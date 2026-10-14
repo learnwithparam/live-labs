@@ -56,5 +56,5 @@ def guard(question: str, reply: str | None, sources: list[Passage], client, mode
     claims = [c.model_dump() for c in got.claims]
     bad = [c for c in claims if c["verdict"] == "unsupported"]
     if bad:
-        return Guarded(False, claims, f"{len(bad)} of {len(claims)} claims have no support: {bad[0]['claim']}", cost)
+        return Guarded(False, claims, f"{len(bad)} of {len(claims)} claims have no support: {bad[0]['claim'].rstrip('.')}.", cost)
     return Guarded(True, claims, f"All {len(claims)} claims found in the cited sections.", cost)
