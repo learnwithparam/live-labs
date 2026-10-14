@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Catalogue filler</title>
+<style>
+/* Colours are the workshop tokens in design/tokens.json; a course test pins every hex here to that file. */
+:root {
+  --paper: #FAFAFA; --card: #FFFFFF; --ink: #151515; --ink-2: #414141; --muted: #606060;
+  --line: #DFDFDF; --accent: #FAFF69; --fill-dark: #1F1F1C;
+  --pass: #008138; --fail: #BF000F; --wait: #B75000;
+  --sans: Inter, Helvetica, Arial, sans-serif; --mono: Inconsolata, "Courier New", Courier, monospace;
+}
+* { box-sizing: border-box }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 15px/1.5 var(--sans) }
+header { display: flex; align-items: baseline; gap: 16px; padding: 18px 28px; border-bottom: 1px solid var(--line); background: var(--card) }
+header h1 { margin: 0; font-size: 20px }
+header .model { color: var(--muted); font-family: var(--mono) }
+header .spacer { flex: 1 }
+header .tally { font-weight: 700 }
+.controls { display: flex; gap: 14px; align-items: center; padding: 16px 28px 0 }
+.controls label { color: var(--muted); font-weight: 600 }
+select, button { font: inherit; border: 1px solid var(--ink); border-radius: 4px; padding: 7px 12px; background: var(--card); color: var(--ink) }
+button { font-weight: 600; cursor: pointer }
+button.primary { background: var(--accent) }
+button:disabled { opacity: .5; cursor: wait }
+.verdict { margin-left: auto; font-weight: 700; padding: 6px 12px; border: 2px solid currentColor; border-radius: 4px }
+main { display: grid; grid-template-columns: minmax(0, 1fr) 300px minmax(0, 1.2fr); gap: 20px; padding: 20px 28px }
+.panel { background: var(--card); border: 1px solid var(--line); border-radius: 4px; padding: 16px }
+.panel h2 { margin: 0 0 12px; font-size: 13px; text-transform: uppercase; color: var(--muted); font-weight: 600 }
+table { width: 100%; border-collapse: collapse; font-size: 14px }
+th { text-align: left; color: var(--muted); font-weight: 600; border-bottom: 1px solid var(--line); padding: 4px 6px }
+td { padding: 5px 6px; border-bottom: 1px solid var(--line) }
+td.num { font-family: var(--mono); text-align: right }
+.pass { color: var(--pass) } .fail { color: var(--fail) } .wait { color: var(--wait) }
+tr.worse td { font-weight: 700 } tr.worse td:first-child::after { content: "  worse"; color: var(--fail) }
+td.broke { color: var(--fail); font-weight: 700 } td.fixed { color: var(--pass); font-weight: 700 }
+ul.list { list-style: none; margin: 0; padding: 0; max-height: 520px; overflow: auto }
+ul.list button { width: 100%; text-align: left; border: 1px solid transparent; background: none; font-weight: 400; display: flex; gap: 8px; align-items: center; padding: 7px 8px }
+ul.list button[aria-current="true"] { background: var(--accent); border-color: var(--ink) }
+.dot { width: 9px; height: 9px; border-radius: 50%; margin-left: auto; flex: none; background: var(--line) }
+.dot.held { background: var(--pass) } .dot.person { background: var(--wait) }
+pre { font: 14px/1.5 var(--mono); white-space: pre-wrap; margin: 0 }
+.posting { background: var(--paper); border: 1px solid var(--line); border-radius: 4px; padding: 12px; max-height: 300px; overflow: auto; margin-bottom: 14px }
+.decide { margin-top: 14px; padding: 10px 12px; border: 2px solid var(--wait); border-radius: 4px }
+.decide b { color: var(--wait) }
+.held-note { margin-top: 14px; padding: 10px 12px; border: 2px solid var(--pass); border-radius: 4px; color: var(--pass); font-weight: 700 }
+td.miss { color: var(--fail); font-weight: 700 }
+tr.best td { font-weight: 700 }
+.empty { color: var(--muted) }
+</style>
+</head>
+<body>
+<header>
+  <h1>Catalogue filler</h1>
+  <span class="model" id="model"></span>
+  <span class="spacer"></span>
+  <span class="tally" id="tally"></span>
+</header>
+<div class="controls">
+  <button id="one">Fill one product per request</button>
+  <button class="primary" id="packed">Fill packed</button>
+</div>
+<main>
+  <section class="panel"><h2>Cost and accuracy</h2><div id="cost"><p class="empty">Fill the catalogue one way, then the other.</p></div></section>
+  <section class="panel"><h2>Products</h2><ul class="list" id="list"></ul></section>
+  <section class="panel"><h2 id="title">Product</h2><div id="detail"><p class="empty">Pick a product.</p></div></section>
+</main>
+<script>
+const ATTRIBUTES = ["category", "size_value", "size_unit", "organic", "vegan"];
+const $ = (id) => document.getElementById(id);
+let shelf, runs = {}, shown = null, picked = null;
+
+function text(v) { return v === null || v === undefined || v === "" ? "-" : String(v) }
+function esc(s) { return text(s).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c]) }
+const NAMES = { one: "one per request", packed: "packed" };
+
+function drawCost() {
+  const ways = Object.keys(runs);
+  if (!ways.length) return;
+  const cheapest = Math.min(...ways.map((w) => runs[w].per_thousand));
+  const rows = ways.map((w) => { const r = runs[w]; return `<tr class="${r.per_thousand === cheapest && ways.length > 1 ? "best" : ""}">
+    <td>${NAMES[w]}</td><td class="num">${r.requests}</td><td class="num">$${r.per_thousand.toFixed(4)}</td>
+    <td class="num">${r.right}/${r.total}</td><td class="num">${Object.keys(r.person).length}</td></tr>` }).join("");
+  let saving = "";
+  if (runs.one && runs.packed) saving = `<p>Packed costs ${Math.round(100 * (1 - runs.packed.per_thousand / runs.one.per_thousand))}% less per product and matches ${runs.packed.right} of ${runs.packed.total} retailer attributes, against ${runs.one.right} one per request.</p>`;
+  $("cost").innerHTML = `<table><tr><th>Way</th><th>Requests</th><th>Per 1,000</th><th>Match retailer</th><th>Need a person</th></tr>${rows}</table>${saving}`;
+}
+
+function drawTally() {
+  const r = runs[shown], need = Object.keys(r.person).length;
+  $("tally").textContent = `${r.filled} of ${shelf.products.length} filled with no person, ${need} need a person`;
+}
+
+function drawList() {
+  $("list").innerHTML = "";
+  const r = runs[shown], person = r ? r.person : {};
+  const order = [...shelf.products].sort((a, b) => (b.sku in person) - (a.sku in person));
+  for (const p of order) {
+    const li = document.createElement("li"), b = document.createElement("button");
+    const state = !r ? "" : p.sku in person ? "person" : "held";
+    b.innerHTML = `<span>${esc(p.title)}</span><span class="dot ${state}"></span>`;
+    b.setAttribute("aria-current", String(p.sku === picked));
+    b.onclick = () => { picked = p.sku; drawList(); drawDetail() };
+    li.append(b); $("list").append(li);
+  }
+}
+
+function drawDetail() {
+  if (!picked) return;
+  const p = shelf.products.find((x) => x.sku === picked), supplied = shelf.supplied[picked];
+  $("title").textContent = p.sku;
+  const r = runs[shown], got = r ? r.attributes[picked] : null;
+  const miss = (a) => supplied && supplied[a] !== "" && got && String(got[a]).toLowerCase() !== supplied[a] && !(a === "size_value" && Math.abs(got[a] - supplied[a]) <= 0.02 * supplied[a]);
+  const head = `<tr><th>Attribute</th><th>Filled</th>${supplied ? "<th>Retailer</th>" : ""}</tr>`;
+  const rows = ATTRIBUTES.map((a) => `<tr><td>${a}</td><td class="${miss(a) ? "miss" : ""}">${esc(got ? got[a] : null)}</td>${supplied ? `<td>${esc(supplied[a])}</td>` : ""}</tr>`).join("");
+  let note = "";
+  if (r && picked in r.person) {
+    const why = r.person[picked];
+    const decide = why.startsWith("no reply") ? "fills the attributes by hand from the pack." : "reads the ingredients on the pack and sets vegan to yes or no; until then the product stays out of the vegan filter.";
+    note = `<div class="decide"><b>Needs a person.</b> ${esc(why[0].toUpperCase() + why.slice(1))}.<br>A person decides: ${decide}</div>`;
+  } else if (r) {
+    note = `<div class="held-note">Filled with no person: every attribute the storefront filters on is set${supplied ? ", and it matches the retailer" : ""}.</div>`;
+  }
+  $("detail").innerHTML = `<div class="posting"><pre>${esc(p.title)}\n${esc(p.description)}</pre></div><table>${head}${rows}</table>${note}`;
+}
+
+async function fill(way) {
+  const button = $(way), label = button.textContent;
+  button.disabled = true; button.textContent = `Filling ${shelf.products.length} products...`;
+  runs[way] = await (await fetch(`/api/fill/${way}`, { method: "POST" })).json();
+  button.disabled = false; button.textContent = label;
+  shown = way;
+  if (!picked) picked = Object.keys(runs[way].person)[0] || shelf.products[0].sku;
+  drawCost(); drawTally(); drawList(); drawDetail();
+}
+
+async function boot() {
+  shelf = await (await fetch("/api/shelf")).json();
+  $("model").textContent = shelf.model;
+  $("packed").textContent = `Fill packed, ${shelf.size} per request`;
+  $("one").onclick = () => fill("one");
+  $("packed").onclick = () => fill("packed");
+  drawList();
+}
+boot();
+</script>
+</body>
+</html>

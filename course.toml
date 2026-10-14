@@ -42,7 +42,7 @@ owns = "batch processing"
 job = "Fill missing product attributes across a whole grocery catalogue overnight, as Instacart's Maple does"
 truth = "attributes the retailer already supplied for a sample of products"
 metric = "cost per thousand products at the same attribute accuracy"
-status = "planned"
+status = "ready"
 
 [[lab]]
 n = 4
