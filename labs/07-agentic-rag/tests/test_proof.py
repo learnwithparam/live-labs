@@ -12,7 +12,7 @@ from policy.review import review
 from policy.search import Policies
 
 LAB = Path(__file__).parent.parent
-MIN_ACCEPTED = 13  # of 16 agent answers the expert's points must accept
+MIN_ACCEPTED = 14  # of 16 agent answers the expert's points must accept
 MIN_FOUND = 30  # of the 33 sections the expert's answers use, in front of the agent's model
 
 

@@ -119,8 +119,9 @@ main { max-width: 1240px; margin: 0 auto; padding: 28px 32px 56px }
 .row:not(.head):hover { background: var(--paper) }
 .row[aria-expanded="true"] { background: var(--paper) }
 .row .q { font-size: 15px }
-.pill { display: inline-flex; gap: 6px; align-items: baseline; font-size: 14px }
-.pill b { font-size: 14px }
+.pill { display: flex; flex-direction: column; gap: 2px; font-size: 14px }
+.pill b { font-size: 14px; white-space: nowrap }
+.pill small { color: var(--muted); font-size: 13px; white-space: nowrap }
 .open { padding: 4px 18px 18px; background: var(--paper); border-top: 1px dashed var(--line) }
 .pair { display: flex; gap: 18px; flex-wrap: wrap }
 .pair > div { flex: 1 1 320px; background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; font-size: 15px }
@@ -343,10 +344,10 @@ async function loadReview() {
     const s = review[key];
     return `<div class="name">${name}<small>${sub}</small></div>
       <div class="bar ${cls}"><i style="width:${(100 * s.accepted / s.total).toFixed(1)}%"></i><span>${s.accepted} of ${s.total} accepted</span></div>
-      <div class="cost">${s.found} of ${s.needs} expert sections found<br>${s.calls_per_question} calls, $${s.cost_per_question.toFixed(5)} a question</div>`;
+      <div class="cost">${s.found} of ${s.needs} expert sections found<br>${s.calls_per_question} ${s.calls_per_question === 1 ? "call" : "calls"}, $${s.cost_per_question.toFixed(5)} a question</div>`;
   };
   const rows = Object.fromEntries(review.rows.map((r) => [`${r.id}/${r.how}`, r]));
-  const cell = (r) => `<span class="pill"><b class="${r.accepted ? "ok" : r.covered ? "bad" : "waiting"}">${r.accepted ? "✓ accepted" : r.covered ? "✗ not accepted" : "to a person"}</b> ${r.found}/${r.needs}</span>`;
+  const cell = (r) => `<span class="pill"><b class="${r.accepted ? "ok" : r.covered ? "bad" : "waiting"}">${r.accepted ? "✓ accepted" : r.covered ? "✗ not accepted" : "to a person"}</b> <small>${r.found} of ${r.needs} sections</small></span>`;
   const ids = [...new Set(review.rows.map((r) => r.id))].sort();
   const body = ids.map((id) => {
     const p = rows[`${id}/plain`], a = rows[`${id}/agentic`], q = room.questions.find((x) => x.id === id);

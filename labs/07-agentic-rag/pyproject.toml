@@ -3,7 +3,14 @@ name = "lab-07-agentic-rag"
 version = "0.1.0"
 description = "Build Agentic RAG with LangGraph: answer on-call policy questions that need several lookups, and score them against an expert's answers"
 requires-python = ">=3.11"
-dependencies = ["langgraph==1.2.12", "bm25s==0.3.11", "pypdf>=6.1", "openai>=1.100", "pydantic>=2.11"]
+dependencies = [
+    "langgraph==1.2.12",
+    "bm25s==0.3.11",
+    "pypdf>=6.1",
+    "openai>=1.100",
+    "pydantic>=2.11",
+    "pystemmer==2.2.0.3",
+]
 
 [project.scripts]
 policy = "policy.cli:main"

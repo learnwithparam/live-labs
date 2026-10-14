@@ -6,10 +6,13 @@ engineers and the runbooks share words like "ledger-writer" and "FLUSHALL".
 """
 
 import bm25s
+import Stemmer
 
 from policy.ingest import Passage
 
 K = 3
+# "deploys" in a section must match "deploy" in a search; without a stemmer they are different words.
+STEM = Stemmer.Stemmer("english")
 
 
 class Policies:
@@ -19,10 +22,10 @@ class Policies:
         # The document title and heading go into the index too: "Freeze window" is the words a person searches.
         corpus = [f"{p.doc} {p.section} {p.text}" for p in passages]
         self.index = bm25s.BM25()
-        self.index.index(bm25s.tokenize(corpus, stopwords="en", show_progress=False), show_progress=False)
+        self.index.index(bm25s.tokenize(corpus, stopwords="en", stemmer=STEM, show_progress=False), show_progress=False)
 
     def search(self, query: str, k: int = K) -> list[Passage]:
-        tokens = bm25s.tokenize([query], stopwords="en", show_progress=False)
+        tokens = bm25s.tokenize([query], stopwords="en", stemmer=STEM, show_progress=False)
         found, scores = self.index.retrieve(tokens, k=min(k, len(self.passages)), show_progress=False)
         # A score of 0 means no shared word: that passage would only invite a guess.
         return [self.passages[i] for i, s in zip(found[0], scores[0]) if s > 0]

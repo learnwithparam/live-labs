@@ -14,7 +14,7 @@ searches and checks what it found. That raised acceptable answers by 27% and cut
 - **The source of truth** is `data/expert.jsonl`: 16 on-call questions. For each, an expert listed
   the sections a correct answer uses and the points it must make.
 - **The metric** is the share of answers the expert's points accept. The proof test asserts the agent
-  gets at least 13 of 16 accepted, more than plain RAG, and finds at least 30 of the 33 sections.
+  gets at least 14 of 16 accepted, more than plain RAG, and finds at least 30 of the 33 sections.
 
 ## What you will be able to do
 
@@ -41,7 +41,7 @@ Check to Search. Each stop lights as the agent finishes it. The log below shows 
 newly found sections in yellow. The answer on the right cites each section by number. When the
 policies do not cover a question, it goes to the policy owners instead of guessing.
 
-<img src="docs/policy-desk.jpg" alt="Ledgerline policy desk: the agent planned four searches, including the weekend deploy freeze, and answered with the two approvals the expert expects" width="720">
+<img src="docs/policy-desk.jpg" alt="Ledgerline policy desk: on slow card payments the agent planned four searches, including incident severity, and went back once for what was missing" width="720">
 
 ## Words you will use
 
@@ -55,7 +55,7 @@ policies do not cover a question, it goes to the policy owners instead of guessi
 
 You need [uv](https://docs.astral.sh/uv/) and an [OpenRouter](https://openrouter.ai) key. Search is
 [bm25s](https://github.com/xhluca/bm25s), keyword search in memory, the same for both ways of
-answering.
+answering. A stemmer makes "deploys" in a policy match "deploy" in a search.
 
 ```bash
 uv sync
@@ -76,8 +76,9 @@ uv run policy ask --plain "Product wants the new checkout flag turned on for eve
 
 Expect: /Cited:/
 
-In our runs it found the feature flag rule, which says a flag change "follows the freeze". It did not
-find the freeze window itself, so it could not say whether Saturday is inside it.
+It finds the feature flag rule, which says a flag change "follows the freeze". It does not find the
+freeze window itself, so nothing in front of the model says whether Saturday is inside it. Some runs
+say they cannot tell; others guess.
 
 ## 2. Ask the agent
 
@@ -105,8 +106,8 @@ uv run policy review
 
 Expect: /agentic\s+\d+ of 16/
 
-In our runs plain RAG was accepted on 11 of 16 and the agent on 13 or 14 of 16. The agent had 31 or 32
-of the 33 sections the expert used in front of it, against 27 for plain RAG. It cost about 4 model calls a
+In our runs plain RAG was accepted on 10 or 11 of 16 and the agent on 16 of 16. The agent had 31 or
+32 of the 33 sections the expert used in front of it, against 26 for plain RAG. It cost about 4 model calls a
 question instead of 1, under a fifth of a cent. `out/review.json` holds every answer and grade, and each miss names the expert's point it missed.
 
 ## 4. See it
@@ -117,12 +118,13 @@ Start the desk and open http://127.0.0.1:8000:
 uv run policy serve
 ```
 
-Pick Q01 from the expert's set and press **Ask the policies**. Watch the route: the plan adds a search
-for the deploy freeze, and when the check finds a section missing the loop goes back for it. The expert's points appear under the answer
+Pick Q09 from the expert's set and press **Ask the policies**. The question is about slow card
+payments, and the plan adds a search for incident severity, which holds the paging command. When the
+check finds a section missing, the loop goes back for it. The expert's points appear under the answer
 with a tick for each point made. Switch to **Plain RAG, one search** and ask again. Then open **Expert
 review** and press any row to read both answers side by side. Stop the page with Ctrl-C.
 
-<img src="docs/expert-review.jpg" alt="Expert review: plain RAG accepted on 11 of 16 questions, the agent on 14 of 16, with each question's result for both" width="720">
+<img src="docs/expert-review.jpg" alt="Expert review: plain RAG accepted on 11 of 16 questions, the agent on 16 of 16, with each question's result for both" width="720">
 
 ## 5. Prove it
 
@@ -135,7 +137,7 @@ uv run pytest -q
 
 Expect: /\d+ passed/
 
-The proof runs both ways on a real model. It fails if the agent is accepted fewer than 13 times, is
+The proof runs both ways on a real model. It fails if the agent is accepted fewer than 14 times, is
 not ahead of plain RAG, or finds fewer than 30 of the expert's sections:
 
 ```bash
@@ -160,4 +162,5 @@ every uncovered question to the document owners; those are the gaps to write nex
 
 - Set `MAX_ROUNDS = 1` in `src/policy/graph.py` and rerun `policy review`. How many answers does the retry earn?
 - Delete the "Add a search for each policy the situation triggers" sentence from `PLAN`. Which questions fail?
+- Remove `stemmer=STEM` from both calls in `src/policy/search.py` and rerun `policy review`. Which sections stop being found?
 - Write two questions of your own into `data/expert.jsonl` that need three documents, and test both ways.
