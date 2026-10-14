@@ -1,0 +1,20 @@
+{
+  "name": "listing-workflow",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "listing": "tsx src/cli.ts",
+    "test": "vitest run --exclude tests/proof.test.ts",
+    "proof": "vitest run tests/proof.test.ts"
+  },
+  "dependencies": {
+    "@mastra/core": "1.72.0",
+    "zod": "4.6.5"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.4",
+    "tsx": "4.23.15",
+    "typescript": "6.0.3",
+    "vitest": "5.0.3"
+  }
+}

@@ -22,7 +22,7 @@ import tempfile
 from pathlib import Path
 
 STEP = re.compile(r"```bash\n(.*?)```\n+(?:Expect: ([^\n]+)\n)?", re.S)
-SKIP = {".env", ".venv", "__pycache__", ".pytest_cache"}
+SKIP = {".env", ".venv", "__pycache__", ".pytest_cache", "node_modules"}
 
 
 def steps(readme: Path) -> list[tuple[str, str | None]]:

@@ -102,7 +102,7 @@ owns = "workflows: chaining and parallel steps"
 job = "Turn a supplier spec sheet into a product listing in chained steps, with every claim checked"
 truth = "the supplier spec sheet each claim in the listing must trace to"
 metric = "share of listings published without an edit"
-status = "planned"
+status = "ready"
 
 [[lab]]
 n = 9

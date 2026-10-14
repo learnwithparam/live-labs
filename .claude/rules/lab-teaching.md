@@ -18,6 +18,9 @@ simply.
   uses only `design/tokens.json` colours.
 - **Why-comments in teaching modules.** Every module except the CLI, settings and server carries at
   least 3 comment or docstring lines per 40 lines of code, saying why, not what.
+- **The framework's own language.** A lab is TypeScript when its framework is (Mastra), with
+  `package.json`, `package-lock.json` and `tests/proof.test.ts` in place of the Python files. Its
+  `//` and `/* */` lines count as why-comments.
 - **Plain English.** No README sentence runs past 40 words, and no em dash. A list item counts as its
   own sentence, so split a long outcome into a list.
 

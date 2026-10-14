@@ -1,0 +1,14 @@
+LUMEN LIGHTING  |  DATASHEET  |  Lumen 400R Rechargeable Headlamp  |  LL-400R
+
+Turn night into day. Built for the long run.
+
+Max output ........ 400 lumens (boost, 30 s, then steps down to 200)
+Modes ............. boost, high 200 lm, medium 80 lm, low 10 lm, red 5 lm
+Run time .......... high 3 h, medium 9 h, low 60 h
+Beam distance ..... 95 m on boost
+Battery ........... 1200 mAh Li-ion, built in, charges by USB-C in 3 h
+Water rating ...... IPX4 (splash resistant)
+Weight ............ 72 g with strap
+Lock mode ......... yes, to stop it turning on in a pack
+
+Warranty 2 years. Battery 1 year.

@@ -1,0 +1,410 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Northbeck product import</title>
+<style>
+/* Colours are the workshop tokens in design/tokens.json; a course test pins every hex here to that file. */
+:root {
+  --paper: #FAFAFA; --card: #FFFFFF; --ink: #151515; --ink-2: #414141; --muted: #606060; --faint: #808080;
+  --line: #DFDFDF; --accent: #FAFF69; --accent-deep: #4F5101; --fill-dark: #1F1F1C;
+  --pass: #008138; --fail: #BF000F; --wait: #B75000;
+  --sans: Inter, Helvetica, Arial, sans-serif; --mono: Inconsolata, "Courier New", Courier, monospace;
+}
+* { box-sizing: border-box }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.55 var(--sans) }
+button, select { font: inherit; color: inherit }
+button { cursor: pointer }
+:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px }
+[hidden] { display: none !important }
+
+/* A store admin: a dark nav rail on the left, the work on the right, as merchandisers know it. */
+.shell { display: grid; grid-template-columns: 216px minmax(0, 1fr); min-height: 100vh }
+nav { background: var(--fill-dark); color: var(--paper); padding: 22px 14px; display: flex; flex-direction: column; gap: 4px }
+.store { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 18px; padding: 0 10px 22px; letter-spacing: -0.01em }
+.store i { width: 26px; height: 26px; border-radius: 7px; background: var(--accent); display: inline-block; position: relative }
+.store i::after { content: ""; position: absolute; left: 6px; right: 6px; bottom: 6px; border-bottom: 9px solid var(--fill-dark); border-left: 7px solid transparent; border-right: 7px solid transparent }
+nav a { color: var(--line); text-decoration: none; padding: 8px 10px; border-radius: 8px; font-size: 15px; font-weight: 500 }
+nav a[aria-current] { background: var(--ink-2); color: var(--paper); font-weight: 700 }
+nav .sub { padding-left: 26px; font-size: 14px }
+
+main { padding: 26px 36px 60px; max-width: 1280px; width: 100% }
+.crumbs { color: var(--muted); font-size: 14px }
+h1 { margin: 2px 0 18px; font-size: 28px; letter-spacing: -0.02em }
+.views { display: flex; gap: 22px; border-bottom: 1px solid var(--line); margin-bottom: 22px }
+.views button { border: 0; background: none; padding: 8px 0 10px; font-weight: 600; color: var(--muted); border-bottom: 3px solid transparent; margin-bottom: -1px }
+.views button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--ink) }
+
+/* The import bar: which supplier sheet, which way to write it, and go. */
+.bar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px }
+.bar label { font-size: 14px; color: var(--muted) }
+.bar select { border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; background: var(--card); min-width: 280px }
+.how { display: inline-flex; background: var(--paper); border: 1px solid var(--line); border-radius: 9px; padding: 3px }
+.how button { border: 0; background: none; padding: 6px 14px; border-radius: 7px; font-weight: 600; font-size: 15px; color: var(--ink-2) }
+.how button[aria-pressed="true"] { background: var(--card); color: var(--ink); box-shadow: 0 0 0 1px var(--line) }
+.go { margin-left: auto; border: 0; background: var(--ink); color: var(--paper); font-weight: 700; padding: 9px 20px; border-radius: 8px }
+.go:disabled { opacity: .5; cursor: default }
+
+/* The run: one lane per step on a shared clock. Three bars side by side is what "parallel" looks like. */
+.run { margin-top: 18px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px 20px 12px }
+.run-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px }
+.run-head b { font-size: 16px }
+.run-head span { color: var(--muted); font-size: 14px; font-variant-numeric: tabular-nums }
+.lane { display: grid; grid-template-columns: 120px minmax(0, 1fr) 72px; align-items: center; gap: 12px; height: 32px }
+.lane .name { font-weight: 600; font-size: 15px; color: var(--ink-2) }
+.lane .track { position: relative; height: 18px; background: var(--paper); border-radius: 5px }
+.lane .bar-fill { position: absolute; top: 0; bottom: 0; border-radius: 5px; background: var(--ink); min-width: 4px }
+.lane.live .bar-fill { background: var(--accent); box-shadow: inset 0 0 0 1px var(--accent-deep) }
+.lane.repair .bar-fill { background: var(--wait) }
+.lane.publish .bar-fill { background: var(--pass) }
+.lane .ms { font: 15px var(--mono); color: var(--muted); text-align: right }
+.lane.idle .name { color: var(--faint) }
+.fork { margin: 4px 0 2px 132px; font-size: 14px; color: var(--muted) }
+
+/* The verdict line: what happened to this listing, then what a merchandiser would still have to fix. */
+.verdict { margin-top: 18px; display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 14px 18px; border-radius: 12px; border: 1px solid var(--line); background: var(--card) }
+.badge { font-weight: 700; font-size: 14px; padding: 3px 10px; border-radius: 999px; color: var(--card) }
+.badge.published { background: var(--pass) }
+.badge.held { background: var(--wait) }
+.verdict p { margin: 0; flex: 1 1 320px; color: var(--ink-2) }
+.verdict .act { border: 1px solid var(--line); background: var(--card); padding: 7px 14px; border-radius: 8px; font-weight: 600 }
+.verdict .act.primary { background: var(--ink); color: var(--paper); border-color: var(--ink) }
+.audit { margin: 10px 0 0; padding: 12px 18px; border-left: 4px solid var(--fail); background: var(--card); border-radius: 0 10px 10px 0 }
+.audit.clean { border-left-color: var(--pass) }
+.audit b { display: block; margin-bottom: 4px }
+.audit li { margin: 4px 0; color: var(--ink-2) }
+
+/* The page as the buyer sees it, next to the sheet it came from. */
+.work { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(340px, 0.7fr); gap: 22px; margin-top: 18px; align-items: start }
+.pdp { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 26px 30px 30px }
+.pdp .price { font-size: 22px; font-weight: 700; margin: 4px 0 16px }
+.pdp h2 { font-size: 26px; line-height: 1.25; margin: 0; letter-spacing: -0.015em }
+.pdp .desc { font-size: 17px; color: var(--ink-2); max-width: 66ch }
+.pdp ul { padding-left: 20px; max-width: 66ch }
+.pdp li { margin: 6px 0 }
+.claim { cursor: pointer; border-radius: 3px; transition: background .15s }
+.claim:hover, .claim.on { background: var(--accent) }
+.claim.bad { text-decoration: underline wavy var(--fail); text-decoration-thickness: 1.5px; text-underline-offset: 4px }
+.why { display: block; font-size: 14px; color: var(--fail); margin: 2px 0 8px }
+.cites { font: 13px var(--mono); color: var(--accent-deep); vertical-align: 2px; margin-left: 4px }
+.cutlist { margin-top: 20px; border-top: 1px dashed var(--line); padding-top: 12px; font-size: 15px; color: var(--muted) }
+.cutlist s { display: block; margin: 4px 0 }
+.empty { color: var(--muted); padding: 40px 0; text-align: center }
+
+/* The supplier's sheet, typed as it arrived. Highlighter marks are the facts the workflow quoted. */
+.sheet { background: var(--card); border: 1px solid var(--line); border-radius: 4px; padding: 20px 18px; box-shadow: 4px 4px 0 var(--line); position: sticky; top: 16px }
+.sheet h3 { margin: 0 0 10px; font-size: 15px; color: var(--muted); font-weight: 600 }
+.sheet pre { margin: 0; font: 13.5px/1.6 var(--mono); white-space: pre-wrap; word-break: break-word; color: var(--ink-2) }
+.sheet mark { background: var(--paper); color: var(--ink); box-shadow: inset 0 -2px 0 var(--line); border-radius: 2px }
+.sheet mark.limit { box-shadow: inset 0 -2px 0 var(--wait) }
+.sheet mark.on { background: var(--accent); box-shadow: inset 0 -2px 0 var(--accent-deep) }
+
+/* The catalogue: every sheet both ways, and the number the product team watches. */
+.score { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin: 18px 0 }
+.tally { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px 20px }
+.tally b { font-size: 15px }
+.tally .big { font-size: 40px; font-weight: 800; letter-spacing: -0.03em; font-variant-numeric: tabular-nums }
+.tally .big small { font-size: 18px; color: var(--muted); font-weight: 600 }
+.tally .split { display: flex; height: 10px; border-radius: 5px; overflow: hidden; background: var(--paper); margin: 8px 0 }
+.tally .split i { display: block }
+.tally .meta { font-size: 14px; color: var(--muted) }
+table { width: 100%; border-collapse: collapse; background: var(--card); border: 1px solid var(--line); border-radius: 12px; overflow: hidden }
+th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line); font-size: 15px; vertical-align: top }
+th { font-size: 14px; color: var(--muted); font-weight: 600; background: var(--paper) }
+td small { display: block; color: var(--muted); font-size: 13px; margin-top: 2px }
+.pill { font-weight: 700; font-size: 13px; padding: 2px 9px; border-radius: 999px; white-space: nowrap }
+.pill.clean { background: var(--pass); color: var(--card) }
+.pill.wrong { background: var(--fail); color: var(--card) }
+.pill.held { background: var(--wait); color: var(--card) }
+.pill.wait { background: var(--paper); color: var(--faint); box-shadow: inset 0 0 0 1px var(--line) }
+
+@media (max-width: 900px) {
+  .shell { grid-template-columns: minmax(0, 1fr) }
+  nav { flex-direction: row; overflow-x: auto; padding: 10px }
+  .store { padding: 0 10px 0 0 }
+  nav .sub { padding-left: 10px }
+  main { padding: 18px 16px 40px }
+  .work, .score { grid-template-columns: minmax(0, 1fr) }
+  .sheet { position: static }
+  .lane { grid-template-columns: 90px minmax(0, 1fr) 60px }
+  .fork { margin-left: 0 }
+}
+@media (prefers-reduced-motion: reduce) { .claim { transition: none } }
+</style>
+</head>
+<body data-surface="supplier product import">
+<div class="shell">
+  <nav aria-label="Store admin">
+    <div class="store"><i aria-hidden="true"></i>Northbeck</div>
+    <a href="#">Orders</a>
+    <a href="#" aria-current="page">Products</a>
+    <a href="#" class="sub" aria-current="page">Import from supplier</a>
+    <a href="#">Customers</a>
+    <a href="#">Online store</a>
+  </nav>
+  <main>
+    <div class="crumbs">Products</div>
+    <h1>Import from supplier</h1>
+    <div class="views" role="tablist">
+      <button role="tab" aria-selected="true" data-view="one">One product</button>
+      <button role="tab" aria-selected="false" data-view="all">Whole catalogue</button>
+    </div>
+
+    <section id="one">
+      <div class="bar">
+        <label for="product">Supplier sheet</label>
+        <select id="product"></select>
+        <div class="how" role="group" aria-label="How to write the listing">
+          <button type="button" data-how="workflow" aria-pressed="true">Workflow</button>
+          <button type="button" data-how="one-prompt" aria-pressed="false">One prompt</button>
+        </div>
+        <button class="go" id="write">Write listing</button>
+      </div>
+
+      <div class="run" id="run" hidden>
+        <div class="run-head"><b id="run-title">Workflow run</b><span id="clock">0.0 s</span></div>
+        <div id="lanes"></div>
+        <div class="fork" id="fork" hidden></div>
+      </div>
+
+      <div id="result" hidden>
+        <div class="verdict">
+          <span class="badge" id="badge"></span>
+          <p id="why"></p>
+          <button class="act" id="edit" hidden>Edit before publishing</button>
+          <button class="act primary" id="anyway" hidden>Publish anyway</button>
+        </div>
+        <div class="audit" id="audit"></div>
+      </div>
+
+      <div class="work">
+        <article class="pdp" id="pdp"><p class="empty">Pick a supplier sheet and write its listing. The product page appears here.</p></article>
+        <aside class="sheet"><h3 id="sheet-name">Supplier sheet</h3><pre id="sheet"></pre></aside>
+      </div>
+    </section>
+
+    <section id="all" hidden>
+      <div class="bar">
+        <span>Every supplier sheet, written both ways, then audited by the merchant's rules.</span>
+        <button class="go" id="import">Import the catalogue</button>
+      </div>
+      <div class="score">
+        <div class="tally" id="t-one-prompt"></div>
+        <div class="tally" id="t-workflow"></div>
+      </div>
+      <table>
+        <thead><tr><th>Product</th><th>One prompt</th><th>Workflow</th></tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </section>
+  </main>
+</div>
+
+<script>
+const $ = (s) => document.querySelector(s)
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c])
+let products = [], how = 'workflow', current = null
+
+// The steps in the order the workflow declares them; the three writers share a start time.
+const STEPS = { workflow: ['extract', 'title', 'description', 'features', 'check', 'publish', 'repair'], 'one-prompt': ['one-prompt'] }
+
+async function boot() {
+  products = await (await fetch('/api/products')).json()
+  $('#product').innerHTML = products.map((p) => `<option value="${p.id}">${esc(p.product)}</option>`).join('')
+  showSheet([])
+  renderRows([])
+}
+
+function product() { return products.find((p) => p.id === $('#product').value) }
+
+// Mark each quoted fact on the sheet. Quotes are matched loosely on spacing, as the workflow matched them.
+function showSheet(facts) {
+  const p = product(), sheet = p.sheet
+  $('#sheet-name').textContent = `${p.id}.txt`
+  const ranges = []
+  for (const f of facts) {
+    const words = f.quote.trim().split(/\s+/).map((w) => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+    const m = new RegExp(words.join('\\s+'), 'i').exec(sheet)
+    if (m && !ranges.some((r) => m.index < r.end && m.index + m[0].length > r.start)) ranges.push({ start: m.index, end: m.index + m[0].length, f })
+  }
+  ranges.sort((a, b) => a.start - b.start)
+  let html = '', at = 0
+  for (const r of ranges) {
+    html += esc(sheet.slice(at, r.start)) + `<mark data-f="${r.f.id}" class="${r.f.limit ? 'limit' : ''}" title="${r.f.id}: ${esc(r.f.fact)}">${esc(sheet.slice(r.start, r.end))}</mark>`
+    at = r.end
+  }
+  $('#sheet').innerHTML = html + esc(sheet.slice(at))
+}
+
+// Lanes on a shared clock: a bar starts when its step starts and grows until it ends.
+let lanes = {}, t0 = 0, ticking = null
+function startRun() {
+  lanes = {}
+  $('#lanes').innerHTML = STEPS[how].map((s) => `<div class="lane idle" data-step="${s}"><span class="name">${s}</span><div class="track"><div class="bar-fill" hidden></div></div><span class="ms"></span></div>`).join('')
+  $('#run-title').textContent = how === 'workflow' ? 'Workflow run' : 'One prompt run'
+  $('#fork').hidden = true
+  $('#run').hidden = false
+  t0 = performance.now()
+  clearInterval(ticking)
+  ticking = setInterval(draw, 100)
+}
+function draw() {
+  const now = performance.now() - t0
+  $('#clock').textContent = `${(now / 1000).toFixed(1)} s`
+  const span = Math.max(now, ...Object.values(lanes).map((l) => l.end ?? 0), 1)
+  for (const [step, l] of Object.entries(lanes)) {
+    const lane = document.querySelector(`.lane[data-step="${step}"]`)
+    const bar = lane.querySelector('.bar-fill')
+    const end = l.end ?? now
+    bar.hidden = false
+    bar.style.left = `${(l.start / span) * 100}%`
+    bar.style.width = `${((end - l.start) / span) * 100}%`
+    lane.querySelector('.ms').textContent = `${Math.round(end - l.start)} ms`
+  }
+}
+function onStep(e) {
+  const lane = document.querySelector(`.lane[data-step="${e.step}"]`)
+  if (!lane) return
+  lane.classList.remove('idle')
+  if (e.phase === 'start') { lanes[e.step] = { start: e.ms }; lane.classList.add('live') }
+  else { lanes[e.step].end = e.ms; lane.classList.remove('live') }
+  if (e.step === 'publish' || e.step === 'repair') {
+    lane.classList.add(e.step)
+    // Only one branch runs; the other lane stays empty, which is the point of a branch.
+    const other = document.querySelector(`.lane[data-step="${e.step === 'publish' ? 'repair' : 'publish'}"]`)
+    other.querySelector('.ms').textContent = 'skipped'
+    $('#fork').hidden = false
+    $('#fork').textContent = e.step === 'publish' ? 'Every claim passed the check, so the branch took publish.' : 'Some claims failed the check, so the branch took repair.'
+  }
+  draw()
+}
+
+function write() {
+  current = null
+  $('#write').disabled = true
+  $('#result').hidden = true
+  $('#pdp').innerHTML = '<p class="empty">Writing…</p>'
+  showSheet([])
+  startRun()
+  const src = new EventSource(`/api/write?id=${encodeURIComponent($('#product').value)}&how=${how}`)
+  src.addEventListener('step', (m) => onStep(JSON.parse(m.data)))
+  src.addEventListener('done', (m) => {
+    src.close()
+    clearInterval(ticking)
+    draw()
+    $('#write').disabled = false
+    current = JSON.parse(m.data)
+    show(current)
+  })
+  src.onerror = () => {
+    src.close()
+    clearInterval(ticking)
+    $('#write').disabled = false
+    $('#pdp').innerHTML = '<p class="empty">The run stopped before it finished. Check the server log, then write the listing again.</p>'
+  }
+}
+
+function show({ listing, edits, clean }) {
+  const p = product()
+  $('#result').hidden = false
+  $('#badge').className = `badge ${listing.status}`
+  $('#badge').textContent = listing.status === 'published' ? 'Published' : 'Held for review'
+  $('#why').textContent = listing.why
+  $('#edit').hidden = $('#anyway').hidden = listing.status !== 'held'
+  const audit = $('#audit')
+  audit.className = `audit${edits.length ? '' : ' clean'}`
+  audit.innerHTML = edits.length
+    ? `<b>Merchant audit: ${edits.length === 1 ? 'one edit' : `${edits.length} edits`} before this can stay live</b><ul>${edits.map((e) => `<li>${esc(e.why)}${e.says !== '(missing)' ? ` <em>"${esc(e.says)}"</em>` : ''}</li>`).join('')}</ul>`
+    : `<b>Merchant audit: nothing to edit${clean ? '' : ' in the copy'}</b>`
+  // A sentence the merchant would edit is underlined even when the workflow's own check passed it.
+  const flagged = (text) => edits.find((e) => e.says !== '(missing)' && text.includes(e.says.slice(0, 40)))
+  const claim = (i) => {
+    const flag = flagged(i.text)
+    const bad = !i.ok || flag
+    const cites = i.facts.length ? `<span class="cites">${i.facts.join(' ')}</span>` : ''
+    const why = !i.ok ? i.why : flag ? flag.why : ''
+    return `<span class="claim${bad ? ' bad' : ''}" data-facts="${i.facts.join(' ')}">${esc(i.text)}</span>${cites}${why ? `<span class="why">${esc(why)}</span>` : ''}`
+  }
+  const of = (part) => listing.items.filter((i) => i.part === part && i.text)
+  const title = of('title')[0]
+  $('#pdp').innerHTML = !listing.items.length ? `<p class="empty">${esc(listing.why)}</p>` : `
+    <h2>${title ? claim(title) : esc(p.product)}</h2>
+    <div class="price">€${p.price}</div>
+    <p class="desc">${of('description').map(claim).join(' ')}</p>
+    <ul>${of('feature').map((i) => `<li>${claim(i)}</li>`).join('')}</ul>
+    ${listing.cut.length ? `<div class="cutlist">Cut by repair, because no fact supports it:${listing.cut.map((c) => `<s>${esc(c)}</s>`).join('')}</div>` : ''}`
+  showSheet(listing.facts)
+  if (how === 'one-prompt') $('#sheet-name').textContent += ' (nothing quoted: one prompt cites no facts)'
+}
+
+// Click a claim to see the words on the sheet it stands on.
+$('#pdp').addEventListener('click', (e) => {
+  const c = e.target.closest('.claim')
+  document.querySelectorAll('.claim.on, .sheet mark.on').forEach((n) => n.classList.remove('on'))
+  if (!c) return
+  c.classList.add('on')
+  const ids = c.dataset.facts.split(' ').filter(Boolean)
+  ids.forEach((id) => document.querySelector(`.sheet mark[data-f="${id}"]`)?.classList.add('on'))
+  document.querySelector('.sheet mark.on')?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+})
+
+async function decide(decision) {
+  await fetch('/api/decide', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id: $('#product').value, decision }) })
+  $('#badge').className = 'badge published'
+  $('#badge').textContent = decision === 'publish anyway' ? 'Published by a merchandiser' : 'Sent to a merchandiser to edit'
+  $('#edit').hidden = $('#anyway').hidden = true
+}
+$('#anyway').onclick = () => decide('publish anyway')
+$('#edit').onclick = () => decide('edit')
+
+document.querySelectorAll('.how button').forEach((b) => (b.onclick = () => {
+  how = b.dataset.how
+  document.querySelectorAll('.how button').forEach((x) => x.setAttribute('aria-pressed', String(x === b)))
+}))
+$('#product').onchange = () => { showSheet([]); $('#result').hidden = true; $('#run').hidden = true; $('#pdp').innerHTML = '<p class="empty">Write this listing to see its product page.</p>' }
+$('#write').onclick = write
+document.querySelectorAll('.views button').forEach((b) => (b.onclick = () => {
+  document.querySelectorAll('.views button').forEach((x) => x.setAttribute('aria-selected', String(x === b)))
+  $('#one').hidden = b.dataset.view !== 'one'
+  $('#all').hidden = b.dataset.view !== 'all'
+}))
+
+// The catalogue view: rows fill in as each listing lands, both ways side by side.
+let rows = []
+function outcome(r) {
+  if (!r) return '<span class="pill wait">waiting</span>'
+  if (r.clean) return '<span class="pill clean">live, nothing to edit</span>'
+  if (r.listing.status === 'held') return `<span class="pill held">held</span><small>${esc(r.listing.why)}</small>`
+  return `<span class="pill wrong">live with ${r.edits.length === 1 ? 'an error' : 'errors'}</span><small>${esc(r.edits[0].why)}</small>`
+}
+function renderRows(list) {
+  rows = list
+  const find = (id, h) => rows.find((r) => r.id === id && r.how === h)
+  $('#rows').innerHTML = products.map((p) => `<tr><td>${esc(p.product)}</td><td>${outcome(find(p.id, 'one-prompt'))}</td><td>${outcome(find(p.id, 'workflow'))}</td></tr>`).join('')
+  for (const h of ['one-prompt', 'workflow']) {
+    const mine = rows.filter((r) => r.how === h)
+    const n = (f) => mine.filter(f).length
+    const clean = n((r) => r.clean), held = n((r) => r.listing.status === 'held'), wrong = mine.length - clean - held
+    const pct = (k) => `${(k / products.length) * 100}%`
+    const cost = mine.reduce((s, r) => s + r.listing.cost, 0)
+    $(`#t-${h}`).innerHTML = `<b>${h === 'workflow' ? 'Workflow' : 'One prompt'}</b>
+      <div class="big">${clean}<small> of ${products.length} published without an edit</small></div>
+      <div class="split"><i style="width:${pct(clean)};background:var(--pass)"></i><i style="width:${pct(held)};background:var(--wait)"></i><i style="width:${pct(wrong)};background:var(--fail)"></i></div>
+      <div class="meta">${held} held for a person, ${wrong} live with errors, $${cost.toFixed(4)} in model calls</div>`
+  }
+}
+$('#import').onclick = () => {
+  $('#import').disabled = true
+  const got = []
+  renderRows(got)
+  const src = new EventSource('/api/review')
+  src.addEventListener('row', (m) => { got.push(JSON.parse(m.data)); renderRows(got) })
+  src.addEventListener('done', () => { src.close(); $('#import').disabled = false })
+  src.onerror = () => { src.close(); $('#import').disabled = false }
+}
+
+boot()
+</script>
+</body>
+</html>

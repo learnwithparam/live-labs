@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from check_course import LAB_POINTER, ROOT, comment_problems, course_map, opening_problems, page_problems, plain_problems, problems, title_problems
+from check_course import KINDS, LAB_POINTER, kind, ROOT, comment_problems, course_map, opening_problems, page_problems, plain_problems, problems, title_problems
 from walkthrough import matches, scene, steps
 
 import json
@@ -104,3 +104,18 @@ def test_a_readme_sentence_stays_short_and_a_list_item_counts_alone():
     listed = "You can:\n\n" + "\n".join(f"- do thing {n} with " + " ".join(["word"] * 8) for n in range(6))
     assert plain_problems(listed) == []
     assert plain_problems("A \u2014 B.") == ["an em dash; use a full stop or a comma"]
+
+
+def test_a_typescript_module_needs_why_comments_too():
+    bare = "\n".join(f"const x{n} = {n}" for n in range(40))
+    assert comment_problems("m.ts", bare) == ["m.ts: 0 why-comment lines for 40 lines of code, needs 3"]
+    why = "/**\n * Why this module exists.\n */\n" + bare
+    assert comment_problems("m.ts", why) == []
+    assert comment_problems("m.ts", "// one\n" + bare.replace("const x1 = 1", "const x1 = 1 // two").replace("const x2 = 2", "const x2 = 2 // three")) == []
+
+
+def test_a_typescript_lab_needs_its_lock_file_and_proof(tmp_path):
+    (tmp_path / "package.json").write_text("{}")
+    assert kind(tmp_path) == "node"
+    assert "package-lock.json" in KINDS[kind(tmp_path)] and "tests/proof.test.ts" in KINDS["node"]
+    assert kind(tmp_path / "missing") == "python"

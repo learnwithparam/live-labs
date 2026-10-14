@@ -15,7 +15,13 @@ from walkthrough import steps  # noqa: E402
 
 ROOT = Path(__file__).parent.parent
 BEGIN, END = "<!-- course map: generated from course.toml by `make readme` -->", "<!-- end course map -->"
-REQUIRED = ["README.md", "pyproject.toml", "uv.lock", "env.example", "tests/test_proof.py"]
+REQUIRED = ["README.md", "env.example"]
+# A lab is Python (uv) or TypeScript (npm) when its framework is: Mastra is TypeScript. Each kind pins
+# its dependencies in a lock file and has one proof test that runs on a real model.
+KINDS = {
+    "python": ["pyproject.toml", "uv.lock", "tests/test_proof.py"],
+    "node": ["package.json", "package-lock.json", "tests/proof.test.ts"],
+}
 # Labs are added, removed and reordered; a README that names another lab by number or place goes stale.
 # Every lab is a product job checked against something the model did not write (AGENTS.md).
 JOB_FIELDS = ["job", "truth", "metric"]
@@ -25,7 +31,7 @@ OPENING = ["## The product job", "## What you will be able to do"]
 SURFACE = re.compile(r'<body[^>]*\bdata-surface="([^"]+)"')
 LAYOUT = re.compile(r"grid-template-columns:\s*([^;}]+)")
 # The modules a lab teaches from carry why-comments; plumbing (the CLI, settings, the server) is exempt.
-PLUMBING = {"__init__.py", "cli.py", "config.py", "serve.py"}
+PLUMBING = {"__init__.py", "cli.py", "config.py", "serve.py", "cli.ts", "config.ts", "serve.ts"}
 WHY_PER_40 = 3
 # Plain English: a README sentence longer than this was the "hard English" the owner rejected.
 LONGEST_SENTENCE = 40
@@ -71,8 +77,29 @@ def page_problems(pages: dict[str, str]) -> list[str]:
     return found
 
 
+def kind(lab: Path) -> str:
+    return "node" if (lab / "package.json").exists() else "python"
+
+
+def ts_comment_problems(name: str, source: str) -> list[str]:
+    """The TypeScript form of comment_problems: // and /* */ lines are the why-comments."""
+    why = code = 0
+    in_block = False
+    for line in (raw.strip() for raw in source.splitlines()):
+        if in_block or line.startswith(("//", "/*")):
+            why += 1
+            in_block = (in_block or line.startswith("/*")) and "*/" not in line
+        elif line:
+            code += 1
+            why += " // " in line
+    need = code * WHY_PER_40 // 40
+    return [f"{name}: {why} why-comment lines for {code} lines of code, needs {need}"] if why < need else []
+
+
 def comment_problems(name: str, source: str) -> list[str]:
     """A teaching module has at least WHY_PER_40 comment or docstring lines per 40 lines of code."""
+    if name.endswith(".ts"):
+        return ts_comment_problems(name, source)
     docs: set[int] = set()
     for node in ast.walk(ast.parse(source)):
         if isinstance(node, (ast.Module, ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)) and ast.get_docstring(node):
@@ -125,7 +152,7 @@ def problems(course: dict, readme: str) -> list[str]:
     found += [f"labs/{s}: folder exists but course.toml does not mark it ready" for s in folders - ready]
     for slug in sorted(ready):
         lab = ROOT / "labs" / slug
-        found += [f"labs/{slug}: missing {f}" for f in REQUIRED if not (lab / f).exists()]
+        found += [f"labs/{slug}: missing {f}" for f in REQUIRED + KINDS[kind(lab)] if not (lab / f).exists()]
         if (lab / "README.md").exists() and not any(expect for _, expect in steps(lab / "README.md")):
             found.append(f"labs/{slug}/README.md: no step with an Expect: line")
         if (lab / "README.md").exists():
@@ -134,10 +161,10 @@ def problems(course: dict, readme: str) -> list[str]:
             found += [f"labs/{slug}/README.md: {p}" for p in title_problems((lab / "README.md").read_text(), title)]
             found += [f"labs/{slug}/README.md: points at another lab ({m.group(0)!r})" for m in LAB_POINTER.finditer((lab / "README.md").read_text())]
             found += [f"labs/{slug}/README.md: {p}" for p in plain_problems((lab / "README.md").read_text())]
-        for module in sorted((lab / "src").glob("*/*.py")):
+        for module in sorted([*(lab / "src").glob("*/*.py"), *(lab / "src").glob("*.ts")]):
             if module.name not in PLUMBING:
                 found += comment_problems(str(module.relative_to(ROOT)), module.read_text())
-    found += page_problems({str(p.relative_to(ROOT)): p.read_text() for p in (ROOT / "labs").glob("*/src/*/page.html")})
+    found += page_problems({str(p.relative_to(ROOT)): p.read_text() for p in [*(ROOT / "labs").glob("*/src/*/page.html"), *(ROOT / "labs").glob("*/src/page.html")]})
     if course_map(course) not in readme:
         found.append("README.md: course map is stale; run `make readme`")
     return found

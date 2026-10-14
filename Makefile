@@ -7,7 +7,7 @@ LABS := $(sort $(wildcard labs/*/))
 check:
 	python3 scripts/check_course.py
 	cd scripts && uv run --with pytest pytest -q -p no:cacheprovider test_scripts.py
-	@for lab in $(LABS); do echo "== $$lab"; (cd $$lab && uv run --frozen pytest -q) || exit 1; done
+	@for lab in $(LABS); do echo "== $$lab"; if [ -f $$lab/package.json ]; then (cd $$lab && npm ci --silent && npm test --silent) || exit 1; else (cd $$lab && uv run --frozen pytest -q) || exit 1; fi; done
 
 readme:
 	python3 scripts/check_course.py --write
