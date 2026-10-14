@@ -116,6 +116,18 @@ def test_the_desk_serves_only_the_receipts():
         server.shutdown()
 
 
+@pytest.mark.parametrize("headers", [{"Host": "attacker.example:80"}, {"Origin": "http://attacker.example"}])
+def test_the_desk_refuses_other_sites(headers):
+    server = serve(Desk(LAB / "data/receipts", CHARGES, FakeClient(), "any-model"), 0)
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    try:
+        request = urllib.request.Request(f"http://127.0.0.1:{server.server_port}/api/naive/coffee.jpg", headers=headers, method="POST")
+        with pytest.raises(urllib.error.HTTPError, match="403"):
+            urllib.request.urlopen(request)
+    finally:
+        server.shutdown()
+
+
 def test_env_example_matches_the_code_defaults():
     env = dict(
         line.split("=", 1) for line in (LAB / "env.example").read_text().splitlines() if "=" in line and not line.startswith("#")

@@ -92,7 +92,15 @@ def handler(desk: Desk) -> type[BaseHTTPRequestHandler]:
         def log_message(self, *args) -> None:
             pass
 
+        def local(self) -> bool:
+            """Only this machine's own page may call: a rebound Host or a foreign Origin could spend the key."""
+            hosts = {f"{name}:{self.server.server_port}" for name in ("127.0.0.1", "localhost")}
+            host, origin = self.headers.get("Host"), self.headers.get("Origin")
+            return host in hosts and origin in (None, f"http://{host}")
+
         def do_GET(self) -> None:
+            if not self.local():
+                return self.send(403, b"forbidden", "text/plain")
             if self.path == "/":
                 return self.send(200, PAGE.read_bytes(), "text/html; charset=utf-8")
             if self.path == "/api/receipts":
@@ -106,6 +114,8 @@ def handler(desk: Desk) -> type[BaseHTTPRequestHandler]:
             self.send(404, b"not found", "text/plain")
 
         def do_POST(self) -> None:
+            if not self.local():
+                return self.send(403, b"forbidden", "text/plain")
             action, _, name = self.path.removeprefix("/api/").partition("/")
             if name not in desk.files or action not in ("extract", "naive"):
                 return self.send(404, b"not found", "text/plain")
