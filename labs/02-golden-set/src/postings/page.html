@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Golden set bench</title>
+<title>Prompt change review</title>
 <style>
 /* Colours are the workshop tokens in design/tokens.json; a course test pins every hex here to that file. */
 :root {
@@ -13,152 +13,251 @@
   --sans: Inter, Helvetica, Arial, sans-serif; --mono: Inconsolata, "Courier New", Courier, monospace;
 }
 * { box-sizing: border-box }
-body { margin: 0; background: var(--paper); color: var(--ink); font: 15px/1.5 var(--sans) }
-header { display: flex; align-items: baseline; gap: 16px; padding: 18px 28px; border-bottom: 1px solid var(--line); background: var(--card) }
-header h1 { margin: 0; font-size: 20px }
-header .model { color: var(--muted); font-family: var(--mono) }
-header .spacer { flex: 1 }
-header .tally { font-weight: 700 }
-.controls { display: flex; gap: 14px; align-items: center; padding: 16px 28px 0 }
-.controls label { color: var(--muted); font-weight: 600 }
-select, button { font: inherit; border: 1px solid var(--ink); border-radius: 4px; padding: 7px 12px; background: var(--card); color: var(--ink) }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.5 var(--sans) }
+.top { background: var(--fill-dark); color: var(--paper); padding: 10px 0 }
+.wrap { max-width: 1160px; margin: 0 auto; padding: 0 24px }
+.top .wrap { display: flex; gap: 16px; align-items: center }
+.repo { font: 600 16px var(--mono) }
+.top .tally { margin-left: auto; font-weight: 700 }
+.top .tally:empty { display: none }
+.pr { padding: 22px 0 6px }
+.pr h1 { margin: 0; font-size: 28px; line-height: 1.2 }
+.state { display: inline-block; margin-right: 10px; padding: 2px 12px; border-radius: 999px; font-size: 15px; font-weight: 700; vertical-align: 4px; background: var(--pass); color: var(--card) }
+.pr p { margin: 8px 0 0; color: var(--ink-2) }
+.pick { display: flex; gap: 10px; align-items: center; margin-top: 14px; flex-wrap: wrap }
+select, button { font: inherit; border: 1px solid var(--ink); border-radius: 6px; padding: 7px 12px; background: var(--card); color: var(--ink) }
 button { font-weight: 600; cursor: pointer }
-button.primary { background: var(--accent) }
-button:disabled { opacity: .5; cursor: wait }
-.verdict { margin-left: auto; font-weight: 700; padding: 6px 12px; border: 2px solid currentColor; border-radius: 4px }
-main { display: grid; grid-template-columns: minmax(0, 0.9fr) 250px minmax(0, 1.4fr); gap: 20px; padding: 20px 28px }
-.panel { background: var(--card); border: 1px solid var(--line); border-radius: 4px; padding: 16px }
-.panel h2 { margin: 0 0 12px; font-size: 13px; text-transform: uppercase; color: var(--muted); font-weight: 600 }
-table { width: 100%; border-collapse: collapse; font-size: 14px }
-th { text-align: left; color: var(--muted); font-weight: 600; border-bottom: 1px solid var(--line); padding: 4px 6px }
-td { padding: 5px 6px; border-bottom: 1px solid var(--line) }
-td.num { font-family: var(--mono); text-align: right }
-.pass { color: var(--pass) } .fail { color: var(--fail) } .wait { color: var(--wait) }
-tr.worse td { font-weight: 700 } tr.worse td:first-child::after { content: "  worse"; color: var(--fail) }
-td.broke { color: var(--fail); font-weight: 700 } td.fixed { color: var(--pass); font-weight: 700 }
-ul.list { list-style: none; margin: 0; padding: 0 }
-ul.list button { width: 100%; text-align: left; border: 1px solid transparent; background: none; font-weight: 400; display: flex; gap: 8px; align-items: center; padding: 7px 8px }
-ul.list button[aria-current="true"] { background: var(--accent); border-color: var(--ink) }
-.dot { width: 9px; height: 9px; border-radius: 50%; margin-left: auto; flex: none; background: var(--line) }
-.dot.held { background: var(--pass) } .dot.person { background: var(--wait) }
-pre { font: 14px/1.5 var(--mono); white-space: pre-wrap; margin: 0 }
-.posting { background: var(--paper); border: 1px solid var(--line); border-radius: 4px; padding: 12px; max-height: 300px; overflow: auto; margin-bottom: 14px }
-.decide { margin-top: 14px; padding: 10px 12px; border: 2px solid var(--wait); border-radius: 4px }
-.decide b { color: var(--wait) }
-.held-note { margin-top: 14px; padding: 10px 12px; border: 2px solid var(--pass); border-radius: 4px; color: var(--pass); font-weight: 700 }
-.prompt { padding: 0 28px 28px }
-.prompt pre { background: var(--fill-dark); color: var(--paper); padding: 14px; border-radius: 4px }
-.empty { color: var(--muted) }
+button.go { background: var(--accent) }
+button:disabled { opacity: .6; cursor: wait }
+button:focus-visible, select:focus-visible, tr.row:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px }
+.box { background: var(--card); border: 1px solid var(--line); border-radius: 8px; margin-top: 18px }
+.box > h2 { margin: 0; padding: 10px 16px; font-size: 16px; border-bottom: 1px solid var(--line); background: var(--paper); border-radius: 8px 8px 0 0 }
+.box > h2 code { font: 600 15px var(--mono) }
+/* The diff: removed lines tinted red with a minus, added lines tinted green with a plus, the rest grey. */
+.diff { font: 15px/1.55 var(--mono); padding: 6px 0; max-height: 260px; overflow: auto }
+.diff div { padding: 0 16px 0 40px; white-space: pre-wrap; position: relative }
+.diff div::before { position: absolute; left: 16px; color: var(--muted) }
+.diff .del { background: #BF000F14 } .diff .del::before { content: "-"; color: var(--fail) }
+.diff .add { background: #00813814 } .diff .add::before { content: "+"; color: var(--pass) }
+.diff .same { color: var(--muted) }
+.check { display: flex; gap: 14px; align-items: flex-start; padding: 16px }
+.icon { flex: none; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; color: var(--card); font-weight: 800; font-size: 19px; background: var(--muted) }
+.icon.pass { background: var(--pass) } .icon.fail { background: var(--fail) }
+.check h3 { margin: 0; font-size: 21px; line-height: 1.3 }
+.check p { margin: 4px 0 0; color: var(--ink-2) }
+.fields { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); border-top: 1px solid var(--line) }
+.field { padding: 10px 12px; border-right: 1px solid var(--line) }
+.field:last-child { border-right: 0 }
+.field .name { font: 14px var(--mono); color: var(--ink-2) }
+.field .score { font: 700 20px/1.3 var(--mono) }
+.field.worse { background: #BF000F0F } .field.worse .score { color: var(--fail) }
+.field.better .score { color: var(--pass) }
+.field .of { font-size: 13px; color: var(--muted) }
+/* The matrix: one row per approved posting, one cell per filter, coloured by what the change did to it. */
+table.matrix { width: 100%; border-collapse: collapse }
+.matrix th { text-align: left; font: 600 14px var(--mono); color: var(--ink-2); padding: 8px; border-bottom: 1px solid var(--line) }
+.matrix td { padding: 6px 8px; border-bottom: 1px solid var(--line); font: 14px var(--mono) }
+.matrix td.who { font: 15px var(--sans); width: 250px }
+.matrix td.who small { display: block; color: var(--muted); font-size: 13px }
+tr.row { cursor: pointer }
+tr.row:hover td { background: var(--paper) }
+tr.row[aria-expanded="true"] td { background: var(--accent) }
+.cell { display: inline-block; min-width: 64px; padding: 2px 6px; border-radius: 4px; border: 1px solid transparent }
+.cell.broke { background: var(--fail); color: var(--card); font-weight: 700 }
+.cell.fixed { border-color: var(--pass); color: var(--pass); font-weight: 700 }
+.cell.wrong { color: var(--muted); text-decoration: line-through }
+.flag { font: 700 13px var(--sans); color: var(--wait) }
+.flag.held { color: var(--pass) }
+.legend { display: flex; gap: 18px; flex-wrap: wrap; padding: 10px 16px; font-size: 14px; color: var(--ink-2) }
+.legend .cell { min-width: 0 }
+tr.open td { background: var(--paper); padding: 14px 16px; cursor: default }
+.open-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; font-family: var(--sans) }
+.open-grid pre { margin: 0; font: 15px/1.5 var(--mono); white-space: pre-wrap; background: var(--card); border: 1px solid var(--line); border-radius: 6px; padding: 12px }
+mark { background: var(--accent); color: var(--ink); padding: 0 2px }
+.why { font-size: 16px; line-height: 1.5 }
+.why ul { margin: 6px 0; padding-left: 20px }
+.why .broke { color: var(--fail); font-weight: 700 }
+.why .held { color: var(--pass) }
+.decide { margin-top: 10px; padding: 10px 12px; border-left: 5px solid var(--wait); background: var(--card) }
+.decide b, .why b.wait { color: var(--wait) }
+.merge { display: flex; gap: 14px; align-items: center; padding: 16px }
+.merge h3 { margin: 0; font-size: 19px }
+.merge p { margin: 2px 0 0; color: var(--ink-2) }
+.merge.blocked { border-left: 6px solid var(--fail) }
+.merge.ready { border-left: 6px solid var(--pass) }
+.gap { height: 30px }
+@media (max-width: 860px) { .fields { grid-template-columns: repeat(2, 1fr) } .open-grid { grid-template-columns: 1fr } .matrix td.who { width: auto } }
+@media (prefers-reduced-motion: no-preference) { tr.open td { animation: in .18s ease-out } @keyframes in { from { opacity: 0 } } }
 </style>
 </head>
 <body>
-<header>
-  <h1>Golden set bench</h1>
-  <span class="model" id="model"></span>
-  <span class="spacer"></span>
-  <span class="tally" id="tally"></span>
-</header>
-<div class="controls">
-  <label for="before">Before</label><select id="before"></select>
-  <label for="after">After</label><select id="after"></select>
-  <button class="primary" id="score">Score both against the golden set</button>
-  <span class="verdict" id="verdict" hidden></span>
+<div class="top"><div class="wrap"><span class="repo">jobboard / posting-filters</span><span class="tally" id="tally" role="status"></span></div></div>
+<div class="wrap">
+  <section class="pr">
+    <h1><span class="state">Open</span><span id="change-title"></span></h1>
+    <p id="change-about"></p>
+    <div class="pick">
+      <label for="change">Proposed change</label><select id="change"></select>
+      <button class="go" id="run">Run the golden set check</button>
+    </div>
+  </section>
+
+  <section class="box">
+    <h2>Prompt change: <code>prompts/shipped.txt</code> → <code id="after-file"></code></h2>
+    <div class="diff" id="diff"></div>
+  </section>
+
+  <section class="box" id="check-box">
+    <div class="check"><div class="icon" id="icon">?</div><div><h3 id="verdict"></h3><p id="verdict-about"></p></div></div>
+    <div class="fields" id="fields" hidden></div>
+  </section>
+
+  <section class="box" id="matrix-box" hidden>
+    <h2>Approved postings, one row each. Open a row to read the posting.</h2>
+    <table class="matrix" id="matrix"></table>
+    <div class="legend"><span><span class="cell broke">red</span> the change broke it</span><span><span class="cell fixed">green</span> the change fixed it</span><span><span class="cell wrong">struck</span> wrong with both prompts</span><span>plain: right with both</span></div>
+  </section>
+
+  <section class="box merge" id="merge" hidden></section>
+  <div class="gap"></div>
 </div>
-<main>
-  <section class="panel"><h2>Accuracy per field</h2><div id="fields"><p class="empty">Pick a change and score it.</p></div></section>
-  <section class="panel"><h2>Approved postings</h2><ul class="list" id="list"></ul></section>
-  <section class="panel"><h2 id="title">Posting</h2><div id="detail"><p class="empty">Pick a posting.</p></div></section>
-</main>
-<section class="prompt"><h2 class="empty" id="prompt-title"></h2><pre id="prompt"></pre></section>
 <script>
 const FIELDS = ["seniority", "workplace", "employment", "salary_min", "salary_max", "currency", "period"];
+// What each prompt file changes, in the words a reviewer uses. A new file in prompts/ shows up by its name.
+const TITLES = { shorter: "Shorten the posting prompt to 15 words", "years-rule": "Add one sentence about years of experience" };
+const BEFORE = "shipped";
 const $ = (id) => document.getElementById(id);
-let bench, result = null, picked = null;
+let bench, result = null, opened = null;
 
-function shown(v) { return v === null || v === undefined ? "-" : String(v) }
-function esc(s) { return shown(s).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c]) }
+function esc(v) { return (v === null || v === undefined ? "none" : String(v)).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c]) }
+function words(stem) { return bench.prompts[stem].trim().split(/\s+/).length }
+// Line one of a posting is the role, and line two starts with the company.
+function who(name) { const [role, where] = bench.postings[name].split("\n"); return { company: where.split(" · ")[0], role } }
+// Pay prints in full with separators, so 2,800,000 and 28 sit side by side and the gap is plain.
+function shown(v) { return typeof v === "number" ? v.toLocaleString("en-US") : esc(v) }
 
-function changesFor(name) {
-  if (!result) return { broke: [], fixed: [] };
-  return { broke: result.regressed.filter((c) => c.posting === name), fixed: result.fixed.filter((c) => c.posting === name) };
+// A line diff by longest common subsequence, enough for prompt files that fit on one screen.
+function diffLines(a, b) {
+  const x = a.split("\n"), y = b.split("\n"), n = x.length, m = y.length;
+  const L = Array.from({ length: n + 1 }, () => new Array(m + 1).fill(0));
+  for (let i = n - 1; i >= 0; i--) for (let j = m - 1; j >= 0; j--) L[i][j] = x[i] === y[j] ? L[i + 1][j + 1] + 1 : Math.max(L[i + 1][j], L[i][j + 1]);
+  const out = []; let i = 0, j = 0;
+  while (i < n || j < m) {
+    if (i < n && j < m && x[i] === y[j]) { out.push(["same", x[i]]); i++; j++ }
+    // Removed lines print before the lines that replace them, the way a code review reads.
+    else if (i < n && (j === m || L[i + 1][j] >= L[i][j + 1])) out.push(["del", x[i++]]);
+    else out.push(["add", y[j++]]);
+  }
+  return out;
 }
 
-function drawList() {
-  $("list").innerHTML = "";
-  for (const name of Object.keys(bench.golden)) {
-    const li = document.createElement("li"), b = document.createElement("button");
-    const state = !result ? "" : result.needs_person.includes(name) ? "person" : "held";
-    b.innerHTML = `<span>${esc(name.replace(/\.txt$/, ""))}</span><span class="dot ${state}"></span>`;
-    b.setAttribute("aria-current", String(name === picked));
-    b.onclick = () => { picked = name; drawList(); drawDetail() };
-    li.append(b); $("list").append(li);
+function drawChange() {
+  const after = $("change").value;
+  $("change-title").textContent = TITLES[after] || after;
+  $("change-about").textContent = `Replaces the prompt in production (${words(BEFORE)} words) with prompts/${after}.txt (${words(after)} words). Scored with ${bench.model}.`;
+  $("after-file").textContent = `prompts/${after}.txt`;
+  $("diff").innerHTML = diffLines(bench.prompts[BEFORE].trim(), bench.prompts[after].trim()).map(([k, t]) => `<div class="${k}">${esc(t) || " "}</div>`).join("");
+}
+
+// The server lists every broken and fixed field; anything else is right with both prompts or wrong with both.
+function cellState(name, f) {
+  if (result.regressed.some((c) => c.posting === name && c.field === f)) return "broke";
+  if (result.fixed.some((c) => c.posting === name && c.field === f)) return "fixed";
+  return result.right[name][f] ? "held" : "wrong";
+}
+
+function drawCheck() {
+  const held = result.total - result.needs_person.length;
+  $("tally").textContent = `${held} of ${result.total} postings held, ${result.needs_person.length} need a person`;
+  $("icon").className = "icon " + (result.blocked ? "fail" : "pass");
+  $("icon").textContent = result.blocked ? "✕" : "✓";
+  $("verdict").textContent = result.blocked
+    ? `Blocked. The new prompt gets ${result.worse.join(", ")} wrong on postings the prompt in production got right.`
+    : "Passed. No filter is right on fewer postings than before.";
+  $("verdict-about").textContent = result.blocked
+    ? `${result.needs_person.length} postings need a person to read them. The other ${held} held, so nobody reads those.`
+    : `${result.fixed.length ? "The change fixed " + result.fixed.map((c) => `${c.field} for ${who(c.posting).company}`).join(", ") + ". " : ""}No posting needs a person.`;
+  $("fields").hidden = false;
+  $("fields").innerHTML = FIELDS.map((f) => {
+    const b = result.before[f], a = result.after[f];
+    return `<div class="field ${a < b ? "worse" : a > b ? "better" : ""}"><div class="name">${f}</div><div class="score">${b} → ${a}</div><div class="of">right, of ${result.total}</div></div>`;
+  }).join("");
+}
+
+function drawMatrix() {
+  $("matrix-box").hidden = false;
+  // The postings a person must read come first, so the reviewer starts where the work is.
+  const names = Object.keys(bench.golden).sort((p, q) => result.needs_person.includes(q) - result.needs_person.includes(p));
+  const after = result.runs[$("change").value].readings;
+  let html = `<tr><th>Posting</th>${FIELDS.map((f) => `<th>${f}</th>`).join("")}<th></th></tr>`;
+  for (const name of names) {
+    const { company, role } = who(name), needs = result.needs_person.includes(name);
+    html += `<tr class="row" tabindex="0" data-name="${name}" aria-expanded="${name === opened}"><td class="who">${esc(company)}<small>${esc(role)}</small></td>` +
+      FIELDS.map((f) => `<td><span class="cell ${cellState(name, f)}">${shown(after[name][f])}</span></td>`).join("") +
+      `<td><span class="flag ${needs ? "" : "held"}">${needs ? "Needs a person" : "Held"}</span></td></tr>`;
+    if (name === opened) html += `<tr class="open"><td colspan="${FIELDS.length + 2}">${detail(name)}</td></tr>`;
+  }
+  $("matrix").innerHTML = html;
+  for (const tr of document.querySelectorAll("tr.row")) {
+    const toggle = () => { opened = opened === tr.dataset.name ? null : tr.dataset.name; drawMatrix() };
+    tr.onclick = toggle;
+    tr.onkeydown = (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggle() } };
   }
 }
 
-function drawFields() {
-  if (!result) return;
-  const total = result.total;
-  const rows = FIELDS.map((f) => `<tr class="${result.worse.includes(f) ? "worse" : ""}"><td>${f}</td><td class="num">${result.before[f]}/${total}</td><td class="num">${result.after[f]}/${total}</td></tr>`).join("");
-  const cost = (stem) => `$${result.runs[stem].cost.toFixed(4)}`;
-  $("fields").innerHTML = `<table><tr><th>Field</th><th>${esc($("before").value)}</th><th>${esc($("after").value)}</th></tr>${rows}
-    <tr><td>cost of the run</td><td class="num">${cost($("before").value)}</td><td class="num">${cost($("after").value)}</td></tr></table>`;
-  const held = total - result.needs_person.length;
-  $("tally").textContent = `${held} of ${total} postings held, ${result.needs_person.length} need a person`;
-  const v = $("verdict");
-  v.hidden = false;
-  v.className = "verdict " + (result.blocked ? "fail" : "pass");
-  v.textContent = result.blocked ? `Blocked: ${result.worse.join(", ")} got worse` : "Passed: no field got worse";
+// Mark the pay in the posting, so the eye lands where the salary filters read.
+function highlight(text) {
+  let out = esc(text);
+  for (const pat of [/\d[\d,.]*\s*(?:-|to)\s*[\d,.]+\s*LPA/g, /[€$£]\s?[\d,.]+k?(?:\s*(?:-|to)\s*[€$£]?\s?[\d,.]+k?)?/g]) out = out.replace(pat, (m) => `<mark>${m}</mark>`);
+  return out;
 }
 
-function drawDetail() {
-  if (!picked) return;
-  $("title").textContent = picked;
-  const approved = bench.golden[picked];
-  let table = "";
-  const { broke, fixed } = changesFor(picked);
-  if (result) {
-    const before = result.runs[$("before").value].readings[picked], after = result.runs[$("after").value].readings[picked];
-    const cls = (f) => broke.some((c) => c.field === f) ? "broke" : fixed.some((c) => c.field === f) ? "fixed" : "";
-    table = `<table><tr><th>Field</th><th>Approved</th><th>Before</th><th>After</th></tr>` +
-      FIELDS.map((f) => `<tr><td>${f}</td><td>${esc(approved[f])}</td><td>${esc(before[f])}</td><td class="${cls(f)}">${esc(after[f])}</td></tr>`).join("") + "</table>";
-  } else {
-    table = `<table><tr><th>Field</th><th>Approved</th></tr>` + FIELDS.map((f) => `<tr><td>${f}</td><td>${esc(approved[f])}</td></tr>`).join("") + "</table>";
-  }
-  let note = "";
+function detail(name) {
+  const broke = result.regressed.filter((c) => c.posting === name);
+  let why;
   if (broke.length) {
-    const what = broke.map((c) => `${c.field} was ${esc(c.before)}, now ${esc(c.after)}, approved ${esc(c.approved)}`).join("; ");
-    note = `<div class="decide"><b>Needs a person.</b> The change broke ${what}.<br>A person decides: the change is wrong and goes back, or the approved label was wrong and is corrected in data/golden.jsonl.</div>`;
-  } else if (result) {
-    note = `<div class="held-note">Held: every field the person approved is still right${fixed.length ? ", and the change fixed " + fixed.map((c) => c.field).join(", ") : ""}. No person needed.</div>`;
+    why = `<b class="wait">Needs a person.</b> The new prompt broke ${broke.length === 1 ? "one filter" : broke.length + " filters"} on this posting:<ul>` +
+      broke.map((c) => `<li><span class="broke">${c.field}</span> was ${shown(c.before)} with the prompt in production. Now it is ${shown(c.after)}. A person approved ${shown(c.approved)}.</li>`).join("") +
+      `</ul><div class="decide"><b>A person decides</b> which side is wrong. If the new prompt is wrong, the change goes back. If the approved answer is wrong, it is corrected in data/golden.jsonl.</div>`;
+  } else {
+    why = `<b class="held">Held.</b> Every filter a person approved is still right with prompts/${esc($("change").value)}.txt, so nobody needs to read this posting.`;
   }
-  $("detail").innerHTML = `<div class="posting"><pre>${esc(bench.postings[picked])}</pre></div>${table}${note}`;
+  return `<div class="open-grid"><pre>${highlight(bench.postings[name])}</pre><div class="why">${why}</div></div>`;
 }
 
-function drawPrompt() {
-  const stem = $("after").value, text = bench.prompts[stem];
-  $("prompt-title").textContent = `The ${stem} prompt, ${text.trim().split(/\s+/).length} words`;
-  $("prompt").textContent = text;
+function drawMerge() {
+  const m = $("merge"); m.hidden = false;
+  m.className = "box merge " + (result.blocked ? "blocked" : "ready");
+  m.innerHTML = result.blocked
+    ? `<div class="icon fail">✕</div><div><h3>This change cannot ship yet</h3><p>The golden set check failed on ${result.worse.length === 1 ? "one filter" : result.worse.length + " filters"}. A change ships only when no filter gets worse.</p></div>`
+    : `<div class="icon pass">✓</div><div><h3>This change can ship</h3><p>The golden set check passed. Every filter is right on at least as many postings as before.</p></div>`;
 }
 
-async function score() {
-  $("score").disabled = true; $("score").textContent = "Scoring 14 postings twice...";
-  const res = await fetch(`/api/gate/${$("before").value}/${$("after").value}`, { method: "POST" });
+function reset() {
+  result = null; opened = null;
+  for (const id of ["fields", "matrix-box", "merge"]) $(id).hidden = true;
+  $("tally").textContent = ""; $("icon").className = "icon"; $("icon").textContent = "?";
+  $("verdict").textContent = "The golden set check has not run yet.";
+  $("verdict-about").textContent = `It reads all ${Object.keys(bench.golden).length} approved postings with both prompts and compares every filter with what a person approved.`;
+  drawChange();
+}
+
+async function run() {
+  const button = $("run"), n = Object.keys(bench.golden).length;
+  button.disabled = true; button.textContent = `Reading ${n} postings with both prompts...`;
+  const res = await fetch(`/api/gate/${BEFORE}/${$("change").value}`, { method: "POST" });
   result = await res.json();
-  $("score").disabled = false; $("score").textContent = "Score both against the golden set";
-  if (!picked) picked = result.needs_person[0] || Object.keys(bench.golden)[0];
-  drawFields(); drawList(); drawDetail();
+  button.disabled = false; button.textContent = "Run the golden set check";
+  drawCheck(); drawMatrix(); drawMerge();
 }
 
 async function boot() {
   bench = await (await fetch("/api/bench")).json();
-  $("model").textContent = bench.model;
-  for (const stem of Object.keys(bench.prompts)) {
-    $("before").add(new Option(stem, stem, false, stem === "shipped"));
-    $("after").add(new Option(stem, stem, false, stem === "shorter"));
-  }
-  $("after").onchange = () => { result = null; drawPrompt(); drawList(); drawDetail(); $("verdict").hidden = true; $("tally").textContent = "" };
-  $("score").onclick = score;
-  drawList(); drawPrompt();
+  for (const stem of Object.keys(bench.prompts)) if (stem !== BEFORE) $("change").add(new Option(TITLES[stem] || stem, stem));
+  $("change").value = "shorter";
+  $("change").onchange = reset;
+  $("run").onclick = run;
+  reset();
 }
 boot();
 </script>

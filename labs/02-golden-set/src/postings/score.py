@@ -21,6 +21,7 @@ def right(golden: dict[str, dict], readings: dict[str, dict]) -> dict[str, dict[
 def accuracy(golden: dict[str, dict], readings: dict[str, dict]) -> dict[str, int]:
     """field -> how many postings the run got right. The number the team watches, one per field."""
     marks = right(golden, readings)
+    # Count down each column, not across each row: "salary_min 12 of 14" says which filter broke.
     return {f: sum(marks[name][f] for name in golden) for f in FIELDS}
 
 
@@ -43,6 +44,7 @@ class Verdict:
 
     @property
     def worse(self) -> list[str]:
+        # One field down is enough. A better total does not pay for a salary filter that hides jobs.
         return [f for f in FIELDS if self.after[f] < self.before[f]]
 
     @property
@@ -62,8 +64,10 @@ def gate(golden: dict[str, dict], before: dict[str, dict], after: dict[str, dict
     for name, approved in golden.items():
         for f in FIELDS:
             change = Change(name, f, approved[f], before[name][f], after[name][f])
+            # Right before and wrong after: the change broke this field on this posting.
             if was[name][f] and not now[name][f]:
                 verdict.regressed.append(change)
+            # Wrong before and right after: the change fixed it.
             elif now[name][f] and not was[name][f]:
                 verdict.fixed.append(change)
     return verdict

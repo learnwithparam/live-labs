@@ -36,11 +36,11 @@ ships. Nothing tells them that a Bengaluru salary of "28 - 35 LPA" now books as 
 
 ## What you will build
 
-A golden set bench. Pick the prompt you have and the change you want, score both against the
-approved postings, and read the verdict: accuracy per field before and after, which postings held,
-and which ones a person has to look at.
+A check that runs on every prompt change, shown as a pull request review. It scores the prompt in
+production and the proposed change against the approved postings, blocks the change if any filter
+gets worse, and lists the postings a person has to read.
 
-<img src="docs/golden-bench.jpg" alt="The golden set bench: accuracy per field for the shipped and shorter prompts, the approved postings with a dot each, and the Lumen posting where the shorter prompt read 28 LPA as 28" width="720">
+<img src="docs/golden-bench.jpg" alt="The prompt change review: the shorter prompt is blocked, and the Lumen Labs row is open with its salary stored as 280,000 instead of 2,800,000 and the decision a person makes" width="720">
 
 The 14 postings in `data/postings` cover what breaks the filters: a salary in lakh, an hourly
 contract rate, a "lead" title, a contract-to-hire role, an office that is optional, a salary that is
@@ -146,18 +146,20 @@ The gate lists Harbor under "fixed" and nothing under "broke". This is how the l
 
 ## 6. See it
 
-The bench page is the same code behind one page. Start it and open http://127.0.0.1:8000:
+The check page is the same code behind a page that looks like a pull request review. Start it and
+open http://127.0.0.1:8000:
 
 ```sh
 uv run postings serve
 ```
 
-Leave **Before** on `shipped` and **After** on `shorter`, and press **Score both against the golden
-set**. The header counts the postings that held and the ones that need a person, and the verdict says
-which fields got worse. Pick a green posting: every approved field is still right and no person is
-needed. Pick Lumen: the broken fields are red, and the box says what the person decides. Then switch
-**After** to `years-rule` and score again: the verdict passes and no posting needs a person. Stop the
-bench with Ctrl-C.
+**Proposed change** shows "Shorten the posting prompt to 15 words" with its diff. Press **Run the
+golden set check**. The box under the diff says the change is blocked and names the filters that got
+worse, and the header counts the postings that held and the ones that need a person. Click the **Acme
+Ledger GmbH** row: every approved filter is still right, so nobody reads it. Click the **Lumen Labs**
+row: the broken salary is in red, and the box says what the person decides. Then pick "Add one sentence
+about years of experience" and run the check again: it passes and no posting needs a person. Stop the
+page with Ctrl-C.
 
 ## 7. Prove it
 

@@ -6,7 +6,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 from postings.extract import read_all
-from postings.score import gate, load_golden
+from postings.score import gate, load_golden, right
 
 PAGE = Path(__file__).with_name("page.html")
 
@@ -38,6 +38,8 @@ class Bench:
             "needs_person": verdict.needs_person,
             "regressed": [asdict(c) for c in verdict.regressed],
             "fixed": [asdict(c) for c in verdict.fixed],
+            # Which filters the new prompt gets right, so the page can tell "wrong with both" from "right with both".
+            "right": right(self.golden, self.runs[after]["readings"]),
             "runs": {before: self.runs[before], after: self.runs[after]},
         }
 

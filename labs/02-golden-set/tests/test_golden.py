@@ -81,6 +81,7 @@ def test_the_bench_scores_two_prompts_and_shows_what_needs_a_person():
     assert {"shipped", "shorter", "years-rule"} <= set(listing["prompts"]) and len(listing["postings"]) == 14
     assert verdict["blocked"] and verdict["needs_person"] == ["lumen-swe2.txt"]
     assert verdict["after"]["salary_min"] == 13 and verdict["before"] == {f: 14 for f in FIELDS}
+    assert verdict["right"]["lumen-swe2.txt"]["salary_min"] is False and verdict["right"]["acme-backend.txt"]["salary_min"] is True
     assert 'id="tally"' in page and "A person decides" in page
 
 
