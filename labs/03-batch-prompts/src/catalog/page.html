@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Catalogue filler</title>
+<title>Harvest Lane catalogue</title>
 <style>
 /* Colours are the workshop tokens in design/tokens.json; a course test pins every hex here to that file. */
 :root {
@@ -13,138 +13,247 @@
   --sans: Inter, Helvetica, Arial, sans-serif; --mono: Inconsolata, "Courier New", Courier, monospace;
 }
 * { box-sizing: border-box }
-body { margin: 0; background: var(--paper); color: var(--ink); font: 15px/1.5 var(--sans) }
-header { display: flex; align-items: baseline; gap: 16px; padding: 18px 28px; border-bottom: 1px solid var(--line); background: var(--card) }
-header h1 { margin: 0; font-size: 20px }
-header .model { color: var(--muted); font-family: var(--mono) }
-header .spacer { flex: 1 }
-header .tally { font-weight: 700 }
-.controls { display: flex; gap: 14px; align-items: center; padding: 16px 28px 0 }
-.controls label { color: var(--muted); font-weight: 600 }
-select, button { font: inherit; border: 1px solid var(--ink); border-radius: 4px; padding: 7px 12px; background: var(--card); color: var(--ink) }
-button { font-weight: 600; cursor: pointer }
-button.primary { background: var(--accent) }
-button:disabled { opacity: .5; cursor: wait }
-.verdict { margin-left: auto; font-weight: 700; padding: 6px 12px; border: 2px solid currentColor; border-radius: 4px }
-main { display: grid; grid-template-columns: minmax(0, 1fr) 300px minmax(0, 1.2fr); gap: 20px; padding: 20px 28px }
-.panel { background: var(--card); border: 1px solid var(--line); border-radius: 4px; padding: 16px }
-.panel h2 { margin: 0 0 12px; font-size: 13px; text-transform: uppercase; color: var(--muted); font-weight: 600 }
-table { width: 100%; border-collapse: collapse; font-size: 14px }
-th { text-align: left; color: var(--muted); font-weight: 600; border-bottom: 1px solid var(--line); padding: 4px 6px }
-td { padding: 5px 6px; border-bottom: 1px solid var(--line) }
-td.num { font-family: var(--mono); text-align: right }
-.pass { color: var(--pass) } .fail { color: var(--fail) } .wait { color: var(--wait) }
-tr.worse td { font-weight: 700 } tr.worse td:first-child::after { content: "  worse"; color: var(--fail) }
-td.broke { color: var(--fail); font-weight: 700 } td.fixed { color: var(--pass); font-weight: 700 }
-ul.list { list-style: none; margin: 0; padding: 0; max-height: 520px; overflow: auto }
-ul.list button { width: 100%; text-align: left; border: 1px solid transparent; background: none; font-weight: 400; display: flex; gap: 8px; align-items: center; padding: 7px 8px }
-ul.list button[aria-current="true"] { background: var(--accent); border-color: var(--ink) }
-.dot { width: 9px; height: 9px; border-radius: 50%; margin-left: auto; flex: none; background: var(--line) }
-.dot.held { background: var(--pass) } .dot.person { background: var(--wait) }
-pre { font: 14px/1.5 var(--mono); white-space: pre-wrap; margin: 0 }
-.posting { background: var(--paper); border: 1px solid var(--line); border-radius: 4px; padding: 12px; max-height: 300px; overflow: auto; margin-bottom: 14px }
-.decide { margin-top: 14px; padding: 10px 12px; border: 2px solid var(--wait); border-radius: 4px }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.5 var(--sans) }
+button { font: inherit; cursor: pointer; color: var(--ink) }
+button:focus-visible, input:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px }
+header { background: var(--fill-dark); color: var(--paper); padding: 12px 28px; display: flex; align-items: baseline; gap: 14px }
+header h1 { margin: 0; font-size: 21px }
+header .sub { color: var(--line) }
+header .tally { margin-left: auto; font-weight: 700 }
+header .tally:empty { display: none }
+
+/* The overnight job: one row per way of filling the catalogue, like a batch dashboard. */
+.job { margin: 20px 28px 0; background: var(--card); border: 1px solid var(--line); border-radius: 8px }
+.job h2 { margin: 0; padding: 12px 16px 2px; font-size: 18px }
+.job > p { margin: 0; padding: 0 16px 10px; color: var(--ink-2) }
+.job table { width: 100%; border-collapse: collapse }
+.job th { text-align: left; font-weight: 600; font-size: 14px; color: var(--ink-2); padding: 8px 16px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line) }
+.job td { padding: 12px 16px; border-bottom: 1px solid var(--line); font: 17px var(--mono) }
+.job tr:last-child td { border-bottom: 0 }
+.job td.way { font: 600 16px var(--sans) }
+.job td.way small { display: block; font-weight: 400; color: var(--muted); font-size: 14px }
+.job td.cheap { color: var(--pass); font-weight: 700 }
+.job .run { white-space: nowrap; border: 1px solid var(--ink); border-radius: 6px; padding: 6px 14px; background: var(--accent); font-weight: 600 }
+.job .run:disabled { opacity: .6; cursor: wait }
+.status { font: 14px var(--sans); color: var(--muted) }
+.status.done { color: var(--pass); font-weight: 600 }
+
+/* The storefront the job feeds: filters on the left work only once attributes are filled. */
+.store { display: grid; grid-template-columns: 230px minmax(0, 1fr); gap: 24px; padding: 22px 28px 40px }
+.filters h3 { margin: 16px 0 6px; font-size: 15px }
+.filters h3:first-child { margin-top: 0 }
+.filters label { display: flex; gap: 8px; align-items: center; padding: 3px 0; font-size: 15px; cursor: pointer }
+.filters label .n { margin-left: auto; color: var(--muted); font: 14px var(--mono) }
+.filters label.off { color: var(--muted); cursor: default }
+.filters .person-filter { margin-top: 18px; padding: 10px; border: 2px solid var(--wait); border-radius: 6px; background: var(--card) }
+.filters .person-filter label { font-weight: 600; color: var(--wait) }
+.empty-note { padding: 14px; border-radius: 6px; background: var(--card); border: 1px dashed var(--muted); color: var(--ink-2); font-size: 15px }
+.results-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 12px }
+.results-head h2 { margin: 0; font-size: 20px }
+.results-head span { color: var(--muted) }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 14px }
+.card { text-align: left; background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 0; overflow: hidden; display: flex; flex-direction: column }
+.card:hover { border-color: var(--ink) }
+.card .tile { height: 92px; display: grid; place-items: center; font-size: 44px; background: var(--paper); border-bottom: 1px solid var(--line) }
+.card .body { padding: 10px 12px 12px }
+.card .name { font-weight: 600; line-height: 1.3; font-size: 15px }
+.card .size { font: 14px var(--mono); color: var(--ink-2); margin-top: 4px }
+.badges { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px }
+.badge { font-size: 12.5px; font-weight: 600; padding: 1px 8px; border-radius: 999px; border: 1px solid var(--ink-2); color: var(--ink-2) }
+.badge.green { border-color: var(--pass); color: var(--pass) }
+.badge.person { background: var(--wait); border-color: var(--wait); color: var(--card) }
+.badge.none { border-style: dashed; color: var(--muted); border-color: var(--muted) }
+.card.needs { border: 2px solid var(--wait) }
+.more { margin-top: 16px; border: 1px solid var(--ink); border-radius: 6px; padding: 7px 14px; background: var(--card) }
+
+/* The product drawer: the retailer's text beside what the job filled, and the decision when one is needed. */
+.drawer { position: fixed; inset: 0 0 0 auto; width: min(520px, 100%); background: var(--card); border-left: 1px solid var(--ink); padding: 22px 24px; overflow: auto; box-shadow: -8px 0 0 #1515150D }
+.drawer[hidden] { display: none }
+.drawer .close { float: right; border: 1px solid var(--ink); border-radius: 6px; background: var(--card); padding: 4px 10px }
+.drawer h2 { margin: 0 0 4px; font-size: 22px; line-height: 1.25 }
+.drawer .sku { font: 14px var(--mono); color: var(--muted) }
+.drawer .text { margin: 14px 0; padding: 12px; background: var(--paper); border-radius: 6px; font: 15px/1.5 var(--mono); white-space: pre-wrap }
+.drawer table { width: 100%; border-collapse: collapse; margin-top: 6px }
+.drawer th { text-align: left; font-size: 14px; color: var(--ink-2); border-bottom: 2px solid var(--ink); padding: 4px 6px }
+.drawer td { padding: 6px; border-bottom: 1px solid var(--line); font: 15px var(--mono) }
+.drawer td:first-child { font-family: var(--sans) }
+.drawer td.miss { color: var(--fail); font-weight: 700 }
+.decide { margin-top: 16px; padding: 12px 14px; border-left: 6px solid var(--wait); background: var(--paper) }
 .decide b { color: var(--wait) }
-.held-note { margin-top: 14px; padding: 10px 12px; border: 2px solid var(--pass); border-radius: 4px; color: var(--pass); font-weight: 700 }
-td.miss { color: var(--fail); font-weight: 700 }
-tr.best td { font-weight: 700 }
-.empty { color: var(--muted) }
+.ok { margin-top: 16px; padding: 12px 14px; border-left: 6px solid var(--pass); background: var(--paper) }
+.ok b { color: var(--pass) }
+@media (max-width: 860px) { .store { grid-template-columns: 1fr } .job { overflow-x: auto } }
 </style>
 </head>
 <body>
-<header>
-  <h1>Catalogue filler</h1>
-  <span class="model" id="model"></span>
-  <span class="spacer"></span>
-  <span class="tally" id="tally"></span>
-</header>
-<div class="controls">
-  <button id="one">Fill one product per request</button>
-  <button class="primary" id="packed">Fill packed</button>
-</div>
-<main>
-  <section class="panel"><h2>Cost and accuracy</h2><div id="cost"><p class="empty">Fill the catalogue one way, then the other.</p></div></section>
-  <section class="panel"><h2>Products</h2><ul class="list" id="list"></ul></section>
-  <section class="panel"><h2 id="title">Product</h2><div id="detail"><p class="empty">Pick a product.</p></div></section>
+<header><h1>Harvest Lane catalogue</h1><span class="sub" id="sub"></span><span class="tally" id="tally" role="status"></span></header>
+
+<section class="job" aria-labelledby="job-title">
+  <h2 id="job-title">Tonight's job: fill the storefront filters</h2>
+  <p id="job-about"></p>
+  <table>
+    <thead><tr><th>Way</th><th>Requests</th><th>Sent this run</th><th>Cost</th><th>Per 1,000 products</th><th>Match the retailer</th><th>Needs a person</th><th></th></tr></thead>
+    <tbody id="ways"></tbody>
+  </table>
+</section>
+
+<main class="store">
+  <aside class="filters" id="filters" aria-label="Filters"></aside>
+  <section>
+    <div class="results-head"><h2 id="results-title">All products</h2><span id="results-count"></span></div>
+    <div class="grid" id="grid"></div>
+    <button class="more" id="more" hidden>Show more products</button>
+  </section>
 </main>
+
+<aside class="drawer" id="drawer" hidden aria-label="Product"></aside>
+
 <script>
-const ATTRIBUTES = ["category", "size_value", "size_unit", "organic", "vegan"];
+const WAYS = {
+  one: { name: "One request per product", note: "the instructions sent with every product" },
+  packed: { name: "Packed", note: "many products under one copy of the instructions" },
+};
+const CATEGORIES = {
+  produce: ["Produce", "🥬"], dairy: ["Dairy", "🧀"], bakery: ["Bakery", "🍞"], meat_seafood: ["Meat and seafood", "🐟"],
+  pantry: ["Pantry", "🥫"], snacks: ["Snacks", "🍪"], beverages: ["Drinks", "🧃"], frozen: ["Frozen", "🧊"],
+  household: ["Household", "🧽"], personal_care: ["Personal care", "🧴"],
+};
+// A picture per kind of product, found by a word in its title; the category picture is the fallback.
+const PICTURES = [["banana", "🍌"], ["spinach", "🥬"], ["apple", "🍎"], ["oat milk", "🥛"], ["milk chocolate", "🍫"], ["milk", "🥛"],
+  ["yogurt", "🥣"], ["cheddar", "🧀"], ["loaf", "🍞"], ["croissant", "🥐"], ["chicken stock", "🍲"], ["chicken", "🍗"], ["salmon", "🐟"],
+  ["oats", "🌾"], ["penne", "🍝"], ["peanut", "🥜"], ["chips", "🌮"], ["biscuits", "🍪"], ["sparkling", "💧"], ["coffee", "☕"],
+  ["pizza", "🍕"], ["vegetable", "🥕"], ["platter", "🍱"], ["soap", "🧼"], ["towels", "🧻"], ["shampoo", "🧴"], ["toothpaste", "🪥"]];
+const PAGE_SIZE = 24;
 const $ = (id) => document.getElementById(id);
-let shelf, runs = {}, shown = null, picked = null;
+let shelf, runs = {}, shown = "packed", filter = { category: null, organic: false, vegan: false, person: false }, limit = PAGE_SIZE;
 
-function text(v) { return v === null || v === undefined || v === "" ? "-" : String(v) }
-function esc(s) { return text(s).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c]) }
-const NAMES = { one: "one per request", packed: "packed" };
+const money = (v) => "$" + v.toFixed(v < 0.01 ? 4 : 3);
+const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c]);
 
-function drawCost() {
-  const ways = Object.keys(runs);
-  if (!ways.length) return;
-  const cheapest = Math.min(...ways.map((w) => runs[w].per_thousand));
-  const rows = ways.map((w) => { const r = runs[w]; return `<tr class="${r.per_thousand === cheapest && ways.length > 1 ? "best" : ""}">
-    <td>${NAMES[w]}</td><td class="num">${r.requests}</td><td class="num">$${r.per_thousand.toFixed(4)}</td>
-    <td class="num">${r.right}/${r.total}</td><td class="num">${Object.keys(r.person).length}</td></tr>` }).join("");
-  let saving = "";
-  if (runs.one && runs.packed) saving = `<p>Packed costs ${Math.round(100 * (1 - runs.packed.per_thousand / runs.one.per_thousand))}% less per product and matches ${runs.packed.right} of ${runs.packed.total} retailer attributes, against ${runs.one.right} one per request.</p>`;
-  $("cost").innerHTML = `<table><tr><th>Way</th><th>Requests</th><th>Per 1,000</th><th>Match retailer</th><th>Need a person</th></tr>${rows}</table>${saving}`;
+// The storefront shows whichever run finished last, so the filters are what that job produced.
+function current() { return runs[shown] }
+
+function drawJob() {
+  const n = shelf.products.length;
+  $("sub").textContent = `${n} products from retailers, filled by ${shelf.model}`;
+  $("job-about").textContent = `Retailers send a title and a description. The storefront needs category, size, organic and vegan. Packed sends ${shelf.size} products per request. A rerun reads the checkpoint and sends only what is not done yet.`;
+  const cheapest = Math.min(...Object.values(runs).map((r) => r.per_thousand));
+  $("ways").innerHTML = Object.entries(WAYS).map(([way, w]) => {
+    const r = runs[way];
+    const cell = (v) => (r ? v : "<span class='status'>not run</span>");
+    return `<tr><td class="way">${w.name}<small>${w.note}</small></td>
+      <td>${cell(r && r.requests)}</td>
+      <td>${cell(r && `${r.sent}${r.sent === 0 ? " <span class='status done'>all in the checkpoint</span>" : ""}`)}</td>
+      <td>${cell(r && money(r.cost))}</td>
+      <td class="${r && r.per_thousand === cheapest && Object.keys(runs).length > 1 ? "cheap" : ""}">${cell(r && money(r.per_thousand))}</td>
+      <td>${cell(r && `${r.right} of ${r.total}`)}</td>
+      <td>${cell(r && Object.keys(r.person).length)}</td>
+      <td><button class="run" data-way="${way}">${r ? "Run again" : "Run"}</button></td></tr>`;
+  }).join("");
+  for (const b of document.querySelectorAll(".run")) b.onclick = () => fill(b.dataset.way, b);
+  const r = current();
+  $("tally").textContent = r ? `Filled with no person: ${r.filled} of ${n}. ${Object.keys(r.person).length} need a person.` : "";
 }
 
-function drawTally() {
-  const r = runs[shown], need = Object.keys(r.person).length;
-  $("tally").textContent = `${r.filled} of ${shelf.products.length} filled with no person, ${need} need a person`;
+function matches(p) {
+  const r = current(), a = r && r.attributes[p.sku];
+  if (filter.person) return r && p.sku in r.person;
+  if (!a) return !filter.category && !filter.organic && !filter.vegan;
+  if (filter.category && a.category !== filter.category) return false;
+  if (filter.organic && !a.organic) return false;
+  // A product waiting on a person never shows under vegan: it is not guessed.
+  if (filter.vegan && (a.vegan !== "yes" || p.sku in r.person)) return false;
+  return true;
 }
 
-function drawList() {
-  $("list").innerHTML = "";
-  const r = runs[shown], person = r ? r.person : {};
-  const order = [...shelf.products].sort((a, b) => (b.sku in person) - (a.sku in person));
-  for (const p of order) {
-    const li = document.createElement("li"), b = document.createElement("button");
-    const state = !r ? "" : p.sku in person ? "person" : "held";
-    b.innerHTML = `<span>${esc(p.title)}</span><span class="dot ${state}"></span>`;
-    b.setAttribute("aria-current", String(p.sku === picked));
-    b.onclick = () => { picked = p.sku; drawList(); drawDetail() };
-    li.append(b); $("list").append(li);
+function drawFilters() {
+  const r = current(), f = $("filters");
+  if (!r) {
+    f.innerHTML = `<div class="empty-note">No product has a category, size or diet yet, so shoppers cannot filter. Run tonight's job to fill them.</div>`;
+    return;
   }
+  const counts = {};
+  for (const a of Object.values(r.attributes)) counts[a.category] = (counts[a.category] || 0) + 1;
+  const all = Object.values(r.attributes);
+  f.innerHTML = `<h3>Category</h3>` +
+    `<label><input type="radio" name="cat" value="" ${!filter.category ? "checked" : ""}> All <span class="n">${all.length}</span></label>` +
+    Object.entries(CATEGORIES).map(([k, [name]]) => `<label><input type="radio" name="cat" value="${k}" ${filter.category === k ? "checked" : ""}> ${name} <span class="n">${counts[k] || 0}</span></label>`).join("") +
+    `<h3>Diet and farming</h3>` +
+    `<label><input type="checkbox" id="f-organic" ${filter.organic ? "checked" : ""}> Organic <span class="n">${all.filter((a) => a.organic).length}</span></label>` +
+    `<label><input type="checkbox" id="f-vegan" ${filter.vegan ? "checked" : ""}> Vegan <span class="n">${all.filter((a) => a.vegan === "yes").length}</span></label>` +
+    `<div class="person-filter"><label><input type="checkbox" id="f-person" ${filter.person ? "checked" : ""}> Needs a person <span class="n">${Object.keys(r.person).length}</span></label></div>`;
+  for (const input of f.querySelectorAll("input[name=cat]")) input.onchange = () => { filter.category = input.value || null; filter.person = false; limit = PAGE_SIZE; drawFilters(); drawGrid() };
+  $("f-organic").onchange = (e) => { filter.organic = e.target.checked; limit = PAGE_SIZE; drawGrid() };
+  $("f-vegan").onchange = (e) => { filter.vegan = e.target.checked; limit = PAGE_SIZE; drawGrid() };
+  // The person queue is every product waiting on someone, whatever its category, so the category resets to All.
+  $("f-person").onchange = (e) => { filter.person = e.target.checked; if (filter.person) filter.category = null; limit = PAGE_SIZE; drawFilters(); drawGrid() };
 }
 
-function drawDetail() {
-  if (!picked) return;
-  const p = shelf.products.find((x) => x.sku === picked), supplied = shelf.supplied[picked];
-  $("title").textContent = p.sku;
-  const r = runs[shown], got = r ? r.attributes[picked] : null;
-  const miss = (a) => supplied && supplied[a] !== "" && got && String(got[a]).toLowerCase() !== supplied[a] && !(a === "size_value" && Math.abs(got[a] - supplied[a]) <= 0.02 * supplied[a]);
-  const head = `<tr><th>Attribute</th><th>Filled</th>${supplied ? "<th>Retailer</th>" : ""}</tr>`;
-  const rows = ATTRIBUTES.map((a) => `<tr><td>${a}</td><td class="${miss(a) ? "miss" : ""}">${esc(got ? got[a] : null)}</td>${supplied ? `<td>${esc(supplied[a])}</td>` : ""}</tr>`).join("");
+function size(a) { return a.size_unit === "count" ? `${a.size_value} count` : `${a.size_value} ${a.size_unit}` }
+
+function card(p) {
+  const r = current(), a = r && r.attributes[p.sku], needs = r && p.sku in r.person;
+  const kind = PICTURES.find(([word]) => p.title.toLowerCase().includes(word));
+  const icon = kind ? kind[1] : a ? CATEGORIES[a.category][1] : "📦";
+  let badges = "";
+  if (!a) badges = `<span class="badge none">No filters yet</span>`;
+  else {
+    badges += `<span class="badge">${CATEGORIES[a.category][0]}</span>`;
+    if (a.organic) badges += `<span class="badge green">Organic</span>`;
+    if (a.vegan === "yes" && !needs) badges += `<span class="badge green">Vegan</span>`;
+    if (needs) badges += `<span class="badge person">Needs a person</span>`;
+  }
+  return `<button class="card ${needs ? "needs" : ""}" data-sku="${p.sku}"><div class="tile" aria-hidden="true">${icon}</div><div class="body">
+    <div class="name">${esc(p.title)}</div><div class="size">${a ? size(a) : "size unknown"}</div><div class="badges">${badges}</div></div></button>`;
+}
+
+function drawGrid() {
+  const list = shelf.products.filter(matches);
+  $("results-title").textContent = filter.person ? "Products that need a person" : filter.category ? CATEGORIES[filter.category][0] : "All products";
+  $("results-count").textContent = `${list.length} products`;
+  $("grid").innerHTML = list.slice(0, limit).map(card).join("");
+  $("more").hidden = list.length <= limit;
+  for (const c of document.querySelectorAll(".card")) c.onclick = () => open(c.dataset.sku);
+}
+
+function open(sku) {
+  const p = shelf.products.find((x) => x.sku === sku), r = current(), a = r && r.attributes[sku];
+  const sample = shelf.supplied[sku];
+  const rows = a ? ["category", "size_value", "size_unit", "organic", "vegan"].map((k) => {
+    const want = sample && sample[k], miss = want !== undefined && String(want) !== String(a[k]) && !(k === "size_value" && Math.abs(a[k] - want) <= 0.02 * want);
+    return `<tr><td>${k}</td><td>${esc(a[k])}</td>${sample ? `<td class="${miss ? "miss" : ""}">${esc(want)}</td>` : ""}</tr>`;
+  }).join("") : "";
   let note = "";
-  if (r && picked in r.person) {
-    const why = r.person[picked];
-    const decide = why.startsWith("no reply") ? "fills the attributes by hand from the pack." : "reads the ingredients on the pack and sets vegan to yes or no; until then the product stays out of the vegan filter.";
-    note = `<div class="decide"><b>Needs a person.</b> ${esc(why[0].toUpperCase() + why.slice(1))}.<br>A person decides: ${decide}</div>`;
-  } else if (r) {
-    note = `<div class="held-note">Filled with no person: every attribute the storefront filters on is set${supplied ? ", and it matches the retailer" : ""}.</div>`;
+  if (r && sku in r.person) {
+    note = `<div class="decide"><b>Needs a person.</b> ${esc(r.person[sku].charAt(0).toUpperCase() + r.person[sku].slice(1))}.<p>A person decides: they read the pack or ask the retailer, then set vegan. Until then the product stays out of the vegan filter.</p></div>`;
+  } else if (a) {
+    note = `<div class="ok"><b>Filled with no person.</b> Every filter is set from the retailer's own text, so the product is live.</div>`;
   }
-  $("detail").innerHTML = `<div class="posting"><pre>${esc(p.title)}\n${esc(p.description)}</pre></div><table>${head}${rows}</table>${note}`;
+  $("drawer").innerHTML = `<button class="close" id="close">Close</button><h2>${esc(p.title)}</h2><div class="sku">${p.sku}</div>
+    <div class="text">${esc(p.description)}</div>
+    ${a ? `<table><tr><th>Filter</th><th>Filled tonight</th>${sample ? "<th>Retailer's sample</th>" : ""}</tr>${rows}</table>` : "<p>Nothing is filled yet.</p>"}
+    ${note}`;
+  $("drawer").hidden = false;
+  $("close").onclick = () => { $("drawer").hidden = true };
+  $("close").focus();
 }
 
-async function fill(way) {
-  const button = $(way), label = button.textContent;
-  button.disabled = true; button.textContent = `Filling ${shelf.products.length} products...`;
+async function fill(way, button) {
+  const n = shelf.products.length;
+  button.disabled = true;
+  button.textContent = runs[way] ? "Reading the checkpoint..." : `Filling ${n} products...`;
   runs[way] = await (await fetch(`/api/fill/${way}`, { method: "POST" })).json();
-  button.disabled = false; button.textContent = label;
   shown = way;
-  if (!picked) picked = Object.keys(runs[way].person)[0] || shelf.products[0].sku;
-  drawCost(); drawTally(); drawList(); drawDetail();
+  drawJob(); drawFilters(); drawGrid();
 }
 
-async function boot() {
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") $("drawer").hidden = true });
+$("more").onclick = () => { limit += PAGE_SIZE; drawGrid() };
+
+(async () => {
   shelf = await (await fetch("/api/shelf")).json();
-  $("model").textContent = shelf.model;
-  $("packed").textContent = `Fill packed, ${shelf.size} per request`;
-  $("one").onclick = () => fill("one");
-  $("packed").onclick = () => fill("packed");
-  drawList();
-}
-boot();
+  drawJob(); drawFilters(); drawGrid();
+})();
 </script>
 </body>
 </html>

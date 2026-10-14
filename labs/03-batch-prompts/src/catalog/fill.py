@@ -44,8 +44,10 @@ def one_body(product: Product, model: str) -> dict:
 
 def pack_body(products: list[Product], model: str) -> dict:
     """Many products under one copy of the instructions: the instructions are paid for once per pack."""
+    # 24 products become 24 short lines. The long INSTRUCTIONS above are sent once for all of them.
     listing = "\n".join(p.line() for p in products)
     messages = [{"role": "system", "content": INSTRUCTIONS}, {"role": "user", "content": f"One line per product: sku, title and description, split by a bar.\n{listing}"}]
+    # The reply must be a list of products, each with its sku, so every answer can be matched to a product.
     return {"model": model, "messages": messages, "temperature": 0, "response_format": schema_format(Pack)}
 
 
@@ -55,7 +57,9 @@ def one_lines(products: list[Product], model: str) -> list[dict]:
 
 def batch_lines(products: list[Product], model: str, size: int) -> list[dict]:
     """The batch file: one request per pack, each line keyed by `custom_id`."""
+    # Cut the catalogue into packs: 240 products at 24 a pack is 10 requests.
     packs = [products[i : i + size] for i in range(0, len(products), size)]
+    # Each line is the format batch APIs read. custom_id is how a result finds its way back to its pack.
     return [{"custom_id": f"pack-{n:04d}", "method": "POST", "url": ENDPOINT, "body": pack_body(pack, model)} for n, pack in enumerate(packs)]
 
 
@@ -88,6 +92,7 @@ def run_lines(lines: list[dict], client, done_path: Path, workers: int = 8) -> d
 
     A crash at pack 3,000 of 40,000 costs one pack, not the night: rerun and it skips what is done."""
     done_path.parent.mkdir(parents=True, exist_ok=True)
+    # The checkpoint is a file of finished requests. Read it first, so nothing finished is paid for twice.
     done = {row["custom_id"] for row in read_jsonl(done_path)}
     todo = [line for line in lines if line["custom_id"] not in done]
 
@@ -97,6 +102,7 @@ def run_lines(lines: list[dict], client, done_path: Path, workers: int = 8) -> d
 
     with ThreadPoolExecutor(workers) as pool, done_path.open("a") as out:
         for row in pool.map(one, todo):
+            # Append each result the moment it lands, and flush, so a crash keeps every result before it.
             out.write(json.dumps(row) + "\n")
             out.flush()
     return {"sent": len(todo), "skipped": len(done & {line["custom_id"] for line in lines})}
@@ -123,6 +129,7 @@ def anthropic_params(body: dict, model: str) -> dict:
 
 def submit(lines: list[dict], client, model: str, limit: int) -> str:
     """Hand the first `limit` lines of the file to Anthropic's Message Batches API."""
+    # The same lines as the live run. The provider runs them within a day and charges half.
     requests = [{"custom_id": line["custom_id"], "params": anthropic_params(line["body"], model)} for line in lines[:limit]]
     return client.messages.batches.create(requests=requests).id
 
@@ -130,6 +137,7 @@ def submit(lines: list[dict], client, model: str, limit: int) -> str:
 def collect(batch_id: str, client) -> tuple[list[dict], list[str]] | None:
     """The batch's results as checkpoint rows and the reasons any request failed, or None while it is still
     running. A failed request is left out of the rows, so the next run retries it."""
+    # A batch is not a call you wait on. Ask whether it has ended, and come back later if not.
     if client.messages.batches.retrieve(batch_id).processing_status != "ended":
         return None
     rows, errors = [], []

@@ -32,11 +32,12 @@ product, so most of what you pay for is that paragraph, 240 times.
 
 ## What you will build
 
-A catalogue filler. It fills every product one per request and then packed 24 per request, and shows
-the cost per thousand products, how many attributes match the retailer, and which products a person
-has to finish.
+The Harvest Lane storefront, as its catalogue team sees it the morning after the job. A table runs
+tonight's job one product per request and packed 24 per request, with the cost per thousand products.
+The shelf below can be filtered by category, organic and vegan, and one box shows only the products a
+person still has to finish.
 
-<img src="docs/catalogue-filler.jpg" alt="The catalogue filler: cost per thousand products one per request and packed, the product list with a dot each, and a product that needs a person because no ingredients are listed" width="720">
+<img src="docs/catalogue-filler.jpg" alt="The Harvest Lane storefront after the job: the cost of both ways, the products that need a person, and the biscuits tin open because no ingredients are listed" width="720">
 
 The catalogue is synthetic and seeded: `python3 data/make_catalogue.py` writes the same two files.
 
@@ -145,18 +146,19 @@ the step 3 model cost $0.0311 per thousand. The batch waits; nothing about the f
 
 ## 5. See it
 
-The filler page is the same code behind one page. Start it and open http://127.0.0.1:8000:
+The storefront is the same code behind one page. Start it and open http://127.0.0.1:8000:
 
 ```sh
 uv run catalog serve
 ```
 
-Press **Fill one product per request**, then **Fill packed, 24 per request**. The cost table puts
-the two side by side, and the header counts the products filled with no person and the ones that
-need one. Pick a green product: every attribute is set and, when the retailer supplied it, matches.
-Pick an orange one, such as an assorted biscuits tin: no ingredients are listed, so vegan cannot be
-set from the text, and the box says what the person decides. Press a button again and nothing is
-sent: the checkpoint already holds it. Stop the page with Ctrl-C.
+Press **Run** on the row "One request per product", then on "Packed". The table puts the two costs
+side by side, and the dark header counts the products filled with no person and the ones that need
+one. Pick **Dairy** and open Northstar Sharp Cheddar Block: every filter is set and matches the
+retailer's sample. Tick **Needs a person** and open Harvest Lane Assorted Biscuits Tin: no
+ingredients are listed, so vegan cannot be set from the text, and the drawer says what the person
+decides. Press **Run again** and nothing is sent: the checkpoint already holds every request. Stop
+the page with Ctrl-C.
 
 ## 6. Prove it
 
