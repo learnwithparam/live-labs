@@ -1,0 +1,1 @@
+Extract the seniority, workplace, employment type and salary range from this job posting as JSON.

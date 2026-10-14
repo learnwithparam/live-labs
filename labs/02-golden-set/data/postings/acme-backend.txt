@@ -1,0 +1,12 @@
+Senior Backend Engineer
+Acme Ledger GmbH · Remote (anywhere in the EU)
+
+We are a 60-person team building accounting software for European freelancers. You will own our invoicing
+services in Go and Postgres.
+
+What you bring
+- 6+ years building backend services
+- Comfort owning a service in production, on call one week in six
+
+Contract: permanent, full-time
+Salary: €70,000 – €85,000 per year, plus 25 days holiday

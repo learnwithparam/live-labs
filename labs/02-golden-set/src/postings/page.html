@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Golden set bench</title>
+<style>
+/* Colours are the workshop tokens in design/tokens.json; a course test pins every hex here to that file. */
+:root {
+  --paper: #FAFAFA; --card: #FFFFFF; --ink: #151515; --ink-2: #414141; --muted: #606060;
+  --line: #DFDFDF; --accent: #FAFF69; --fill-dark: #1F1F1C;
+  --pass: #008138; --fail: #BF000F; --wait: #B75000;
+  --sans: Inter, Helvetica, Arial, sans-serif; --mono: Inconsolata, "Courier New", Courier, monospace;
+}
+* { box-sizing: border-box }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 15px/1.5 var(--sans) }
+header { display: flex; align-items: baseline; gap: 16px; padding: 18px 28px; border-bottom: 1px solid var(--line); background: var(--card) }
+header h1 { margin: 0; font-size: 20px }
+header .model { color: var(--muted); font-family: var(--mono) }
+header .spacer { flex: 1 }
+header .tally { font-weight: 700 }
+.controls { display: flex; gap: 14px; align-items: center; padding: 16px 28px 0 }
+.controls label { color: var(--muted); font-weight: 600 }
+select, button { font: inherit; border: 1px solid var(--ink); border-radius: 4px; padding: 7px 12px; background: var(--card); color: var(--ink) }
+button { font-weight: 600; cursor: pointer }
+button.primary { background: var(--accent) }
+button:disabled { opacity: .5; cursor: wait }
+.verdict { margin-left: auto; font-weight: 700; padding: 6px 12px; border: 2px solid currentColor; border-radius: 4px }
+main { display: grid; grid-template-columns: minmax(0, 0.9fr) 250px minmax(0, 1.4fr); gap: 20px; padding: 20px 28px }
+.panel { background: var(--card); border: 1px solid var(--line); border-radius: 4px; padding: 16px }
+.panel h2 { margin: 0 0 12px; font-size: 13px; text-transform: uppercase; color: var(--muted); font-weight: 600 }
+table { width: 100%; border-collapse: collapse; font-size: 14px }
+th { text-align: left; color: var(--muted); font-weight: 600; border-bottom: 1px solid var(--line); padding: 4px 6px }
+td { padding: 5px 6px; border-bottom: 1px solid var(--line) }
+td.num { font-family: var(--mono); text-align: right }
+.pass { color: var(--pass) } .fail { color: var(--fail) } .wait { color: var(--wait) }
+tr.worse td { font-weight: 700 } tr.worse td:first-child::after { content: "  worse"; color: var(--fail) }
+td.broke { color: var(--fail); font-weight: 700 } td.fixed { color: var(--pass); font-weight: 700 }
+ul.list { list-style: none; margin: 0; padding: 0 }
+ul.list button { width: 100%; text-align: left; border: 1px solid transparent; background: none; font-weight: 400; display: flex; gap: 8px; align-items: center; padding: 7px 8px }
+ul.list button[aria-current="true"] { background: var(--accent); border-color: var(--ink) }
+.dot { width: 9px; height: 9px; border-radius: 50%; margin-left: auto; flex: none; background: var(--line) }
+.dot.held { background: var(--pass) } .dot.person { background: var(--wait) }
+pre { font: 14px/1.5 var(--mono); white-space: pre-wrap; margin: 0 }
+.posting { background: var(--paper); border: 1px solid var(--line); border-radius: 4px; padding: 12px; max-height: 300px; overflow: auto; margin-bottom: 14px }
+.decide { margin-top: 14px; padding: 10px 12px; border: 2px solid var(--wait); border-radius: 4px }
+.decide b { color: var(--wait) }
+.held-note { margin-top: 14px; padding: 10px 12px; border: 2px solid var(--pass); border-radius: 4px; color: var(--pass); font-weight: 700 }
+.prompt { padding: 0 28px 28px }
+.prompt pre { background: var(--fill-dark); color: var(--paper); padding: 14px; border-radius: 4px }
+.empty { color: var(--muted) }
+</style>
+</head>
+<body>
+<header>
+  <h1>Golden set bench</h1>
+  <span class="model" id="model"></span>
+  <span class="spacer"></span>
+  <span class="tally" id="tally"></span>
+</header>
+<div class="controls">
+  <label for="before">Before</label><select id="before"></select>
+  <label for="after">After</label><select id="after"></select>
+  <button class="primary" id="score">Score both against the golden set</button>
+  <span class="verdict" id="verdict" hidden></span>
+</div>
+<main>
+  <section class="panel"><h2>Accuracy per field</h2><div id="fields"><p class="empty">Pick a change and score it.</p></div></section>
+  <section class="panel"><h2>Approved postings</h2><ul class="list" id="list"></ul></section>
+  <section class="panel"><h2 id="title">Posting</h2><div id="detail"><p class="empty">Pick a posting.</p></div></section>
+</main>
+<section class="prompt"><h2 class="empty" id="prompt-title"></h2><pre id="prompt"></pre></section>
+<script>
+const FIELDS = ["seniority", "workplace", "employment", "salary_min", "salary_max", "currency", "period"];
+const $ = (id) => document.getElementById(id);
+let bench, result = null, picked = null;
+
+function shown(v) { return v === null || v === undefined ? "-" : String(v) }
+function esc(s) { return shown(s).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c]) }
+
+function changesFor(name) {
+  if (!result) return { broke: [], fixed: [] };
+  return { broke: result.regressed.filter((c) => c.posting === name), fixed: result.fixed.filter((c) => c.posting === name) };
+}
+
+function drawList() {
+  $("list").innerHTML = "";
+  for (const name of Object.keys(bench.golden)) {
+    const li = document.createElement("li"), b = document.createElement("button");
+    const state = !result ? "" : result.needs_person.includes(name) ? "person" : "held";
+    b.innerHTML = `<span>${esc(name.replace(/\.txt$/, ""))}</span><span class="dot ${state}"></span>`;
+    b.setAttribute("aria-current", String(name === picked));
+    b.onclick = () => { picked = name; drawList(); drawDetail() };
+    li.append(b); $("list").append(li);
+  }
+}
+
+function drawFields() {
+  if (!result) return;
+  const total = result.total;
+  const rows = FIELDS.map((f) => `<tr class="${result.worse.includes(f) ? "worse" : ""}"><td>${f}</td><td class="num">${result.before[f]}/${total}</td><td class="num">${result.after[f]}/${total}</td></tr>`).join("");
+  const cost = (stem) => `$${result.runs[stem].cost.toFixed(4)}`;
+  $("fields").innerHTML = `<table><tr><th>Field</th><th>${esc($("before").value)}</th><th>${esc($("after").value)}</th></tr>${rows}
+    <tr><td>cost of the run</td><td class="num">${cost($("before").value)}</td><td class="num">${cost($("after").value)}</td></tr></table>`;
+  const held = total - result.needs_person.length;
+  $("tally").textContent = `${held} of ${total} postings held, ${result.needs_person.length} need a person`;
+  const v = $("verdict");
+  v.hidden = false;
+  v.className = "verdict " + (result.blocked ? "fail" : "pass");
+  v.textContent = result.blocked ? `Blocked: ${result.worse.join(", ")} got worse` : "Passed: no field got worse";
+}
+
+function drawDetail() {
+  if (!picked) return;
+  $("title").textContent = picked;
+  const approved = bench.golden[picked];
+  let table = "";
+  const { broke, fixed } = changesFor(picked);
+  if (result) {
+    const before = result.runs[$("before").value].readings[picked], after = result.runs[$("after").value].readings[picked];
+    const cls = (f) => broke.some((c) => c.field === f) ? "broke" : fixed.some((c) => c.field === f) ? "fixed" : "";
+    table = `<table><tr><th>Field</th><th>Approved</th><th>Before</th><th>After</th></tr>` +
+      FIELDS.map((f) => `<tr><td>${f}</td><td>${esc(approved[f])}</td><td>${esc(before[f])}</td><td class="${cls(f)}">${esc(after[f])}</td></tr>`).join("") + "</table>";
+  } else {
+    table = `<table><tr><th>Field</th><th>Approved</th></tr>` + FIELDS.map((f) => `<tr><td>${f}</td><td>${esc(approved[f])}</td></tr>`).join("") + "</table>";
+  }
+  let note = "";
+  if (broke.length) {
+    const what = broke.map((c) => `${c.field} was ${esc(c.before)}, now ${esc(c.after)}, approved ${esc(c.approved)}`).join("; ");
+    note = `<div class="decide"><b>Needs a person.</b> The change broke ${what}.<br>A person decides: the change is wrong and goes back, or the approved label was wrong and is corrected in data/golden.jsonl.</div>`;
+  } else if (result) {
+    note = `<div class="held-note">Held: every field the person approved is still right${fixed.length ? ", and the change fixed " + fixed.map((c) => c.field).join(", ") : ""}. No person needed.</div>`;
+  }
+  $("detail").innerHTML = `<div class="posting"><pre>${esc(bench.postings[picked])}</pre></div>${table}${note}`;
+}
+
+function drawPrompt() {
+  const stem = $("after").value, text = bench.prompts[stem];
+  $("prompt-title").textContent = `The ${stem} prompt, ${text.trim().split(/\s+/).length} words`;
+  $("prompt").textContent = text;
+}
+
+async function score() {
+  $("score").disabled = true; $("score").textContent = "Scoring 14 postings twice...";
+  const res = await fetch(`/api/gate/${$("before").value}/${$("after").value}`, { method: "POST" });
+  result = await res.json();
+  $("score").disabled = false; $("score").textContent = "Score both against the golden set";
+  if (!picked) picked = result.needs_person[0] || Object.keys(bench.golden)[0];
+  drawFields(); drawList(); drawDetail();
+}
+
+async function boot() {
+  bench = await (await fetch("/api/bench")).json();
+  $("model").textContent = bench.model;
+  for (const stem of Object.keys(bench.prompts)) {
+    $("before").add(new Option(stem, stem, false, stem === "shipped"));
+    $("after").add(new Option(stem, stem, false, stem === "shorter"));
+  }
+  $("after").onchange = () => { result = null; drawPrompt(); drawList(); drawDetail(); $("verdict").hidden = true; $("tally").textContent = "" };
+  $("score").onclick = score;
+  drawList(); drawPrompt();
+}
+boot();
+</script>
+</body>
+</html>

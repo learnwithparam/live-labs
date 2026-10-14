@@ -20,7 +20,7 @@ print what the README promises.
 | # | Lab | Built on | Status |
 |---|---|---|---|
 | 1 | [Extract Structured Data with LLMs](labs/01-structured-output) | Ramp matches uploaded receipts to card transactions | ready |
-| 2 | Build a Golden Set for an LLM Feature | LinkedIn: the last 15% took four more months | planned |
+| 2 | [Build a Golden Set for an LLM Feature](labs/02-golden-set) | LinkedIn: the last 15% took four more months | ready |
 | 3 | Process a Million Prompts with Batch APIs | Instacart Maple batch LLM platform | planned |
 | 4 | Build a RAG Pipeline over PDFs | Uber Genie on-call copilot | planned |
 | 5 | Measure RAG Accuracy with Recall@k | Uber's golden set over policy PDFs | planned |

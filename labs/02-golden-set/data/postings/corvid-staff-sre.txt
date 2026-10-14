@@ -1,0 +1,10 @@
+Staff Site Reliability Engineer
+Corvid Health · Austin, TX (hybrid: in the office Tuesday and Wednesday)
+
+Corvid runs scheduling for 900 clinics. You will set the reliability bar across 40 services and lead
+the incident review process.
+
+- 10+ years in infrastructure or SRE
+- Deep Kubernetes and Terraform
+
+Full-time. Base pay range: $185K - $215K annually, plus equity.

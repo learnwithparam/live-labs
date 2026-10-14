@@ -1,0 +1,11 @@
+Lead Machine Learning Engineer
+Evergreen Insurance · Toronto, ON · Hybrid (3 days a week in our King Street office)
+
+Lead a team of five building claim triage models. You will set technical direction and still write
+code most days.
+
+- 8+ years in ML, 2+ leading engineers
+- Python, PyTorch, feature stores
+
+Permanent, full-time
+Compensation: CAD 160,000 to 190,000 base

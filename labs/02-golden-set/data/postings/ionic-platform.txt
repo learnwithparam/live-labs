@@ -1,0 +1,10 @@
+Platform Engineer
+Ionic Freight · Berlin · We meet in the office on Tuesdays and Thursdays
+
+Build the internal developer platform that 120 engineers deploy through.
+
+- 4+ years with Kubernetes, CI/CD and one of Go or Python
+- You have run a platform others depend on
+
+Unbefristet, Vollzeit (permanent, full-time)
+Gehalt / Salary: 75.000 - 90.000 EUR brutto im Jahr

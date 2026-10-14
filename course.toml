@@ -30,7 +30,7 @@ owns = "golden sets and field accuracy"
 job = "Measure an LLM feature against cases people already signed off before changing its prompt or model"
 truth = "a labelled set of past cases a person approved"
 metric = "accuracy per field, before and after each change"
-status = "planned"
+status = "ready"
 
 [[lab]]
 n = 3

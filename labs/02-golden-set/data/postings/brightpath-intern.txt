@@ -1,0 +1,11 @@
+Data Engineering Intern (Summer 2027)
+BrightPath Analytics · London office, on site five days a week
+
+Spend twelve weeks on our pipelines team moving client data from S3 into our warehouse. You will ship
+real code with a mentor beside you.
+
+- Currently studying computer science or a related degree
+- Some Python
+
+Stipend: £2,400 per month
+Start: June 2027

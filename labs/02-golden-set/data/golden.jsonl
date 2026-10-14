@@ -1,0 +1,14 @@
+{"posting": "acme-backend.txt", "approved": {"seniority": "senior", "workplace": "remote", "employment": "full_time", "salary_min": 70000, "salary_max": 85000, "currency": "EUR", "period": "year"}}
+{"posting": "brightpath-intern.txt", "approved": {"seniority": "intern", "workplace": "onsite", "employment": "internship", "salary_min": 2400, "salary_max": 2400, "currency": "GBP", "period": "month"}}
+{"posting": "corvid-staff-sre.txt", "approved": {"seniority": "staff", "workplace": "hybrid", "employment": "full_time", "salary_min": 185000, "salary_max": 215000, "currency": "USD", "period": "year"}}
+{"posting": "dunmore-react-contract.txt", "approved": {"seniority": "mid", "workplace": "remote", "employment": "contract", "salary_min": 70, "salary_max": 85, "currency": "USD", "period": "hour"}}
+{"posting": "evergreen-lead-ml.txt", "approved": {"seniority": "staff", "workplace": "hybrid", "employment": "full_time", "salary_min": 160000, "salary_max": 190000, "currency": "CAD", "period": "year"}}
+{"posting": "fable-junior-qa.txt", "approved": {"seniority": "junior", "workplace": "onsite", "employment": "full_time", "salary_min": 35000, "salary_max": 45000, "currency": "PHP", "period": "month"}}
+{"posting": "gridline-principal.txt", "approved": {"seniority": "principal", "workplace": "remote", "employment": "full_time", "salary_min": null, "salary_max": 260000, "currency": "USD", "period": "year"}}
+{"posting": "harbor-support-parttime.txt", "approved": {"seniority": "mid", "workplace": "remote", "employment": "part_time", "salary_min": 28, "salary_max": 28, "currency": "EUR", "period": "hour"}}
+{"posting": "ionic-platform.txt", "approved": {"seniority": "mid", "workplace": "hybrid", "employment": "full_time", "salary_min": 75000, "salary_max": 90000, "currency": "EUR", "period": "year"}}
+{"posting": "juniper-analyst-c2h.txt", "approved": {"seniority": "senior", "workplace": "onsite", "employment": "contract", "salary_min": 60, "salary_max": 60, "currency": "USD", "period": "hour"}}
+{"posting": "kestrel-ios.txt", "approved": {"seniority": "senior", "workplace": "remote", "employment": "full_time", "salary_min": null, "salary_max": null, "currency": null, "period": null}}
+{"posting": "lumen-swe2.txt", "approved": {"seniority": "mid", "workplace": "remote", "employment": "full_time", "salary_min": 2800000, "salary_max": 3500000, "currency": "INR", "period": "year"}}
+{"posting": "meridian-graduate.txt", "approved": {"seniority": "junior", "workplace": "onsite", "employment": "full_time", "salary_min": 42000, "salary_max": 42000, "currency": "EUR", "period": "year"}}
+{"posting": "nimbus-frontend.txt", "approved": {"seniority": "senior", "workplace": "hybrid", "employment": "full_time", "salary_min": 150000, "salary_max": 170000, "currency": "USD", "period": "year"}}
