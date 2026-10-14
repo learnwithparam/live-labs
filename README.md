@@ -25,7 +25,7 @@ print what the README promises.
 | 4 | [Build a RAG Pipeline over PDFs](labs/04-rag-pipeline) | Uber Genie on-call copilot | ready |
 | 5 | [Measure RAG Accuracy with Recall@k](labs/05-rag-recall) | Uber's golden set over policy PDFs | ready |
 | 6 | [Stop RAG Hallucinations with an LLM Judge](labs/06-rag-judge) | DoorDash Dasher support guardrail and judge | ready |
-| 7 | Build Agentic RAG with LangGraph | Uber enhanced agentic RAG | planned |
+| 7 | [Build Agentic RAG with LangGraph](labs/07-agentic-rag) | Uber enhanced agentic RAG | ready |
 | 8 | Build an AI Workflow with Mastra | Shopify Magic writes product descriptions from merchant details | planned |
 | 9 | Route Support Tickets with a Decision Model | Zendesk intelligent triage | planned |
 | 10 | Make an AI Workflow Survive a Crash | Temporal case studies: Coinbase and Netflix | planned |

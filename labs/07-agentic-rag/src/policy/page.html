@@ -1,0 +1,374 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ledgerline policy desk</title>
+<style>
+/* Colours are the workshop tokens in design/tokens.json; a course test pins every hex here to that file. */
+:root {
+  --paper: #FAFAFA; --card: #FFFFFF; --ink: #151515; --ink-2: #414141; --muted: #606060; --faint: #808080;
+  --line: #DFDFDF; --accent: #FAFF69; --accent-deep: #4F5101; --fill-dark: #1F1F1C;
+  --pass: #008138; --fail: #BF000F; --wait: #B75000;
+  --sans: Inter, Helvetica, Arial, sans-serif; --mono: Inconsolata, "Courier New", Courier, monospace;
+}
+* { box-sizing: border-box }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.55 var(--sans) }
+button, input, select, textarea { font: inherit; color: inherit }
+button { cursor: pointer }
+:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px }
+[hidden] { display: none !important }
+code, .id { font-family: var(--mono); font-size: 15px }
+
+/* A light internal tool: the engineer reads it at 3am next to a dashboard, so the page stays quiet. */
+header { display: flex; align-items: center; gap: 28px; padding: 14px 32px; background: var(--card); border-bottom: 1px solid var(--line) }
+.brand { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 17px; letter-spacing: -0.01em }
+.brand i { width: 18px; height: 18px; background: var(--ink); display: inline-block; box-shadow: 5px 5px 0 var(--accent) }
+.brand span { font-weight: 500; color: var(--muted) }
+.tabs { display: flex; gap: 6px; background: var(--paper); border: 1px solid var(--line); border-radius: 999px; padding: 4px }
+.tabs button { border: 0; background: none; padding: 5px 16px; border-radius: 999px; font-weight: 600; font-size: 15px; color: var(--ink-2) }
+.tabs button[aria-selected="true"] { background: var(--ink); color: var(--paper) }
+header .model { margin-left: auto; font-size: 14px; color: var(--muted) }
+
+main { max-width: 1240px; margin: 0 auto; padding: 28px 32px 56px }
+
+/* The question: one big box, as a search engine would have it, with the expert's set one click away. */
+.ask { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px }
+.ask textarea { width: 100%; border: 0; resize: none; font-size: 21px; line-height: 1.4; min-height: 64px; background: none; letter-spacing: -0.01em }
+.ask textarea:focus { outline: none }
+.ask:focus-within { border-color: var(--ink) }
+.ask-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; border-top: 1px solid var(--line); padding-top: 14px; margin-top: 8px }
+.how { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden }
+.how button { border: 0; background: var(--card); padding: 7px 14px; font-size: 15px; font-weight: 600; color: var(--ink-2) }
+.how button + button { border-left: 1px solid var(--line) }
+.how button[aria-pressed="true"] { background: var(--accent); color: var(--ink) }
+.ask select { max-width: 420px; border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px; background: var(--card); font-size: 15px }
+.go { margin-left: auto; border: 0; background: var(--ink); color: var(--paper); font-weight: 700; padding: 10px 22px; border-radius: 8px }
+.go:disabled { opacity: .5; cursor: default }
+
+/* The route: the graph the agent runs, drawn as a line of stops. The loop back is the agent part. */
+.route { margin: 26px 0 8px; background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 18px 24px 8px }
+.route svg { width: 100%; height: 132px; display: block }
+.route .rail { stroke: var(--line); stroke-width: 4; fill: none }
+.route .rail.on { stroke: var(--ink) }
+.route .loop { stroke: var(--line); stroke-width: 3; fill: none; stroke-dasharray: 7 6 }
+.route .loop.on { stroke: var(--wait) }
+.route circle { fill: var(--card); stroke: var(--line); stroke-width: 4 }
+.route .stop.done circle { stroke: var(--ink); fill: var(--ink) }
+.route .stop.now circle { stroke: var(--ink); fill: var(--accent) }
+.route .stop.skip circle { stroke: var(--line); fill: var(--paper) }
+.route text { font: 600 16px var(--sans); fill: var(--ink); text-anchor: middle }
+.route text.sub { font: 500 14px var(--sans); fill: var(--muted) }
+.route text.loopnote { font: 600 14px var(--sans); fill: var(--wait) }
+.route .stop.skip text { fill: var(--faint) }
+
+/* The run on the left, the answer on the right: the answer is what the engineer acts on, so it never scrolls away. */
+.desk { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: 24px; margin-top: 18px; align-items: start }
+.log h2, .reply h2 { font-size: 15px; margin: 0 0 10px; color: var(--muted); font-weight: 600 }
+.step { display: flex; gap: 14px; padding: 12px 0; border-top: 1px solid var(--line) }
+.step .t { flex: 0 0 52px; font-family: var(--mono); font-size: 14px; color: var(--muted); padding-top: 2px }
+.step .what { flex: 1; min-width: 0 }
+.step b { display: block; font-size: 16px }
+.step.missing b { color: var(--wait) }
+.step.enough b { color: var(--pass) }
+.query { margin: 8px 0 0; padding: 8px 12px; background: var(--paper); border: 1px solid var(--line); border-radius: 8px }
+.query code { display: block; color: var(--ink) }
+.hits { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px }
+.hit { font-family: var(--mono); font-size: 14px; padding: 1px 8px; border-radius: 5px; background: var(--card); border: 1px solid var(--line); color: var(--muted) }
+.hit.new { color: var(--ink); border-color: var(--ink); background: var(--accent) }
+.empty { color: var(--muted); padding: 14px 0; border-top: 1px solid var(--line) }
+
+.reply { position: sticky; top: 16px }
+.answer { background: var(--card); border: 2px solid var(--ink); border-radius: 14px; padding: 18px 20px }
+.answer.gap { border-color: var(--wait) }
+.answer p { margin: 0 0 10px; font-size: 17px }
+.answer sup a { font: 700 12px var(--sans); color: var(--ink); background: var(--accent); padding: 0 5px; border-radius: 4px; text-decoration: none; margin-left: 2px }
+.meta { font-size: 14px; color: var(--muted); margin-top: 6px }
+.sources { list-style: none; margin: 14px 0 0; padding: 0; border-top: 1px solid var(--line) }
+.sources li { padding: 10px 0; border-bottom: 1px solid var(--line); font-size: 15px }
+.sources li:target { background: var(--paper) }
+.sources .n { font-weight: 800; margin-right: 6px }
+.sources details summary { cursor: pointer; color: var(--ink-2) }
+.sources details p { margin: 6px 0 0; color: var(--ink-2); font-size: 15px }
+.notice { margin-top: 12px; padding: 12px 14px; border-radius: 10px; border: 2px solid var(--wait); background: var(--card) }
+.notice b { color: var(--wait) }
+.notice.sent { border-color: var(--pass) } .notice.sent b { color: var(--pass) }
+.quiet { border: 1px solid var(--line); background: var(--card); padding: 7px 12px; border-radius: 8px; font-size: 15px; font-weight: 600; margin-top: 10px }
+.experts { margin-top: 14px; background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px 18px }
+.experts h3 { margin: 0 0 8px; font-size: 16px; display: flex; justify-content: space-between; gap: 10px }
+.experts h3 span { font-size: 14px }
+.point { display: flex; gap: 10px; padding: 6px 0; font-size: 15px }
+.tick { flex: 0 0 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; color: var(--card); font-weight: 800; font-size: 13px }
+.tick.yes { background: var(--pass) } .tick.no { background: var(--fail) }
+.ok { color: var(--pass) } .bad { color: var(--fail) } .waiting { color: var(--wait) }
+
+/* The expert review: the number the team watches, plain RAG and the agent on the same 16 questions. */
+.score { display: grid; grid-template-columns: 9rem minmax(0, 1fr) 15rem; gap: 14px 18px; align-items: center; background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 22px 24px }
+.score .name { font-weight: 700 }
+.score .name small { display: block; font-weight: 500; color: var(--muted); font-size: 14px }
+.bar { height: 30px; background: var(--paper); border: 1px solid var(--line); border-radius: 6px; position: relative; overflow: hidden }
+.bar i { position: absolute; inset: 0 auto 0 0; background: var(--ink) }
+.bar.agent i { background: var(--accent); border-right: 2px solid var(--ink) }
+.bar span { position: absolute; left: 12px; top: 3px; font-weight: 800; color: var(--paper); font-size: 15px }
+.bar.agent span { color: var(--ink) }
+.score .cost { font-size: 15px; color: var(--ink-2) }
+.lede { font-size: 17px; color: var(--ink-2); max-width: 72ch; margin: 0 0 18px }
+.board { margin-top: 22px; background: var(--card); border: 1px solid var(--line); border-radius: 14px; overflow: hidden }
+.row { display: grid; grid-template-columns: 3.4rem minmax(0, 1fr) 10rem 10rem; gap: 14px; padding: 11px 18px; border-top: 1px solid var(--line); align-items: center; width: 100%; text-align: left; background: none; border-left: 0; border-right: 0; border-bottom: 0 }
+.row.head { border-top: 0; font-size: 14px; color: var(--muted); font-weight: 600 }
+.row:not(.head):hover { background: var(--paper) }
+.row[aria-expanded="true"] { background: var(--paper) }
+.row .q { font-size: 15px }
+.pill { display: inline-flex; gap: 6px; align-items: baseline; font-size: 14px }
+.pill b { font-size: 14px }
+.open { padding: 4px 18px 18px; background: var(--paper); border-top: 1px dashed var(--line) }
+.pair { display: flex; gap: 18px; flex-wrap: wrap }
+.pair > div { flex: 1 1 320px; background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; font-size: 15px }
+.pair h4 { margin: 0 0 6px; font-size: 15px }
+.wait-box { padding: 22px; color: var(--muted) }
+
+@media (max-width: 860px) {
+  header { flex-wrap: wrap; padding: 12px 16px; gap: 12px }
+  main { padding: 18px 16px 40px }
+  .desk { grid-template-columns: minmax(0, 1fr) }
+  .reply { position: static }
+  .score { grid-template-columns: minmax(0, 1fr) }
+  .row { grid-template-columns: 2.6rem minmax(0, 1fr) }
+  .row > :nth-child(n+3) { grid-column: 2 }
+}
+</style>
+</head>
+<body data-surface="on-call policy desk">
+<header>
+  <div class="brand"><i aria-hidden="true"></i>Ledgerline <span>policy desk</span></div>
+  <div class="tabs" role="tablist">
+    <button role="tab" id="tab-ask" aria-selected="true">Ask</button>
+    <button role="tab" id="tab-review" aria-selected="false">Expert review</button>
+  </div>
+  <div class="model" id="model"></div>
+</header>
+
+<main id="view-ask">
+  <form class="ask" id="ask">
+    <textarea id="question" aria-label="Your question" rows="2" placeholder="Ask the runbooks and policies, the way you would ask the person who wrote them"></textarea>
+    <div class="ask-row">
+      <div class="how" role="group" aria-label="How to answer">
+        <button type="button" data-how="agentic" aria-pressed="true">Agent (LangGraph)</button>
+        <button type="button" data-how="plain" aria-pressed="false">Plain RAG, one search</button>
+      </div>
+      <select id="pick" aria-label="A question from the expert's set"><option value="">A question from the expert's set</option></select>
+      <button class="go" id="go" type="submit">Ask the policies</button>
+    </div>
+  </form>
+
+  <section class="route" aria-label="The steps the agent runs">
+    <svg viewBox="0 0 1000 132" preserveAspectRatio="none" role="img" aria-label="Plan, search, check, answer, with a loop from check back to search">
+      <path class="rail" id="r1" d="M110 46 H370"/>
+      <path class="rail" id="r2" d="M370 46 H630"/>
+      <path class="rail" id="r3" d="M630 46 H890"/>
+      <path class="loop" id="loop" d="M630 66 C630 118, 370 118, 370 66"/>
+      <text class="loopnote" id="loopnote" x="500" y="126"></text>
+      <g class="stop" id="s-plan"><circle cx="110" cy="46" r="15"/><text x="110" y="16">Plan</text><text class="sub" id="n-plan" x="110" y="90"></text></g>
+      <g class="stop" id="s-search"><circle cx="370" cy="46" r="15"/><text x="370" y="16">Search</text><text class="sub" id="n-search" x="300" y="90"></text></g>
+      <g class="stop" id="s-check"><circle cx="630" cy="46" r="15"/><text x="630" y="16">Check what is missing</text><text class="sub" id="n-check" x="700" y="90"></text></g>
+      <g class="stop" id="s-answer"><circle cx="890" cy="46" r="15"/><text x="890" y="16">Answer</text><text class="sub" id="n-answer" x="890" y="90"></text></g>
+    </svg>
+  </section>
+
+  <div class="desk">
+    <section class="log" aria-live="polite">
+      <h2>What it looked up</h2>
+      <div id="steps"><div class="empty">Ask a question. Each step appears here as the agent finishes it.</div></div>
+    </section>
+    <aside class="reply">
+      <h2>Answer</h2>
+      <div id="answer"><div class="empty">The answer cites the sections it used, so you can open each one.</div></div>
+      <div id="experts"></div>
+    </aside>
+  </div>
+</main>
+
+<main id="view-review" hidden>
+  <p class="lede">An on-call expert wrote the points a correct answer must make for 16 questions. Both ways use the same search, the same model and the same answer step. Only the agent plans its searches and goes back for what is missing.</p>
+  <div id="review"><div class="score wait-box">Loading the review.</div></div>
+</main>
+
+<script>
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"})[c]);
+let room = null, how = "agentic", seen = new Set(), rounds = 0, last = null;
+
+async function load() {
+  room = await (await fetch("/api/room")).json();
+  $("#model").textContent = `${room.sections} policy sections, answers on ${room.model}`;
+  for (const q of room.questions) $("#pick").insertAdjacentHTML("beforeend", `<option value="${q.id}">${q.id}: ${esc(q.question.slice(0, 70))}…</option>`);
+}
+
+$("#pick").addEventListener("change", (e) => {
+  const q = room.questions.find((x) => x.id === e.target.value);
+  if (q) $("#question").value = q.question;
+});
+document.querySelectorAll(".how button").forEach((b) => b.addEventListener("click", () => {
+  how = b.dataset.how;
+  document.querySelectorAll(".how button").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+}));
+
+function stop(name, state, note) {
+  const g = $(`#s-${name}`);
+  g.classList.remove("done", "now", "skip");
+  if (state) g.classList.add(state);
+  if (note !== undefined) $(`#n-${name}`).textContent = note;
+}
+
+function resetRoute() {
+  for (const n of ["plan", "search", "check", "answer"]) stop(n, how === "plain" && (n === "plan" || n === "check") ? "skip" : "", "");
+  for (const r of ["r1", "r2", "r3"]) $(`#${r}`).classList.remove("on");
+  $("#loop").classList.remove("on");
+  $("#loopnote").textContent = "";
+}
+
+const secs = (t) => `${t.toFixed(1)}s`;
+
+function addStep(cls, at, html) {
+  $("#steps").insertAdjacentHTML("beforeend", `<div class="step ${cls}"><div class="t">${secs(at)}</div><div class="what">${html}</div></div>`);
+}
+
+// Each event from the server is one finished node of the graph: draw it on the route and in the log.
+function onEvent(e) {
+  if (e.node === "plan") {
+    stop("plan", "done", `${e.queries.length} searches`); stop("search", "now"); $("#r1").classList.add("on");
+    addStep("", e.at, `<b>Planned ${e.queries.length} searches</b>${e.queries.map((q) => `<div class="query"><code>${esc(q)}</code></div>`).join("")}`);
+  } else if (e.node === "search") {
+    rounds += 1;
+    stop("search", "done", rounds > 1 ? `${rounds} rounds` : "1 round");
+    $("#r2").classList.add("on");
+    if (how !== "plain") stop("check", "now");
+    const blocks = e.searches.map((s) => {
+      const hits = s.found.map((id) => { const fresh = !seen.has(id); return `<span class="hit ${fresh ? "new" : ""}">${esc(id)}</span>`; }).join("");
+      s.found.forEach((id) => seen.add(id));
+      return `<div class="query"><code>${esc(s.query)}</code><div class="hits">${hits || '<span class="hit">nothing</span>'}</div></div>`;
+    }).join("");
+    addStep("", e.at, `<b>${rounds > 1 ? "Searched again" : "Searched"}: ${seen.size} sections in hand</b>${blocks}`);
+  } else if (e.node === "check") {
+    if (e.queries && e.queries.length) {
+      stop("check", "done", "something missing"); stop("search", "now"); $("#loop").classList.add("on");
+      $("#loopnote").textContent = "goes back for what is missing";
+      addStep("missing", e.at, `<b>Still missing</b>${esc(e.missing)}`);
+    } else {
+      stop("check", "done", "enough"); stop("answer", "now"); $("#r3").classList.add("on");
+      addStep("enough", e.at, `<b>Enough to answer</b>Every part of the question has a section behind it.`);
+    }
+  } else if (e.node === "answer") {
+    if (how === "plain") { $("#r3").classList.add("on"); }
+    stop("answer", "done", secs(e.at));
+    addStep("", e.at, `<b>Answered from ${e.sources.length} sections</b>${e.calls} model ${e.calls === 1 ? "call" : "calls"}, $${e.cost.toFixed(5)}`);
+    showAnswer(e);
+  }
+}
+
+function showAnswer(e) {
+  last = e;
+  const order = e.cited.length ? e.cited : e.sources.map((s) => s.id);
+  // Citations come back as [section-id]; the page turns each into a numbered link to the section below.
+  let text = esc(e.answer || "The policies found do not answer this.");
+  text = text.replace(/\[([a-z0-9-]+#[a-z0-9-]+)\]/g, (m, id) => {
+    const n = order.indexOf(id) + 1;
+    return n ? `<sup><a href="#src-${n}">${n}</a></sup>` : "";
+  });
+  text = text.replace(/`([^`]+)`/g, "<code>$1</code>");
+  const paras = text.split(/\n+/).map((p) => `<p>${p}</p>`).join("");
+  const byId = Object.fromEntries(e.sources.map((s) => [s.id, s]));
+  const list = order.map((id, i) => byId[id]).filter(Boolean).map((s, i) =>
+    `<li id="src-${i + 1}"><span class="n">${i + 1}</span>${esc(s.doc)}, ${esc(s.section)}, page ${s.page}<details><summary class="id">${esc(s.id)}</summary><p>${esc(s.text)}</p></details></li>`).join("");
+  const gap = !e.covered ? `<div class="notice" id="gap"><b>The policies do not cover all of this.</b> A person who owns them should answer it.<br><button class="quiet" id="send">Send to the policy owners</button></div>`
+    : `<button class="quiet" id="send">Wrong or incomplete? Send to the policy owners</button>`;
+  $("#answer").innerHTML = `<div class="answer ${e.covered ? "" : "gap"}">${paras}<div class="meta">${how === "plain" ? "Plain RAG" : "Agent"}, ${secs(e.at)}, ${e.calls} model ${e.calls === 1 ? "call" : "calls"}</div><ol class="sources">${list}</ol></div>${gap}`;
+  $("#send").addEventListener("click", escalate);
+  gradeIt(e.answer);
+}
+
+async function escalate() {
+  const sent = await (await fetch("/api/escalate", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({question: $("#question").value, answer: last?.answer || ""})})).json();
+  const box = `<div class="notice sent" id="gap"><b>Sent to the policy owners.</b> ${sent.length} ${sent.length === 1 ? "question waits" : "questions wait"} in their queue, in out/escalated.jsonl.</div>`;
+  ($("#gap") || $("#send")).outerHTML = box;
+}
+
+// A question from the expert's set is graded against the expert's points, the same check the review runs.
+async function gradeIt(answer) {
+  const q = room.questions.find((x) => x.question === $("#question").value.trim());
+  if (!q) { $("#experts").innerHTML = ""; return; }
+  $("#experts").innerHTML = `<div class="experts"><h3>The expert's points <span class="waiting">grading</span></h3></div>`;
+  const g = await (await fetch("/api/grade", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({id: q.id, answer})})).json();
+  const points = g.points.map((p, i) => `<div class="point"><span class="tick ${g.made[i] ? "yes" : "no"}">${g.made[i] ? "✓" : "✗"}</span><span>${esc(p)}</span></div>`).join("");
+  $("#experts").innerHTML = `<div class="experts"><h3>The expert's points <span class="${g.accepted ? "ok" : "bad"}">${g.accepted ? "Accepted" : "Not accepted"}</span></h3>${points}</div>`;
+}
+
+$("#ask").addEventListener("submit", async (ev) => {
+  ev.preventDefault();
+  const question = $("#question").value.trim();
+  if (!question) return;
+  $("#go").disabled = true; seen = new Set(); rounds = 0;
+  resetRoute(); stop(how === "plain" ? "search" : "plan", "now");
+  $("#steps").innerHTML = ""; $("#experts").innerHTML = "";
+  $("#answer").innerHTML = `<div class="empty">Working. Each finished step shows on the left.</div>`;
+  // The server sends one JSON line per finished step; read them as they arrive.
+  const res = await fetch("/api/ask", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({question, how})});
+  const reader = res.body.getReader(), dec = new TextDecoder();
+  let buf = "";
+  for (;;) {
+    const {done, value} = await reader.read();
+    if (done) break;
+    buf += dec.decode(value, {stream: true});
+    let nl;
+    while ((nl = buf.indexOf("\n")) >= 0) { const line = buf.slice(0, nl); buf = buf.slice(nl + 1); if (line.trim()) onEvent(JSON.parse(line)); }
+  }
+  $("#go").disabled = false;
+});
+
+function tab(name) {
+  $("#tab-ask").setAttribute("aria-selected", String(name === "ask"));
+  $("#tab-review").setAttribute("aria-selected", String(name === "review"));
+  $("#view-ask").hidden = name !== "ask"; $("#view-review").hidden = name !== "review";
+  if (name === "review") loadReview();
+}
+$("#tab-ask").addEventListener("click", () => tab("ask"));
+$("#tab-review").addEventListener("click", () => tab("review"));
+
+let review = null;
+async function loadReview() {
+  if (review) return;
+  if (!room.reviewed) $("#review").innerHTML = `<div class="score wait-box">Running both ways on 16 questions and grading every answer. This takes about a minute.</div>`;
+  review = await (await fetch("/api/review")).json();
+  const line = (key, name, sub, cls) => {
+    const s = review[key];
+    return `<div class="name">${name}<small>${sub}</small></div>
+      <div class="bar ${cls}"><i style="width:${(100 * s.accepted / s.total).toFixed(1)}%"></i><span>${s.accepted} of ${s.total} accepted</span></div>
+      <div class="cost">${s.found} of ${s.needs} expert sections found<br>${s.calls_per_question} calls, $${s.cost_per_question.toFixed(5)} a question</div>`;
+  };
+  const rows = Object.fromEntries(review.rows.map((r) => [`${r.id}/${r.how}`, r]));
+  const cell = (r) => `<span class="pill"><b class="${r.accepted ? "ok" : r.covered ? "bad" : "waiting"}">${r.accepted ? "✓ accepted" : r.covered ? "✗ not accepted" : "to a person"}</b> ${r.found}/${r.needs}</span>`;
+  const ids = [...new Set(review.rows.map((r) => r.id))].sort();
+  const body = ids.map((id) => {
+    const p = rows[`${id}/plain`], a = rows[`${id}/agentic`], q = room.questions.find((x) => x.id === id);
+    return `<button class="row" aria-expanded="false" data-id="${id}"><span class="id">${id}</span><span class="q">${esc(q.question)}</span>${cell(p)}${cell(a)}</button>
+      <div class="open" id="open-${id}" hidden>
+        <div class="experts"><h3>The expert's points</h3>${review.points[id].map((pt, i) => `<div class="point"><span class="tick ${a.made[i] ? "yes" : "no"}">${a.made[i] ? "✓" : "✗"}</span><span>${esc(pt)}</span></div>`).join("")}<div class="meta">Ticks are the agent's answer.</div></div>
+        <div class="pair" style="margin-top:12px">
+          <div><h4>Plain RAG <span class="${p.accepted ? "ok" : "bad"}">${p.accepted ? "accepted" : "not accepted"}</span></h4>${esc(p.answer || "No answer.")}<div class="meta">${esc(p.reason)}</div></div>
+          <div><h4>Agent <span class="${a.accepted ? "ok" : "bad"}">${a.accepted ? "accepted" : "not accepted"}</span></h4>${esc(a.answer || "No answer.")}<div class="meta">${esc(a.reason)}</div></div>
+        </div>
+      </div>`;
+  }).join("");
+  $("#review").innerHTML = `<div class="score">${line("plain", "Plain RAG", "one search", "")}${line("agentic", "Agent", "plans, checks, retries", "agent")}</div>
+    <div class="board"><div class="row head"><span>#</span><span>Question</span><span>Plain RAG</span><span>Agent</span></div>${body}</div>`;
+  document.querySelectorAll(".row[data-id]").forEach((b) => b.addEventListener("click", () => {
+    const open = b.getAttribute("aria-expanded") === "true";
+    b.setAttribute("aria-expanded", String(!open));
+    $(`#open-${b.dataset.id}`).hidden = open;
+  }));
+}
+
+load();
+</script>
+</body>
+</html>

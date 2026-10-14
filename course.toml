@@ -90,7 +90,7 @@ owns = "agentic retrieval"
 job = "Answer policy questions that need several lookups, as Uber's agentic RAG does for its policy docs"
 truth = "answers an expert wrote for a question set"
 metric = "share of answers the expert accepts"
-status = "planned"
+status = "ready"
 
 [[lab]]
 n = 8

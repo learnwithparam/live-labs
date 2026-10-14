@@ -1,0 +1,27 @@
+[project]
+name = "lab-07-agentic-rag"
+version = "0.1.0"
+description = "Build Agentic RAG with LangGraph: answer on-call policy questions that need several lookups, and score them against an expert's answers"
+requires-python = ">=3.11"
+dependencies = ["langgraph==1.2.12", "bm25s==0.3.11", "pypdf>=6.1", "openai>=1.100", "pydantic>=2.11"]
+
+[project.scripts]
+policy = "policy.cli:main"
+
+[dependency-groups]
+dev = ["pytest>=8.4"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/policy"]
+
+[tool.uv]
+# Every dependency resolves to a release at least two weeks old, so a fresh one never lands untested.
+exclude-newer = "2026-10-01T00:00:00Z"
+
+[tool.pytest.ini_options]
+markers = ["proof: calls a real model; needs LLM_API_KEY"]
+addopts = "-m 'not proof'"
