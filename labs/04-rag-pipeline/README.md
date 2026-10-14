@@ -21,9 +21,12 @@ engineer can open the cited passage and see the command there.
 ## What you will be able to do
 
 Before: you paste docs into a prompt or cut them every few hundred characters, and trust whatever
-comes back. After this lab you can read PDFs into passages by section with their page, drop the page
-furniture, find the passages a question needs, get an answer that cites them, check each citation
-against the passage, and send a person the answers that do not stand.
+comes back. After this lab you can:
+
+- read PDFs into passages by section, with their page, and drop the page furniture
+- find the passages a question needs and get an answer that cites them
+- check each citation against its passage
+- send a person the answers that do not stand
 
 ## The problem
 

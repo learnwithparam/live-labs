@@ -19,10 +19,13 @@ case study").
 
 ## What you will be able to do
 
-Before: you can call a model and get text back. After this lab you can take a document a person
-handles today, get typed fields out of it, check those fields against a record the model did not
-write, and hand a person only what fails, with a test that says how many still need one. Every lab
-in this course builds on that pattern.
+Before: you can call a model and get text back. After this lab you can:
+
+- take a document a person handles today and get typed fields out of it
+- check those fields against a record the model did not write
+- hand a person only what fails, with a test that says how many still need one
+
+Every lab in this course builds on that pattern.
 
 ## The problem
 

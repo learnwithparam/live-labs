@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from check_course import LAB_POINTER, ROOT, course_map, opening_problems, problems, title_problems
+from check_course import LAB_POINTER, ROOT, comment_problems, course_map, opening_problems, page_problems, plain_problems, problems, title_problems
 from walkthrough import matches, scene, steps
 
 import json
@@ -80,3 +80,27 @@ def test_every_colour_a_lab_page_uses_is_a_workshop_token():
     for page in pages:
         used = {hex.upper() for hex in re.findall(r"#[0-9A-Fa-f]{6}\b", page.read_text())}
         assert used <= allowed, f"{page.relative_to(ROOT)} uses colours outside design/tokens.json: {sorted(used - allowed)}"
+
+
+def test_two_lab_pages_cannot_share_a_surface_or_a_layout():
+    chat = '<body data-surface="team chat"><style>.a { grid-template-columns: 240px 1fr }</style>'
+    shop = '<body data-surface="storefront"><style>.a { grid-template-columns: 240px 1fr }</style>'
+    assert page_problems({"a": chat}) == []
+    assert page_problems({"a": chat, "b": chat.replace("240px 1fr", "1fr 1fr")}) == ["b: surface 'team chat' is already a's"]
+    assert page_problems({"a": chat, "b": shop}) == ["b: same grid layout as a"]
+    assert page_problems({"a": "<body>"}) == ["a: <body> has no data-surface naming the product surface"]
+
+
+def test_a_teaching_module_needs_why_comments():
+    bare = "\n".join(f"x{n} = {n}" for n in range(40))
+    assert comment_problems("m.py", bare) == ["m.py: 0 why-comment lines for 40 lines of code, needs 3"]
+    why = '"""Why this module exists."""\n# why one\n# why two\n' + bare
+    assert comment_problems("m.py", why) == []
+
+
+def test_a_readme_sentence_stays_short_and_a_list_item_counts_alone():
+    long = " ".join(["word"] * 41) + "."
+    assert plain_problems(long)[0].startswith("sentence of 41 words")
+    listed = "You can:\n\n" + "\n".join(f"- do thing {n} with " + " ".join(["word"] * 8) for n in range(6))
+    assert plain_problems(listed) == []
+    assert plain_problems("A \u2014 B.") == ["an em dash; use a full stop or a comma"]

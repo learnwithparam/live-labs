@@ -18,6 +18,7 @@ BLIND = "You answer an on-call engineer's question about their company's payment
 
 
 class Answer(BaseModel):
+    # null, not a guess, when the passages do not hold the answer: the check sends those to a person.
     answer: str | None
     cited: list[str]
 
@@ -35,6 +36,7 @@ def schema_format() -> dict:
 
 
 def listing(passages: list[Passage]) -> str:
+    # Each passage carries its id in brackets, so the model can cite exactly the ones it used.
     return "\n\n".join(f"[{p.id}] {p.doc}, {p.section}, page {p.page}\n{p.text}" for p in passages)
 
 

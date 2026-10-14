@@ -24,8 +24,12 @@ here, and you cannot work on it without a fixed set of cases a person has signed
 ## What you will be able to do
 
 Before: you change a prompt, try it on a few inputs, read the output and ship it. After this lab you
-can keep a labelled set of cases a person approved, score any change against it per field, block a
-change that makes any field worse, and hand a person only the cases that changed for the worse.
+can:
+
+- keep a labelled set of cases a person approved
+- score any change against it, field by field
+- block a change that makes any field worse
+- hand a person only the cases that changed for the worse
 
 ## The problem
 

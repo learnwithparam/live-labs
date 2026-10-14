@@ -19,9 +19,12 @@ Instacart with Maple"). At that scale the cost per product decides whether the j
 ## What you will be able to do
 
 Before: you loop over the catalogue and send one request per product, and a crash at product 3,000
-means starting again. After this lab you can write a whole job as one batch file, pack many products
-per request, run it with a checkpoint that skips what is done, retry what a reply dropped, send the
-same file to a provider's batch API, and hand a person only the products the text cannot settle.
+means starting again. After this lab you can:
+
+- write a whole job as one batch file, with many products per request
+- run it with a checkpoint that skips what is done, and retry what a reply dropped
+- send the same file to a provider's batch API
+- hand a person only the products the text cannot settle
 
 ## The problem
 
