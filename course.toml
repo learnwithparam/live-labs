@@ -66,7 +66,7 @@ owns = "retrieval metrics, hybrid search and reranking"
 job = "Find the right policy passage for a question before any answer is written"
 truth = "question and passage pairs a person labelled"
 metric = "recall@k on the labelled questions"
-status = "planned"
+status = "ready"
 
 [[lab]]
 n = 6

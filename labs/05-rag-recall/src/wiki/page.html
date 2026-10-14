@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ledgerline runbooks</title>
+<style>
+/* Colours are the workshop tokens in design/tokens.json; a course test pins every hex here to that file. */
+:root {
+  --paper: #FAFAFA; --card: #FFFFFF; --ink: #151515; --ink-2: #414141; --muted: #606060;
+  --line: #DFDFDF; --accent: #FAFF69; --accent-deep: #4F5101; --fill-dark: #1F1F1C;
+  --pass: #008138; --fail: #BF000F; --wait: #B75000;
+  --sans: Inter, Helvetica, Arial, sans-serif; --mono: Inconsolata, "Courier New", Courier, monospace;
+}
+* { box-sizing: border-box }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.55 var(--sans) }
+button, input, select { font: inherit; color: inherit }
+button { cursor: pointer }
+:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px }
+
+/* The intranet bar: the wiki's name and its two pages. Search is what staff use, quality is what the owner watches. */
+header { background: var(--card); border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 28px; padding: 0 32px; height: 60px }
+.brand { font-weight: 800; font-size: 18px; letter-spacing: -0.01em }
+.brand span { font-weight: 400; color: var(--muted) }
+nav { display: flex; gap: 4px; height: 100% }
+nav button { border: 0; background: none; padding: 0 14px; border-bottom: 3px solid transparent; color: var(--muted); font-weight: 600 }
+nav button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--ink) }
+header .who { margin-left: auto; color: var(--muted); font-size: 14px }
+
+/* Search: one centred column, like every search engine staff already know. */
+#search { max-width: 820px; margin: 0 auto; padding: 44px 24px 80px }
+#search h1 { font-size: 34px; letter-spacing: -0.02em; line-height: 1.15; margin: 0 0 6px }
+#search .sub { color: var(--muted); margin: 0 0 24px }
+form.q { display: flex; background: var(--card); border: 2px solid var(--ink); border-radius: 30px; padding: 6px 6px 6px 22px; box-shadow: 0 2px 0 var(--ink) }
+form.q input { flex: 1; border: 0; outline: 0; background: none; font-size: 18px; min-width: 0 }
+form.q button { border: 0; background: var(--fill-dark); color: var(--paper); border-radius: 24px; padding: 10px 22px; font-weight: 700 }
+.ways { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0 10px; align-items: center }
+.ways .lbl { color: var(--muted); font-size: 14px; margin-right: 4px }
+.ways button { border: 1px solid var(--line); background: var(--card); border-radius: 18px; padding: 5px 14px; font-size: 14px }
+.ways button[aria-pressed="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink) }
+.try { font-size: 14px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: baseline }
+.try button { border: 0; background: none; padding: 0; color: var(--ink-2); text-decoration: underline; text-underline-offset: 3px; font-size: 14px; text-align: left }
+
+/* The answer to "did the labelled section come back?", shown above the results so it is read first. */
+.verdict { margin: 28px 0 8px; padding: 14px 18px; border-left: 5px solid var(--line); background: var(--card) }
+.verdict.hit { border-left-color: var(--pass) }
+.verdict.miss { border-left-color: var(--fail) }
+.verdict b.n { font-size: 20px }
+.verdict .across { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; font-size: 14px }
+.verdict .across span { border: 1px solid var(--line); border-radius: 4px; padding: 2px 10px; background: var(--paper) }
+.verdict .across span.now { border-color: var(--ink); font-weight: 700 }
+.count { color: var(--muted); font-size: 14px; margin: 18px 0 4px }
+
+/* A result: where it lives, what the section is called, and the words that matched. */
+ol.results { list-style: none; margin: 0; padding: 0; counter-reset: r }
+ol.results li { counter-increment: r; padding: 18px 0 18px 46px; border-bottom: 1px solid var(--line); position: relative }
+ol.results li::before { content: counter(r); position: absolute; left: 0; top: 18px; width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--line); display: grid; place-items: center; font-weight: 700; font-size: 14px; color: var(--muted); background: var(--card) }
+ol.results li.labelled::before { background: var(--accent); color: var(--ink); border-color: var(--ink) }
+.crumb { font-family: var(--mono); font-size: 14px; color: var(--muted) }
+.result h3 { margin: 2px 0 4px; font-size: 19px }
+.result p { margin: 0; color: var(--ink-2) }
+.result mark { background: var(--accent); color: var(--ink); padding: 0 2px }
+.result .meta { margin-top: 6px; font-size: 13px; color: var(--muted); display: flex; gap: 14px }
+.result .tag { color: var(--pass); font-weight: 700 }
+.empty { color: var(--muted); padding: 40px 0; text-align: center }
+
+/* Search quality: one report the owner reads after every change to the index. */
+#quality { max-width: 1120px; margin: 0 auto; padding: 36px 32px 80px }
+#quality h1 { font-size: 30px; letter-spacing: -0.02em; margin: 0 }
+#quality .sub { color: var(--muted); margin: 4px 0 26px }
+.panel { background: var(--card); border: 1px solid var(--line); border-radius: 6px; padding: 22px 24px; margin-bottom: 22px }
+.panel h2 { font-size: 19px; margin: 0 0 4px }
+.panel .hint { color: var(--muted); margin: 0 0 14px; font-size: 15px }
+.chartwrap { display: flex; flex-wrap: wrap; gap: 28px; align-items: flex-start }
+svg.chart { flex: 1 1 420px; min-width: 0; max-width: 560px; height: auto; font-family: var(--sans) }
+table.recall { border-collapse: collapse; font-size: 15px; min-width: 330px }
+table.recall th, table.recall td { padding: 7px 12px; border-bottom: 1px solid var(--line); text-align: right }
+table.recall th:first-child, table.recall td:first-child { text-align: left }
+table.recall td.best { background: var(--accent); font-weight: 700 }
+.measuring { color: var(--muted); padding: 30px 0 }
+
+/* Per question: where each way put the labelled section, 1 on the left, missing past 10 on the right. */
+table.ranks { border-collapse: collapse; width: 100%; font-size: 14px }
+table.ranks th { text-align: left; color: var(--muted); font-weight: 600; padding: 6px 8px; border-bottom: 1px solid var(--line) }
+table.ranks td { padding: 5px 8px; border-bottom: 1px solid var(--line); vertical-align: middle }
+table.ranks td.qq { max-width: 360px }
+table.ranks tr.person td.qq { color: var(--wait); font-weight: 600 }
+.track { position: relative; height: 16px; width: 150px; background: linear-gradient(to right, var(--paper) 0 50%, var(--card) 50%); border: 1px solid var(--line); border-radius: 8px }
+.track i { position: absolute; top: 2px; width: 10px; height: 10px; border-radius: 50%; background: var(--ink) }
+.track i.miss { background: var(--fail); right: 2px }
+.track i.top { background: var(--pass) }
+
+/* The questions no setting fixes: the labelled section beside what came back, and a person decides. */
+.case { border: 1px solid var(--wait); border-radius: 6px; padding: 18px 20px; margin-top: 12px; background: var(--card) }
+.case .q { font-size: 18px; font-weight: 700; margin: 0 0 12px }
+.compare { display: flex; flex-wrap: wrap; gap: 16px }
+.compare section { flex: 1 1 300px; border: 1px solid var(--line); border-radius: 4px; padding: 12px 14px; background: var(--paper) }
+.compare h4 { margin: 0 0 4px; font-size: 13px; color: var(--muted); font-weight: 600 }
+.compare .crumb { display: block; margin-bottom: 4px }
+.compare p { margin: 0; font-size: 15px }
+.decide { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; align-items: center }
+.decide button { border: 1px solid var(--ink); background: var(--card); border-radius: 4px; padding: 8px 14px; font-weight: 600 }
+.decide button.primary { background: var(--fill-dark); color: var(--paper) }
+.decided { color: var(--pass); font-weight: 700 }
+[hidden] { display: none !important }
+
+@media (max-width: 720px) {
+  header { padding: 0 16px; gap: 12px } header .who { display: none }
+  #search, #quality { padding-left: 16px; padding-right: 16px }
+  #search h1 { font-size: 27px }
+  table.ranks td.qq { max-width: 180px } .track { width: 90px }
+}
+@media (prefers-reduced-motion: no-preference) { ol.results li { animation: in 0.15s ease-out both } @keyframes in { from { opacity: 0 } } }
+</style>
+</head>
+<body data-surface="internal runbook search">
+<header>
+  <div class="brand">Ledgerline <span>Runbooks</span></div>
+  <nav role="tablist">
+    <button role="tab" aria-selected="true" data-tab="search" id="tab-search">Search</button>
+    <button role="tab" aria-selected="false" data-tab="quality" id="tab-quality">Search quality</button>
+  </nav>
+  <div class="who" id="who"></div>
+</header>
+
+<main id="search">
+  <h1>Find the runbook section you need</h1>
+  <p class="sub" id="corpus">Searching the payments wiki.</p>
+  <form class="q" id="ask">
+    <input id="question" name="question" autocomplete="off" placeholder="Ask the way you would ask a teammate" aria-label="Question">
+    <button type="submit">Search</button>
+  </form>
+  <div class="ways" id="ways"><span class="lbl">Search with</span></div>
+  <div class="try" id="try"><span>Labelled questions:</span></div>
+  <div id="verdict"></div>
+  <div class="count" id="count"></div>
+  <ol class="results" id="results"></ol>
+</main>
+
+<main id="quality" hidden>
+  <h1>Search quality</h1>
+  <p class="sub" id="qsub">Every labelled question, searched four ways.</p>
+  <div id="report"><p class="measuring">Open this tab to measure.</p></div>
+</main>
+
+<script>
+const NAMES = { keyword: "Keyword", embedding: "Embedding", hybrid: "Hybrid", rerank: "Hybrid + rerank" };
+const KS = [1, 3, 5, 10];
+let room = null, how = "rerank", report = null;
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+const post = (url, body) => fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }).then((r) => r.json());
+
+// Highlight the question's own words in a snippet, the way a search page shows why a result matched.
+function highlight(text, question) {
+  const words = [...new Set(question.toLowerCase().match(/[a-z0-9-]{4,}/g) || [])];
+  let html = esc(text);
+  for (const w of words) html = html.replace(new RegExp(`\\b(${w.replace(/[-]/g, "\\-")})`, "gi"), "<mark>$1</mark>");
+  return html;
+}
+
+async function load() {
+  room = await fetch("/api/room").then((r) => r.json());
+  $("corpus").textContent = `Searching ${room.sections} sections across ${room.docs.length} runbooks from the payments wiki.`;
+  $("who").textContent = `${room.questions.length} labelled questions`;
+  for (const way of room.ways) {
+    const b = document.createElement("button");
+    b.type = "button"; b.textContent = NAMES[way]; b.dataset.how = way;
+    b.setAttribute("aria-pressed", String(way === how));
+    b.onclick = () => { how = way; document.querySelectorAll("#ways button").forEach((x) => x.setAttribute("aria-pressed", String(x.dataset.how === how))); if ($("question").value.trim()) search(); };
+    $("ways").append(b);
+  }
+  for (const n of [0, 12, 2, 17]) {
+    const b = document.createElement("button");
+    b.type = "button"; b.textContent = room.questions[n]; b.className = "pick";
+    b.onclick = () => { $("question").value = room.questions[n]; search(); };
+    $("try").append(b);
+  }
+}
+
+async function search() {
+  const question = $("question").value.trim();
+  if (!question) return;
+  $("count").textContent = `Searching with ${NAMES[how]}...`;
+  const res = await post("/api/search", { question, how });
+  $("count").textContent = `Top ${res.hits.length} sections, ${NAMES[how]}`;
+  const rank = res.hits.findIndex((h) => h.id === res.label) + 1;
+  if (res.label) {
+    const others = room.ways.map((w) => `<span class="${w === how ? "now" : ""}">${NAMES[w]}: ${res.ranks[w] ? "rank " + res.ranks[w] : "not in top 10"}</span>`).join("");
+    $("verdict").innerHTML = rank
+      ? `<div class="verdict hit"><b class="n">Labelled section at rank ${rank}.</b> A person marked <span class="crumb">${esc(res.label)}</span> as the answer to this question.<div class="across">${others}</div></div>`
+      : `<div class="verdict miss"><b class="n">Labelled section missing from the top 5.</b> The answer is <span class="crumb">${esc(res.label)}</span>, and an answer built from these results cannot cite it.<div class="across">${others}</div></div>`;
+  } else {
+    $("verdict").innerHTML = `<div class="verdict">Nobody has labelled this question, so the page cannot tell whether these results are right.</div>`;
+  }
+  $("results").innerHTML = res.hits.map((h) => `
+    <li class="result ${h.id === res.label ? "labelled" : ""}">
+      <div class="crumb">${esc(h.doc)} &rsaquo; page ${h.page}</div>
+      <h3>${esc(h.section)}</h3>
+      <p>${highlight(h.text.length > 320 ? h.text.slice(0, 320) + "..." : h.text, question)}</p>
+      <div class="meta"><span>score ${h.score}</span>${h.id === res.label ? '<span class="tag">Labelled answer</span>' : ""}</div>
+    </li>`).join("") || `<p class="empty">No sections came back.</p>`;
+}
+
+// The recall@k chart: one line per way, so the gap between them is the lesson.
+function chart(r) {
+  const W = 640, H = 320, L = 48, R = 24, T = 20, B = 70;
+  const x = (i) => L + (i * (W - L - R)) / (KS.length - 1);
+  // The axis starts at half: every way finds most sections, and the gap that matters is near the top.
+  const y = (v) => T + (1 - (v / r.total - 0.5) / 0.5) * (H - T - B);
+  const styles = { keyword: 'stroke="#808080" stroke-dasharray="2 5"', embedding: 'stroke="#606060" stroke-dasharray="8 6"', hybrid: 'stroke="#414141"', rerank: 'stroke="#151515" stroke-width="4"' };
+  let s = `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Recall at k for each way of searching">`;
+  for (const v of [0.5, 0.6, 0.7, 0.8, 0.9, 1]) {
+    s += `<line x1="${L}" x2="${W - R}" y1="${y(v * r.total)}" y2="${y(v * r.total)}" stroke="#DFDFDF"/><text x="${L - 8}" y="${y(v * r.total) + 5}" text-anchor="end" font-size="13" fill="#606060">${Math.round(v * 100)}%</text>`;
+  }
+  KS.forEach((k, i) => { s += `<text x="${x(i)}" y="${H - 44}" text-anchor="middle" font-size="13" fill="#606060">top ${k}</text>`; });
+  for (const way of Object.keys(r.recall)) {
+    const pts = KS.map((k, i) => [x(i), y(r.recall[way][k])]);
+    s += `<polyline fill="none" stroke-width="2.5" ${styles[way]} points="${pts.map((p) => p.join(",")).join(" ")}"/>`;
+    s += pts.map((p) => `<circle cx="${p[0]}" cy="${p[1]}" r="${way === "rerank" ? 6 : 4}" fill="${way === "rerank" ? "#FAFF69" : "#FFFFFF"}" stroke="#151515" stroke-width="1.5"/>`).join("");
+  }
+  // A legend under the axis: the lines meet near the top, so labels at their ends would collide.
+  Object.keys(r.recall).forEach((way, i) => {
+    const lx = L + i * 140, ly = H - 4;
+    s += `<line x1="${lx}" x2="${lx + 28}" y1="${ly - 5}" y2="${ly - 5}" stroke-width="2.5" ${styles[way]}/><text x="${lx + 36}" y="${ly}" font-size="14" fill="#151515" font-weight="${way === "rerank" ? 700 : 400}">${NAMES[way]}</text>`;
+  });
+  return s + "</svg>";
+}
+
+function track(rank) {
+  if (!rank) return `<div class="track" title="not in top 10"><i class="miss"></i></div>`;
+  return `<div class="track" title="rank ${rank}"><i class="${rank <= 5 ? "top" : ""}" style="left:${2 + ((rank - 1) / 9) * 125}px"></i></div>`;
+}
+
+async function measure() {
+  if (report) return;
+  $("report").innerHTML = `<p class="measuring">Measuring ${room.questions.length} labelled questions four ways. The reranker reads 20 sections per question, so this takes about a minute.</p>`;
+  report = await fetch("/api/quality").then((r) => r.json());
+  const best = Object.keys(report.recall).at(-1);
+  const top = (k) => Math.max(...Object.values(report.recall).map((v) => v[k]));
+  $("qsub").textContent = `${report.total} questions a person labelled with the section that answers them, searched four ways.`;
+  const table = `<table class="recall"><thead><tr><th>Way</th>${KS.map((k) => `<th>top ${k}</th>`).join("")}</tr></thead><tbody>${Object.keys(report.recall).map((w) => `<tr><td>${NAMES[w]}</td>${KS.map((k) => `<td class="${report.recall[w][k] === top(k) ? "best" : ""}">${report.recall[w][k]} of ${report.total}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
+  const rows = report.rows.map((row) => `<tr class="${report.person.includes(row.question) ? "person" : ""}"><td class="qq">${esc(row.question)}</td>${Object.keys(report.recall).map((w) => `<td>${track(row.ranks[w])}</td>`).join("")}</tr>`).join("");
+  $("report").innerHTML = `
+    <div class="panel"><h2>Recall at top k</h2><p class="hint">How many labelled questions have their section within the top k results. An answer cites the top 5.</p>
+      <div class="chartwrap">${chart(report)}${table}</div></div>
+    <div class="panel" id="person"><h2>Needs a person (${report.person.length})</h2><p class="hint">Still outside the top 5 on ${NAMES[best]}. No search setting fixes these: either the label is wrong, or the runbook needs rewording.</p><div id="cases"></div></div>
+    <div class="panel"><h2>Every question</h2><p class="hint">Where each way placed the labelled section: rank 1 on the left, rank 10 on the right, red when it is not in the top 10.</p>
+      <div style="overflow-x:auto"><table class="ranks"><thead><tr><th>Question</th>${Object.keys(report.recall).map((w) => `<th>${NAMES[w]}</th>`).join("")}</tr></thead><tbody>${rows}</tbody></table></div></div>`;
+  for (const question of report.person) showCase(question, best);
+}
+
+// One case: the labelled section on the left, what the search put first on the right, and the decision.
+async function showCase(question, best) {
+  const res = await post("/api/search", { question, how: best });
+  const top = res.hits[0];
+  const done = room.decisions.find((d) => d.question === question);
+  const el = document.createElement("div");
+  el.className = "case";
+  el.innerHTML = `<p class="q">${esc(question)}</p>
+    <div class="compare">
+      <section><h4>Labelled answer</h4><span class="crumb">${esc(res.labelled.id)}</span><p>${esc(res.labelled.text)}</p></section>
+      <section><h4>Search put this first</h4><span class="crumb">${esc(top.id)}</span><p>${esc(top.text)}</p></section>
+    </div>
+    <div class="decide"></div>`;
+  const decide = el.querySelector(".decide");
+  const settle = (d) => { decide.innerHTML = `<span class="decided">${d.decision === "label" ? "Label moved to " + esc(d.passage) : "Runbook queued for rewording"}.</span>`; };
+  if (done) settle(done);
+  else {
+    decide.innerHTML = `<button class="primary" data-d="label">Move the label to the top result</button><button data-d="runbook">Reword the runbook</button>`;
+    decide.querySelectorAll("button").forEach((b) => b.onclick = async () => {
+      const passage = b.dataset.d === "label" ? top.id : res.label;
+      room.decisions = await post("/api/review", { question, decision: b.dataset.d, passage });
+      settle({ decision: b.dataset.d, passage });
+    });
+  }
+  $("cases").append(el);
+}
+
+document.querySelectorAll("nav button").forEach((b) => b.onclick = () => {
+  document.querySelectorAll("nav button").forEach((x) => x.setAttribute("aria-selected", String(x === b)));
+  $("search").hidden = b.dataset.tab !== "search";
+  $("quality").hidden = b.dataset.tab !== "quality";
+  if (b.dataset.tab === "quality") measure();
+});
+$("ask").onsubmit = (e) => { e.preventDefault(); search(); };
+load();
+</script>
+</body>
+</html>

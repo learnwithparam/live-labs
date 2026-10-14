@@ -1,0 +1,40 @@
+{"question": "We got RECON-MISMATCH-22 this morning. What do I do with it?", "passage": "reconciliation-job#recon-mismatch-22"}
+{"question": "What does RECON-MISMATCH-17 mean?", "passage": "reconciliation-job#recon-mismatch-17"}
+{"question": "Checkout is returning AUTH-503 for a lot of shoppers. What is that?", "passage": "card-auth-gateway#error-codes"}
+{"question": "What is the exact kcat-skip command?", "passage": "kafka-consumer-lag#poison-message"}
+{"question": "How do I use hookctl replay?", "passage": "webhook-dispatcher#replay-events"}
+{"question": "What does fxctl freeze do and how long does it last?", "passage": "fx-rates-service#freeze-rates"}
+{"question": "When should I run redisctl add-shard?", "passage": "idempotency-cache#alert-idemcachememoryhigh"}
+{"question": "What does patronictl failover need as the candidate?", "passage": "postgres-failover#fail-over"}
+{"question": "How do I run authctl route?", "passage": "card-auth-gateway#acquirer-failover"}
+{"question": "What is the reconctl rerun syntax?", "passage": "reconciliation-job#rerun"}
+{"question": "What do I do when IdemCacheMemoryHigh fires?", "passage": "idempotency-cache#alert-idemcachememoryhigh"}
+{"question": "PayoutWriterErrorRate fired. Where do I look first?", "passage": "payout-writer-runbook#alert-payoutwritererrorrate"}
+{"question": "The consumer is stuck on one bad event it cannot read. How do I get past it?", "passage": "kafka-consumer-lag#poison-message"}
+{"question": "A merchant says our notifications stopped reaching them three days ago. Why?", "passage": "webhook-dispatcher#retries"}
+{"question": "Can I just wipe the Redis keys to free memory?", "passage": "idempotency-cache#never-flush"}
+{"question": "Is it fine to type an exchange rate in by hand while the providers are down?", "passage": "fx-rates-service#manual-rate"}
+{"question": "How quickly do I have to respond when I get paged at night?", "passage": "on-call-handbook#response-time"}
+{"question": "I need to read the production database during an outage. How do I get in?", "passage": "access-and-secrets#break-glass-access"}
+{"question": "Someone posted an API token in a Jira comment. What now?", "passage": "access-and-secrets#secret-rotation"}
+{"question": "A log line has a whole credit card number in it. How serious is that?", "passage": "data-retention#masking-in-logs"}
+{"question": "A customer wants everything we hold about them erased. How long do we have?", "passage": "data-retention#deletion-requests"}
+{"question": "How long do we have to keep the books?", "passage": "data-retention#retention"}
+{"question": "Can I swap my on-call week with a teammate?", "passage": "on-call-handbook#swapping-shifts"}
+{"question": "Do I get paid extra for being on call on Saturday?", "passage": "on-call-handbook#weekend-pay"}
+{"question": "Who do I call if the secondary on-call does not pick up?", "passage": "on-call-handbook#escalation-chain"}
+{"question": "When does the database replica count as caught up enough to promote?", "passage": "postgres-failover#check-replica-lag"}
+{"question": "Shoppers wait forever at checkout when the acquirer hangs. What protects them?", "passage": "card-auth-gateway#circuit-breaker"}
+{"question": "Can I roll out a flag to every merchant on Saturday?", "passage": "deploy-policy#feature-flags"}
+{"question": "Can a schema change go out together with the code that reads the new column?", "passage": "deploy-policy#database-migrations"}
+{"question": "How do I know a new version is safe before every pod gets it?", "passage": "deploy-policy#canary"}
+{"question": "The bank never sent last night's file. Does the matching job just fail?", "passage": "reconciliation-job#bank-file-late"}
+{"question": "What happens to retried payments if the Redis primary dies?", "passage": "idempotency-cache#failover"}
+{"question": "Only us-east-1 payouts are failing. How do I stop sending from that region?", "passage": "payout-writer-runbook#mitigation"}
+{"question": "Ledger writes fail in eu-west-1 only. How do I take that region out?", "passage": "ledger-writer-runbook#mitigation"}
+{"question": "Payout errors began right after this morning's release. What first?", "passage": "payout-writer-runbook#rollback"}
+{"question": "Ledger writer errors started after a deploy an hour ago. Roll back how?", "passage": "ledger-writer-runbook#rollback"}
+{"question": "The banking partner has an outage. Should I retry the transfers by hand?", "passage": "payout-writer-runbook#partner-outage"}
+{"question": "Ledger writer errors are still above 2% after twenty minutes. Who do I page?", "passage": "ledger-writer-runbook#escalation"}
+{"question": "Is a slow ledger-pg primary a reason to fail over?", "passage": "postgres-failover#when-to-fail-over"}
+{"question": "Merchant wants a new signing secret. Will their old webhooks break?", "passage": "webhook-dispatcher#signing-secret"}
