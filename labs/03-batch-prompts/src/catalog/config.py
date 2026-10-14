@@ -5,6 +5,7 @@ from pathlib import Path
 
 DEFAULT_BASE_URL = "https://openrouter.ai/api/v1"
 DEFAULT_MODEL = "google/gemini-2.5-flash-lite"
+BATCH_MODEL = "claude-haiku-5-5"
 
 
 def load_dotenv(path: Path = Path(".env")) -> None:
@@ -24,3 +25,12 @@ def settings() -> tuple[str, str, str]:
     base_url = os.environ.get("LLM_BASE_URL") or DEFAULT_BASE_URL
     model = os.environ.get("LLM_MODEL") or DEFAULT_MODEL
     return base_url, key, model
+
+
+def batch_settings() -> tuple[str, str]:
+    """The batch step runs on Anthropic's Message Batches API, with its own key."""
+    load_dotenv()
+    key = os.environ.get("ANTHROPIC_API_KEY", "")
+    if not key:
+        raise SystemExit("ANTHROPIC_API_KEY is not set. Add it to .env to submit a batch.")
+    return key, os.environ.get("BATCH_MODEL") or BATCH_MODEL

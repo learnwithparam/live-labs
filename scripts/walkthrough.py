@@ -49,7 +49,7 @@ def learner_env(env_file: Path | None) -> dict[str, str]:
     if env_file:
         extra = read_env_file(env_file)
         env.setdefault("LLM_API_KEY", extra.get("LLM_API_KEY") or extra.get("OPENROUTER_API_KEY", ""))
-        for key in ("LLM_BASE_URL", "LLM_MODEL"):
+        for key in ("LLM_BASE_URL", "LLM_MODEL", "ANTHROPIC_API_KEY"):
             if key in extra:
                 env.setdefault(key, extra[key])
     return env

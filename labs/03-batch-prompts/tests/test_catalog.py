@@ -106,42 +106,40 @@ def test_a_person_is_needed_only_when_vegan_cannot_be_read_or_nothing_came_back(
 
 
 class FakeBatches:
-    """An OpenAI-compatible files and batches API: takes the file, then hands back one result per line."""
+    """Anthropic's Message Batches API: takes the requests, then hands back one tool call per request."""
 
     def __init__(self):
-        self.status, self.uploaded = "in_progress", b""
-        self.files = SimpleNamespace(create=self.upload, content=self.content)
-        self.batches = SimpleNamespace(create=self.start, retrieve=self.retrieve)
+        self.status, self.requests = "in_progress", []
+        self.messages = SimpleNamespace(batches=SimpleNamespace(create=self.create, retrieve=self.retrieve, results=self.results))
 
-    def upload(self, file, purpose):
-        assert purpose == "batch"
-        self.uploaded = file[1]
-        return SimpleNamespace(id="file-1")
-
-    def start(self, input_file_id, endpoint, completion_window):
-        assert (input_file_id, endpoint, completion_window) == ("file-1", "/v1/chat/completions", "24h")
-        return SimpleNamespace(id="batch-1")
+    def create(self, requests):
+        self.requests = requests
+        return SimpleNamespace(id="msgbatch-1")
 
     def retrieve(self, batch_id):
-        return SimpleNamespace(status=self.status, output_file_id="file-2")
+        return SimpleNamespace(processing_status=self.status)
 
-    def content(self, file_id):
-        rows = []
-        for line in self.uploaded.decode().splitlines():
-            request = json.loads(line)
-            reply = {"products": [answer(s) for s in skus_in(request["body"])]}
-            body = {"choices": [{"message": {"content": json.dumps(reply)}}], "usage": {"cost": 0.00005}}
-            rows.append(json.dumps({"custom_id": request["custom_id"], "response": {"body": body}}))
-        return SimpleNamespace(text="\n".join(rows))
+    def results(self, batch_id):
+        for request in self.requests:
+            params = request["params"]
+            assert params["tool_choice"] == {"type": "tool", "name": "pack"} and params["tools"][0]["name"] == "pack"
+            call = SimpleNamespace(type="tool_use", input={"products": [answer(s) for s in skus_in(params)]})
+            message = SimpleNamespace(content=[call], usage=SimpleNamespace(input_tokens=1_000_000, output_tokens=1_000_000))
+            yield SimpleNamespace(custom_id=request["custom_id"], result=SimpleNamespace(type="succeeded", message=message))
+        yield SimpleNamespace(custom_id="pack-9999", result=SimpleNamespace(type="errored"))
 
 
 def test_the_same_file_goes_to_a_batch_api_and_comes_back_as_checkpoint_rows():
     lines, api = batch_lines(PRODUCTS, "any-model", 24), FakeBatches()
-    assert submit(lines, api) == "batch-1" and len(api.uploaded.decode().splitlines()) == 10
-    assert collect("batch-1", api) is None
-    api.status = "completed"
-    rows = collect("batch-1", api)
-    assert [r["custom_id"] for r in rows] == [line["custom_id"] for line in lines]
+    assert submit(lines, api, "claude-haiku-5-5", 5) == "msgbatch-1" and len(api.requests) == 5
+    assert {r["params"]["model"] for r in api.requests} == {"claude-haiku-5-5"}
+    assert api.requests[0]["params"]["system"] == INSTRUCTIONS
+    assert collect("msgbatch-1", api) is None
+    api.status = "ended"
+    rows, errors = collect("msgbatch-1", api)
+    assert errors == ["pack-9999: errored"]
+    assert [r["custom_id"] for r in rows] == [line["custom_id"] for line in lines[:5]]
+    assert rows[0]["cost"] == pytest.approx(0.30)  # a million tokens each way at the batch price
     kept, dropped = parse(rows[0]["reply"], skus_in(lines[0]["body"]))
     assert len(kept) == 24 and not dropped
 

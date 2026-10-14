@@ -73,33 +73,69 @@ def run_file(path: Path, catalogue: Path) -> int:
     return 0
 
 
-def submit_file(path: Path) -> int:
+BATCH_CHECKPOINT = OUT / "batch-done.jsonl"
+BATCH_ID = OUT / "batch-id.txt"
+
+
+def batch_client():
+    from anthropic import Anthropic
+
+    from catalog.config import batch_settings
+
+    key, model = batch_settings()
+    return Anthropic(api_key=key), model
+
+
+def submit_file(path: Path, limit: int) -> int:
     from catalog.fill import submit
 
-    client, _ = client_and_model()
-    try:
-        batch_id = submit(read_file(path), client)
-    except Exception as error:  # noqa: BLE001 - any refusal means this endpoint has no batch API
-        print(f"this endpoint has no batch API ({type(error).__name__}); `catalog run {path}` sends the same file now")
-        return 1
-    print(f"submitted batch {batch_id}; `catalog collect {batch_id}` once it completes, within 24 hours")
+    client, model = batch_client()
+    batch_id = submit(read_file(path), client, model, limit)
+    BATCH_ID.write_text(batch_id)
+    # A new batch replaces the last one's results, so collect never scores rows from an older batch.
+    BATCH_CHECKPOINT.unlink(missing_ok=True)
+    print(f"submitted {min(limit, len(read_file(path)))} requests to {model} as batch {batch_id}")
+    print("`catalog collect --wait` once it ends, within 24 hours")
     return 0
 
 
-def collect_batch(batch_id: str) -> int:
-    from catalog.fill import collect, skus_in
+def collect_batch(batch_id: str | None, path: Path, catalogue: Path, wait: bool) -> int:
+    import time
 
-    client, _ = client_and_model()
-    rows = collect(batch_id, client)
-    if rows is None:
+    from catalog.fill import collect, filled_in, read_jsonl, skus_in
+    from catalog.score import load_products, load_supplied, tally
+
+    client, model = batch_client()
+    if not batch_id and not BATCH_ID.exists():
+        print("no batch submitted yet: run `catalog submit FILE` first")
+        return 1
+    batch_id = batch_id or BATCH_ID.read_text().strip()
+    result = collect(batch_id, client)
+    if result is None and wait:
+        print(f"waiting for batch {batch_id} to end")
+    while result is None and wait:
+        time.sleep(10)
+        result = collect(batch_id, client)
+    if result is None:
         print(f"batch {batch_id} is still running")
         return 1
-    lines = {line["custom_id"]: line for line in read_file(OUT / "batch.jsonl")}
-    CHECKPOINT.parent.mkdir(parents=True, exist_ok=True)
-    with CHECKPOINT.open("a") as out:
+    rows, errors = result
+    for error in errors:
+        print(f"failed {error}")
+    if not rows:
+        return 1
+    lines = {line["custom_id"]: line for line in read_file(path)}
+    done = {row["custom_id"] for row in read_jsonl(BATCH_CHECKPOINT)}
+    BATCH_CHECKPOINT.parent.mkdir(parents=True, exist_ok=True)
+    with BATCH_CHECKPOINT.open("a") as out:
         for row in rows:
-            out.write(json.dumps({**row, "skus": skus_in(lines[row["custom_id"]]["body"])}) + "\n")
-    print(f"collected {len(rows)} results into {CHECKPOINT}; `catalog run out/batch.jsonl` settles them")
+            if row["custom_id"] not in done:
+                out.write(json.dumps({**row, "skus": skus_in(lines[row["custom_id"]]["body"])}) + "\n")
+    filled, cost, _ = filled_in(BATCH_CHECKPOINT)
+    asked = {sku for row in read_jsonl(BATCH_CHECKPOINT) for sku in row["skus"]}
+    products = [p for p in load_products(catalogue) if p.sku in asked]
+    supplied = {sku: row for sku, row in load_supplied(SUPPLIED).items() if sku in asked}
+    report(f"batch on {model}", len(rows), tally(products, filled, supplied, cost))
     return 0
 
 
@@ -127,8 +163,14 @@ def main() -> None:
     run = sub.add_parser("run")
     run.add_argument("path", type=Path)
     run.add_argument("--catalogue", type=Path, default=CATALOGUE)
-    sub.add_parser("submit").add_argument("path", type=Path)
-    sub.add_parser("collect").add_argument("batch_id")
+    send = sub.add_parser("submit")
+    send.add_argument("path", type=Path)
+    send.add_argument("--limit", type=int, default=5, help="requests to send; 5 keeps a demo under a cent")
+    take = sub.add_parser("collect")
+    take.add_argument("batch_id", nargs="?", help="defaults to the last batch submitted")
+    take.add_argument("--file", type=Path, default=OUT / "batch.jsonl")
+    take.add_argument("--catalogue", type=Path, default=CATALOGUE)
+    take.add_argument("--wait", action="store_true", help="poll every 10 seconds until the batch ends")
     sub.add_parser("serve").add_argument("--port", type=int, default=8000)
     args = parser.parse_args()
     if args.command == "one":
@@ -138,7 +180,7 @@ def main() -> None:
     if args.command == "run":
         sys.exit(run_file(args.path, args.catalogue))
     if args.command == "submit":
-        sys.exit(submit_file(args.path))
+        sys.exit(submit_file(args.path, args.limit))
     if args.command == "collect":
-        sys.exit(collect_batch(args.batch_id))
+        sys.exit(collect_batch(args.batch_id, args.file, args.catalogue, args.wait))
     sys.exit(serve_page(args.port))

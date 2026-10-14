@@ -42,10 +42,10 @@ The catalogue is synthetic and seeded: `python3 data/make_catalogue.py` writes t
 
 ## Words you will use
 
-- **Batch file**: one JSON line per request, in the format OpenAI's batch API reads. Other providers read the same shape.
+- **Batch file**: one JSON line per request, each with a `custom_id`. Batch APIs read the same shape.
 - **Packing**: many products in one request under one copy of the instructions, so the instructions are paid for once per pack.
 - **Checkpoint**: a file of finished results. A rerun reads it and sends only what is missing.
-- **Batch API**: a provider endpoint that takes a whole batch file and returns the results within a day, usually at about half price.
+- **Batch API**: a provider endpoint that takes a whole batch file and returns the results within a day, at half the live price on Anthropic's Message Batches API.
 - **Needs a person**: a product whose attributes the text cannot settle, such as vegan with no ingredients listed.
 
 ## Set up
@@ -58,7 +58,8 @@ measured on `google/gemini-2.5-flash-lite` through [OpenRouter](https://openrout
 cp env.example .env
 ```
 
-Put your key after `LLM_API_KEY=` in `.env`. Then install:
+Put your key after `LLM_API_KEY=` in `.env`, and an Anthropic key after `ANTHROPIC_API_KEY=` for
+step 4 (five packs cost about a fifth of a cent). Then install:
 
 ```bash
 uv sync
@@ -106,8 +107,8 @@ uv run catalog run out/batch.jsonl
 
 Expect: /sent \d+ requests/
 
-In our runs packing cost $0.0311 per thousand products, about 46% less, and 232 of 237 attributes
-matched, as many as one per request. Run it again, as you would after a crash:
+In our runs packing cost $0.0311 to $0.0337 per thousand products, 41 to 46% less, and 232 of 237
+attributes matched, as many as one per request. Run it again, as you would after a crash:
 
 ```bash
 uv run catalog run out/batch.jsonl
@@ -119,20 +120,28 @@ Nothing is sent twice. A run that dies at pack 3,000 of 40,000 loses one pack, n
 
 ## 4. Hand the file to a batch API
 
-`submit` uploads the same file to a provider's batch endpoint, and `collect` writes the results into
-the same checkpoint, so `run` settles them exactly as before:
+`submit` sends the same packs to Anthropic's Message Batches API on `claude-haiku-5-5`, at half its
+live price. It needs `ANTHROPIC_API_KEY` in `.env` and sends at most five packs unless you pass
+`--limit`:
 
 ```bash
 uv run catalog submit out/batch.jsonl
 ```
 
-Expect: /no batch API|submitted batch/
+Expect: /submitted 5 requests to claude-haiku-5-5/
 
-OpenRouter has no batch endpoint, so on the lab's setup this prints "this endpoint has no batch API"
-and you keep the run from step 3. With a key for an OpenAI-compatible batch API, point
-`LLM_BASE_URL` at it, submit, and run `uv run catalog collect <id>` within a day. Those endpoints
-usually charge about half. We did not measure that discount here; the 46% above comes from packing
-alone.
+`collect` waits for the batch to end, writes each result to `out/batch-done.jsonl` and scores the
+products it holds against the retailer:
+
+```bash
+uv run catalog collect --wait
+```
+
+Expect: /attributes match the retailer/
+
+In our runs the five packs took five to seven minutes and cost $0.0021, $0.0175 per thousand
+products, with 116 or 117 of 119 attributes matching and 8 or 9 of 120 products needing a person. The same packs live on
+the step 3 model cost $0.0311 per thousand. The batch waits; nothing about the file changes.
 
 ## 5. See it
 

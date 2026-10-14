@@ -54,7 +54,7 @@ def one_lines(products: list[Product], model: str) -> list[dict]:
 
 
 def batch_lines(products: list[Product], model: str, size: int) -> list[dict]:
-    """The batch file: one request per pack, in the OpenAI batch format every batch API reads."""
+    """The batch file: one request per pack, each line keyed by `custom_id`."""
     packs = [products[i : i + size] for i in range(0, len(products), size)]
     return [{"custom_id": f"pack-{n:04d}", "method": "POST", "url": ENDPOINT, "body": pack_body(pack, model)} for n, pack in enumerate(packs)]
 
@@ -106,25 +106,43 @@ def read_jsonl(path: Path) -> list[dict]:
     return [json.loads(line) for line in path.read_text().splitlines() if line.strip()] if path.exists() else []
 
 
-def submit(lines: list[dict], client) -> str:
-    """Hand the same file to a provider's batch API (OpenAI-compatible files and batches endpoints)."""
-    data = "".join(json.dumps(line) + "\n" for line in lines).encode()
-    uploaded = client.files.create(file=("batch.jsonl", data), purpose="batch")
-    return client.batches.create(input_file_id=uploaded.id, endpoint=ENDPOINT, completion_window="24h").id
+# Claude Haiku 5.5 on the Message Batches API, dollars per token: half the live price
+# (platform.claude.com/docs/en/about-claude/pricing, prompts under 100K tokens).
+BATCH_PRICE_IN, BATCH_PRICE_OUT = 0.05e-6, 0.25e-6
 
 
-def collect(batch_id: str, client) -> list[dict] | None:
-    """The provider's results as checkpoint rows, or None while the batch is still running."""
-    batch = client.batches.retrieve(batch_id)
-    if batch.status != "completed":
+def anthropic_params(body: dict, model: str) -> dict:
+    """One line of the batch file as a Messages request. The reply schema becomes a tool the model must call."""
+    system = next(m["content"] for m in body["messages"] if m["role"] == "system")
+    user = [m for m in body["messages"] if m["role"] != "system"]
+    schema = body["response_format"]["json_schema"]
+    tool = {"name": schema["name"], "description": "Record the filled attributes.", "input_schema": schema["schema"]}
+    return {"model": model, "max_tokens": 8192, "system": system, "messages": user,
+            "tools": [tool], "tool_choice": {"type": "tool", "name": tool["name"]}}
+
+
+def submit(lines: list[dict], client, model: str, limit: int) -> str:
+    """Hand the first `limit` lines of the file to Anthropic's Message Batches API."""
+    requests = [{"custom_id": line["custom_id"], "params": anthropic_params(line["body"], model)} for line in lines[:limit]]
+    return client.messages.batches.create(requests=requests).id
+
+
+def collect(batch_id: str, client) -> tuple[list[dict], list[str]] | None:
+    """The batch's results as checkpoint rows and the reasons any request failed, or None while it is still
+    running. A failed request is left out of the rows, so the next run retries it."""
+    if client.messages.batches.retrieve(batch_id).processing_status != "ended":
         return None
-    rows = []
-    for line in client.files.content(batch.output_file_id).text.splitlines():
-        result = json.loads(line)
-        body = result["response"]["body"]
-        rows.append({"custom_id": result["custom_id"], "reply": body["choices"][0]["message"]["content"], "cost": body.get("usage", {}).get("cost", 0.0)})
-    return rows
-
+    rows, errors = [], []
+    for result in client.messages.batches.results(batch_id):
+        if result.result.type != "succeeded":
+            error = getattr(result.result, "error", None)
+            errors.append(f"{result.custom_id}: {error.error.message if error else result.result.type}")
+            continue
+        message = result.result.message
+        call = next(block for block in message.content if block.type == "tool_use")
+        cost = message.usage.input_tokens * BATCH_PRICE_IN + message.usage.output_tokens * BATCH_PRICE_OUT
+        rows.append({"custom_id": result.custom_id, "reply": json.dumps(call.input), "cost": cost})
+    return rows, errors
 
 
 def filled_in(done_path: Path) -> tuple[dict[str, Attributes], float, list[str]]:
