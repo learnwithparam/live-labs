@@ -108,7 +108,7 @@ Expect: /workflow\s+published without an edit: \d+ of 12/
 
 In our runs one prompt published 6 to 9 of 12 without an edit and put 3 to 6 live with an error. The
 workflow published 10 or 11 of 12, held at most 1 for a person, and put at most 1 live with an error.
-It cost about 0.7 of a cent a listing against 0.08. `out/review.json` holds every listing and every edit.
+It cost 0.7 to 0.9 of a cent a listing against 0.08. `out/review.json` holds every listing and every edit.
 
 ## 4. See it
 
