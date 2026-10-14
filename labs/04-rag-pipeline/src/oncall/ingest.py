@@ -57,8 +57,11 @@ def by_section(path: Path) -> list[Passage]:
             passages.append(Passage(f"{path.stem}#{slug(heading)}", doc, heading, page, join(body)))
 
     for line in lines(path):
+        # The header and footer repeat on every page. Left in, they would match every question a little.
         if line.size <= FURNITURE or line.size == TITLE:
             continue
+        # A heading closes the passage before it and opens the next, so a passage never spans two topics
+        # and its id names the section a person opens to check.
         if line.size == HEADING:
             close()
             heading, page, body = line.text, line.page, []
@@ -73,6 +76,7 @@ def by_size(path: Path, size: int = 300) -> list[Passage]:
     passages = []
     for number, page in enumerate(PdfReader(path).pages, 1):
         text = page.extract_text()
+        # The cut falls wherever the count lands: inside a command, or after the page header.
         for start in range(0, len(text), size):
             passages.append(Passage(f"{path.stem}#p{number}-{start // size + 1}", path.stem, f"characters {start} to {start + size}", number, text[start : start + size]))
     return passages

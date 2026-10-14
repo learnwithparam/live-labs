@@ -4,24 +4,41 @@ import json
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
-from oncall.desk import Desk
-from oncall.score import load_questions
+from oncall.desk import Desk, row
+from oncall.score import judge, load_questions
 
 PAGE = Path(__file__).with_name("page.html")
 WAYS = ("size", "section")
 
 
 class Room:
-    """The docs, the questions, the model, and each way's results once run."""
+    """The docs, the questions, the model, and each way's answers once given."""
 
     def __init__(self, docs: Path, questions: Path, client, model: str):
         self.docs, self.questions = docs, load_questions(questions)
         self.client, self.model = client, model
+        self.desks: dict[str, Desk] = {}
         self.runs: dict[str, dict] = {}
+        self.answers: dict[tuple[str, str], dict] = {}
+
+    def desk(self, how: str) -> Desk:
+        # Ingest once per way: reading six PDFs is cheap, but not on every message.
+        if how not in self.desks:
+            self.desks[how] = Desk(self.docs, self.client, self.model, how)
+        return self.desks[how]
+
+    def ask(self, how: str, question: str) -> dict:
+        """One message in the channel. A question from the set is judged against its fact; any other is answered unjudged."""
+        key = (how, question)
+        if key not in self.answers:
+            reply = self.desk(how).ask(question)
+            known = next((q for q in self.questions if q.question == question), None)
+            self.answers[key] = row(question, reply, judge(known, reply) if known else None)
+        return self.answers[key]
 
     def run(self, how: str) -> dict:
         if how not in self.runs:
-            self.runs[how] = Desk(self.docs, self.client, self.model, how).run(self.questions)
+            self.runs[how] = self.desk(how).run(self.questions)
         return self.runs[how]
 
 
@@ -59,6 +76,13 @@ def handler(room: Room) -> type[BaseHTTPRequestHandler]:
         def do_POST(self) -> None:
             if not self.local():
                 return self.send(403, b"forbidden", "text/plain")
+            if self.path.startswith("/api/ask/"):
+                how = self.path.removeprefix("/api/ask/")
+                length = int(self.headers.get("Content-Length") or 0)
+                question = json.loads(self.rfile.read(length) or b"{}").get("question", "").strip()
+                if how not in WAYS or not question:
+                    return self.send(400, b"a way and a question", "text/plain")
+                return self.send_json(room.ask(how, question))
             how = self.path.removeprefix("/api/answer/")
             if how not in WAYS:
                 return self.send(404, b"not found", "text/plain")

@@ -108,6 +108,22 @@ def test_the_page_answers_both_ways_and_shows_who_goes_to_a_person():
     assert 'id="tally"' in page and "A person decides" in page and "No person needed" in page
 
 
+def test_the_channel_answers_one_message_and_judges_it_only_when_the_set_has_its_fact(monkeypatch):
+    skip = next(q for q in FACTS if "skip it" in q)
+    server, base = start(Room(DOCS, QUESTIONS, FakeClient(), "any-model"))
+    ask = lambda how, question: json.loads(urllib.request.urlopen(urllib.request.Request(
+        f"{base}/api/ask/{how}", data=json.dumps({"question": question}).encode(), method="POST")).read())
+    try:
+        section, tls = ask("section", skip), ask("section", next(q for q in FACTS if "TLS" in q))
+        monkeypatch.setitem(FACTS, "Who wrote the ledger-writer runbook?", None)  # the fake can answer it; the set never approved it
+        outside = ask("section", "Who wrote the ledger-writer runbook?")
+    finally:
+        server.shutdown()
+    assert section["supported"] and section["cited"] == ["kafka-consumer-lag#poison-message"]
+    assert tls["supported"] is False and "instead of guessing" in tls["reason"]
+    assert outside["supported"] is None and outside["reason"] is None
+
+
 @pytest.mark.parametrize("headers", [{"Host": "attacker.example:80"}, {"Origin": "http://attacker.example"}])
 def test_the_page_refuses_other_sites(headers):
     server, base = start(Room(DOCS, QUESTIONS, FakeClient(), "any-model"))

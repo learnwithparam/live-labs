@@ -38,8 +38,10 @@ class Verdict:
 def judge(question: Question, reply: Reply) -> Verdict:
     """An answer stands only when it states the fact and a passage it cites holds that fact.
     Everything else goes to a person, with the reason."""
+    # Only ids the model was actually shown count: a made-up id cannot hold anything.
     shown = {p.id: p.text for p in reply.passages}
     cited = {pid: shown[pid] for pid in reply.cited if pid in shown}
+    # Saying "not covered" is the right answer when no runbook covers it; a person still takes the question.
     if reply.answer is None:
         if question.fact is None:
             return Verdict(False, "the docs do not cover this, and the answer says so instead of guessing", None, cited)
@@ -48,8 +50,10 @@ def judge(question: Question, reply: Reply) -> Verdict:
         return Verdict(False, "answered a question the docs do not cover: nothing it cites can hold the answer", None, cited)
     if not cited:
         return Verdict(False, "the answer cites no passage it was given", question.fact, cited)
+    # The citation must hold the fact itself. A chunk cut at settlement-co does not, even if the answer is right.
     if not any(holds(text, question.fact) for text in cited.values()):
         return Verdict(False, f"no cited passage holds {question.fact!r}", question.fact, cited)
+    # And the answer must say it: a right citation under a wrong command still sends the wrong command.
     if not holds(reply.answer, question.fact):
         return Verdict(False, f"the cited passage holds {question.fact!r} but the answer does not state it", question.fact, cited)
     return Verdict(True, None, question.fact, cited)

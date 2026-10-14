@@ -34,10 +34,12 @@ ledger-writer drains a region with `ledgerctl drain`, payout-writer pauses one w
 
 ## What you will build
 
-An on-call desk. It answers every question twice, once from 300-character chunks and once from
-section passages, and shows which answers stand on their citation and which go to a person.
+Ledgerline's #payments-oncall channel with a runbook bot in it. You ask a question, the bot answers
+from the runbook PDFs and cites the section it used, and you can open the citation to see the fact.
+When the cited passage does not hold the fact, or no runbook covers the question, the bot hands it to
+a person.
 
-<img src="docs/oncall-desk.jpg" alt="The on-call desk: supported citations for each way of cutting the docs, the questions with a dot each, and an answer whose cited chunk cuts the command in two, so it goes to a person" width="720">
+<img src="docs/oncall-desk.jpg" alt="The #payments-oncall channel: the bot read the runbooks as 300-character chunks, so the skip command it gives is cut to settlement-co, and the open citation shows the chunk ends mid-name" width="720">
 
 The docs are synthetic: `uv run --with reportlab==4.4.4 python data/make_docs.py` writes the same PDFs.
 
@@ -148,18 +150,19 @@ answer. Those two go to a person: 17 of 19 answered with a supporting citation, 
 
 ## 5. See it
 
-The desk page is the same code behind one page. Start it and open http://127.0.0.1:8000:
+The channel is the same code behind one page. Start it and open http://127.0.0.1:8000:
 
 ```sh
 uv run oncall serve
 ```
 
-Press **Answer from 300-character chunks**, then **Answer from section passages**. The header counts
-the answers that stand on their citation and the questions that go to a person. Pick a green
-question: the cited passage is shown with the fact marked, and no person is needed. Pick the TLS
-certificate question: no runbook covers it, the desk says so instead of guessing, and the box says
-what the person decides. Switch back to the chunks to see an answer whose citation cuts the command in
-two. Stop the page with Ctrl-C.
+Pick **300-character chunks** at the top, then press the suggested question about the stuck
+partition. The command in the reply is cut to `settlement-co`, and the reply says it needs a person:
+press a citation to see the chunk end mid-name. Pick **Sections** and ask again: the whole command
+comes back, and the cited passage marks it. Ask the TLS certificate question: no runbook covers it, the
+bot says so instead of guessing, and **Hand to the on-call lead** posts the handoff. Press **Check
+every question** to count the answers that stand on their citation and list the ones that need a
+person. Stop the page with Ctrl-C.
 
 ## 6. Prove it
 

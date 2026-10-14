@@ -18,8 +18,10 @@ class Index:
 
     def __init__(self, passages: list[Passage]):
         self.passages = passages
+        # The heading is indexed with the text: "Poison message" is the words an engineer asks with.
         counts = [Counter(words(f"{p.section} {p.text}")) for p in passages]
         seen = Counter(w for c in counts for w in c)
+        # A word in every passage (ledger, payments) says nothing; a rare one (kcat, freeze) says a lot.
         self.idf = {w: math.log(len(passages) / n) + 1 for w, n in seen.items()}
         self.vectors = [self.weigh(c) for c in counts]
 
@@ -31,5 +33,6 @@ class Index:
     def search(self, question: str, k: int = 4) -> list[Passage]:
         query = self.weigh(Counter(words(question)))
         scores = [sum(query.get(w, 0.0) * v for w, v in vector.items()) for vector in self.vectors]
+        # Only passages that share a word with the question: an empty list lets the answer say "not covered".
         ranked = sorted(range(len(scores)), key=lambda i: -scores[i])
         return [self.passages[i] for i in ranked[:k] if scores[i] > 0]

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>On-call desk</title>
+<title>#payments-oncall</title>
 <style>
 /* Colours are the workshop tokens in design/tokens.json; a course test pins every hex here to that file. */
 :root {
@@ -13,137 +13,259 @@
   --sans: Inter, Helvetica, Arial, sans-serif; --mono: Inconsolata, "Courier New", Courier, monospace;
 }
 * { box-sizing: border-box }
-body { margin: 0; background: var(--paper); color: var(--ink); font: 15px/1.5 var(--sans) }
-header { display: flex; align-items: baseline; gap: 16px; padding: 18px 28px; border-bottom: 1px solid var(--line); background: var(--card) }
-header h1 { margin: 0; font-size: 20px }
-header .model { color: var(--muted); font-family: var(--mono) }
-header .spacer { flex: 1 }
-header .tally { font-weight: 700 }
-.controls { display: flex; gap: 14px; align-items: center; padding: 16px 28px 0 }
-.controls label { color: var(--muted); font-weight: 600 }
-select, button { font: inherit; border: 1px solid var(--ink); border-radius: 4px; padding: 7px 12px; background: var(--card); color: var(--ink) }
-button { font-weight: 600; cursor: pointer }
-button.primary { background: var(--accent) }
-button:disabled { opacity: .5; cursor: wait }
-.verdict { margin-left: auto; font-weight: 700; padding: 6px 12px; border: 2px solid currentColor; border-radius: 4px }
-main { display: grid; grid-template-columns: minmax(0, 0.8fr) 340px minmax(0, 1.4fr); gap: 20px; padding: 20px 28px }
-.panel { background: var(--card); border: 1px solid var(--line); border-radius: 4px; padding: 16px }
-.panel h2 { margin: 0 0 12px; font-size: 13px; text-transform: uppercase; color: var(--muted); font-weight: 600 }
-table { width: 100%; border-collapse: collapse; font-size: 14px }
-th { text-align: left; color: var(--muted); font-weight: 600; border-bottom: 1px solid var(--line); padding: 4px 6px }
-td { padding: 5px 6px; border-bottom: 1px solid var(--line) }
-td.num { font-family: var(--mono); text-align: right }
-.pass { color: var(--pass) } .fail { color: var(--fail) } .wait { color: var(--wait) }
-tr.worse td { font-weight: 700 } tr.worse td:first-child::after { content: "  worse"; color: var(--fail) }
-td.broke { color: var(--fail); font-weight: 700 } td.fixed { color: var(--pass); font-weight: 700 }
-ul.list { list-style: none; margin: 0; padding: 0; max-height: 520px; overflow: auto }
-ul.list button { width: 100%; text-align: left; border: 1px solid transparent; background: none; font-weight: 400; display: flex; gap: 8px; align-items: center; padding: 7px 8px }
-ul.list button[aria-current="true"] { background: var(--accent); border-color: var(--ink) }
-.dot { width: 9px; height: 9px; border-radius: 50%; margin-left: auto; flex: none; background: var(--line) }
-.dot.held { background: var(--pass) } .dot.person { background: var(--wait) }
-pre { font: 14px/1.5 var(--mono); white-space: pre-wrap; margin: 0 }
-.posting { background: var(--paper); border: 1px solid var(--line); border-radius: 4px; padding: 12px; max-height: 300px; overflow: auto; margin-bottom: 14px }
-.decide { margin-top: 14px; padding: 10px 12px; border: 2px solid var(--wait); border-radius: 4px }
-.decide b { color: var(--wait) }
-.held-note { margin-top: 14px; padding: 10px 12px; border: 2px solid var(--pass); border-radius: 4px; color: var(--pass); font-weight: 700 }
-.passage { background: var(--paper); border: 1px solid var(--line); border-radius: 4px; padding: 10px 12px; margin: 8px 0; font-size: 14px }
-.passage .where { color: var(--muted); font-family: var(--mono); font-size: 13px; margin-bottom: 4px }
-.passage mark { background: var(--accent); color: var(--ink) }
-.answer { font-size: 16px; margin: 0 0 12px }
-h3 { font-size: 13px; text-transform: uppercase; color: var(--muted); font-weight: 600; margin: 14px 0 4px }
-tr.best td { font-weight: 700 }
-.empty { color: var(--muted) }
+html, body { height: 100% }
+body { margin: 0; background: var(--card); color: var(--ink); font: 16px/1.5 var(--sans); display: grid; grid-template-columns: 252px minmax(0, 1fr) }
+button { font: inherit; color: inherit; cursor: pointer }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px }
+
+/* The workspace rail: the channels an on-call engineer lives in, and the runbooks the bot reads. */
+.side { background: var(--fill-dark); color: var(--paper); padding: 18px 12px; display: flex; flex-direction: column; gap: 22px; overflow: auto }
+.side .ws { font-size: 19px; font-weight: 800; padding: 0 8px }
+.side h2 { font-size: 13px; font-weight: 600; margin: 0 0 6px; padding: 0 8px }
+.side ul { list-style: none; margin: 0; padding: 0 }
+.side li { padding: 3px 8px; border-radius: 4px; font-size: 15px }
+.side li.on { background: var(--accent); color: var(--ink); font-weight: 700 }
+.side .doc { font-family: var(--mono); font-size: 14px; white-space: nowrap }
+
+.chan { display: flex; flex-direction: column; height: 100vh; min-width: 0 }
+.top { display: flex; align-items: center; gap: 18px; padding: 12px 24px; border-bottom: 1px solid var(--line); flex-wrap: wrap }
+.top h1 { margin: 0; font-size: 19px }
+.top .topic { color: var(--muted); font-size: 14px; flex: 1; min-width: 220px }
+.reads { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--muted) }
+.seg { display: inline-flex; border: 1px solid var(--ink); border-radius: 4px; overflow: hidden }
+.seg button { border: 0; background: var(--card); padding: 5px 12px; font-size: 14px; font-weight: 600 }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--paper) }
+#check { border: 1px solid var(--ink); background: var(--accent); border-radius: 4px; padding: 6px 12px; font-size: 14px; font-weight: 700 }
+#check:disabled { cursor: wait }
+
+/* The score of the whole set, one line per way the bot has read the runbooks. */
+.score { display: flex; align-items: center; gap: 16px; background: var(--paper); border-bottom: 1px solid var(--line); padding: 8px 24px; font-size: 15px }
+#tally { flex: 1 }
+#tally p { margin: 2px 0 }
+#tally .need { color: var(--wait); font-weight: 700 }
+
+#thread { flex: 1; overflow: auto; padding: 18px 24px 8px; scroll-behavior: smooth }
+.msg { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 12px; padding: 8px 0; max-width: 820px }
+.av { width: 40px; height: 40px; border-radius: 4px; display: grid; place-items: center; font-weight: 800; font-size: 14px }
+.av.you { background: var(--fill-dark); color: var(--paper) }
+.av.bot { background: var(--accent); color: var(--ink); border: 1px solid var(--ink) }
+.who { font-weight: 700 } .when { color: var(--muted); font-size: 13px; margin-left: 6px }
+.tag { font-size: 12px; border: 1px solid var(--muted); color: var(--muted); border-radius: 4px; padding: 0 6px; margin-left: 8px }
+.text { margin: 2px 0 0 } .text p { margin: 0 0 6px }
+code { font-family: var(--mono); font-size: 15px; background: var(--paper); border: 1px solid var(--line); border-radius: 2px; padding: 0 4px }
+.cmd { display: flex; align-items: center; gap: 10px; background: var(--fill-dark); color: var(--paper); border-radius: 4px; padding: 10px 12px; margin: 8px 0; font-family: var(--mono); font-size: 16px }
+.cmd span { flex: 1; overflow-wrap: anywhere }
+.cmd button { border: 1px solid var(--paper); background: transparent; border-radius: 4px; font: 13px var(--sans); padding: 2px 8px }
+.sources { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 }
+.cite { border: 1px solid var(--line); background: var(--card); border-radius: 4px; padding: 3px 10px; font-size: 14px; text-align: left }
+.cite[aria-expanded="true"] { border-color: var(--ink); background: var(--paper) }
+.cite b { font-weight: 700 }
+.passage { border-left: 4px solid var(--ink); background: var(--paper); padding: 8px 14px; margin: 6px 0 8px; font-size: 15px }
+.passage .where { font-family: var(--mono); font-size: 14px; color: var(--muted); margin-bottom: 4px }
+mark { background: var(--accent); color: var(--ink); padding: 0 2px }
+.ok { color: var(--pass); font-weight: 700; font-size: 15px; margin: 4px 0 }
+.unchecked { color: var(--muted); font-size: 14px; margin: 4px 0 }
+.handoff { border-left: 4px solid var(--wait); background: var(--paper); padding: 10px 14px; margin: 6px 0; font-size: 15px }
+.handoff p { margin: 0 0 6px }
+.handoff b { color: var(--wait) }
+.handoff button { border: 1px solid var(--wait); color: var(--wait); background: var(--card); border-radius: 4px; padding: 4px 10px; font-weight: 700; font-size: 14px }
+.handoff button:disabled { cursor: default; border-color: var(--line); color: var(--muted) }
+.sys { color: var(--muted); font-size: 14px; text-align: center; margin: 10px 0; max-width: 820px }
+.typing span { display: inline-block; width: 7px; height: 7px; margin-right: 4px; border-radius: 50%; background: var(--muted); animation: blink 1s infinite }
+.typing span:nth-child(2) { animation-delay: .2s } .typing span:nth-child(3) { animation-delay: .4s }
+@keyframes blink { 50% { opacity: .2 } }
+@media (prefers-reduced-motion: reduce) { .typing span { animation: none } #thread { scroll-behavior: auto } }
+.list { margin: 6px 0; padding: 0; list-style: none }
+.list button { border: 0; background: none; padding: 2px 0; text-align: left; text-decoration: underline; color: var(--ink) }
+
+.compose { border-top: 1px solid var(--line); padding: 10px 24px 16px }
+.try { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 8px }
+.try button { flex: none; border: 1px solid var(--line); background: var(--paper); border-radius: 16px; padding: 3px 12px; font-size: 14px; max-width: 360px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+form { display: flex; gap: 8px; border: 1px solid var(--muted); border-radius: 6px; padding: 6px }
+form input { flex: 1; border: 0; font: inherit; padding: 6px 8px; min-width: 0 }
+form input:focus { outline: none }
+form button { border: 0; background: var(--ink); color: var(--paper); border-radius: 4px; padding: 6px 16px; font-weight: 700 }
+@media (max-width: 760px) { body { grid-template-columns: 1fr } .side { display: none } .top, #tally, #thread, .compose { padding-left: 16px; padding-right: 16px } }
 </style>
 </head>
 <body>
-<header>
-  <h1>On-call desk</h1>
-  <span class="model" id="model"></span>
-  <span class="spacer"></span>
-  <span class="tally" id="tally"></span>
-</header>
-<div class="controls">
-  <button id="size">Answer from 300-character chunks</button>
-  <button class="primary" id="section">Answer from section passages</button>
-</div>
-<main>
-  <section class="panel"><h2>Citations that support the answer</h2><div id="score"><p class="empty">Answer the questions one way, then the other.</p></div></section>
-  <section class="panel"><h2>Questions</h2><ul class="list" id="list"></ul></section>
-  <section class="panel"><h2>Answer</h2><div id="detail"><p class="empty">Pick a question.</p></div></section>
+<aside class="side" aria-label="Workspace">
+  <div class="ws">Ledgerline</div>
+  <nav><h2>Channels</h2>
+    <ul><li class="on"># payments-oncall</li><li># deploy-approvals</li><li># payments-db</li><li># incidents</li></ul>
+  </nav>
+  <section><h2>Runbooks the bot reads</h2><ul id="docs"></ul></section>
+</aside>
+
+<main class="chan">
+  <div class="top">
+    <h1># payments-oncall</h1>
+    <div class="topic">Ask the runbook bot. Every answer cites the section it came from.</div>
+    <div class="reads">Bot reads runbooks as
+      <span class="seg"><button class="way" data-how="section" aria-pressed="true">Sections</button><button class="way" data-how="size" aria-pressed="false">300-character chunks</button></span>
+    </div>
+  </div>
+  <div class="score">
+    <div id="tally" aria-live="polite"><p>Not checked yet. Check every question to count the answers that stand on their citation.</p></div>
+    <button id="check">Check every question</button>
+  </div>
+  <div id="thread" aria-live="polite"></div>
+  <div class="compose">
+    <div class="try" id="try" aria-label="Questions from tonight's shift"></div>
+    <form id="ask"><input id="q" placeholder="Ask the runbook bot" autocomplete="off" aria-label="Question"><button>Send</button></form>
+  </div>
 </main>
+
 <script>
-const $ = (id) => document.getElementById(id);
-let room, runs = {}, shown = null, picked = null;
-const NAMES = { size: "300-character chunks", section: "section passages" };
+const $ = (s) => document.querySelector(s);
+const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+const WAYS = { section: "sections", size: "300-character chunks" };
+const TRY = [
+  "One partition of settlement-consumer is stuck on a message it cannot parse. How do I skip it?",
+  "PayoutWriterErrorRate fired for us-east-1 only. How do I take that region out of traffic?",
+  "I need to ship a fix during the freeze. Where does the approval go?",
+  "How do I rotate the TLS certificate on the public API gateway?",
+  "The ledger-pg primary is down. How do I check the replica's lag before I promote it?",
+];
+let how = "section", minute = 12, questions = [];
+const runs = {};
 
-function text(v) { return v === null || v === undefined ? "-" : String(v) }
-function esc(s) { return text(s).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c]) }
-function marked(body, fact) {
-  const safe = esc(body);
-  if (!fact) return safe;
-  const at = safe.toLowerCase().indexOf(esc(fact).toLowerCase());
-  return at < 0 ? safe : safe.slice(0, at) + "<mark>" + safe.slice(at, at + esc(fact).length) + "</mark>" + safe.slice(at + esc(fact).length);
+// A 3 a.m. shift: each message is a minute later than the last.
+const clock = () => `3:${String(minute++).padStart(2, "0")} AM`;
+const thread = $("#thread");
+function post(html) {
+  thread.insertAdjacentHTML("beforeend", html);
+  thread.lastElementChild.scrollIntoView({ block: "end" });
+  return thread.lastElementChild;
+}
+const sys = (text) => post(`<div class="sys">${esc(text)}</div>`);
+const docTitle = (doc) => doc.replace(/\.pdf$/, "");
+
+// Mark the fact inside a passage, so the person checking sees the exact words the answer rests on.
+function marked(text, fact) {
+  const at = fact ? text.toLowerCase().indexOf(fact.toLowerCase()) : -1;
+  if (at < 0) return esc(text);
+  return esc(text.slice(0, at)) + `<mark>${esc(text.slice(at, at + fact.length))}</mark>` + esc(text.slice(at + fact.length));
+}
+// A fact that is something to type (a command, a slash command) names the tool to look for in the answer.
+const typed = (fact) => fact && (/^[a-z/][\w./-]* \S/.test(fact) || fact.endsWith("()"));
+// The command as the bot wrote it: from the tool's name to the end of its sentence. Shown whole, so a
+// command cut by a bad chunk (settlement-co) is as visible as a right one.
+function command(answer, fact) {
+  if (!typed(fact)) return null;
+  const tool = fact.split(" ")[0], at = answer.indexOf(tool);
+  if (at < 0) return null;
+  const rest = answer.slice(at), end = rest.search(/\.(\s+[A-Z]|\s*$)/);
+  return end < 0 ? rest : rest.slice(0, end);
+}
+const prose = (text) => esc(text).replace(/`([^`]+)`/g, "<code>$1</code>");
+const capital = (t) => t.charAt(0).toUpperCase() + t.slice(1);
+
+function answerHtml(r) {
+  if (r.answer === null) return `<p>I could not find this in the runbooks, so I will not guess.</p>`;
+  let html = `<p>${prose(r.answer)}</p>`;
+  const cmd = command(r.answer, r.fact);
+  if (cmd) html += `<div class="cmd"><span>${esc(cmd)}</span><button type="button" class="copy">Copy</button></div>`;
+  return html;
 }
 
-function drawScore() {
-  const rows = Object.keys(runs).map((w) => { const t = runs[w].tally; return `<tr class="${w === shown ? "best" : ""}"><td>${NAMES[w]}</td>
-    <td class="num">${t.supported}/${t.answered}</td><td class="num">${Math.round(100 * t.share)}%</td><td class="num">${t.person}</td></tr>` }).join("");
-  $("score").innerHTML = `<table><tr><th>Passages</th><th>Supported</th><th>Share</th><th>To a person</th></tr>${rows}</table>`;
-  const t = runs[shown].tally;
-  $("tally").textContent = `${t.supported} of ${t.questions} answered with a supporting citation, ${t.person} go to a person`;
+function sourcesHtml(r, n) {
+  const cited = r.found.filter((p) => r.cited.includes(p.id));
+  if (!cited.length) return "";
+  const chips = cited.map((p, i) => `<button class="cite" aria-expanded="false" data-p="${n}-${i}"><b>${esc(docTitle(p.doc))}</b>, ${esc(p.section)}, page ${p.page}</button>`).join("");
+  const quotes = cited.map((p, i) => `<div class="passage" id="p${n}-${i}" hidden><div class="where">${esc(p.id)}</div>${marked(p.text, r.fact)}</div>`).join("");
+  return `<div class="sources">${chips}</div>${quotes}`;
 }
 
-function drawList() {
-  $("list").innerHTML = "";
-  const rows = runs[shown] ? runs[shown].rows : null;
-  room.questions.forEach((q, i) => {
-    const li = document.createElement("li"), b = document.createElement("button");
-    const state = !rows ? "" : rows[i].supported ? "held" : "person";
-    b.innerHTML = `<span>${esc(q)}</span><span class="dot ${state}"></span>`;
-    b.setAttribute("aria-current", String(i === picked));
-    b.onclick = () => { picked = i; drawList(); drawDetail() };
-    li.append(b); $("list").append(li);
-  });
+function verdictHtml(r) {
+  if (r.supported === null) return `<div class="unchecked">Not checked: this question has no approved answer in the set yet.</div>`;
+  if (r.supported) return `<div class="ok">The cited passage holds ${esc(r.fact)}. No person needed.</div>`;
+  return `<div class="handoff"><p><b>Needs a person.</b> ${esc(capital(r.reason))}.</p>
+    <p>A person decides: they answer in this thread or hand it to the team that owns it, and the answer becomes a runbook page.</p>
+    <button type="button" class="hand">Hand to the on-call lead</button></div>`;
 }
 
-function decides(row) {
-  if (row.fact === null) return "answers from what they know or hands it to the owning team, and adds the answer to the runbooks so the next question finds it.";
-  return `opens the runbook, checks the step, and replies with it. The runbook may need the step written so it survives being cut into passages.`;
+let asked = 0;
+async function ask(question) {
+  const n = asked++, way = how;
+  post(`<div class="msg"><div class="av you">You</div><div><span class="who">You</span><span class="when">${clock()}</span><div class="text"><p>${esc(question)}</p></div></div></div>`);
+  const bot = post(`<div class="msg bot" data-q="${esc(question)}"><div class="av bot">RB</div><div><span class="who">Runbook bot</span><span class="when">${clock()}</span><span class="tag">read from ${WAYS[way]}</span><div class="text typing" aria-label="The bot is answering"><span></span><span></span><span></span></div></div></div>`);
+  const r = await fetch(`/api/ask/${way}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ question }) }).then((x) => x.json());
+  const body = bot.querySelector(".text");
+  body.classList.remove("typing");
+  body.removeAttribute("aria-label");
+  body.innerHTML = answerHtml(r) + sourcesHtml(r, n) + verdictHtml(r);
+  bot.classList.add(r.supported === false ? "person" : r.supported ? "stands" : "unchecked");
+  bot.scrollIntoView({ block: "end" });
 }
 
-function drawDetail() {
-  if (picked === null || !runs[shown]) return;
-  const row = runs[shown].rows[picked];
-  const cited = row.found.filter((p) => row.cited.includes(p.id));
-  const passages = cited.map((p) => `<div class="passage"><div class="where">[${esc(p.id)}] ${esc(p.doc)}, ${esc(p.section)}, page ${p.page}</div>${marked(p.text, row.fact)}</div>`).join("") || `<p class="empty">No passage cited.</p>`;
-  let note;
-  if (row.supported) {
-    note = `<div class="held-note">Stands on its citation: the cited passage holds ${esc(row.fact)} and the answer states it. No person needed.</div>`;
-  } else {
-    const why = row.reason[0].toUpperCase() + row.reason.slice(1);
-    note = `<div class="decide"><b>Goes to a person.</b> ${esc(why)}.<br>A person decides: ${decides(row)}</div>`;
+thread.addEventListener("click", (e) => {
+  const cite = e.target.closest(".cite");
+  if (cite) {
+    const open = cite.getAttribute("aria-expanded") !== "true";
+    cite.setAttribute("aria-expanded", open);
+    const passage = document.getElementById("p" + cite.dataset.p);
+    passage.hidden = !open;
+    if (open) passage.scrollIntoView({ block: "nearest" });
   }
-  $("detail").innerHTML = `<p><b>${esc(room.questions[picked])}</b></p><p class="answer">${esc(row.answer ?? "No answer: the passages found do not cover it.")}</p><h3>Cited</h3>${passages}${note}`;
+  const hand = e.target.closest(".hand");
+  if (hand) {
+    hand.disabled = true;
+    hand.textContent = "Handed to the on-call lead";
+    sys("The on-call lead was paged. The question stays open until a person answers it.");
+  }
+  const copy = e.target.closest(".copy");
+  if (copy) {
+    navigator.clipboard?.writeText(copy.previousElementSibling.textContent).catch(() => {});
+    copy.textContent = "Copied";
+  }
+  const again = e.target.closest("[data-ask]");
+  if (again) ask(again.dataset.ask);
+});
+
+document.querySelectorAll(".way").forEach((b) => b.addEventListener("click", () => {
+  if (b.dataset.how === how) return;
+  how = b.dataset.how;
+  document.querySelectorAll(".way").forEach((x) => x.setAttribute("aria-pressed", x === b));
+  sys(`The bot now reads the runbooks as ${WAYS[how]}.`);
+}));
+
+// The metric, once per way: answers whose citation holds the fact, and the questions a person takes.
+function showTally() {
+  $("#tally").innerHTML = ["section", "size"].filter((w) => runs[w]).map((w) => {
+    const t = runs[w].tally;
+    return `<p>From ${WAYS[w]}: ${t.supported} of ${t.questions} answered with a citation that holds the fact, no person needed. <span class="need">${t.person} need a person.</span></p>`;
+  }).join("");
 }
 
-async function answer(way) {
-  const button = $(way), label = button.textContent;
-  button.disabled = true; button.textContent = `Answering ${room.questions.length} questions...`;
-  runs[way] = await (await fetch(`/api/answer/${way}`, { method: "POST" })).json();
-  button.disabled = false; button.textContent = label;
-  shown = way;
-  if (picked === null) picked = runs[way].rows.findIndex((r) => !r.supported);
-  drawScore(); drawList(); drawDetail();
-}
+$("#check").addEventListener("click", async () => {
+  const b = $("#check"), way = how;
+  b.disabled = true;
+  b.textContent = `Checking ${questions.length} questions`;
+  runs[way] = await fetch(`/api/answer/${way}`, { method: "POST" }).then((x) => x.json());
+  const t = runs[way].tally, person = runs[way].rows.filter((r) => !r.supported);
+  post(`<div class="msg bot summary" data-how="${way}"><div class="av bot">RB</div><div><span class="who">Runbook bot</span><span class="when">${clock()}</span><span class="tag">read from ${WAYS[way]}</span>
+    <div class="text"><p>I answered all ${t.questions} questions in the set from ${WAYS[way]}. ${t.supported} stand on a citation that holds the fact. These ${t.person} need a person:</p>
+    <ul class="list">${person.map((r) => `<li><button data-ask="${esc(r.question)}">${esc(r.question)}</button></li>`).join("")}</ul></div></div></div>`);
+  showTally();
+  b.disabled = false;
+  b.textContent = "Check every question";
+});
 
-async function boot() {
-  room = await (await fetch("/api/room")).json();
-  $("model").textContent = room.model;
-  $("size").onclick = () => answer("size");
-  $("section").onclick = () => answer("section");
-  drawList();
-}
-boot();
+$("#ask").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const q = $("#q").value.trim();
+  if (q) { $("#q").value = ""; ask(q); }
+});
+
+fetch("/api/room").then((x) => x.json()).then((room) => {
+  questions = room.questions;
+  $("#docs").innerHTML = room.docs.map((d) => `<li class="doc">${esc(d)}</li>`).join("");
+  $("#try").innerHTML = TRY.filter((q) => questions.includes(q)).map((q) => `<button type="button" data-ask="${esc(q)}" title="${esc(q)}">${esc(q)}</button>`).join("");
+  $("#try").addEventListener("click", (e) => { const b = e.target.closest("[data-ask]"); if (b) ask(b.dataset.ask); });
+  post(`<div class="msg"><div class="av bot">RB</div><div><span class="who">Runbook bot</span><span class="when">${clock()}</span>
+    <div class="text"><p>I answer from the ${room.docs.length} runbooks on the left, and from nothing else. Every answer cites the section it came from: open the citation and check the command before you run it. When the runbooks do not hold the answer, I say so and a person takes it.</p></div></div></div>`);
+});
 </script>
 </body>
 </html>
