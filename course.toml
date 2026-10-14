@@ -54,7 +54,7 @@ owns = "ingestion, chunking and cited answers"
 job = "Answer an engineer's on-call question from internal docs with a citation, as Uber Genie does in Slack"
 truth = "the doc passage each answer cites"
 metric = "share of answers whose citation supports them"
-status = "planned"
+status = "ready"
 
 [[lab]]
 n = 5

@@ -22,7 +22,7 @@ print what the README promises.
 | 1 | [Extract Structured Data with LLMs](labs/01-structured-output) | Ramp matches uploaded receipts to card transactions | ready |
 | 2 | [Build a Golden Set for an LLM Feature](labs/02-golden-set) | LinkedIn: the last 15% took four more months | ready |
 | 3 | [Process a Million Prompts with Batch APIs](labs/03-batch-prompts) | Instacart Maple batch LLM platform | ready |
-| 4 | Build a RAG Pipeline over PDFs | Uber Genie on-call copilot | planned |
+| 4 | [Build a RAG Pipeline over PDFs](labs/04-rag-pipeline) | Uber Genie on-call copilot | ready |
 | 5 | Measure RAG Accuracy with Recall@k | Uber's golden set over policy PDFs | planned |
 | 6 | Stop RAG Hallucinations with an LLM Judge | DoorDash Dasher support guardrail and judge | planned |
 | 7 | Build Agentic RAG with LangGraph | Uber enhanced agentic RAG | planned |

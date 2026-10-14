@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>On-call desk</title>
+<style>
+/* Colours are the workshop tokens in design/tokens.json; a course test pins every hex here to that file. */
+:root {
+  --paper: #FAFAFA; --card: #FFFFFF; --ink: #151515; --ink-2: #414141; --muted: #606060;
+  --line: #DFDFDF; --accent: #FAFF69; --fill-dark: #1F1F1C;
+  --pass: #008138; --fail: #BF000F; --wait: #B75000;
+  --sans: Inter, Helvetica, Arial, sans-serif; --mono: Inconsolata, "Courier New", Courier, monospace;
+}
+* { box-sizing: border-box }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 15px/1.5 var(--sans) }
+header { display: flex; align-items: baseline; gap: 16px; padding: 18px 28px; border-bottom: 1px solid var(--line); background: var(--card) }
+header h1 { margin: 0; font-size: 20px }
+header .model { color: var(--muted); font-family: var(--mono) }
+header .spacer { flex: 1 }
+header .tally { font-weight: 700 }
+.controls { display: flex; gap: 14px; align-items: center; padding: 16px 28px 0 }
+.controls label { color: var(--muted); font-weight: 600 }
+select, button { font: inherit; border: 1px solid var(--ink); border-radius: 4px; padding: 7px 12px; background: var(--card); color: var(--ink) }
+button { font-weight: 600; cursor: pointer }
+button.primary { background: var(--accent) }
+button:disabled { opacity: .5; cursor: wait }
+.verdict { margin-left: auto; font-weight: 700; padding: 6px 12px; border: 2px solid currentColor; border-radius: 4px }
+main { display: grid; grid-template-columns: minmax(0, 0.8fr) 340px minmax(0, 1.4fr); gap: 20px; padding: 20px 28px }
+.panel { background: var(--card); border: 1px solid var(--line); border-radius: 4px; padding: 16px }
+.panel h2 { margin: 0 0 12px; font-size: 13px; text-transform: uppercase; color: var(--muted); font-weight: 600 }
+table { width: 100%; border-collapse: collapse; font-size: 14px }
+th { text-align: left; color: var(--muted); font-weight: 600; border-bottom: 1px solid var(--line); padding: 4px 6px }
+td { padding: 5px 6px; border-bottom: 1px solid var(--line) }
+td.num { font-family: var(--mono); text-align: right }
+.pass { color: var(--pass) } .fail { color: var(--fail) } .wait { color: var(--wait) }
+tr.worse td { font-weight: 700 } tr.worse td:first-child::after { content: "  worse"; color: var(--fail) }
+td.broke { color: var(--fail); font-weight: 700 } td.fixed { color: var(--pass); font-weight: 700 }
+ul.list { list-style: none; margin: 0; padding: 0; max-height: 520px; overflow: auto }
+ul.list button { width: 100%; text-align: left; border: 1px solid transparent; background: none; font-weight: 400; display: flex; gap: 8px; align-items: center; padding: 7px 8px }
+ul.list button[aria-current="true"] { background: var(--accent); border-color: var(--ink) }
+.dot { width: 9px; height: 9px; border-radius: 50%; margin-left: auto; flex: none; background: var(--line) }
+.dot.held { background: var(--pass) } .dot.person { background: var(--wait) }
+pre { font: 14px/1.5 var(--mono); white-space: pre-wrap; margin: 0 }
+.posting { background: var(--paper); border: 1px solid var(--line); border-radius: 4px; padding: 12px; max-height: 300px; overflow: auto; margin-bottom: 14px }
+.decide { margin-top: 14px; padding: 10px 12px; border: 2px solid var(--wait); border-radius: 4px }
+.decide b { color: var(--wait) }
+.held-note { margin-top: 14px; padding: 10px 12px; border: 2px solid var(--pass); border-radius: 4px; color: var(--pass); font-weight: 700 }
+.passage { background: var(--paper); border: 1px solid var(--line); border-radius: 4px; padding: 10px 12px; margin: 8px 0; font-size: 14px }
+.passage .where { color: var(--muted); font-family: var(--mono); font-size: 13px; margin-bottom: 4px }
+.passage mark { background: var(--accent); color: var(--ink) }
+.answer { font-size: 16px; margin: 0 0 12px }
+h3 { font-size: 13px; text-transform: uppercase; color: var(--muted); font-weight: 600; margin: 14px 0 4px }
+tr.best td { font-weight: 700 }
+.empty { color: var(--muted) }
+</style>
+</head>
+<body>
+<header>
+  <h1>On-call desk</h1>
+  <span class="model" id="model"></span>
+  <span class="spacer"></span>
+  <span class="tally" id="tally"></span>
+</header>
+<div class="controls">
+  <button id="size">Answer from 300-character chunks</button>
+  <button class="primary" id="section">Answer from section passages</button>
+</div>
+<main>
+  <section class="panel"><h2>Citations that support the answer</h2><div id="score"><p class="empty">Answer the questions one way, then the other.</p></div></section>
+  <section class="panel"><h2>Questions</h2><ul class="list" id="list"></ul></section>
+  <section class="panel"><h2>Answer</h2><div id="detail"><p class="empty">Pick a question.</p></div></section>
+</main>
+<script>
+const $ = (id) => document.getElementById(id);
+let room, runs = {}, shown = null, picked = null;
+const NAMES = { size: "300-character chunks", section: "section passages" };
+
+function text(v) { return v === null || v === undefined ? "-" : String(v) }
+function esc(s) { return text(s).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c]) }
+function marked(body, fact) {
+  const safe = esc(body);
+  if (!fact) return safe;
+  const at = safe.toLowerCase().indexOf(esc(fact).toLowerCase());
+  return at < 0 ? safe : safe.slice(0, at) + "<mark>" + safe.slice(at, at + esc(fact).length) + "</mark>" + safe.slice(at + esc(fact).length);
+}
+
+function drawScore() {
+  const rows = Object.keys(runs).map((w) => { const t = runs[w].tally; return `<tr class="${w === shown ? "best" : ""}"><td>${NAMES[w]}</td>
+    <td class="num">${t.supported}/${t.answered}</td><td class="num">${Math.round(100 * t.share)}%</td><td class="num">${t.person}</td></tr>` }).join("");
+  $("score").innerHTML = `<table><tr><th>Passages</th><th>Supported</th><th>Share</th><th>To a person</th></tr>${rows}</table>`;
+  const t = runs[shown].tally;
+  $("tally").textContent = `${t.supported} of ${t.questions} answered with a supporting citation, ${t.person} go to a person`;
+}
+
+function drawList() {
+  $("list").innerHTML = "";
+  const rows = runs[shown] ? runs[shown].rows : null;
+  room.questions.forEach((q, i) => {
+    const li = document.createElement("li"), b = document.createElement("button");
+    const state = !rows ? "" : rows[i].supported ? "held" : "person";
+    b.innerHTML = `<span>${esc(q)}</span><span class="dot ${state}"></span>`;
+    b.setAttribute("aria-current", String(i === picked));
+    b.onclick = () => { picked = i; drawList(); drawDetail() };
+    li.append(b); $("list").append(li);
+  });
+}
+
+function decides(row) {
+  if (row.fact === null) return "answers from what they know or hands it to the owning team, and adds the answer to the runbooks so the next question finds it.";
+  return `opens the runbook, checks the step, and replies with it. The runbook may need the step written so it survives being cut into passages.`;
+}
+
+function drawDetail() {
+  if (picked === null || !runs[shown]) return;
+  const row = runs[shown].rows[picked];
+  const cited = row.found.filter((p) => row.cited.includes(p.id));
+  const passages = cited.map((p) => `<div class="passage"><div class="where">[${esc(p.id)}] ${esc(p.doc)}, ${esc(p.section)}, page ${p.page}</div>${marked(p.text, row.fact)}</div>`).join("") || `<p class="empty">No passage cited.</p>`;
+  let note;
+  if (row.supported) {
+    note = `<div class="held-note">Stands on its citation: the cited passage holds ${esc(row.fact)} and the answer states it. No person needed.</div>`;
+  } else {
+    const why = row.reason[0].toUpperCase() + row.reason.slice(1);
+    note = `<div class="decide"><b>Goes to a person.</b> ${esc(why)}.<br>A person decides: ${decides(row)}</div>`;
+  }
+  $("detail").innerHTML = `<p><b>${esc(room.questions[picked])}</b></p><p class="answer">${esc(row.answer ?? "No answer: the passages found do not cover it.")}</p><h3>Cited</h3>${passages}${note}`;
+}
+
+async function answer(way) {
+  const button = $(way), label = button.textContent;
+  button.disabled = true; button.textContent = `Answering ${room.questions.length} questions...`;
+  runs[way] = await (await fetch(`/api/answer/${way}`, { method: "POST" })).json();
+  button.disabled = false; button.textContent = label;
+  shown = way;
+  if (picked === null) picked = runs[way].rows.findIndex((r) => !r.supported);
+  drawScore(); drawList(); drawDetail();
+}
+
+async function boot() {
+  room = await (await fetch("/api/room")).json();
+  $("model").textContent = room.model;
+  $("size").onclick = () => answer("size");
+  $("section").onclick = () => answer("section");
+  drawList();
+}
+boot();
+</script>
+</body>
+</html>

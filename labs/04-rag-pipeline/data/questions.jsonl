@@ -1,0 +1,19 @@
+{"question": "LedgerWriterErrorRate fired and only eu-west-1 is failing. How do I take that region out of traffic?", "fact": "ledgerctl drain --region eu-west-1"}
+{"question": "ledger-writer started erroring right after this morning's deploy. How do I roll it back?", "fact": "kubectl rollout undo deployment/ledger-writer -n payments"}
+{"question": "The ledger-writer error rate is still high after 20 minutes. Who do I page, and where?", "fact": "#payments-db"}
+{"question": "How far behind does settlement-consumer have to be before the lag alert fires?", "fact": "250,000 messages"}
+{"question": "One partition of settlement-consumer is stuck on a message it cannot parse. How do I skip it?", "fact": "kcat-skip --group settlement-consumer --partition"}
+{"question": "What is the most settlement-consumer replicas worth running?", "fact": "24 partitions"}
+{"question": "The ledger-pg primary is down. How do I check the replica's lag before I promote it?", "fact": "pg_last_xact_replay_timestamp()"}
+{"question": "How much replica lag is safe for promoting a ledger-pg replica?", "fact": "5 seconds"}
+{"question": "What is the exact command to fail ledger-pg over to ledger-pg-2?", "fact": "patronictl failover ledger-pg --candidate ledger-pg-2"}
+{"question": "What do I do with the connection pool after a ledger-pg failover?", "fact": "pgbouncer RELOAD"}
+{"question": "When does the weekend deploy freeze for payments services start?", "fact": "Friday 16:00 UTC"}
+{"question": "I need to ship a fix during the freeze. Where does the approval go?", "fact": "#deploy-approvals"}
+{"question": "How long does a new deploy sit on the canary before it can be promoted?", "fact": "30 minutes"}
+{"question": "Payouts have stopped for every customer. How do I page the incident commander?", "fact": "/page ic-payments"}
+{"question": "PayoutWriterErrorRate fired for us-east-1 only. How do I take that region out of traffic?", "fact": "payoutctl pause --region"}
+{"question": "Transfers are still failing on payout-writer after 15 minutes. Where do I escalate?", "fact": "#payouts-partner"}
+{"question": "How do I roll back payout-writer after a bad deploy?", "fact": "kubectl rollout undo deployment/payout-writer -n payouts"}
+{"question": "How do I rotate the TLS certificate on the public API gateway?", "fact": null}
+{"question": "What is the on-call pay for a weekend shift?", "fact": null}
