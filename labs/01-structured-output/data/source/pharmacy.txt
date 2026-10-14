@@ -1,0 +1,11 @@
+CORNER PHARMACY #2231
+Boston MA 02116
+10/01/2026 13:02
+
+IBUPROFEN 200MG 100CT        9.99 T
+ADHESIVE BANDAGES 30CT       4.49 T
+SPRING WATER 1L              1.29
+Subtotal                    15.77
+MA TAX 6.25%                 0.91
+TOTAL                      $16.68
+DEBIT                       16.68

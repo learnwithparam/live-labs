@@ -1,0 +1,429 @@
+# The course map. One row per lab; README.md's map is generated from this file
+# (`make readme`) and `make check` fails when they differ or a ready lab is missing.
+# status: "ready" means the folder exists and passes `make check`; "planned" means not built yet.
+# owns: the one concept this lab teaches. `make check` fails when two labs own the same concept;
+# a later lab reuses an earlier lab's concept and says so in its README.
+# job, truth, metric: the product job, the source of truth outside the model, and the number the
+# proof asserts. AGENTS.md says why; `make check` fails a row without them.
+
+title = "Applied AI Engineering for Software Engineers"
+
+[[lab]]
+n = 1
+slug = "01-structured-output"
+title = "Extract Structured Data with LLMs"
+part = "The LLM as an API"
+anchor = "Ramp matches uploaded receipts to card transactions"
+owns = "structured output and the review queue"
+job = "Match each receipt photo, PDF or email to the card charge it pays for, so finance never types it in"
+truth = "the card transactions feed from the bank"
+metric = "share of receipts matched with no person"
+status = "ready"
+
+[[lab]]
+n = 2
+slug = "02-golden-set"
+title = "Build a Golden Set for an LLM Feature"
+part = "The LLM as an API"
+anchor = "LinkedIn: the last 15% took four more months"
+owns = "golden sets and field accuracy"
+job = "Measure an LLM feature against cases people already signed off before changing its prompt or model"
+truth = "a labelled set of past cases a person approved"
+metric = "accuracy per field, before and after each change"
+status = "planned"
+
+[[lab]]
+n = 3
+slug = "03-batch-prompts"
+title = "Process a Million Prompts with Batch APIs"
+part = "The LLM as an API"
+anchor = "Instacart Maple batch LLM platform"
+owns = "batch processing"
+job = "Fill missing product attributes across a whole grocery catalogue overnight, as Instacart's Maple does"
+truth = "attributes the retailer already supplied for a sample of products"
+metric = "cost per thousand products at the same attribute accuracy"
+status = "planned"
+
+[[lab]]
+n = 4
+slug = "04-rag-pipeline"
+title = "Build a RAG Pipeline over PDFs"
+part = "RAG you can measure"
+anchor = "Uber Genie on-call copilot"
+owns = "ingestion, chunking and cited answers"
+job = "Answer an engineer's on-call question from internal docs with a citation, as Uber Genie does in Slack"
+truth = "the doc passage each answer cites"
+metric = "share of answers whose citation supports them"
+status = "planned"
+
+[[lab]]
+n = 5
+slug = "05-rag-recall"
+title = "Measure RAG Accuracy with Recall@k"
+part = "RAG you can measure"
+anchor = "Uber's golden set over policy PDFs"
+owns = "retrieval metrics, hybrid search and reranking"
+job = "Find the right policy passage for a question before any answer is written"
+truth = "question and passage pairs a person labelled"
+metric = "recall@k on the labelled questions"
+status = "planned"
+
+[[lab]]
+n = 6
+slug = "06-rag-judge"
+title = "Stop RAG Hallucinations with an LLM Judge"
+part = "RAG you can measure"
+anchor = "DoorDash Dasher support guardrail and judge"
+owns = "LLM judges and their agreement with people"
+job = "Stop a support bot sending a courier an answer its sources do not support, as DoorDash does"
+truth = "support agents' verdicts on a sample of answers"
+metric = "judge agreement with people, and unsupported answers sent"
+status = "planned"
+
+[[lab]]
+n = 7
+slug = "07-agentic-rag"
+title = "Build Agentic RAG with LangGraph"
+part = "RAG you can measure"
+anchor = "Uber enhanced agentic RAG"
+owns = "agentic retrieval"
+job = "Answer policy questions that need several lookups, as Uber's agentic RAG does for its policy docs"
+truth = "answers an expert wrote for a question set"
+metric = "share of answers the expert accepts"
+status = "planned"
+
+[[lab]]
+n = 8
+slug = "08-ai-workflow"
+title = "Build an AI Workflow with Mastra"
+part = "Workflows, routing and decisions"
+anchor = "Shopify Magic writes product descriptions from merchant details"
+owns = "workflows: chaining and parallel steps"
+job = "Turn a supplier spec sheet into a product listing in chained steps, with every claim checked"
+truth = "the supplier spec sheet each claim in the listing must trace to"
+metric = "share of listings published without an edit"
+status = "planned"
+
+[[lab]]
+n = 9
+slug = "09-request-routing"
+title = "Route Support Tickets with a Decision Model"
+part = "Workflows, routing and decisions"
+anchor = "Zendesk intelligent triage"
+owns = "request routing"
+job = "Send each incoming support ticket to the queue that can solve it"
+truth = "the queue each past ticket was finally resolved in"
+metric = "share of tickets reassigned after routing"
+status = "planned"
+
+[[lab]]
+n = 10
+slug = "10-durable-workflow"
+title = "Make an AI Workflow Survive a Crash"
+part = "Workflows, routing and decisions"
+anchor = "Temporal case studies: Coinbase and Netflix"
+owns = "durable execution and waiting for a human"
+job = "Run a refund that waits days for a manager's approval and pays out exactly once"
+truth = "the payments ledger"
+metric = "refunds paid twice or lost after a crash (zero)"
+status = "planned"
+
+[[lab]]
+n = 11
+slug = "11-agent-loop"
+title = "Build an AI Agent Loop from Scratch"
+part = "Agents"
+anchor = "Klarna's assistant handled two thirds of support chats"
+owns = "the agent loop and its budgets"
+job = "Resolve an order-support chat by calling order and refund tools in a loop"
+truth = "the order system's state after the run"
+metric = "share of chats resolved with no human handoff, inside the step and cost budget"
+status = "planned"
+
+[[lab]]
+n = 12
+slug = "12-mcp-tools"
+title = "Design Tools for AI Agents with MCP"
+part = "Agents"
+anchor = "Shopify Sidekick tool design"
+owns = "tool design"
+job = "Let a merchant run store admin tasks by asking, as Shopify Sidekick does"
+truth = "the store's admin API state after each task"
+metric = "task success rate and wrong-tool calls"
+status = "planned"
+
+[[lab]]
+n = 13
+slug = "13-context-engineering"
+title = "Cut Agent Token Costs with Context Engineering"
+part = "Agents"
+anchor = "Manus KV-cache hit rate"
+owns = "context within one run"
+job = "Keep a long-running agent task affordable, as Manus does with its cache hit rate"
+truth = "the provider's billed and cached tokens"
+metric = "cost per completed task and cache hit rate"
+status = "planned"
+
+[[lab]]
+n = 14
+slug = "14-agent-memory"
+title = "Give AI Agents Long-Term Memory with Mem0"
+part = "Agents"
+anchor = "ChatGPT memory and its controls"
+owns = "memory across sessions"
+job = "Remember what a user said across sessions and let them correct it, as ChatGPT memory does"
+truth = "what the user actually said, and their corrections"
+metric = "share of recalled facts the user confirms, and wrong memories"
+status = "planned"
+
+[[lab]]
+n = 15
+slug = "15-research-subagents"
+title = "Build a Deep Research Agent with Subagents"
+part = "Agents"
+anchor = "Anthropic's multi-agent research system"
+owns = "multi-agent orchestration"
+job = "Write a cited research report from many sources, as Anthropic's research system does"
+truth = "the sources each claim cites"
+metric = "share of claims their cited source supports, and cost per report"
+status = "planned"
+
+[[lab]]
+n = 16
+slug = "16-voice-pipecat"
+title = "Build a Voice AI Agent with Pipecat"
+part = "Voice AI"
+anchor = "SoundHound takes restaurant phone orders"
+owns = "voice pipelines and turn latency"
+job = "Take a restaurant's phone order by voice and put it in the till"
+truth = "the order a person would have keyed from the same call"
+metric = "orders taken with no staff, and turn latency"
+status = "planned"
+
+[[lab]]
+n = 17
+slug = "17-voice-phone"
+title = "Put a Voice AI Agent on a Phone Line"
+part = "Voice AI"
+anchor = "LiveKit behind ChatGPT voice"
+owns = "telephony and simulated callers"
+job = "Answer a business's inbound phone line with a voice agent"
+truth = "simulated caller scripts with the outcome each caller needs"
+metric = "share of simulated calls that reach their outcome"
+status = "planned"
+
+[[lab]]
+n = 18
+slug = "18-vision-damage"
+title = "Assess Car Damage Photos with Vision LLMs"
+part = "Vision AI and decision AI"
+anchor = "Tractable damage appraisal"
+owns = "vision extraction"
+job = "Estimate car repair cost from claim photos, as Tractable does for insurers"
+truth = "the repairer's final bill for each claim"
+metric = "share of estimates within tolerance of the bill"
+status = "planned"
+
+[[lab]]
+n = 19
+slug = "19-decision-ai"
+title = "Score Refund Risk with a Decision Model"
+part = "Vision AI and decision AI"
+anchor = "Stripe Radar score, thresholds and review"
+owns = "risk scores, thresholds and calibration"
+job = "Decide which refunds to pay, hold or review, as Stripe Radar does for payments"
+truth = "chargebacks and fraud found later"
+metric = "fraud caught at a fixed review rate"
+status = "planned"
+
+[[lab]]
+n = 20
+slug = "20-remote-mcp-oauth"
+title = "Ship a Remote MCP Server with OAuth"
+part = "Agentic AI systems you can trust"
+anchor = "Remote MCP servers from Linear, Sentry and Atlassian"
+owns = "authentication and acting on behalf of a user"
+job = "Let an assistant act in a user's Linear workspace as that user"
+truth = "the scopes the user granted and the product's audit log"
+metric = "actions outside the granted scope (zero)"
+status = "planned"
+
+[[lab]]
+n = 21
+slug = "21-rag-permissions"
+title = "Enforce Document Permissions in RAG with OpenFGA"
+part = "Agentic AI systems you can trust"
+anchor = "Glean permission-aware search"
+owns = "data permissions (ReBAC)"
+job = "Answer from company documents without showing anyone a file they cannot open, as Glean does"
+truth = "each source system's access list"
+metric = "documents leaked across permission test pairs (zero)"
+status = "planned"
+
+[[lab]]
+n = 22
+slug = "22-agent-actions-authz"
+title = "Authorize AI Agent Actions with RBAC and ABAC"
+part = "Agentic AI systems you can trust"
+anchor = "Block's Goose: read-only and destructive tools"
+owns = "action permissions (RBAC and ABAC)"
+job = "Let a coding agent read freely but ask before anything destructive, as Block's Goose does"
+truth = "the role and attribute policy table"
+metric = "destructive actions run without approval (zero)"
+status = "planned"
+
+[[lab]]
+n = 23
+slug = "23-guardrails"
+title = "Block Prompt Injection with Guardrails"
+part = "Agentic AI systems you can trust"
+anchor = "Zillow Fair Housing Classifier"
+owns = "input and output guardrails"
+job = "Block a listing assistant from answers that break fair housing law, as Zillow does"
+truth = "a labelled set of compliant and violating messages"
+metric = "violations caught and good answers wrongly blocked"
+status = "planned"
+
+[[lab]]
+n = 24
+slug = "24-pii-phi"
+title = "Redact PII and PHI before the LLM"
+part = "Agentic AI systems you can trust"
+anchor = "Clinical scribe products under HIPAA"
+owns = "PII and PHI redaction"
+job = "Strip patient identifiers from a visit transcript before an LLM writes the note"
+truth = "PHI spans a person annotated"
+metric = "PHI missed (recall) on the annotated set"
+status = "planned"
+
+[[lab]]
+n = 25
+slug = "25-mcp-gateway"
+title = "Control AI Agent Tool Access with an MCP Gateway"
+part = "Agentic AI systems you can trust"
+anchor = "Block's curated list of approved MCP servers"
+owns = "the MCP gateway"
+job = "Let staff agents use only approved MCP servers, as Block does with its curated list"
+truth = "the approved server list"
+metric = "calls to unapproved servers that got through (zero)"
+status = "planned"
+
+[[lab]]
+n = 26
+slug = "26-llm-gateway"
+title = "Route LLM Calls with an LLM Gateway"
+part = "LLMOps and governance"
+anchor = "RouteLLM and Instacart's AI gateway"
+owns = "the LLM gateway and model routing"
+job = "Send each LLM call to the cheapest model that answers it well, as Instacart's gateway does"
+truth = "provider invoices and a labelled quality set"
+metric = "cost per request at the same quality"
+status = "planned"
+
+[[lab]]
+n = 27
+slug = "27-prompt-registry"
+title = "Manage Prompts Outside Your Code"
+part = "LLMOps and governance"
+anchor = "Langfuse and PromptLayer prompt registries"
+owns = "prompt versions"
+job = "Let a product team change a support bot's prompt without a deploy and roll it back in a minute"
+truth = "the golden set score of each prompt version"
+metric = "time to roll back a bad prompt"
+status = "planned"
+
+[[lab]]
+n = 28
+slug = "28-tracing"
+title = "Trace AI Agents with OpenTelemetry"
+part = "LLMOps and governance"
+anchor = "OpenTelemetry GenAI conventions"
+owns = "tracing and cost per run"
+job = "Tell finance what each customer's AI usage cost last month, and which step made a run slow"
+truth = "the provider's invoice"
+metric = "share of the invoice attributed to a customer and a feature"
+status = "planned"
+
+[[lab]]
+n = 29
+slug = "29-evals-ci"
+title = "Gate AI Releases with Evals in CI"
+part = "LLMOps and governance"
+anchor = "Shopify Sidekick evals before release"
+owns = "release gates and trajectory evals"
+job = "Block a release that makes an assistant worse, as Shopify runs evals before Sidekick ships"
+truth = "the golden set and expected tool trajectories"
+metric = "regressions caught before release"
+status = "planned"
+
+[[lab]]
+n = 30
+slug = "30-ai-governance"
+title = "Govern AI Systems with an Inventory and Audit Log"
+part = "LLMOps and governance"
+anchor = "EU AI Act transparency duties from Aug 2026"
+owns = "inventory, audit log and disclosure"
+job = "Answer an auditor: which AI systems talk to customers, and what one said on a given day"
+truth = "the AI inventory and the audit log"
+metric = "time to answer an audit request"
+status = "planned"
+
+[[lab]]
+n = 31
+slug = "31-agent-api"
+title = "Ship a Streaming AI Agent API with an API Gateway"
+part = "Deploy"
+anchor = "The chat endpoint behind every in-app assistant"
+owns = "the agent API and the API gateway"
+job = "Serve an assistant to a web app with streaming, auth and rate limits"
+truth = "the gateway's logs under a load test"
+metric = "time to first token at p95, and error rate"
+status = "planned"
+
+[[lab]]
+n = 32
+slug = "32-background-agents"
+title = "Run Background Coding Agents with Cloud Sandboxes"
+part = "Deploy"
+anchor = "Ramp Inspect, run on Boat sandboxes"
+owns = "background agents and sandboxes"
+job = "Turn an issue into a tested pull request with no engineer at a keyboard, as Ramp Inspect does"
+truth = "the repo's CI on each pull request"
+metric = "share of agent pull requests merged"
+status = "planned"
+
+[[lab]]
+n = 33
+slug = "33-serverless-agents"
+title = "Run AI Agents on Serverless with Durable Functions"
+part = "Deploy"
+anchor = "AWS Lambda durable functions and Bedrock AgentCore"
+owns = "serverless and managed agent runtimes"
+job = "Run nightly agent jobs that survive a crash with no server to run"
+truth = "the job ledger and the cloud bill"
+metric = "jobs finished after a crash, and cost per run"
+status = "planned"
+
+[[lab]]
+n = 34
+slug = "34-fine-tune"
+title = "Fine-Tune a Small LLM with Reviewed Data"
+part = "Deploy"
+anchor = "Checkr and Ramp replaced a large model with a tuned small one"
+owns = "fine-tuning"
+job = "Replace a large model with a small tuned one at the same accuracy, as Checkr did"
+truth = "labels from the human review queue"
+metric = "accuracy and cost per item against the large model"
+status = "planned"
+
+[[lab]]
+n = 35
+slug = "35-serverless-gpu"
+title = "Serve an Open LLM on Serverless GPUs"
+part = "Deploy"
+anchor = "Ramp on Modal"
+owns = "serving open models"
+job = "Serve the tuned model on your own GPUs only while there is work, as Ramp does on Modal"
+truth = "the same golden set as the hosted model"
+metric = "cost per thousand items and p95 latency"
+status = "planned"

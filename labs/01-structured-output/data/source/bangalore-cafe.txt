@@ -1,0 +1,11 @@
+SRI KRISHNA TIFFIN ROOM
+100 Ft Road, Indiranagar, Bengaluru
+GSTIN 29ABCDE1234F1Z5
+Bill No: 5512   Date: 21-09-2026
+
+Masala Dosa            1 x 180.00     180.00
+Filter Coffee          2 x  60.00     120.00
+                         Sub Total    300.00
+                         CGST 2.5%      7.50
+                         SGST 2.5%      7.50
+                         Grand Total  Rs 315.00

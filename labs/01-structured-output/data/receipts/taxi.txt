@@ -1,0 +1,9 @@
+LONDON BLACK CAB  Licence 61204
+Journey: Paddington -> Canary Wharf
+Date 23/09/2026   Time 07:48
+
+Metered fare                GBP 23.40
+Booking fee                 GBP  2.00
+                           ----------
+Total                       GBP 25.40
+Paid by contactless. No VAT charged.

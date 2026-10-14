@@ -1,0 +1,15 @@
+{
+  "merchant": "Blue Door Coffee",
+  "date": "2026-09-14",
+  "currency": "USD",
+  "line_items": [
+    {"description": "Latte (oat)", "quantity": 1, "amount": 4.75},
+    {"description": "Butter croissant", "quantity": 1, "amount": 3.50},
+    {"description": "Cold brew 16oz", "quantity": 1, "amount": 5.25}
+  ],
+  "discount": 0,
+  "tax": 1.20,
+  "tax_included": false,
+  "tip": 2.00,
+  "total": 17.70
+}
