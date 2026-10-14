@@ -24,7 +24,7 @@ print what the README promises.
 | 3 | [Process a Million Prompts with Batch APIs](labs/03-batch-prompts) | Instacart Maple batch LLM platform | ready |
 | 4 | [Build a RAG Pipeline over PDFs](labs/04-rag-pipeline) | Uber Genie on-call copilot | ready |
 | 5 | [Measure RAG Accuracy with Recall@k](labs/05-rag-recall) | Uber's golden set over policy PDFs | ready |
-| 6 | Stop RAG Hallucinations with an LLM Judge | DoorDash Dasher support guardrail and judge | planned |
+| 6 | [Stop RAG Hallucinations with an LLM Judge](labs/06-rag-judge) | DoorDash Dasher support guardrail and judge | ready |
 | 7 | Build Agentic RAG with LangGraph | Uber enhanced agentic RAG | planned |
 | 8 | Build an AI Workflow with Mastra | Shopify Magic writes product descriptions from merchant details | planned |
 | 9 | Route Support Tickets with a Decision Model | Zendesk intelligent triage | planned |

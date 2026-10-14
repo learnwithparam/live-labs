@@ -78,7 +78,7 @@ owns = "LLM judges and their agreement with people"
 job = "Stop a support bot sending a courier an answer its sources do not support, as DoorDash does"
 truth = "support agents' verdicts on a sample of answers"
 metric = "judge agreement with people, and unsupported answers sent"
-status = "planned"
+status = "ready"
 
 [[lab]]
 n = 7

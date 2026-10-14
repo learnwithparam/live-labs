@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Swiftbite courier support</title>
+<style>
+/* Colours are the workshop tokens in design/tokens.json; a course test pins every hex here to that file. */
+:root {
+  --paper: #FAFAFA; --card: #FFFFFF; --ink: #151515; --ink-2: #414141; --muted: #606060; --faint: #808080;
+  --line: #DFDFDF; --accent: #FAFF69; --accent-deep: #4F5101; --fill-dark: #1F1F1C;
+  --pass: #008138; --fail: #BF000F; --wait: #B75000;
+  --sans: Inter, Helvetica, Arial, sans-serif; --mono: Inconsolata, "Courier New", Courier, monospace;
+}
+* { box-sizing: border-box }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.55 var(--sans) }
+button, input { font: inherit; color: inherit }
+button { cursor: pointer }
+:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px }
+[hidden] { display: none !important }
+
+/* The support tool's bar: dark, like the internal tools agents keep open all shift. */
+header { background: var(--fill-dark); color: var(--paper); display: flex; align-items: stretch; gap: 32px; padding: 0 28px; height: 56px }
+.brand { display: flex; align-items: center; gap: 10px; font-weight: 800; letter-spacing: -0.01em }
+.brand i { width: 22px; height: 22px; border-radius: 50%; background: var(--accent); display: inline-block }
+nav { display: flex; gap: 2px }
+nav button { border: 0; background: none; color: var(--paper); opacity: .75; padding: 0 14px; font-weight: 600; border-bottom: 3px solid transparent }
+nav button[aria-selected="true"] { opacity: 1; border-bottom-color: var(--accent) }
+header .who { margin-left: auto; display: flex; align-items: center; font-size: 14px; opacity: .8 }
+
+/* The queue: couriers waiting, as a strip of tickets across the top. Each carries what the check decided. */
+.queue { display: flex; gap: 10px; overflow-x: auto; padding: 16px 28px; border-bottom: 1px solid var(--line); background: var(--card) }
+.ticket { flex: 0 0 210px; text-align: left; border: 1px solid var(--line); background: var(--paper); border-radius: 10px; padding: 10px 12px; font-size: 14px; line-height: 1.35 }
+.ticket b { display: flex; justify-content: space-between; gap: 6px; font-size: 14px }
+.ticket b small { font-weight: 500; color: var(--muted) }
+.ticket span { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; color: var(--ink-2); margin-top: 4px }
+.ticket[aria-current="true"] { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); background: var(--card) }
+.state { font-size: 12px; font-weight: 700 }
+.state.ok { color: var(--pass) } .state.held { color: var(--wait) } .state.sent { color: var(--muted) }
+
+/* One conversation at a time, centred like the courier sees it in the app. */
+main.inbox { max-width: 780px; margin: 0 auto; padding: 28px 20px 40px }
+.who-line { display: flex; align-items: baseline; gap: 12px; margin-bottom: 18px }
+.who-line h1 { margin: 0; font-size: 22px; letter-spacing: -0.01em }
+.who-line span { color: var(--muted); font-size: 14px }
+.bubble { max-width: 82%; padding: 12px 16px; border-radius: 16px; margin: 0 0 14px }
+.courier { background: var(--card); border: 1px solid var(--line); border-bottom-left-radius: 4px }
+.draft { margin-left: auto; background: var(--card); border: 2px dashed var(--faint); border-bottom-right-radius: 4px }
+.draft.sent { border-style: solid; border-color: var(--ink); background: var(--accent) }
+.draft small { display: block; font-size: 13px; color: var(--muted); margin-bottom: 4px; font-weight: 600 }
+.draft.sent small { color: var(--ink) }
+
+/* The check: each claim the draft makes, with the help centre words that decide it. */
+.check { background: var(--card); border: 1px solid var(--line); border-radius: 12px; margin: 22px 0 0; overflow: hidden }
+.check h2 { font-size: 15px; margin: 0; padding: 12px 16px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; gap: 12px }
+.check h2 span { font-weight: 500; color: var(--muted) }
+.claim { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 0 10px; padding: 12px 16px; border-bottom: 1px solid var(--line) }
+.claim:last-child { border-bottom: 0 }
+.mark { width: 22px; height: 22px; border-radius: 50%; color: var(--card); font-weight: 800; font-size: 13px; display: grid; place-items: center; margin-top: 2px }
+.mark.yes { background: var(--pass) } .mark.no { background: var(--fail) }
+.claim p { margin: 0 }
+.claim blockquote { margin: 6px 0 0; padding: 6px 10px; border-left: 3px solid var(--line); color: var(--ink-2); font-size: 14px }
+.claim.no blockquote { border-left-color: var(--fail) }
+.claim cite { display: block; font-style: normal; font-family: var(--mono); font-size: 13px; color: var(--muted); margin-top: 2px }
+.thinking { padding: 16px; color: var(--muted) }
+
+/* The verdict bar: what happens to this reply, and the agent's two choices when it is held. */
+.verdict { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-top: 8px; padding: 14px 16px; border-radius: 12px; background: var(--card); border: 1px solid var(--line) }
+.verdict.held { border: 2px solid var(--wait) }
+.verdict.ok { border: 2px solid var(--pass) }
+.verdict p { margin: 0; flex: 1 1 260px }
+.verdict strong.held { color: var(--wait) } .verdict strong.ok { color: var(--pass) }
+.btn { border: 1px solid var(--ink); background: var(--card); border-radius: 8px; padding: 8px 14px; font-weight: 600 }
+.btn.primary { background: var(--ink); color: var(--paper) }
+.btn:disabled { opacity: .5; cursor: default }
+
+details.sources { margin-top: 16px }
+details.sources summary { cursor: pointer; color: var(--ink-2); font-weight: 600; font-size: 14px }
+.source { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; margin-top: 8px; font-size: 14px }
+.source b { display: block }
+
+/* A new courier message: type one, or pick one couriers send, and watch the bot draft and the check run. */
+.compose { margin-top: 36px; border-top: 1px solid var(--line); padding-top: 20px }
+.compose h2 { font-size: 16px; margin: 0 0 10px }
+.compose form { display: flex; gap: 8px }
+.compose input { flex: 1; min-width: 0; padding: 10px 14px; border: 1px solid var(--faint); border-radius: 999px; background: var(--card) }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px }
+.chips button { border: 1px solid var(--line); background: var(--card); border-radius: 999px; padding: 4px 12px; font-size: 13px; color: var(--ink-2) }
+
+/* Judge vs agents: the report a support lead reads before trusting the judge with the sample. */
+main.report { max-width: 1060px; margin: 0 auto; padding: 32px 24px 48px }
+.report h1 { font-size: 26px; margin: 0 0 6px; letter-spacing: -0.01em }
+.report .lede { color: var(--ink-2); margin: 0 0 26px; max-width: 70ch }
+.before-after { display: flex; gap: 18px; flex-wrap: wrap; margin-bottom: 30px }
+.ba { flex: 1 1 240px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px }
+.ba strong { display: block; font-size: 44px; line-height: 1; letter-spacing: -0.02em }
+.ba.bad strong { color: var(--fail) } .ba.good strong { color: var(--pass) }
+.ba span { color: var(--ink-2); font-size: 15px }
+.judges { display: flex; gap: 6px; margin-bottom: 14px }
+.judges button { border: 1px solid var(--ink); background: var(--card); border-radius: 999px; padding: 6px 14px; font-weight: 600; font-size: 14px }
+.judges button[aria-pressed="true"] { background: var(--ink); color: var(--paper) }
+.agree { display: flex; gap: 36px; flex-wrap: wrap; align-items: flex-start }
+.matrix { display: grid; grid-template-columns: 112px 150px 150px; gap: 6px; font-size: 14px }
+.matrix .h { color: var(--muted); font-weight: 600; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 2px }
+.matrix .r { color: var(--muted); font-weight: 600; display: flex; align-items: center }
+.cell { border: 1px solid var(--line); background: var(--card); border-radius: 10px; height: 96px; display: flex; flex-direction: column; align-items: center; justify-content: center }
+.cell strong { font-size: 34px; line-height: 1 }
+.cell.right { background: var(--paper) }
+.cell.wrong.some { background: var(--accent); border-color: var(--ink) }
+.cell[aria-pressed="true"] { box-shadow: inset 0 0 0 2px var(--ink) }
+.score { max-width: 380px }
+.score strong { font-size: 40px; letter-spacing: -0.02em; display: block; line-height: 1.1 }
+.score p { margin: 6px 0 0; color: var(--ink-2) }
+.rows { margin-top: 34px; background: var(--card); border: 1px solid var(--line); border-radius: 12px }
+.rows h2 { font-size: 16px; margin: 0; padding: 14px 18px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; gap: 10px }
+.rows h2 button { border: 0; background: none; color: var(--ink-2); text-decoration: underline; font-size: 14px }
+.row { display: grid; grid-template-columns: 70px minmax(0, 1fr) 210px 210px; gap: 14px; padding: 12px 18px; border-bottom: 1px solid var(--line); font-size: 14px }
+.row:last-child { border-bottom: 0 }
+.row .id { font-family: var(--mono); color: var(--muted) }
+.row q { display: block; color: var(--ink-2); quotes: none; margin-top: 4px }
+.v { font-weight: 700 } .v.pass { color: var(--pass) } .v.fail { color: var(--fail) }
+.row .why { color: var(--ink-2); display: block; margin-top: 2px }
+.row.off { background: var(--paper) }
+.loading { padding: 40px 0; color: var(--muted) }
+
+@media (max-width: 760px) {
+  header { padding: 0 16px; gap: 14px } header .who { display: none }
+  .queue { padding: 12px 16px }
+  main.inbox, main.report { padding-left: 16px; padding-right: 16px }
+  .bubble { max-width: 100% }
+  .matrix { grid-template-columns: 80px 1fr 1fr }
+  .row { grid-template-columns: 1fr }
+}
+</style>
+</head>
+<body data-surface="courier support inbox">
+<header>
+  <div class="brand"><i aria-hidden="true"></i>Swiftbite courier support</div>
+  <nav role="tablist">
+    <button role="tab" aria-selected="true" data-tab="inbox">Inbox</button>
+    <button role="tab" aria-selected="false" data-tab="report">Judge vs agents</button>
+  </nav>
+  <div class="who" id="models"></div>
+</header>
+
+<section id="inbox">
+  <div class="queue" id="queue" aria-label="Couriers waiting"></div>
+  <main class="inbox">
+    <div id="convo"></div>
+    <div class="compose">
+      <h2>Try a new courier message</h2>
+      <form id="ask"><input id="q" placeholder="Type what a courier would ask" aria-label="Courier message"><button class="btn primary">Draft a reply</button></form>
+      <div class="chips" id="chips"></div>
+    </div>
+  </main>
+</section>
+
+<section id="report" hidden>
+  <main class="report" id="reportBody"><p class="loading">Open this tab to review the 20 replies agents labelled.</p></main>
+</section>
+
+<script>
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+const post = (url, body) => fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }).then((r) => r.json());
+let room, current, checks = {}, sent = {}, judgeView = "judge", cellFilter = null, quality = null;
+
+function stateOf(t) {
+  if (sent[t.id]) return ["sent", sent[t.id] === "send" ? "Sent" : "Rewriting"];
+  const c = checks[t.id];
+  if (!c) return ["", "Draft waiting"];
+  return c.send ? ["ok", "Ready to send"] : ["held", "Held for you"];
+}
+
+function drawQueue() {
+  $("#queue").innerHTML = room.tickets.map((t) => {
+    const [cls, label] = stateOf(t);
+    return `<button class="ticket" data-id="${t.id}" aria-current="${t.id === current}">
+      <b>${esc(t.courier)} <small>${t.id}</small></b><span>${esc(t.question)}</span>
+      <div class="state ${cls}">${label}</div></button>`;
+  }).join("");
+  document.querySelectorAll(".ticket").forEach((b) => (b.onclick = () => open(b.dataset.id)));
+}
+
+function claimsHtml(c) {
+  return c.claims.map((k) => `<div class="claim ${k.verdict === "supported" ? "yes" : "no"}">
+    <span class="mark ${k.verdict === "supported" ? "yes" : "no"}" aria-label="${k.verdict}">${k.verdict === "supported" ? "✓" : "✕"}</span>
+    <div><p>${esc(k.claim)}</p>${k.quote ? `<blockquote>${esc(k.quote)}<cite>${esc(k.section || "")}</cite></blockquote>` : `<blockquote>No cited section says this.</blockquote>`}</div></div>`).join("");
+}
+
+function verdictHtml(t, c) {
+  if (sent[t.id]) return `<div class="verdict"><p>${sent[t.id] === "send" ? "Sent to the courier." : "Sent back for a rewrite. The courier waits for an agent."}</p></div>`;
+  if (c.send) return `<div class="verdict ok"><p><strong class="ok">Checked.</strong> ${esc(c.why)}</p><button class="btn primary" data-do="send">Send reply</button></div>`;
+  return `<div class="verdict held"><p><strong class="held">Held for you.</strong> ${esc(c.why)} Rewrite it from the help centre, or send it as written if the check is wrong.</p>
+    <button class="btn primary" data-do="rewrite">Rewrite before sending</button><button class="btn" data-do="send">Send as written</button></div>`;
+}
+
+function sourcesHtml(c) {
+  if (!c.sources?.length) return "";
+  return `<details class="sources"><summary>Cited help centre sections (${c.sources.length})</summary>${c.sources.map((s) => `<div class="source"><b>${esc(s.article)}: ${esc(s.section)}</b>${esc(s.text)}</div>`).join("")}</details>`;
+}
+
+function drawConvo(t) {
+  const c = checks[t.id];
+  const body = !t.answer ? "No draft: the help centre does not cover this." : esc(t.answer);
+  $("#convo").innerHTML = `<div class="who-line"><h1>${esc(t.courier)}</h1><span>${t.id}${t.live ? ", typed here" : ""}</span></div>
+    <p class="bubble courier">${esc(t.question)}</p>
+    <div class="bubble draft ${sent[t.id] === "send" ? "sent" : ""}"><small>${sent[t.id] === "send" ? "Sent by the bot" : "Bot draft, not sent"}</small>${body}</div>
+    ${c ? verdictHtml(t, c) : ""}
+    <div class="check"><h2>Grounding check <span>${c ? `${c.claims.filter((k) => k.verdict === "supported").length} of ${c.claims.length} claims supported` : ""}</span></h2>
+    ${c ? (c.claims.length ? claimsHtml(c) : `<p class="thinking">${esc(c.why)}</p>`) : `<p class="thinking">Splitting the draft into claims and checking each against what it cites...</p>`}</div>
+    ${c ? sourcesHtml(c) : ""}`;
+  document.querySelectorAll("[data-do]").forEach((b) => (b.onclick = async () => {
+    b.disabled = true;
+    await post("/api/decide", { ticket: t.id, decision: b.dataset.do });
+    sent[t.id] = b.dataset.do; drawQueue(); drawConvo(t);
+  }));
+}
+
+async function open(id) {
+  current = id; drawQueue();
+  const t = room.tickets.find((x) => x.id === id);
+  drawConvo(t);
+  if (!checks[id] && !t.live) {
+    checks[id] = await post("/api/check", { ticket: id });
+    drawQueue(); if (current === id) drawConvo(t);
+  }
+}
+
+async function ask(question) {
+  const id = `NEW-${room.tickets.filter((t) => t.live).length + 1}`;
+  const t = { id, courier: "Test courier", question, answer: "", cited: [], live: true };
+  room.tickets.unshift(t);
+  current = id; drawQueue();
+  $("#convo").innerHTML = `<div class="who-line"><h1>Test courier</h1><span>${id}, typed here</span></div><p class="bubble courier">${esc(question)}</p><p class="thinking">Searching the help centre, drafting a reply, then checking it...</p>`;
+  const got = await post("/api/ask", { question });
+  t.answer = got.reply; t.cited = got.cited;
+  checks[id] = got; drawQueue(); if (current === id) drawConvo(t);
+}
+
+function drawReport() {
+  const q = quality, a = q[judgeView], m = a.matrix, g = q.guard;
+  const shown = q.rows.filter((r) => !cellFilter || (r.human === cellFilter[0] && r[judgeView] === cellFilter[1]));
+  const cell = (h, j) => {
+    const n = m[h][j], right = h === j;
+    return `<button class="cell ${right ? "right" : "wrong"} ${n ? "some" : ""}" data-cell="${h},${j}" aria-pressed="${cellFilter?.join() === `${h},${j}`}"><strong>${n}</strong>${right ? "agree" : "disagree"}</button>`;
+  };
+  $("#reportBody").innerHTML = `<h1>Can the judge stand in for an agent?</h1>
+    <p class="lede">Support agents labelled ${q.rows.length} replies pass or fail. The grounding check ran on each before sending, and the judge reviewed each after. Here is how often they match the agents.</p>
+    <div class="before-after">
+      <div class="ba bad"><strong>${g.unsupported}</strong><span>unsupported replies would reach couriers with no check</span></div>
+      <div class="ba good"><strong>${g.sent.length}</strong><span>reach couriers with the grounding check${g.sent.length ? `: ${g.sent.join(", ")}` : ""}</span></div>
+      <div class="ba"><strong>${g.held_good.length}</strong><span>good replies held for an agent by mistake</span></div>
+    </div>
+    <div class="judges" role="group" aria-label="Which judge">
+      <button data-judge="judge" aria-pressed="${judgeView === "judge"}">Judge with sources and rubric</button>
+      <button data-judge="naive" aria-pressed="${judgeView === "naive"}">Judge with no sources</button>
+    </div>
+    <div class="agree">
+      <div class="matrix" aria-label="Agent verdict by judge verdict">
+        <span></span><span class="h">Judge: pass</span><span class="h">Judge: fail</span>
+        <span class="r">Agent: pass</span>${cell("pass", "pass")}${cell("pass", "fail")}
+        <span class="r">Agent: fail</span>${cell("fail", "pass")}${cell("fail", "fail")}
+      </div>
+      <div class="score"><strong>${a.agree} of ${a.total} agree</strong>
+        <p>Cohen's kappa ${a.kappa}. It discounts the matches two raters would get by chance, so 0 is a coin toss and 1 is full agreement.</p>
+        <p>${judgeView === "naive" ? `With no sources, the judge passes ${m.fail.pass} replies agents failed: it grades how a reply sounds, and a confident wrong number sounds fine.` : a.disagree.length ? `Read the ${a.disagree.length} disagreements below before you let this judge review the sample alone.` : "No disagreements on this set. Keep labelling a fresh sample every week, because a judge drifts when the help centre changes."}</p>
+        <p style="color:var(--muted);font-size:14px">Check on ${esc(q.model)}, judge on ${esc(q.judge_model)}, $${q.cost.toFixed(4)} for this review.</p></div>
+    </div>
+    <div class="rows"><h2>${cellFilter ? `${shown.length} replies where the agent said ${cellFilter[0]} and the judge said ${cellFilter[1]}` : `All ${shown.length} labelled replies`}${cellFilter ? `<button id="clear">Show all</button>` : ""}</h2>
+    ${shown.map((r) => `<div class="row ${r.human === r[judgeView] ? "" : "off"}"><span class="id">${r.id}</span>
+      <div><b>${esc(r.question)}</b><q>${esc(r.answer)}</q></div>
+      <div><span class="v ${r.human}">Agent: ${r.human}</span><span class="why">${esc(r.reason)}</span></div>
+      <div><span class="v ${r[judgeView]}">Judge: ${r[judgeView]}</span><span class="why">${esc(judgeView === "naive" ? r.naive_reason : r.judge_reason)}</span></div></div>`).join("")}</div>`;
+  document.querySelectorAll("[data-judge]").forEach((b) => (b.onclick = () => { judgeView = b.dataset.judge; cellFilter = null; drawReport(); }));
+  document.querySelectorAll("[data-cell]").forEach((b) => (b.onclick = () => { const c = b.dataset.cell.split(","); cellFilter = cellFilter?.join() === c.join() ? null : c; drawReport(); }));
+  if ($("#clear")) $("#clear").onclick = () => { cellFilter = null; drawReport(); };
+}
+
+async function showReport() {
+  if (quality) return drawReport();
+  $("#reportBody").innerHTML = `<p class="loading">Running the check, the judge and the no-sources judge on 20 labelled replies. About 20 seconds...</p>`;
+  quality = await fetch("/api/quality").then((r) => r.json());
+  drawReport();
+}
+
+document.querySelectorAll("[data-tab]").forEach((b) => (b.onclick = () => {
+  document.querySelectorAll("[data-tab]").forEach((x) => x.setAttribute("aria-selected", x === b));
+  $("#inbox").hidden = b.dataset.tab !== "inbox"; $("#report").hidden = b.dataset.tab !== "report";
+  if (b.dataset.tab === "report") showReport();
+}));
+$("#ask").onsubmit = (e) => { e.preventDefault(); const v = $("#q").value.trim(); if (v) { $("#q").value = ""; ask(v); } };
+
+fetch("/api/room").then((r) => r.json()).then((r) => {
+  room = r;
+  r.decisions.forEach((d) => (sent[d.ticket] = d.decision));
+  $("#models").textContent = `${r.sections} help centre sections`;
+  $("#chips").innerHTML = r.questions.slice(0, 8).map((q) => `<button type="button">${esc(q)}</button>`).join("");
+  document.querySelectorAll("#chips button").forEach((b) => (b.onclick = () => ask(b.textContent)));
+  open(r.tickets[0].id);
+});
+</script>
+</body>
+</html>

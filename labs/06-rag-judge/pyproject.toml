@@ -1,0 +1,23 @@
+[project]
+name = "lab-06-rag-judge"
+version = "0.1.0"
+description = "Stop RAG Hallucinations with an LLM Judge: hold a courier support answer its sources do not support, and trust a judge only as far as it agrees with people"
+requires-python = ">=3.11"
+dependencies = ["bm25s==0.3.11", "openai>=1.100", "pydantic>=2.11"]
+
+[project.scripts]
+support = "courier.cli:main"
+
+[dependency-groups]
+dev = ["pytest>=8.4"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/courier"]
+
+[tool.pytest.ini_options]
+markers = ["proof: calls a real model; needs LLM_API_KEY"]
+addopts = "-m 'not proof'"
