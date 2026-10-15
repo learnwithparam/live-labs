@@ -25,3 +25,5 @@ exclude-newer = "2026-10-01T00:00:00Z"
 [tool.pytest.ini_options]
 markers = ["proof: calls a real model; needs LLM_API_KEY"]
 addopts = "-m 'not proof'"
+# Notices from inside ADK and OpenTelemetry, not from this lab; a learner should see only their own results.
+filterwarnings = ["ignore::DeprecationWarning:opentelemetry.*", "ignore:.*EXPERIMENTAL.*:UserWarning"]

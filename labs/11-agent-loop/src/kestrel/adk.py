@@ -7,6 +7,7 @@ your cost budget, so a callback before each model call checks it, and one after 
 
 import asyncio
 import threading
+import warnings
 from typing import Callable
 
 from google.adk.agents import LlmAgent
@@ -20,6 +21,10 @@ from google.genai import types
 
 from kestrel.budget import Budget
 from kestrel.loop import TEMPERATURE
+
+# ADK flags its JSON schema tool declarations as experimental on every call; the notice is for ADK
+# developers, and it buried the tool calls in the terminal.
+warnings.filterwarnings("ignore", message=r"\[EXPERIMENTAL\]")
 
 HANDED_OFF = "I am passing this to a colleague who will reply within 4 hours."
 
