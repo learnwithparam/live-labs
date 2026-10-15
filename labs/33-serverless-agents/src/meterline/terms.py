@@ -1,7 +1,9 @@
 """The agent's one model call, reading a contract into pricing terms, and the code that refuses to trust it.
 
 The model reads free-text contracts that no parser handles well. Code then checks every number against a
-verbatim quote and computes the invoice itself, so a wrong reading is held for finance, never billed.
+verbatim quote and computes the invoice itself, so a number the model made up is held for finance, never
+billed. A term the model leaves out, such as a cap it reports as null, has no quote to check. It is caught
+only when the change it makes is over the unattended limit.
 """
 
 import json
