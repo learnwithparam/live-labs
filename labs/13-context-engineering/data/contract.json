@@ -1,0 +1,853 @@
+{
+ "client": "Halyard Freight B.V., Waalhaven Oostzijde 85, 3087 BM Rotterdam",
+ "contract": "HF-ROAD-2026",
+ "valid": "2026-01-01 to 2026-12-31",
+ "currency": "EUR",
+ "carriers": {
+  "RRH": {
+   "name": "Rhine Road Haulage GmbH",
+   "address": "Hafenstrasse 41, 47119 Duisburg, Germany",
+   "vat": "DE811204396",
+   "iban": "DE44 3505 0000 0201 4488 12",
+   "terms": 30
+  },
+  "BLT": {
+   "name": "Baltic Line Transport UAB",
+   "address": "Pramones pr. 16, 51327 Kaunas, Lithuania",
+   "vat": "LT100004417819",
+   "iban": "LT12 7300 0101 6624 0091",
+   "terms": 45
+  },
+  "IEC": {
+   "name": "Iberia Express Cargo S.L.",
+   "address": "Calle de la Logistica 9, 28830 San Fernando de Henares, Spain",
+   "vat": "ESB86412207",
+   "iban": "ES91 2100 0418 4502 0005 1332",
+   "terms": 30
+  }
+ },
+ "lanes": [
+  {
+   "carrier": "RRH",
+   "origin": "Rotterdam",
+   "destination": "Duisburg",
+   "per_pallet": 35.0
+  },
+  {
+   "carrier": "RRH",
+   "origin": "Rotterdam",
+   "destination": "Dortmund",
+   "per_pallet": 36.5
+  },
+  {
+   "carrier": "RRH",
+   "origin": "Rotterdam",
+   "destination": "Cologne",
+   "per_pallet": 37.5
+  },
+  {
+   "carrier": "RRH",
+   "origin": "Rotterdam",
+   "destination": "Dusseldorf",
+   "per_pallet": 39.0
+  },
+  {
+   "carrier": "RRH",
+   "origin": "Rotterdam",
+   "destination": "Essen",
+   "per_pallet": 40.5
+  },
+  {
+   "carrier": "RRH",
+   "origin": "Rotterdam",
+   "destination": "Frankfurt",
+   "per_pallet": 42.0
+  },
+  {
+   "carrier": "RRH",
+   "origin": "Rotterdam",
+   "destination": "Mannheim",
+   "per_pallet": 43.5
+  },
+  {
+   "carrier": "RRH",
+   "origin": "Rotterdam",
+   "destination": "Stuttgart",
+   "per_pallet": 45.0
+  },
+  {
+   "carrier": "RRH",
+   "origin": "Rotterdam",
+   "destination": "Munich",
+   "per_pallet": 46.0
+  },
+  {
+   "carrier": "RRH",
+   "origin": "Rotterdam",
+   "destination": "Nuremberg",
+   "per_pallet": 48.0
+  },
+  {
+   "carrier": "RRH",
+   "origin": "Rotterdam",
+   "destination": "Hanover",
+   "per_pallet": 50.0
+  },
+  {
+   "carrier": "RRH",
+   "origin": "Rotterdam",
+   "destination": "Hamburg",
+   "per_pallet": 50.5
+  },
+  {
+   "carrier": "RRH",
+   "origin": "Rotterdam",
+   "destination": "Bremen",
+   "per_pallet": 53.5
+  },
+  {
+   "carrier": "RRH",
+   "origin": "Rotterdam",
+   "destination": "Berlin",
+   "per_pallet": 54.0
+  },
+  {
+   "carrier": "RRH",
+   "origin": "Rotterdam",
+   "destination": "Leipzig",
+   "per_pallet": 55.0
+  },
+  {
+   "carrier": "RRH",
+   "origin": "Rotterdam",
+   "destination": "Dresden",
+   "per_pallet": 57.5
+  },
+  {
+   "carrier": "RRH",
+   "origin": "Rotterdam",
+   "destination": "Basel",
+   "per_pallet": 58.5
+  },
+  {
+   "carrier": "RRH",
+   "origin": "Rotterdam",
+   "destination": "Zurich",
+   "per_pallet": 59.5
+  },
+  {
+   "carrier": "RRH",
+   "origin": "Rotterdam",
+   "destination": "Strasbourg",
+   "per_pallet": 62.0
+  },
+  {
+   "carrier": "RRH",
+   "origin": "Rotterdam",
+   "destination": "Luxembourg",
+   "per_pallet": 64.0
+  },
+  {
+   "carrier": "RRH",
+   "origin": "Rotterdam",
+   "destination": "Liege",
+   "per_pallet": 65.5
+  },
+  {
+   "carrier": "RRH",
+   "origin": "Rotterdam",
+   "destination": "Brussels",
+   "per_pallet": 66.0
+  },
+  {
+   "carrier": "RRH",
+   "origin": "Rotterdam",
+   "destination": "Lille",
+   "per_pallet": 68.0
+  },
+  {
+   "carrier": "RRH",
+   "origin": "Rotterdam",
+   "destination": "Metz",
+   "per_pallet": 69.5
+  },
+  {
+   "carrier": "RRH",
+   "origin": "Rotterdam",
+   "destination": "Saarbrucken",
+   "per_pallet": 70.5
+  },
+  {
+   "carrier": "RRH",
+   "origin": "Rotterdam",
+   "destination": "Karlsruhe",
+   "per_pallet": 73.0
+  },
+  {
+   "carrier": "RRH",
+   "origin": "Rotterdam",
+   "destination": "Kassel",
+   "per_pallet": 74.5
+  },
+  {
+   "carrier": "RRH",
+   "origin": "Rotterdam",
+   "destination": "Erfurt",
+   "per_pallet": 75.5
+  },
+  {
+   "carrier": "RRH",
+   "origin": "Rotterdam",
+   "destination": "Wurzburg",
+   "per_pallet": 77.5
+  },
+  {
+   "carrier": "RRH",
+   "origin": "Rotterdam",
+   "destination": "Augsburg",
+   "per_pallet": 78.5
+  },
+  {
+   "carrier": "RRH",
+   "origin": "Rotterdam",
+   "destination": "Ulm",
+   "per_pallet": 79.0
+  },
+  {
+   "carrier": "RRH",
+   "origin": "Rotterdam",
+   "destination": "Freiburg",
+   "per_pallet": 81.5
+  },
+  {
+   "carrier": "RRH",
+   "origin": "Rotterdam",
+   "destination": "Bielefeld",
+   "per_pallet": 83.0
+  },
+  {
+   "carrier": "RRH",
+   "origin": "Rotterdam",
+   "destination": "Munster",
+   "per_pallet": 85.0
+  },
+  {
+   "carrier": "RRH",
+   "origin": "Rotterdam",
+   "destination": "Osnabruck",
+   "per_pallet": 85.5
+  },
+  {
+   "carrier": "RRH",
+   "origin": "Rotterdam",
+   "destination": "Bonn",
+   "per_pallet": 88.0
+  },
+  {
+   "carrier": "RRH",
+   "origin": "Rotterdam",
+   "destination": "Koblenz",
+   "per_pallet": 89.5
+  },
+  {
+   "carrier": "RRH",
+   "origin": "Rotterdam",
+   "destination": "Mainz",
+   "per_pallet": 90.0
+  },
+  {
+   "carrier": "RRH",
+   "origin": "Rotterdam",
+   "destination": "Wiesbaden",
+   "per_pallet": 92.0
+  },
+  {
+   "carrier": "RRH",
+   "origin": "Rotterdam",
+   "destination": "Heidelberg",
+   "per_pallet": 93.0
+  },
+  {
+   "carrier": "RRH",
+   "origin": "Rotterdam",
+   "destination": "Regensburg",
+   "per_pallet": 94.5
+  },
+  {
+   "carrier": "RRH",
+   "origin": "Rotterdam",
+   "destination": "Ingolstadt",
+   "per_pallet": 96.5
+  },
+  {
+   "carrier": "RRH",
+   "origin": "Rotterdam",
+   "destination": "Salzburg",
+   "per_pallet": 98.0
+  },
+  {
+   "carrier": "RRH",
+   "origin": "Rotterdam",
+   "destination": "Linz",
+   "per_pallet": 99.5
+  },
+  {
+   "carrier": "RRH",
+   "origin": "Rotterdam",
+   "destination": "Vienna",
+   "per_pallet": 101.5
+  },
+  {
+   "carrier": "BLT",
+   "origin": "Rotterdam",
+   "destination": "Kaunas",
+   "per_pallet": 59.0
+  },
+  {
+   "carrier": "BLT",
+   "origin": "Rotterdam",
+   "destination": "Vilnius",
+   "per_pallet": 60.5
+  },
+  {
+   "carrier": "BLT",
+   "origin": "Rotterdam",
+   "destination": "Klaipeda",
+   "per_pallet": 62.5
+  },
+  {
+   "carrier": "BLT",
+   "origin": "Rotterdam",
+   "destination": "Riga",
+   "per_pallet": 63.0
+  },
+  {
+   "carrier": "BLT",
+   "origin": "Rotterdam",
+   "destination": "Tallinn",
+   "per_pallet": 65.5
+  },
+  {
+   "carrier": "BLT",
+   "origin": "Rotterdam",
+   "destination": "Warsaw",
+   "per_pallet": 66.0
+  },
+  {
+   "carrier": "BLT",
+   "origin": "Rotterdam",
+   "destination": "Poznan",
+   "per_pallet": 67.5
+  },
+  {
+   "carrier": "BLT",
+   "origin": "Rotterdam",
+   "destination": "Lodz",
+   "per_pallet": 69.0
+  },
+  {
+   "carrier": "BLT",
+   "origin": "Rotterdam",
+   "destination": "Gdansk",
+   "per_pallet": 71.0
+  },
+  {
+   "carrier": "BLT",
+   "origin": "Rotterdam",
+   "destination": "Wroclaw",
+   "per_pallet": 72.0
+  },
+  {
+   "carrier": "BLT",
+   "origin": "Rotterdam",
+   "destination": "Krakow",
+   "per_pallet": 73.0
+  },
+  {
+   "carrier": "BLT",
+   "origin": "Rotterdam",
+   "destination": "Katowice",
+   "per_pallet": 76.0
+  },
+  {
+   "carrier": "BLT",
+   "origin": "Rotterdam",
+   "destination": "Szczecin",
+   "per_pallet": 77.5
+  },
+  {
+   "carrier": "BLT",
+   "origin": "Rotterdam",
+   "destination": "Bydgoszcz",
+   "per_pallet": 79.0
+  },
+  {
+   "carrier": "BLT",
+   "origin": "Rotterdam",
+   "destination": "Lublin",
+   "per_pallet": 79.0
+  },
+  {
+   "carrier": "BLT",
+   "origin": "Rotterdam",
+   "destination": "Bialystok",
+   "per_pallet": 82.0
+  },
+  {
+   "carrier": "BLT",
+   "origin": "Rotterdam",
+   "destination": "Olsztyn",
+   "per_pallet": 82.0
+  },
+  {
+   "carrier": "BLT",
+   "origin": "Rotterdam",
+   "destination": "Torun",
+   "per_pallet": 84.0
+  },
+  {
+   "carrier": "BLT",
+   "origin": "Rotterdam",
+   "destination": "Rzeszow",
+   "per_pallet": 85.5
+  },
+  {
+   "carrier": "BLT",
+   "origin": "Rotterdam",
+   "destination": "Kielce",
+   "per_pallet": 88.0
+  },
+  {
+   "carrier": "BLT",
+   "origin": "Rotterdam",
+   "destination": "Prague",
+   "per_pallet": 89.5
+  },
+  {
+   "carrier": "BLT",
+   "origin": "Rotterdam",
+   "destination": "Brno",
+   "per_pallet": 90.5
+  },
+  {
+   "carrier": "BLT",
+   "origin": "Rotterdam",
+   "destination": "Ostrava",
+   "per_pallet": 91.5
+  },
+  {
+   "carrier": "BLT",
+   "origin": "Rotterdam",
+   "destination": "Bratislava",
+   "per_pallet": 94.0
+  },
+  {
+   "carrier": "BLT",
+   "origin": "Rotterdam",
+   "destination": "Kosice",
+   "per_pallet": 95.0
+  },
+  {
+   "carrier": "BLT",
+   "origin": "Rotterdam",
+   "destination": "Budapest",
+   "per_pallet": 96.5
+  },
+  {
+   "carrier": "BLT",
+   "origin": "Rotterdam",
+   "destination": "Gyor",
+   "per_pallet": 97.5
+  },
+  {
+   "carrier": "BLT",
+   "origin": "Rotterdam",
+   "destination": "Debrecen",
+   "per_pallet": 99.5
+  },
+  {
+   "carrier": "BLT",
+   "origin": "Rotterdam",
+   "destination": "Pardubice",
+   "per_pallet": 100.5
+  },
+  {
+   "carrier": "BLT",
+   "origin": "Rotterdam",
+   "destination": "Plzen",
+   "per_pallet": 102.0
+  },
+  {
+   "carrier": "BLT",
+   "origin": "Rotterdam",
+   "destination": "Liepaja",
+   "per_pallet": 104.5
+  },
+  {
+   "carrier": "BLT",
+   "origin": "Rotterdam",
+   "destination": "Daugavpils",
+   "per_pallet": 105.0
+  },
+  {
+   "carrier": "BLT",
+   "origin": "Rotterdam",
+   "destination": "Tartu",
+   "per_pallet": 106.0
+  },
+  {
+   "carrier": "BLT",
+   "origin": "Rotterdam",
+   "destination": "Parnu",
+   "per_pallet": 107.5
+  },
+  {
+   "carrier": "BLT",
+   "origin": "Rotterdam",
+   "destination": "Siauliai",
+   "per_pallet": 110.0
+  },
+  {
+   "carrier": "BLT",
+   "origin": "Rotterdam",
+   "destination": "Panevezys",
+   "per_pallet": 111.5
+  },
+  {
+   "carrier": "BLT",
+   "origin": "Rotterdam",
+   "destination": "Elblag",
+   "per_pallet": 112.5
+  },
+  {
+   "carrier": "BLT",
+   "origin": "Rotterdam",
+   "destination": "Opole",
+   "per_pallet": 114.5
+  },
+  {
+   "carrier": "BLT",
+   "origin": "Rotterdam",
+   "destination": "Zielona Gora",
+   "per_pallet": 115.5
+  },
+  {
+   "carrier": "BLT",
+   "origin": "Rotterdam",
+   "destination": "Gorzow",
+   "per_pallet": 117.0
+  },
+  {
+   "carrier": "BLT",
+   "origin": "Rotterdam",
+   "destination": "Radom",
+   "per_pallet": 118.0
+  },
+  {
+   "carrier": "BLT",
+   "origin": "Rotterdam",
+   "destination": "Plock",
+   "per_pallet": 120.0
+  },
+  {
+   "carrier": "BLT",
+   "origin": "Rotterdam",
+   "destination": "Tarnow",
+   "per_pallet": 121.5
+  },
+  {
+   "carrier": "BLT",
+   "origin": "Rotterdam",
+   "destination": "Czestochowa",
+   "per_pallet": 122.5
+  },
+  {
+   "carrier": "BLT",
+   "origin": "Rotterdam",
+   "destination": "Gliwice",
+   "per_pallet": 125.5
+  },
+  {
+   "carrier": "IEC",
+   "origin": "Rotterdam",
+   "destination": "Madrid",
+   "per_pallet": 71.0
+  },
+  {
+   "carrier": "IEC",
+   "origin": "Rotterdam",
+   "destination": "Barcelona",
+   "per_pallet": 74.0
+  },
+  {
+   "carrier": "IEC",
+   "origin": "Rotterdam",
+   "destination": "Valencia",
+   "per_pallet": 75.0
+  },
+  {
+   "carrier": "IEC",
+   "origin": "Rotterdam",
+   "destination": "Zaragoza",
+   "per_pallet": 75.5
+  },
+  {
+   "carrier": "IEC",
+   "origin": "Rotterdam",
+   "destination": "Seville",
+   "per_pallet": 77.0
+  },
+  {
+   "carrier": "IEC",
+   "origin": "Rotterdam",
+   "destination": "Malaga",
+   "per_pallet": 79.0
+  },
+  {
+   "carrier": "IEC",
+   "origin": "Rotterdam",
+   "destination": "Bilbao",
+   "per_pallet": 81.0
+  },
+  {
+   "carrier": "IEC",
+   "origin": "Rotterdam",
+   "destination": "Vigo",
+   "per_pallet": 81.5
+  },
+  {
+   "carrier": "IEC",
+   "origin": "Rotterdam",
+   "destination": "Murcia",
+   "per_pallet": 84.5
+  },
+  {
+   "carrier": "IEC",
+   "origin": "Rotterdam",
+   "destination": "Alicante",
+   "per_pallet": 85.5
+  },
+  {
+   "carrier": "IEC",
+   "origin": "Rotterdam",
+   "destination": "Valladolid",
+   "per_pallet": 87.0
+  },
+  {
+   "carrier": "IEC",
+   "origin": "Rotterdam",
+   "destination": "Pamplona",
+   "per_pallet": 87.5
+  },
+  {
+   "carrier": "IEC",
+   "origin": "Rotterdam",
+   "destination": "Burgos",
+   "per_pallet": 90.5
+  },
+  {
+   "carrier": "IEC",
+   "origin": "Rotterdam",
+   "destination": "Leon",
+   "per_pallet": 91.5
+  },
+  {
+   "carrier": "IEC",
+   "origin": "Rotterdam",
+   "destination": "Salamanca",
+   "per_pallet": 92.0
+  },
+  {
+   "carrier": "IEC",
+   "origin": "Rotterdam",
+   "destination": "Cordoba",
+   "per_pallet": 93.5
+  },
+  {
+   "carrier": "IEC",
+   "origin": "Rotterdam",
+   "destination": "Granada",
+   "per_pallet": 96.0
+  },
+  {
+   "carrier": "IEC",
+   "origin": "Rotterdam",
+   "destination": "Almeria",
+   "per_pallet": 97.5
+  },
+  {
+   "carrier": "IEC",
+   "origin": "Rotterdam",
+   "destination": "Tarragona",
+   "per_pallet": 98.5
+  },
+  {
+   "carrier": "IEC",
+   "origin": "Rotterdam",
+   "destination": "Girona",
+   "per_pallet": 101.0
+  },
+  {
+   "carrier": "IEC",
+   "origin": "Rotterdam",
+   "destination": "Lleida",
+   "per_pallet": 102.5
+  },
+  {
+   "carrier": "IEC",
+   "origin": "Rotterdam",
+   "destination": "Castellon",
+   "per_pallet": 103.0
+  },
+  {
+   "carrier": "IEC",
+   "origin": "Rotterdam",
+   "destination": "Badajoz",
+   "per_pallet": 104.5
+  },
+  {
+   "carrier": "IEC",
+   "origin": "Rotterdam",
+   "destination": "Caceres",
+   "per_pallet": 106.5
+  },
+  {
+   "carrier": "IEC",
+   "origin": "Rotterdam",
+   "destination": "Oviedo",
+   "per_pallet": 107.0
+  },
+  {
+   "carrier": "IEC",
+   "origin": "Rotterdam",
+   "destination": "Gijon",
+   "per_pallet": 110.0
+  },
+  {
+   "carrier": "IEC",
+   "origin": "Rotterdam",
+   "destination": "Santander",
+   "per_pallet": 110.5
+  },
+  {
+   "carrier": "IEC",
+   "origin": "Rotterdam",
+   "destination": "Vitoria",
+   "per_pallet": 112.0
+  },
+  {
+   "carrier": "IEC",
+   "origin": "Rotterdam",
+   "destination": "San Sebastian",
+   "per_pallet": 114.0
+  },
+  {
+   "carrier": "IEC",
+   "origin": "Rotterdam",
+   "destination": "Logrono",
+   "per_pallet": 116.0
+  },
+  {
+   "carrier": "IEC",
+   "origin": "Rotterdam",
+   "destination": "Huesca",
+   "per_pallet": 116.5
+  },
+  {
+   "carrier": "IEC",
+   "origin": "Rotterdam",
+   "destination": "Teruel",
+   "per_pallet": 118.5
+  },
+  {
+   "carrier": "IEC",
+   "origin": "Rotterdam",
+   "destination": "Cuenca",
+   "per_pallet": 120.5
+  },
+  {
+   "carrier": "IEC",
+   "origin": "Rotterdam",
+   "destination": "Toledo",
+   "per_pallet": 121.0
+  },
+  {
+   "carrier": "IEC",
+   "origin": "Rotterdam",
+   "destination": "Albacete",
+   "per_pallet": 123.0
+  },
+  {
+   "carrier": "IEC",
+   "origin": "Rotterdam",
+   "destination": "Jaen",
+   "per_pallet": 124.0
+  },
+  {
+   "carrier": "IEC",
+   "origin": "Rotterdam",
+   "destination": "Huelva",
+   "per_pallet": 126.0
+  },
+  {
+   "carrier": "IEC",
+   "origin": "Rotterdam",
+   "destination": "Cadiz",
+   "per_pallet": 128.0
+  },
+  {
+   "carrier": "IEC",
+   "origin": "Rotterdam",
+   "destination": "Lisbon",
+   "per_pallet": 128.5
+  },
+  {
+   "carrier": "IEC",
+   "origin": "Rotterdam",
+   "destination": "Porto",
+   "per_pallet": 130.5
+  },
+  {
+   "carrier": "IEC",
+   "origin": "Rotterdam",
+   "destination": "Coimbra",
+   "per_pallet": 132.5
+  },
+  {
+   "carrier": "IEC",
+   "origin": "Rotterdam",
+   "destination": "Braga",
+   "per_pallet": 132.5
+  },
+  {
+   "carrier": "IEC",
+   "origin": "Rotterdam",
+   "destination": "Faro",
+   "per_pallet": 135.0
+  },
+  {
+   "carrier": "IEC",
+   "origin": "Rotterdam",
+   "destination": "Lyon",
+   "per_pallet": 137.0
+  },
+  {
+   "carrier": "IEC",
+   "origin": "Rotterdam",
+   "destination": "Toulouse",
+   "per_pallet": 138.5
+  }
+ ],
+ "fuel": {
+  "2026-W35": 0.158,
+  "2026-W36": 0.162,
+  "2026-W37": 0.165,
+  "2026-W38": 0.171,
+  "2026-W39": 0.168,
+  "2026-W40": 0.164
+ },
+ "tail_lift": 35.0,
+ "waiting_per_hour": 45.0,
+ "waiting_free_hours": 2,
+ "adr_share": 0.15
+}

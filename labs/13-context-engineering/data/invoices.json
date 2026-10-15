@@ -1,0 +1,490 @@
+[
+ {
+  "id": "INV-01",
+  "carrier": "RRH",
+  "number": "RRH-26417",
+  "date": "2026-09-06",
+  "shipment": "HF-26093",
+  "waybill": "CMR 4090971",
+  "pickup": "2026-09-01",
+  "destination": "Cologne",
+  "pallets": 12,
+  "booked": [],
+  "delivered": {
+   "tail_lift_stops": 0,
+   "hours_on_site": 0,
+   "dangerous_goods": false
+  },
+  "consignee": "Elbe Retail GmbH",
+  "lines": [
+   {
+    "text": "Linehaul Rotterdam to Cologne, 12 pallets at 37.50",
+    "amount": 450.0
+   },
+   {
+    "text": "Fuel surcharge 16.2% (index 2026-W36)",
+    "amount": 72.9
+   }
+  ]
+ },
+ {
+  "id": "INV-02",
+  "carrier": "BLT",
+  "number": "BLT-8815",
+  "date": "2026-09-07",
+  "shipment": "HF-26096",
+  "waybill": "CMR 4628945",
+  "pickup": "2026-09-02",
+  "destination": "Warsaw",
+  "pallets": 18,
+  "booked": [
+   "tail_lift"
+  ],
+  "delivered": {
+   "tail_lift_stops": 1,
+   "hours_on_site": 0,
+   "dangerous_goods": false
+  },
+  "consignee": "Danube Office Kft.",
+  "lines": [
+   {
+    "text": "Linehaul Rotterdam to Warsaw, 18 pallets at 66.00",
+    "amount": 1188.0
+   },
+   {
+    "text": "Fuel surcharge 16.2% (index 2026-W36)",
+    "amount": 192.46
+   },
+   {
+    "text": "Tail-lift delivery, 1 stop(s) at 35.00",
+    "amount": 35.0
+   }
+  ]
+ },
+ {
+  "id": "INV-03",
+  "carrier": "IEC",
+  "number": "IEC-3336",
+  "date": "2026-09-08",
+  "shipment": "HF-26099",
+  "waybill": "CMR 4199679",
+  "pickup": "2026-09-03",
+  "destination": "Valencia",
+  "pallets": 9,
+  "booked": [],
+  "delivered": {
+   "tail_lift_stops": 0,
+   "hours_on_site": 3,
+   "dangerous_goods": false
+  },
+  "consignee": "Spree Electronics GmbH",
+  "lines": [
+   {
+    "text": "Linehaul Rotterdam to Valencia, 9 pallets at 75.00",
+    "amount": 675.0
+   },
+   {
+    "text": "Fuel surcharge 16.2% (index 2026-W36)",
+    "amount": 109.35
+   },
+   {
+    "text": "Waiting time at delivery, 3 h on site, 1 h charged at 45.00",
+    "amount": 45.0
+   }
+  ]
+ },
+ {
+  "id": "INV-04",
+  "carrier": "RRH",
+  "number": "RRH-26444",
+  "date": "2026-09-12",
+  "shipment": "HF-26102",
+  "waybill": "CMR 4581570",
+  "pickup": "2026-09-07",
+  "destination": "Munich",
+  "pallets": 22,
+  "booked": [],
+  "delivered": {
+   "tail_lift_stops": 0,
+   "hours_on_site": 0,
+   "dangerous_goods": false
+  },
+  "consignee": "Tagus Pharma Lda.",
+  "lines": [
+   {
+    "text": "Linehaul Rotterdam to Munich, 22 pallets at 53.00",
+    "amount": 1166.0
+   },
+   {
+    "text": "Fuel surcharge 16.5% (index 2026-W37)",
+    "amount": 192.39
+   }
+  ]
+ },
+ {
+  "id": "INV-05",
+  "carrier": "BLT",
+  "number": "BLT-8836",
+  "date": "2026-09-13",
+  "shipment": "HF-26105",
+  "waybill": "CMR 4064275",
+  "pickup": "2026-09-08",
+  "destination": "Prague",
+  "pallets": 14,
+  "booked": [
+   "adr"
+  ],
+  "delivered": {
+   "tail_lift_stops": 0,
+   "hours_on_site": 0,
+   "dangerous_goods": true
+  },
+  "consignee": "Baltic Bikes UAB",
+  "lines": [
+   {
+    "text": "Linehaul Rotterdam to Prague, 14 pallets at 89.50",
+    "amount": 1253.0
+   },
+   {
+    "text": "Fuel surcharge 16.5% (index 2026-W37)",
+    "amount": 206.75
+   },
+   {
+    "text": "ADR dangerous goods surcharge 15% of linehaul",
+    "amount": 187.95
+   }
+  ]
+ },
+ {
+  "id": "INV-06",
+  "carrier": "IEC",
+  "number": "IEC-3347",
+  "date": "2026-09-14",
+  "shipment": "HF-26108",
+  "waybill": "CMR 4997780",
+  "pickup": "2026-09-09",
+  "destination": "Barcelona",
+  "pallets": 16,
+  "booked": [],
+  "delivered": {
+   "tail_lift_stops": 0,
+   "hours_on_site": 0,
+   "dangerous_goods": false
+  },
+  "consignee": "Meseta Foods S.A.",
+  "lines": [
+   {
+    "text": "Linehaul Rotterdam to Barcelona, 16 pallets at 74.00",
+    "amount": 1184.0
+   },
+   {
+    "text": "Fuel surcharge 16.5% (index 2026-W37)",
+    "amount": 195.36
+   }
+  ]
+ },
+ {
+  "id": "INV-07",
+  "carrier": "RRH",
+  "number": "RRH-26450",
+  "date": "2026-09-15",
+  "shipment": "HF-26111",
+  "waybill": "CMR 4905513",
+  "pickup": "2026-09-10",
+  "destination": "Hamburg",
+  "pallets": 20,
+  "booked": [],
+  "delivered": {
+   "tail_lift_stops": 0,
+   "hours_on_site": 0,
+   "dangerous_goods": false
+  },
+  "consignee": "Vistula Home Sp. z o.o.",
+  "lines": [
+   {
+    "text": "Linehaul Rotterdam to Hamburg, 20 pallets at 50.50",
+    "amount": 1010.0
+   },
+   {
+    "text": "Fuel surcharge 17.1% (index 2026-W38)",
+    "amount": 172.71
+   }
+  ]
+ },
+ {
+  "id": "INV-08",
+  "carrier": "BLT",
+  "number": "BLT-8849",
+  "date": "2026-09-19",
+  "shipment": "HF-26114",
+  "waybill": "CMR 4386461",
+  "pickup": "2026-09-14",
+  "destination": "Riga",
+  "pallets": 11,
+  "booked": [],
+  "delivered": {
+   "tail_lift_stops": 1,
+   "hours_on_site": 0,
+   "dangerous_goods": false
+  },
+  "consignee": "Alpine Parts AG",
+  "lines": [
+   {
+    "text": "Linehaul Rotterdam to Riga, 11 pallets at 63.00",
+    "amount": 693.0
+   },
+   {
+    "text": "Fuel surcharge 17.1% (index 2026-W38)",
+    "amount": 118.5
+   },
+   {
+    "text": "Tail-lift delivery, 1 stop(s) at 35.00",
+    "amount": 35.0
+   }
+  ]
+ },
+ {
+  "id": "INV-09",
+  "carrier": "IEC",
+  "number": "IEC-3369",
+  "date": "2026-09-20",
+  "shipment": "HF-26117",
+  "waybill": "CMR 4322914",
+  "pickup": "2026-09-15",
+  "destination": "Lisbon",
+  "pallets": 24,
+  "booked": [
+   "tail_lift"
+  ],
+  "delivered": {
+   "tail_lift_stops": 2,
+   "hours_on_site": 0,
+   "dangerous_goods": false
+  },
+  "consignee": "Baltic Bikes UAB",
+  "lines": [
+   {
+    "text": "Linehaul Rotterdam to Lisbon, 24 pallets at 128.50",
+    "amount": 3084.0
+   },
+   {
+    "text": "Fuel surcharge 17.1% (index 2026-W38)",
+    "amount": 527.36
+   },
+   {
+    "text": "Tail-lift delivery, 2 stop(s) at 35.00",
+    "amount": 70.0
+   }
+  ]
+ },
+ {
+  "id": "INV-10",
+  "carrier": "RRH",
+  "number": "RRH-26455",
+  "date": "2026-09-21",
+  "shipment": "HF-26120",
+  "waybill": "CMR 4305061",
+  "pickup": "2026-09-16",
+  "destination": "Zurich",
+  "pallets": 8,
+  "booked": [],
+  "delivered": {
+   "tail_lift_stops": 0,
+   "hours_on_site": 4,
+   "dangerous_goods": false
+  },
+  "consignee": "Tagus Pharma Lda.",
+  "lines": [
+   {
+    "text": "Linehaul Rotterdam to Zurich, 8 pallets at 59.50",
+    "amount": 476.0
+   },
+   {
+    "text": "Fuel surcharge 17.1% (index 2026-W38)",
+    "amount": 81.4
+   },
+   {
+    "text": "Waiting time at delivery, 4 h on site, 4 h charged at 45.00",
+    "amount": 180.0
+   }
+  ]
+ },
+ {
+  "id": "INV-11",
+  "carrier": "BLT",
+  "number": "BLT-8858",
+  "date": "2026-09-22",
+  "shipment": "HF-26123",
+  "waybill": "CMR 4134504",
+  "pickup": "2026-09-17",
+  "destination": "Budapest",
+  "pallets": 19,
+  "booked": [],
+  "delivered": {
+   "tail_lift_stops": 0,
+   "hours_on_site": 0,
+   "dangerous_goods": false
+  },
+  "consignee": "Tagus Pharma Lda.",
+  "lines": [
+   {
+    "text": "Linehaul Rotterdam to Budapest, 19 pallets at 96.50",
+    "amount": 1833.5
+   },
+   {
+    "text": "Fuel surcharge 17.1% (index 2026-W38)",
+    "amount": 313.53
+   }
+  ]
+ },
+ {
+  "id": "INV-12",
+  "carrier": "IEC",
+  "number": "IEC-3400",
+  "date": "2026-09-26",
+  "shipment": "HF-26126",
+  "waybill": "CMR 4514747",
+  "pickup": "2026-09-21",
+  "destination": "Bilbao",
+  "pallets": 13,
+  "booked": [],
+  "delivered": {
+   "tail_lift_stops": 0,
+   "hours_on_site": 0,
+   "dangerous_goods": false
+  },
+  "consignee": "Baltic Bikes UAB",
+  "lines": [
+   {
+    "text": "Linehaul Rotterdam to Bilbao, 13 pallets at 81.00",
+    "amount": 1053.0
+   },
+   {
+    "text": "Fuel surcharge 16.8% (index 2026-W39)",
+    "amount": 176.9
+   }
+  ]
+ },
+ {
+  "id": "INV-13",
+  "carrier": "RRH",
+  "number": "RRH-26480",
+  "date": "2026-09-27",
+  "shipment": "HF-26129",
+  "waybill": "CMR 4045692",
+  "pickup": "2026-09-22",
+  "destination": "Berlin",
+  "pallets": 17,
+  "booked": [],
+  "delivered": {
+   "tail_lift_stops": 0,
+   "hours_on_site": 0,
+   "dangerous_goods": false
+  },
+  "consignee": "Danube Office Kft.",
+  "lines": [
+   {
+    "text": "Linehaul Rotterdam to Berlin, 17 pallets at 54.00",
+    "amount": 918.0
+   },
+   {
+    "text": "Fuel surcharge 16.8% (index 2026-W39)",
+    "amount": 154.22
+   }
+  ]
+ },
+ {
+  "id": "INV-14",
+  "carrier": "BLT",
+  "number": "BLT-8864",
+  "date": "2026-09-28",
+  "shipment": "HF-26132",
+  "waybill": "CMR 4135639",
+  "pickup": "2026-09-23",
+  "destination": "Vilnius",
+  "pallets": 21,
+  "booked": [
+   "tail_lift"
+  ],
+  "delivered": {
+   "tail_lift_stops": 1,
+   "hours_on_site": 0,
+   "dangerous_goods": false
+  },
+  "consignee": "Tagus Pharma Lda.",
+  "lines": [
+   {
+    "text": "Linehaul Rotterdam to Vilnius, 21 pallets at 60.50",
+    "amount": 1270.5
+   },
+   {
+    "text": "Fuel surcharge 16.8% (index 2026-W39)",
+    "amount": 213.44
+   },
+   {
+    "text": "Tail-lift delivery, 1 stop(s) at 35.00",
+    "amount": 35.0
+   }
+  ]
+ },
+ {
+  "id": "INV-15",
+  "carrier": "IEC",
+  "number": "IEC-3407",
+  "date": "2026-09-30",
+  "shipment": "HF-26099",
+  "waybill": "CMR 4199679",
+  "pickup": "2026-09-03",
+  "destination": "Valencia",
+  "pallets": 9,
+  "booked": [],
+  "delivered": {
+   "tail_lift_stops": 0,
+   "hours_on_site": 3,
+   "dangerous_goods": false
+  },
+  "consignee": "Meseta Foods S.A.",
+  "lines": [
+   {
+    "text": "Linehaul Rotterdam to Valencia, 9 pallets at 75.00",
+    "amount": 675.0
+   },
+   {
+    "text": "Fuel surcharge 16.2% (index 2026-W36)",
+    "amount": 109.35
+   },
+   {
+    "text": "Waiting time at delivery, 3 h on site, 1 h charged at 45.00",
+    "amount": 45.0
+   }
+  ]
+ },
+ {
+  "id": "INV-16",
+  "carrier": "RRH",
+  "number": "RRH-26517",
+  "date": "2026-10-03",
+  "shipment": "HF-26138",
+  "waybill": "CMR 4936271",
+  "pickup": "2026-09-28",
+  "destination": "Stuttgart",
+  "pallets": 15,
+  "booked": [],
+  "delivered": {
+   "tail_lift_stops": 0,
+   "hours_on_site": 0,
+   "dangerous_goods": false
+  },
+  "consignee": "Meseta Foods S.A.",
+  "lines": [
+   {
+    "text": "Linehaul Rotterdam to Stuttgart, 15 pallets at 45.00",
+    "amount": 675.0
+   },
+   {
+    "text": "Fuel surcharge 16.4% (index 2026-W40)",
+    "amount": 110.7
+   }
+  ]
+ }
+]

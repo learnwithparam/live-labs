@@ -31,7 +31,7 @@ print what the README promises.
 | 10 | [Make an AI Workflow Survive a Crash](labs/10-durable-workflow) | Temporal case studies: Coinbase and Netflix | ready |
 | 11 | [Build an AI Agent Loop from Scratch](labs/11-agent-loop) | Klarna's assistant handled two thirds of support chats | ready |
 | 12 | [Design Tools for AI Agents with MCP](labs/12-mcp-tools) | Shopify Sidekick tool design | ready |
-| 13 | Cut Agent Token Costs with Context Engineering | Manus KV-cache hit rate | planned |
+| 13 | [Cut Agent Token Costs with Context Engineering](labs/13-context-engineering) | Manus KV-cache hit rate | ready |
 | 14 | Give AI Agents Long-Term Memory with Mem0 | ChatGPT memory and its controls | planned |
 | 15 | Build a Deep Research Agent with Subagents | Anthropic's multi-agent research system | planned |
 | 16 | Build a Voice AI Agent with Pipecat | SoundHound takes restaurant phone orders | planned |

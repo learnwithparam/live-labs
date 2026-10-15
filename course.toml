@@ -162,7 +162,7 @@ owns = "context within one run"
 job = "Keep a long-running agent task affordable, as Manus does with its cache hit rate"
 truth = "the provider's billed and cached tokens"
 metric = "cost per completed task and cache hit rate"
-status = "planned"
+status = "ready"
 
 [[lab]]
 n = 14

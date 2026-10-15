@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="icon" href="data:,">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Halyard audit runs</title>
+<style>
+:root {
+  --paper: #FAFAFA; --card: #FFFFFF; --ink: #151515; --ink-2: #414141; --muted: #606060; --faint: #808080;
+  --line: #DFDFDF; --accent: #FAFF69; --accent-deep: #4F5101; --fill-dark: #1F1F1C;
+  --pass: #008138; --fail: #BF000F; --wait: #B75000;
+  --sans: Inter, Helvetica, Arial, sans-serif; --mono: Inconsolata, "Courier New", Courier, monospace;
+}
+* { box-sizing: border-box }
+html, body { margin: 0 }
+body { background: var(--paper); color: var(--ink); font: 15px/1.5 var(--sans) }
+button { font: inherit; cursor: pointer }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px }
+
+.band { background: var(--fill-dark); color: var(--card); padding: 18px 32px 20px; display: flex; align-items: flex-end;
+  justify-content: space-between; gap: 24px; flex-wrap: wrap }
+.band h1 { margin: 0; font-size: 22px; font-weight: 650; letter-spacing: -0.01em }
+.band p { margin: 2px 0 0; color: var(--line); font-size: 14px }
+.verdict { max-width: 34rem; font-size: 15px; color: var(--card) }
+.verdict strong { background: var(--accent); color: var(--ink); padding: 0 4px }
+
+main { padding: 24px 32px 48px; max-width: 1320px; margin: 0 auto }
+.controls { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; margin-bottom: 18px }
+.run { border: 1px solid var(--ink); background: var(--card); color: var(--ink); padding: 8px 14px; border-radius: 3px }
+.run.primary { background: var(--ink); color: var(--card) }
+.run:disabled { opacity: .5; cursor: progress }
+.habits { display: flex; flex-wrap: wrap; gap: 6px 14px; color: var(--ink-2); font-size: 14px }
+.habits label { display: inline-flex; gap: 6px; align-items: center }
+.status { color: var(--muted); font-size: 14px }
+
+.lane { display: grid; grid-template-columns: 15.5rem minmax(0, 1fr); background: var(--card); border: 1px solid var(--line);
+  margin-bottom: 14px }
+.figures { padding: 16px 18px; border-right: 1px solid var(--line) }
+.figures h2 { margin: 0 0 2px; font-size: 16px }
+.figures .how { margin: 0 0 12px; color: var(--muted); font-size: 13px }
+.figures dl { margin: 0; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 12px; font-size: 14px }
+.figures dt { color: var(--muted) }
+.figures dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums }
+.figures dd.big { font-size: 22px; font-weight: 650; line-height: 1.2 }
+.figures .wrong { margin: 12px 0 0; color: var(--fail); font-size: 13px }
+.figures .right { margin: 12px 0 0; color: var(--pass); font-size: 13px }
+
+.meter { padding: 16px 18px 12px; min-width: 0 }
+.bars { height: 168px; display: flex; align-items: flex-end; gap: 2px; border-bottom: 1px solid var(--ink-2) }
+.bar { flex: 1 1 0; min-width: 3px; display: flex; flex-direction: column; justify-content: flex-end;
+  transform-origin: bottom; animation: rise .35s ease-out }
+.bar .full { background: var(--fail) }
+.bar .cached { background: var(--ink-2) }
+@keyframes rise { from { transform: scaleY(0) } }
+@media (prefers-reduced-motion: reduce) { .bar { animation: none } }
+.strip { display: flex; gap: 2px; margin-top: 4px }
+.strip span { flex: 1 1 0; min-width: 3px; height: 8px; background: var(--line) }
+.strip span.moved { background: var(--fail) }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 18px; margin-top: 8px; color: var(--muted); font-size: 13px }
+.legend i { display: inline-block; width: 10px; height: 10px; margin-right: 6px; vertical-align: -1px }
+.empty { height: 168px; display: grid; place-items: center; color: var(--muted); border: 1px dashed var(--line); font-size: 14px }
+
+.queue { margin-top: 28px }
+.queue h2 { font-size: 18px; margin: 0 }
+.queue .lead { margin: 2px 0 12px; color: var(--ink-2) }
+.dispute { display: grid; grid-template-columns: 5.2rem 6rem minmax(0, 1fr) 7rem 14.5rem; gap: 14px; align-items: center;
+  padding: 12px 14px; background: var(--card); border: 1px solid var(--line); border-top: 0 }
+.dispute:first-of-type { border-top: 1px solid var(--line) }
+.dispute .id { font-weight: 650 }
+.dispute .carrier { color: var(--muted); font-size: 14px; white-space: nowrap }
+.dispute .amount { text-align: right; font-weight: 650; font-variant-numeric: tabular-nums }
+.dispute .actions { display: flex; gap: 6px; justify-content: flex-end }
+.dispute .actions button { border: 1px solid var(--line); background: var(--card); padding: 5px 10px; border-radius: 3px; font-size: 14px }
+.dispute .actions button.send { border-color: var(--ink) }
+.dispute .decided { color: var(--ink-2); font-size: 14px; text-align: right }
+.dispute.sent { background: var(--paper) }
+
+@media (max-width: 900px) {
+  .band, main { padding-left: 16px; padding-right: 16px }
+  .lane { grid-template-columns: 1fr }
+  .figures { border-right: 0; border-bottom: 1px solid var(--line) }
+  .dispute { grid-template-columns: minmax(0, 1fr) auto }
+  .dispute .reason { grid-column: 1 / -1; order: 1 }
+  .dispute .actions, .dispute .decided { order: 2 }
+  .dispute .carrier { display: none }
+  .dispute .actions, .dispute .decided { grid-column: 1 / -1; justify-content: flex-start; text-align: left }
+}
+</style>
+</head>
+<body data-surface="freight audit run console">
+<header class="band">
+  <div>
+    <h1>Halyard Freight accounts payable</h1>
+    <p>Audit runs for September carrier invoices under contract HF-ROAD-2026</p>
+  </div>
+  <p class="verdict" id="verdict">Run both contexts, or run <code>audit review</code>, to compare what each audit costs.</p>
+</header>
+<main>
+  <div class="controls">
+    <button class="run" data-context="naive">Run naive context</button>
+    <button class="run primary" data-context="engineered">Run engineered context</button>
+    <div class="habits" id="habits" title="Put one naive habit back into the engineered context"></div>
+    <span class="status" id="status" role="status"></span>
+  </div>
+
+  <section class="lane" id="lane-naive" aria-label="Naive context run"></section>
+  <section class="lane" id="lane-engineered" aria-label="Engineered context run"></section>
+
+  <section class="queue">
+    <h2>Disputes waiting on the clerk</h2>
+    <p class="lead" id="queue-lead">An audit's disputes land here. Nothing goes to a carrier until the clerk sends it.</p>
+    <div id="disputes"></div>
+  </section>
+</main>
+<script>
+const $ = (selector) => document.querySelector(selector);
+const HOW = {
+  naive: "Clock and progress at the top, last 6 turns kept, finish hidden until done.",
+  engineered: "Same start every step, history only appended, progress recited at the end.",
+};
+const HABITS = {
+  clock: "clock on top", progress: "progress on top", window: "drop old turns", hide_finish: "hide finish",
+};
+const lanes = { naive: null, engineered: null };
+let invoicesById = {};
+let tokenScale = 12000;
+
+const money = (amount) => `$${amount.toFixed(4)}`;
+const euros = (amount) => amount.toLocaleString("en-NL", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const percent = (share) => `${Math.round(share * 100)}%`;
+
+function totals(steps) {
+  const prompt = steps.reduce((sum, step) => sum + step.prompt_tokens, 0);
+  const cached = steps.reduce((sum, step) => sum + step.cached_tokens, 0);
+  return { prompt, cached, cost: steps.reduce((sum, step) => sum + step.cost, 0), hitRate: prompt ? cached / prompt : 0 };
+}
+
+function barFor(step) {
+  // The red part of each bar is what the provider re-read at full price; dark grey came from its cache.
+  const bar = document.createElement("div");
+  bar.className = "bar";
+  bar.style.height = `${Math.min(step.prompt_tokens / tokenScale, 1) * 100}%`;
+  bar.title = `Step ${step.step}: ${step.prompt_tokens.toLocaleString()} tokens in, ${step.cached_tokens.toLocaleString()} cached, ${money(step.cost)}`;
+  const full = document.createElement("div");
+  full.className = "full";
+  full.style.flex = `${step.prompt_tokens - step.cached_tokens} 0 0`;
+  const cached = document.createElement("div");
+  cached.className = "cached";
+  cached.style.flex = `${step.cached_tokens} 0 0`;
+  bar.append(full, cached);
+  return bar;
+}
+
+function cellFor(step) {
+  const cell = document.createElement("span");
+  const moved = step.changed && step.changed !== "first request";
+  cell.className = moved ? "moved" : "";
+  cell.title = `Step ${step.step}: ${step.changed || "appended only"}`;
+  return cell;
+}
+
+function drawLane(context) {
+  const lane = lanes[context];
+  const section = $(`#lane-${context}`);
+  const steps = lane ? lane.steps : [];
+  const sum = totals(steps);
+  const score = lane && lane.score;
+  const title = context === "naive" ? "Naive context" : "Engineered context";
+  const breaks = lane && lane.breaks && lane.breaks.length ? ` with ${lane.breaks.map((habit) => HABITS[habit]).join(", ")}` : "";
+  const wrongRows = score ? score.rows.filter((row) => !row.right) : [];
+  section.innerHTML = `
+    <div class="figures">
+      <h2>${title}${breaks}</h2>
+      <p class="how">${HOW[context]}</p>
+      <dl>
+        <dt>Audit cost</dt><dd class="big">${steps.length ? money(sum.cost) : "none yet"}</dd>
+        <dt>Cache hit rate</dt><dd class="big">${steps.length ? percent(sum.hitRate) : ""}</dd>
+        <dt>Steps</dt><dd>${steps.length}</dd>
+        <dt>Tokens sent</dt><dd>${sum.prompt.toLocaleString()}</dd>
+        <dt>Findings right</dt><dd>${score ? `${score.right} of ${score.invoices}` : lane && !lane.done ? "running" : ""}</dd>
+      </dl>
+      ${score ? (wrongRows.length
+        ? `<p class="wrong">${wrongRows.map((row) => `${row.invoice}: ${row.got ? row.got.verdict : "no finding"}, the contract says ${row.want.verdict}${row.want.verdict === "dispute" ? ` ${euros(row.want.overcharge)} EUR` : ""}`).join(". ")}. No completed audit.</p>`
+        : `<p class="right">Every finding matches the contract. ${money(score.cost_per_completed)} per completed audit.</p>`) : ""}
+      <p class="wrong error" hidden></p>
+    </div>
+    <div class="meter">
+      ${steps.length ? `<div class="bars"></div><div class="strip"></div>` : `<div class="empty">No run yet with this context.</div>`}
+      <div class="legend">
+        <span><i style="background: var(--ink-2)"></i>served from the provider's cache</span>
+        <span><i style="background: var(--fail)"></i>read at full price</span>
+        <span><i style="background: var(--fail); height: 6px"></i>the start of the request changed here</span>
+      </div>
+    </div>`;
+  if (lane && lane.error) {
+    const error = section.querySelector(".error");
+    error.textContent = lane.error;
+    error.hidden = false;
+  }
+  if (steps.length) {
+    section.querySelector(".bars").append(...steps.map(barFor));
+    section.querySelector(".strip").append(...steps.map(cellFor));
+  }
+}
+
+function addSteps(context, steps) {
+  // Only the new steps are appended, so each bar rises once as its step lands.
+  const section = $(`#lane-${context}`);
+  const bars = section.querySelector(".bars");
+  if (!bars) return drawLane(context);
+  const shown = bars.children.length;
+  bars.append(...steps.slice(shown).map(barFor));
+  section.querySelector(".strip").append(...steps.slice(shown).map(cellFor));
+  const sum = totals(steps);
+  const figures = section.querySelectorAll(".figures dd");
+  figures[0].textContent = money(sum.cost);
+  figures[1].textContent = percent(sum.hitRate);
+  figures[2].textContent = steps.length;
+  figures[3].textContent = sum.prompt.toLocaleString();
+}
+
+function drawVerdict() {
+  const naive = lanes.naive && lanes.naive.score;
+  const engineered = lanes.engineered && lanes.engineered.score;
+  if (!naive || !engineered) return;
+  const saving = 1 - engineered.cost / naive.cost;
+  const moreTokens = engineered.prompt_tokens / naive.prompt_tokens - 1;
+  $("#verdict").innerHTML = `The engineered context sent ${moreTokens > 0 ? `${percent(moreTokens)} more` : `${percent(-moreTokens)} fewer`} tokens and cost <strong>${percent(saving)} less</strong>: ${percent(engineered.hit_rate)} of them came from the cache, against ${percent(naive.hit_rate)}.`;
+}
+
+function drawDisputes() {
+  const lane = lanes.engineered && lanes.engineered.disputes ? lanes.engineered : lanes.naive;
+  const list = lane && lane.disputes ? lane.disputes : [];
+  const withheld = list.reduce((sum, finding) => sum + finding.overcharge, 0);
+  $("#queue-lead").textContent = list.length
+    ? `${list.length} disputes from the ${lane === lanes.engineered ? "engineered" : "naive"} run, ${euros(withheld)} EUR withheld. Nothing goes to a carrier until the clerk sends it.`
+    : "An audit's disputes land here. Nothing goes to a carrier until the clerk sends it.";
+  $("#disputes").innerHTML = "";
+  for (const finding of list) {
+    const invoice = invoicesById[finding.invoice] || {};
+    const row = document.createElement("div");
+    row.className = "dispute";
+    // The reason is the model's own words, so every field goes in as text, never as markup.
+    for (const [className, value] of [["id", finding.invoice], ["carrier", invoice.number || ""],
+                                      ["reason", finding.reason], ["amount", `${euros(finding.overcharge)} EUR`]]) {
+      const cell = document.createElement("span");
+      cell.className = className;
+      cell.textContent = value;
+      row.append(cell);
+    }
+    const actions = document.createElement("span");
+    actions.className = "actions";
+    actions.innerHTML = `<button class="send">Send dispute</button><button class="pay">Pay as billed</button>`;
+    row.append(actions);
+    row.querySelector(".send").onclick = () => decide(row, `Dispute sent to ${invoice.carrier || "the carrier"}`);
+    row.querySelector(".pay").onclick = () => decide(row, "Paid as billed");
+    $("#disputes").append(row);
+  }
+}
+
+function decide(row, outcome) {
+  row.classList.add("sent");
+  const decided = document.createElement("span");
+  decided.className = "decided";
+  decided.textContent = outcome;
+  row.querySelector(".actions").replaceWith(decided);
+}
+
+async function start(context) {
+  const breaks = context === "engineered" ? [...document.querySelectorAll("#habits input:checked")].map((box) => box.value) : [];
+  document.querySelectorAll(".run").forEach((button) => (button.disabled = true));
+  $("#status").textContent = `Auditing 16 invoices with the ${context} context.`;
+  const response = await fetch("/api/run", { method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ context, breaks }) });
+  const { id } = await response.json();
+  lanes[context] = { steps: [], breaks, done: false };
+  drawLane(context);
+  while (true) {
+    await new Promise((resolve) => setTimeout(resolve, 700));
+    const run = await (await fetch(`/api/run/${id}`)).json();
+    lanes[context] = run;
+    if (run.done) break;
+    addSteps(context, run.steps);
+  }
+  drawLane(context);
+  drawVerdict();
+  drawDisputes();
+  $("#status").textContent = lanes[context].error ? "" : `The ${context} run finished in ${lanes[context].steps.length} steps.`;
+  document.querySelectorAll(".run").forEach((button) => (button.disabled = false));
+}
+
+async function load() {
+  const overview = await (await fetch("/api/overview")).json();
+  invoicesById = Object.fromEntries(overview.invoices.map((invoice) => [invoice.id, invoice]));
+  $("#habits").innerHTML = overview.breaks.map((habit) =>
+    `<label><input type="checkbox" value="${habit}"> ${HABITS[habit]}</label>`).join("");
+  if (overview.review) {
+    for (const context of ["naive", "engineered"]) {
+      const result = overview.review[context];
+      lanes[context] = { steps: result.steps, score: result.score, disputes: result.disputes, done: true };
+    }
+    // One scale for both lanes, so a taller bar always means a longer request.
+    tokenScale = Math.max(...lanes.naive.steps.concat(lanes.engineered.steps).map((step) => step.prompt_tokens)) * 1.05;
+  }
+  drawLane("naive");
+  drawLane("engineered");
+  drawVerdict();
+  drawDisputes();
+}
+
+document.querySelectorAll(".run").forEach((button) => (button.onclick = () => start(button.dataset.context)));
+load();
+</script>
+</body>
+</html>
