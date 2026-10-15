@@ -1,0 +1,20 @@
+{"id": "TX-00009", "descriptor": "DELTA AIR 0440874717 DELTA.COM GA", "amount": 183.09, "posted": "2026-08-19", "label": "airfare", "reviewer": "priya.raman"}
+{"id": "TX-00045", "descriptor": "SOUTHWEST AIRLINES DALLAS TX", "amount": 78.08, "posted": "2026-08-13", "label": "airfare", "reviewer": "dana.okafor"}
+{"id": "TX-00008", "descriptor": "MARRIOTT MIAMI FL", "amount": 609.4, "posted": "2026-07-16", "label": "lodging", "reviewer": "tom.becker"}
+{"id": "TX-00025", "descriptor": "HAMPTON INN 8615 CA", "amount": 397.94, "posted": "2026-08-12", "label": "lodging", "reviewer": "priya.raman"}
+{"id": "TX-00016", "descriptor": "NTTA AUTOCHARGE TX", "amount": 17.55, "posted": "2026-07-12", "label": "ground_transport", "reviewer": "priya.raman"}
+{"id": "TX-00018", "descriptor": "UBER* TRIP", "amount": 52.37, "posted": "2026-08-21", "label": "ground_transport", "reviewer": "dana.okafor"}
+{"id": "TX-00001", "descriptor": "EZCATER *FERN BAKERY", "amount": 1011.76, "posted": "2026-07-20", "label": "meals", "reviewer": "priya.raman"}
+{"id": "TX-00012", "descriptor": "TST*CEDAR BISTRO", "amount": 203.37, "posted": "2026-08-21", "label": "meals", "reviewer": "priya.raman"}
+{"id": "TX-00007", "descriptor": "ZOOM.US 888-799-9666 CA", "amount": 550.0, "posted": "2026-08-21", "label": "software", "reviewer": "luis.mendez"}
+{"id": "TX-00011", "descriptor": "AMAZON.COM SERVICES 75WCR7", "amount": 71.85, "posted": "2026-08-08", "label": "software", "reviewer": "luis.mendez"}
+{"id": "TX-00003", "descriptor": "GOOGLE *ADS1291594000", "amount": 528.46, "posted": "2026-07-08", "label": "advertising", "reviewer": "tom.becker"}
+{"id": "TX-00004", "descriptor": "GOOGLE *ADS1676843055", "amount": 5424.16, "posted": "2026-08-01", "label": "advertising", "reviewer": "priya.raman"}
+{"id": "TX-00005", "descriptor": "AMZN Mktp US*90T0SZLFM", "amount": 264.38, "posted": "2026-07-25", "label": "office_supplies", "reviewer": "luis.mendez"}
+{"id": "TX-00017", "descriptor": "AMZN Mktp US*QKDGW3X", "amount": 76.7, "posted": "2026-07-17", "label": "office_supplies", "reviewer": "luis.mendez"}
+{"id": "TX-00002", "descriptor": "FEDEX OFFIC97622 SEATTLE WA", "amount": 145.07, "posted": "2026-08-16", "label": "shipping", "reviewer": "luis.mendez"}
+{"id": "TX-00023", "descriptor": "THE UPS STORE 0187", "amount": 28.6, "posted": "2026-08-30", "label": "shipping", "reviewer": "priya.raman"}
+{"id": "TX-00037", "descriptor": "SONIC.NET INC", "amount": 290.11, "posted": "2026-08-05", "label": "telecom", "reviewer": "luis.mendez"}
+{"id": "TX-00047", "descriptor": "AT&T*BILL PAYMENT TX", "amount": 75.18, "posted": "2026-08-15", "label": "telecom", "reviewer": "tom.becker"}
+{"id": "TX-00006", "descriptor": "PAYPAL *LANTERNMEDIA 5667361384", "amount": 2030.18, "posted": "2026-08-03", "label": "professional_services", "reviewer": "luis.mendez"}
+{"id": "TX-00031", "descriptor": "LEGALZOOM* 00B3RWLEN", "amount": 119.54, "posted": "2026-07-25", "label": "professional_services", "reviewer": "luis.mendez"}

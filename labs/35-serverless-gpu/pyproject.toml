@@ -1,0 +1,29 @@
+[project]
+name = "lab-35-serverless-gpu"
+version = "0.1.0"
+description = "Serve an Open LLM on Serverless GPUs: a corporate card company serves its spend-category model with vLLM on a GPU that scales to zero, measured against the hosted model on the same golden set"
+requires-python = ">=3.11,<3.14"
+dependencies = [
+    "modal==1.6.0",
+]
+
+[project.scripts]
+gpu = "corvane_gpu.cli:main"
+
+[dependency-groups]
+dev = ["pytest>=8.4"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/corvane_gpu"]
+
+[tool.uv]
+# Every dependency resolves to a release at least two weeks old, so a fresh one never lands untested.
+exclude-newer = "2026-10-01T00:00:00Z"
+
+[tool.pytest.ini_options]
+markers = ["proof: reads the real GPU run and calls the real hosted model; needs LLM_API_KEY"]
+addopts = "-m 'not proof'"

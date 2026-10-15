@@ -1,0 +1,227 @@
+{"id": "TX-00075", "descriptor": "UBER   *EATS HELP.UBER.COM CA", "amount": 101.53, "posted": "2026-07-06", "label": "meals", "reviewer": "dana.okafor"}
+{"id": "TX-00317", "descriptor": "FIGMA 9LM42DPC8", "amount": 474.16, "posted": "2026-07-06", "label": "software", "reviewer": "tom.becker"}
+{"id": "TX-00423", "descriptor": "MARRIOTT 29431 OAKLAND CA", "amount": 280.49, "posted": "2026-07-06", "label": "lodging", "reviewer": "dana.okafor"}
+{"id": "TX-00871", "descriptor": "NOTION LABS, INC.", "amount": 529.22, "posted": "2026-07-07", "label": "software", "reviewer": "luis.mendez"}
+{"id": "TX-00908", "descriptor": "STAPLES 60328 MIAMI FL", "amount": 37.81, "posted": "2026-07-07", "label": "office_supplies", "reviewer": "dana.okafor"}
+{"id": "TX-01174", "descriptor": "APPLE.COM/BILL 866-712-7753 CA", "amount": 15.91, "posted": "2026-07-07", "label": "software", "reviewer": "priya.raman"}
+{"id": "TX-00149", "descriptor": "CLEAR SECURE INC 755072", "amount": 189.0, "posted": "2026-07-08", "label": "airfare", "reviewer": "luis.mendez"}
+{"id": "TX-00292", "descriptor": "PAYPAL *MERIDIANSTUDIO", "amount": 955.8, "posted": "2026-07-08", "label": "professional_services", "reviewer": "priya.raman"}
+{"id": "TX-01002", "descriptor": "HYATT PLACE 7850 FL", "amount": 403.41, "posted": "2026-07-08", "label": "lodging", "reviewer": "dana.okafor"}
+{"id": "TX-00273", "descriptor": "FASTRAK CSC 778792 CA", "amount": 39.11, "posted": "2026-07-09", "label": "ground_transport", "reviewer": "dana.okafor"}
+{"id": "TX-00919", "descriptor": "GITHUB, INC. GITHUB.COM CA", "amount": 203.11, "posted": "2026-07-09", "label": "software", "reviewer": "tom.becker"}
+{"id": "TX-00947", "descriptor": "ATLASSIAN G2US50", "amount": 648.87, "posted": "2026-07-09", "label": "software", "reviewer": "dana.okafor"}
+{"id": "TX-00202", "descriptor": "NOTION LABS, INC.", "amount": 719.53, "posted": "2026-07-10", "label": "software", "reviewer": "luis.mendez"}
+{"id": "TX-00333", "descriptor": "GOOGLE *WORKSPACE JJY7PWX56", "amount": 3308.71, "posted": "2026-07-10", "label": "software", "reviewer": "priya.raman"}
+{"id": "TX-00623", "descriptor": "CHIPOTLE 7831", "amount": 7.77, "posted": "2026-07-10", "label": "meals", "reviewer": "dana.okafor"}
+{"id": "TX-01084", "descriptor": "COMCAST BUSINESS 540274", "amount": 352.82, "posted": "2026-07-10", "label": "telecom", "reviewer": "priya.raman"}
+{"id": "TX-00241", "descriptor": "MARRIOTT NORTHSIDE BAR NY", "amount": 139.43, "posted": "2026-07-11", "label": "meals", "reviewer": "dana.okafor"}
+{"id": "TX-00611", "descriptor": "BOOKING.COM HOTEL AMSTERDAM", "amount": 298.59, "posted": "2026-07-11", "label": "lodging", "reviewer": "luis.mendez"}
+{"id": "TX-00771", "descriptor": "ATLASSIAN WQL87JCK", "amount": 198.24, "posted": "2026-07-11", "label": "software", "reviewer": "luis.mendez"}
+{"id": "TX-01140", "descriptor": "STAPLES 21446 MIAMI FL", "amount": 280.91, "posted": "2026-07-11", "label": "office_supplies", "reviewer": "priya.raman"}
+{"id": "TX-00431", "descriptor": "COURTYARD BY MARRIOTT WA", "amount": 490.82, "posted": "2026-07-12", "label": "lodging", "reviewer": "dana.okafor"}
+{"id": "TX-00803", "descriptor": "HILTON HOTELS SEATTLE WA", "amount": 349.71, "posted": "2026-07-12", "label": "lodging", "reviewer": "dana.okafor"}
+{"id": "TX-00860", "descriptor": "SQ *MAPLE PARKING CA", "amount": 37.06, "posted": "2026-07-12", "label": "ground_transport", "reviewer": "tom.becker"}
+{"id": "TX-00966", "descriptor": "EXPEDIA*MK6MC0Y EXPEDIA.COM WA", "amount": 165.49, "posted": "2026-07-12", "label": "lodging", "reviewer": "luis.mendez"}
+{"id": "TX-01114", "descriptor": "STAPLES.COM 109015", "amount": 226.47, "posted": "2026-07-12", "label": "office_supplies", "reviewer": "luis.mendez"}
+{"id": "TX-00307", "descriptor": "DOORDASH*TALLOW F4NZK2", "amount": 170.97, "posted": "2026-07-13", "label": "meals", "reviewer": "luis.mendez"}
+{"id": "TX-00605", "descriptor": "OFFICE DEPOT #3497", "amount": 249.53, "posted": "2026-07-13", "label": "office_supplies", "reviewer": "dana.okafor"}
+{"id": "TX-00778", "descriptor": "SQ *MAPLE TAQUERIA NY", "amount": 58.3, "posted": "2026-07-13", "label": "meals", "reviewer": "tom.becker"}
+{"id": "TX-00042", "descriptor": "AMERICAN AIR BAGGAGE FEE", "amount": 39.03, "posted": "2026-07-14", "label": "airfare", "reviewer": "luis.mendez"}
+{"id": "TX-00135", "descriptor": "ATLASSIAN WGXSHR", "amount": 19.16, "posted": "2026-07-14", "label": "software", "reviewer": "luis.mendez"}
+{"id": "TX-00183", "descriptor": "FEDEX OFFIC29735 PORTLAND OR", "amount": 184.35, "posted": "2026-07-14", "label": "office_supplies", "reviewer": "luis.mendez"}
+{"id": "TX-00244", "descriptor": "AMERICAN AIR8525236661740", "amount": 202.64, "posted": "2026-07-14", "label": "airfare", "reviewer": "priya.raman"}
+{"id": "TX-00668", "descriptor": "ZOOM.US 888-799-9666 CA", "amount": 583.03, "posted": "2026-07-14", "label": "software", "reviewer": "priya.raman"}
+{"id": "TX-00903", "descriptor": "AMZN MKTP US*F2WTAF", "amount": 323.44, "posted": "2026-07-14", "label": "office_supplies", "reviewer": "dana.okafor"}
+{"id": "TX-00563", "descriptor": "SOUTHWES 5466587695042", "amount": 182.64, "posted": "2026-07-15", "label": "airfare", "reviewer": "luis.mendez"}
+{"id": "TX-00094", "descriptor": "STAPLES 56307 LOS ANGELES CA", "amount": 66.34, "posted": "2026-07-16", "label": "office_supplies", "reviewer": "tom.becker"}
+{"id": "TX-00146", "descriptor": "UNITED 3639328490314", "amount": 698.37, "posted": "2026-07-16", "label": "lodging", "reviewer": "dana.okafor"}
+{"id": "TX-00267", "descriptor": "TST* SAFFRON RAMEN NEW YORK NY", "amount": 104.02, "posted": "2026-07-16", "label": "meals", "reviewer": "dana.okafor"}
+{"id": "TX-00309", "descriptor": "UPWORK -714922197REF", "amount": 3715.69, "posted": "2026-07-16", "label": "professional_services", "reviewer": "tom.becker"}
+{"id": "TX-00433", "descriptor": "AIRBNB  HMCNCR67J9 SAN FRANCISCO", "amount": 203.15, "posted": "2026-07-16", "label": "lodging", "reviewer": "tom.becker"}
+{"id": "TX-00759", "descriptor": "AMERICAN AIR3125847304399", "amount": 215.64, "posted": "2026-07-16", "label": "airfare", "reviewer": "priya.raman"}
+{"id": "TX-00770", "descriptor": "SP+ PARKING 3292 ATLANTA GA", "amount": 54.69, "posted": "2026-07-16", "label": "ground_transport", "reviewer": "priya.raman"}
+{"id": "TX-00826", "descriptor": "EXXONMOBIL 51356214", "amount": 71.69, "posted": "2026-07-16", "label": "ground_transport", "reviewer": "dana.okafor"}
+{"id": "TX-01089", "descriptor": "COSTCO WHOLESALE 1839", "amount": 199.62, "posted": "2026-07-16", "label": "meals", "reviewer": "luis.mendez"}
+{"id": "TX-01125", "descriptor": "PAYPAL *BLUE OAKMEDIA 9776583080", "amount": 53.7, "posted": "2026-07-16", "label": "advertising", "reviewer": "tom.becker"}
+{"id": "TX-00054", "descriptor": "EXXONMOBIL 66217946", "amount": 32.44, "posted": "2026-07-17", "label": "ground_transport", "reviewer": "luis.mendez"}
+{"id": "TX-00143", "descriptor": "CANVA* 7H5QTZUSK", "amount": 582.46, "posted": "2026-07-17", "label": "software", "reviewer": "priya.raman"}
+{"id": "TX-00383", "descriptor": "HILTON ORCHARD GRILL PORTLAND OR", "amount": 128.32, "posted": "2026-07-17", "label": "meals", "reviewer": "luis.mendez"}
+{"id": "TX-00516", "descriptor": "HYATT REGENCY DENVER CO", "amount": 517.44, "posted": "2026-07-17", "label": "lodging", "reviewer": "priya.raman"}
+{"id": "TX-00926", "descriptor": "LYFT *RIDE SAN FRANCISCO", "amount": 55.87, "posted": "2026-07-17", "label": "ground_transport", "reviewer": "priya.raman"}
+{"id": "TX-01036", "descriptor": "DHL EXPRESS USA N2TP37LL", "amount": 285.0, "posted": "2026-07-17", "label": "shipping", "reviewer": "dana.okafor"}
+{"id": "TX-00107", "descriptor": "DD *DOORDASH MARIGOLD", "amount": 21.72, "posted": "2026-07-18", "label": "meals", "reviewer": "dana.okafor"}
+{"id": "TX-00236", "descriptor": "AMAZON.COM*AGUWYSG AMZN.COM/BILL", "amount": 86.4, "posted": "2026-07-18", "label": "office_supplies", "reviewer": "priya.raman"}
+{"id": "TX-00268", "descriptor": "TST*NORTHSIDE KITCHEN", "amount": 186.55, "posted": "2026-07-18", "label": "meals", "reviewer": "priya.raman"}
+{"id": "TX-00324", "descriptor": "SP+ PARKING 5048 AUSTIN TX", "amount": 36.03, "posted": "2026-07-18", "label": "ground_transport", "reviewer": "priya.raman"}
+{"id": "TX-00492", "descriptor": "NOTION LABS, INC.", "amount": 498.23, "posted": "2026-07-18", "label": "software", "reviewer": "tom.becker"}
+{"id": "TX-01109", "descriptor": "GITHUB S3TM0S", "amount": 341.61, "posted": "2026-07-18", "label": "software", "reviewer": "tom.becker"}
+{"id": "TX-00117", "descriptor": "SQ *KESTREL BAKERY WA", "amount": 110.52, "posted": "2026-07-19", "label": "meals", "reviewer": "luis.mendez"}
+{"id": "TX-00153", "descriptor": "DD *DOORDASH JUNIPER", "amount": 22.86, "posted": "2026-07-19", "label": "meals", "reviewer": "luis.mendez"}
+{"id": "TX-00318", "descriptor": "SFO PARKING SAN FRANCISCO", "amount": 22.37, "posted": "2026-07-19", "label": "ground_transport", "reviewer": "luis.mendez"}
+{"id": "TX-00373", "descriptor": "FEDEX 629080363 MEMPHIS TN", "amount": 107.03, "posted": "2026-07-19", "label": "shipping", "reviewer": "priya.raman"}
+{"id": "TX-00714", "descriptor": "CHIPOTLE 5148", "amount": 5.82, "posted": "2026-07-19", "label": "meals", "reviewer": "dana.okafor"}
+{"id": "TX-00957", "descriptor": "E-ZPASS NY REBILL", "amount": 10.2, "posted": "2026-07-19", "label": "ground_transport", "reviewer": "tom.becker"}
+{"id": "TX-00102", "descriptor": "SQ *NORTHSIDE PARKING NY", "amount": 75.76, "posted": "2026-07-20", "label": "ground_transport", "reviewer": "priya.raman"}
+{"id": "TX-00301", "descriptor": "MARRIOTT MARIGOLD BAR MA", "amount": 99.03, "posted": "2026-07-20", "label": "meals", "reviewer": "luis.mendez"}
+{"id": "TX-00564", "descriptor": "GITHUB 8WC56P", "amount": 100.82, "posted": "2026-07-20", "label": "software", "reviewer": "tom.becker"}
+{"id": "TX-00583", "descriptor": "SWEETGREEN KESTREL", "amount": 53.48, "posted": "2026-07-20", "label": "meals", "reviewer": "tom.becker"}
+{"id": "TX-01156", "descriptor": "CLEAR *CLEARME.COM NY", "amount": 189.0, "posted": "2026-07-20", "label": "airfare", "reviewer": "tom.becker"}
+{"id": "TX-00138", "descriptor": "GRUBHUB*LUPA", "amount": 155.97, "posted": "2026-07-21", "label": "meals", "reviewer": "tom.becker"}
+{"id": "TX-00253", "descriptor": "DELTA AIR LINES ATLANTA", "amount": 451.13, "posted": "2026-07-21", "label": "airfare", "reviewer": "luis.mendez"}
+{"id": "TX-00502", "descriptor": "UBER* TRIP", "amount": 78.1, "posted": "2026-07-21", "label": "ground_transport", "reviewer": "dana.okafor"}
+{"id": "TX-00688", "descriptor": "SQ *TALLOW KITCHEN IL", "amount": 89.32, "posted": "2026-07-21", "label": "meals", "reviewer": "luis.mendez"}
+{"id": "TX-00916", "descriptor": "BRANDT CPA PLLC", "amount": 846.72, "posted": "2026-07-21", "label": "professional_services", "reviewer": "priya.raman"}
+{"id": "TX-00394", "descriptor": "HILTON GARDEN INN DENVER CO", "amount": 537.23, "posted": "2026-07-23", "label": "lodging", "reviewer": "priya.raman"}
+{"id": "TX-00638", "descriptor": "INTUIT *MAILCHIMP", "amount": 64.65, "posted": "2026-07-23", "label": "software", "reviewer": "priya.raman"}
+{"id": "TX-00651", "descriptor": "SQ *BLUE OAK COFFEE", "amount": 93.03, "posted": "2026-07-23", "label": "meals", "reviewer": "tom.becker"}
+{"id": "TX-01148", "descriptor": "SLACK TPJ151NU DUBLIN", "amount": 224.35, "posted": "2026-07-23", "label": "software", "reviewer": "dana.okafor"}
+{"id": "TX-00038", "descriptor": "UNITED WI-FI 595300", "amount": 40.56, "posted": "2026-07-24", "label": "telecom", "reviewer": "tom.becker"}
+{"id": "TX-00341", "descriptor": "UNITED     6142362168 HOUSTON TX", "amount": 221.42, "posted": "2026-07-24", "label": "airfare", "reviewer": "luis.mendez"}
+{"id": "TX-00363", "descriptor": "BOOKING.COM HOTEL AMSTERDAM", "amount": 607.13, "posted": "2026-07-25", "label": "lodging", "reviewer": "tom.becker"}
+{"id": "TX-01015", "descriptor": "HYATT REGENCY MIAMI FL", "amount": 486.25, "posted": "2026-07-25", "label": "lodging", "reviewer": "dana.okafor"}
+{"id": "TX-01062", "descriptor": "EXPEDIA*GE1MZUB EXPEDIA.COM WA", "amount": 1034.1, "posted": "2026-07-25", "label": "airfare", "reviewer": "tom.becker"}
+{"id": "TX-01120", "descriptor": "TWILIO INC QY3R1G3TJ", "amount": 105.86, "posted": "2026-07-25", "label": "software", "reviewer": "tom.becker"}
+{"id": "TX-01199", "descriptor": "SWEETGREEN LANTERN", "amount": 42.43, "posted": "2026-07-25", "label": "meals", "reviewer": "dana.okafor"}
+{"id": "TX-00022", "descriptor": "OPENAI SAN FRANCISCO CA", "amount": 1574.25, "posted": "2026-07-26", "label": "software", "reviewer": "dana.okafor"}
+{"id": "TX-00531", "descriptor": "AMERICAN AIR0327253799644", "amount": 172.31, "posted": "2026-07-26", "label": "airfare", "reviewer": "luis.mendez"}
+{"id": "TX-00255", "descriptor": "EZCATER 5SB26YHQE", "amount": 597.9, "posted": "2026-07-27", "label": "meals", "reviewer": "priya.raman"}
+{"id": "TX-00340", "descriptor": "LOWELL & FINCH LLP", "amount": 818.3, "posted": "2026-07-27", "label": "professional_services", "reviewer": "luis.mendez"}
+{"id": "TX-00386", "descriptor": "AMZN MKTP US*CDPP3PR", "amount": 317.42, "posted": "2026-07-27", "label": "software", "reviewer": "luis.mendez"}
+{"id": "TX-00851", "descriptor": "ZOOM.US 888-799-9666 CA", "amount": 313.53, "posted": "2026-07-27", "label": "software", "reviewer": "priya.raman"}
+{"id": "TX-00858", "descriptor": "GITHUB, INC. GITHUB.COM CA", "amount": 223.27, "posted": "2026-07-27", "label": "software", "reviewer": "tom.becker"}
+{"id": "TX-00224", "descriptor": "FACEBK *VRRPKA", "amount": 1619.29, "posted": "2026-07-28", "label": "advertising", "reviewer": "dana.okafor"}
+{"id": "TX-00721", "descriptor": "SFO PARKING SAN FRANCISCO", "amount": 29.5, "posted": "2026-07-28", "label": "ground_transport", "reviewer": "luis.mendez"}
+{"id": "TX-00812", "descriptor": "NOTION LABS, INC.", "amount": 61.75, "posted": "2026-07-28", "label": "software", "reviewer": "luis.mendez"}
+{"id": "TX-00917", "descriptor": "NOTION LABS, INC.", "amount": 127.04, "posted": "2026-07-28", "label": "software", "reviewer": "tom.becker"}
+{"id": "TX-01196", "descriptor": "PAYPAL *WILLOWSTUDIO", "amount": 229.4, "posted": "2026-07-28", "label": "advertising", "reviewer": "tom.becker"}
+{"id": "TX-00150", "descriptor": "VISTAPRINT.COM 846404", "amount": 195.43, "posted": "2026-07-29", "label": "advertising", "reviewer": "luis.mendez"}
+{"id": "TX-00282", "descriptor": "DD *DOORDASH MARIGOLD", "amount": 75.84, "posted": "2026-07-29", "label": "meals", "reviewer": "dana.okafor"}
+{"id": "TX-00385", "descriptor": "UNITED AIRLINES 1689864265021", "amount": 671.39, "posted": "2026-07-29", "label": "airfare", "reviewer": "luis.mendez"}
+{"id": "TX-00538", "descriptor": "SOUTHWES 3687140834243", "amount": 371.8, "posted": "2026-07-29", "label": "airfare", "reviewer": "priya.raman"}
+{"id": "TX-00646", "descriptor": "DELTA AIR 8117550421339", "amount": 713.41, "posted": "2026-07-29", "label": "airfare", "reviewer": "luis.mendez"}
+{"id": "TX-00976", "descriptor": "PARKWHIZ UZD29UHVF", "amount": 77.41, "posted": "2026-07-29", "label": "ground_transport", "reviewer": "luis.mendez"}
+{"id": "TX-01007", "descriptor": "AWS EMEA aws.amazon.com", "amount": 1336.46, "posted": "2026-07-29", "label": "software", "reviewer": "luis.mendez"}
+{"id": "TX-01127", "descriptor": "B&H PHOTO 800-606-6969", "amount": 69.46, "posted": "2026-07-29", "label": "office_supplies", "reviewer": "tom.becker"}
+{"id": "TX-00671", "descriptor": "GITHUB, INC. GITHUB.COM CA", "amount": 319.1, "posted": "2026-07-30", "label": "software", "reviewer": "dana.okafor"}
+{"id": "TX-01068", "descriptor": "GOOGLE *GSUITE_HARBOR", "amount": 1079.72, "posted": "2026-07-30", "label": "software", "reviewer": "dana.okafor"}
+{"id": "TX-01115", "descriptor": "DELTA AIR BAG FEE ATLANTA GA", "amount": 55.46, "posted": "2026-07-30", "label": "airfare", "reviewer": "dana.okafor"}
+{"id": "TX-01129", "descriptor": "BRANDT CPA PLLC", "amount": 4131.47, "posted": "2026-07-30", "label": "professional_services", "reviewer": "priya.raman"}
+{"id": "TX-00010", "descriptor": "UNITED AIRLINES 5711353267554", "amount": 764.76, "posted": "2026-07-31", "label": "airfare", "reviewer": "dana.okafor"}
+{"id": "TX-00126", "descriptor": "FACEBK ADS 4348537836", "amount": 1603.27, "posted": "2026-07-31", "label": "advertising", "reviewer": "tom.becker"}
+{"id": "TX-00178", "descriptor": "ATLASSIAN 5H61SFA", "amount": 488.85, "posted": "2026-07-31", "label": "software", "reviewer": "tom.becker"}
+{"id": "TX-00234", "descriptor": "SQ *MARIGOLD SUSHI MA", "amount": 93.02, "posted": "2026-07-31", "label": "meals", "reviewer": "luis.mendez"}
+{"id": "TX-00429", "descriptor": "LYFT   *RIDE WED 48PM", "amount": 39.56, "posted": "2026-07-31", "label": "ground_transport", "reviewer": "priya.raman"}
+{"id": "TX-00030", "descriptor": "TST*WILLOW SUSHI", "amount": 290.6, "posted": "2026-08-01", "label": "meals", "reviewer": "priya.raman"}
+{"id": "TX-00458", "descriptor": "FIGMA 20H3X654", "amount": 872.15, "posted": "2026-08-01", "label": "software", "reviewer": "priya.raman"}
+{"id": "TX-00864", "descriptor": "TST* BLUE OAK BISTRO MIAMI FL", "amount": 133.13, "posted": "2026-08-01", "label": "meals", "reviewer": "priya.raman"}
+{"id": "TX-01000", "descriptor": "GITHUB PY35SZE", "amount": 238.21, "posted": "2026-08-01", "label": "software", "reviewer": "priya.raman"}
+{"id": "TX-01003", "descriptor": "NOTION LABS, INC.", "amount": 265.34, "posted": "2026-08-01", "label": "software", "reviewer": "tom.becker"}
+{"id": "TX-01067", "descriptor": "AMAZON WEB SERVICES AWS.AMAZON.CO WA", "amount": 2396.62, "posted": "2026-08-01", "label": "software", "reviewer": "dana.okafor"}
+{"id": "TX-00509", "descriptor": "GUSTO YDY4CBH0C", "amount": 268.6, "posted": "2026-08-02", "label": "software", "reviewer": "tom.becker"}
+{"id": "TX-00618", "descriptor": "HERTZ CAR RENTAL BOSTON MA", "amount": 141.78, "posted": "2026-08-02", "label": "ground_transport", "reviewer": "dana.okafor"}
+{"id": "TX-00056", "descriptor": "APPLE.COM/US 935185", "amount": 32.5, "posted": "2026-08-03", "label": "software", "reviewer": "tom.becker"}
+{"id": "TX-00449", "descriptor": "SQ *HARBOR COFFEE", "amount": 106.01, "posted": "2026-08-03", "label": "meals", "reviewer": "luis.mendez"}
+{"id": "TX-01164", "descriptor": "HILTON HOTELS AUSTIN TX", "amount": 448.67, "posted": "2026-08-03", "label": "lodging", "reviewer": "tom.becker"}
+{"id": "TX-00480", "descriptor": "GRUBHUB*MAPLE", "amount": 37.8, "posted": "2026-08-04", "label": "meals", "reviewer": "priya.raman"}
+{"id": "TX-00572", "descriptor": "META PLATFORMS *ADS BVM0Y1H", "amount": 3982.11, "posted": "2026-08-04", "label": "advertising", "reviewer": "priya.raman"}
+{"id": "TX-00922", "descriptor": "GUSTO ETUGTPMJ", "amount": 262.09, "posted": "2026-08-04", "label": "software", "reviewer": "tom.becker"}
+{"id": "TX-00928", "descriptor": "HERMAN MILLER STORE CA", "amount": 714.34, "posted": "2026-08-04", "label": "office_supplies", "reviewer": "priya.raman"}
+{"id": "TX-00996", "descriptor": "GOOGLE *GSUITE_MARIGOLD", "amount": 118.13, "posted": "2026-08-04", "label": "software", "reviewer": "luis.mendez"}
+{"id": "TX-00086", "descriptor": "SOUTHWES 9634805770370", "amount": 331.28, "posted": "2026-08-06", "label": "airfare", "reviewer": "tom.becker"}
+{"id": "TX-01044", "descriptor": "DELTA AIR LINES ATLANTA", "amount": 423.53, "posted": "2026-08-06", "label": "airfare", "reviewer": "luis.mendez"}
+{"id": "TX-00043", "descriptor": "GOOGLE *WORKSPACE 513B4P9K", "amount": 3243.67, "posted": "2026-08-07", "label": "software", "reviewer": "luis.mendez"}
+{"id": "TX-00644", "descriptor": "ANTHROPIC SAN FRANCISCO CA", "amount": 1018.06, "posted": "2026-08-07", "label": "software", "reviewer": "tom.becker"}
+{"id": "TX-00938", "descriptor": "SQ *LUPA RAMEN CO", "amount": 30.6, "posted": "2026-08-07", "label": "meals", "reviewer": "luis.mendez"}
+{"id": "TX-01077", "descriptor": "SLACK TSLV30C DUBLIN", "amount": 848.62, "posted": "2026-08-07", "label": "software", "reviewer": "dana.okafor"}
+{"id": "TX-00116", "descriptor": "CANVA* WFFVBPKV", "amount": 330.29, "posted": "2026-08-08", "label": "software", "reviewer": "luis.mendez"}
+{"id": "TX-00308", "descriptor": "AMZN Mktp US*TTXCDY", "amount": 584.48, "posted": "2026-08-08", "label": "office_supplies", "reviewer": "priya.raman"}
+{"id": "TX-00346", "descriptor": "HILTON HOTELS LOS ANGELES CA", "amount": 200.06, "posted": "2026-08-08", "label": "lodging", "reviewer": "priya.raman"}
+{"id": "TX-00077", "descriptor": "UBER   *TRIP HELP.UBER.COM CA", "amount": 46.18, "posted": "2026-08-09", "label": "ground_transport", "reviewer": "dana.okafor"}
+{"id": "TX-01043", "descriptor": "OPENAI *CHATGPT SUBSCR", "amount": 1687.74, "posted": "2026-08-09", "label": "software", "reviewer": "priya.raman"}
+{"id": "TX-00013", "descriptor": "SLACK TUY6HC95 DUBLIN", "amount": 45.55, "posted": "2026-08-10", "label": "software", "reviewer": "priya.raman"}
+{"id": "TX-00098", "descriptor": "TST* WILLOW KITCHEN SEATTLE WA", "amount": 321.15, "posted": "2026-08-10", "label": "meals", "reviewer": "tom.becker"}
+{"id": "TX-00427", "descriptor": "DELTA AIR LINES ATLANTA", "amount": 553.59, "posted": "2026-08-10", "label": "airfare", "reviewer": "tom.becker"}
+{"id": "TX-00208", "descriptor": "TST*WILLOW RAMEN", "amount": 275.26, "posted": "2026-08-11", "label": "meals", "reviewer": "priya.raman"}
+{"id": "TX-00507", "descriptor": "AIRBNB * HMK3JBMSMF", "amount": 294.09, "posted": "2026-08-11", "label": "lodging", "reviewer": "priya.raman"}
+{"id": "TX-00515", "descriptor": "HILTON GARDEN INN SEATTLE WA", "amount": 177.17, "posted": "2026-08-11", "label": "lodging", "reviewer": "tom.becker"}
+{"id": "TX-00882", "descriptor": "USPS.COM CLICKNSHIP", "amount": 39.93, "posted": "2026-08-11", "label": "shipping", "reviewer": "tom.becker"}
+{"id": "TX-00985", "descriptor": "AWS EMEA aws.amazon.com", "amount": 6475.45, "posted": "2026-08-11", "label": "software", "reviewer": "tom.becker"}
+{"id": "TX-00085", "descriptor": "FACEBK *5HQ3HTY", "amount": 119.89, "posted": "2026-08-12", "label": "advertising", "reviewer": "luis.mendez"}
+{"id": "TX-00710", "descriptor": "TOPTAL LLC KGYRS31QR", "amount": 488.9, "posted": "2026-08-12", "label": "professional_services", "reviewer": "tom.becker"}
+{"id": "TX-00021", "descriptor": "SLACK TEEPPMPHNM DUBLIN", "amount": 187.03, "posted": "2026-08-13", "label": "software", "reviewer": "dana.okafor"}
+{"id": "TX-00129", "descriptor": "FIGMA SQCJ07", "amount": 604.09, "posted": "2026-08-13", "label": "software", "reviewer": "priya.raman"}
+{"id": "TX-00155", "descriptor": "MARRIOTT LUPA BAR TX", "amount": 127.62, "posted": "2026-08-13", "label": "meals", "reviewer": "tom.becker"}
+{"id": "TX-00378", "descriptor": "AWS EMEA aws.amazon.com", "amount": 5351.87, "posted": "2026-08-13", "label": "software", "reviewer": "dana.okafor"}
+{"id": "TX-00488", "descriptor": "LINKEDIN ADS 629208350", "amount": 1299.38, "posted": "2026-08-13", "label": "advertising", "reviewer": "luis.mendez"}
+{"id": "TX-00914", "descriptor": "AMERICAN AIR2142591925280", "amount": 653.54, "posted": "2026-08-13", "label": "airfare", "reviewer": "tom.becker"}
+{"id": "TX-00065", "descriptor": "COURTYARD BY MARRIOTT CO", "amount": 420.81, "posted": "2026-08-14", "label": "lodging", "reviewer": "priya.raman"}
+{"id": "TX-00171", "descriptor": "META PLATFORMS *ADS CRQJ2Y2", "amount": 2055.09, "posted": "2026-08-14", "label": "advertising", "reviewer": "luis.mendez"}
+{"id": "TX-00401", "descriptor": "FACEBK *XQFE2JMUE", "amount": 1128.83, "posted": "2026-08-14", "label": "advertising", "reviewer": "tom.becker"}
+{"id": "TX-00506", "descriptor": "DELTA AIR 8720120324133", "amount": 329.59, "posted": "2026-08-14", "label": "airfare", "reviewer": "tom.becker"}
+{"id": "TX-00510", "descriptor": "AIRBNB  HMD8G8GCDH SAN FRANCISCO", "amount": 925.45, "posted": "2026-08-14", "label": "lodging", "reviewer": "priya.raman"}
+{"id": "TX-00701", "descriptor": "BOOKING.COM HOTEL AMSTERDAM", "amount": 219.13, "posted": "2026-08-14", "label": "lodging", "reviewer": "priya.raman"}
+{"id": "TX-00817", "descriptor": "VIASAT INFLIGHT WIFI", "amount": 23.71, "posted": "2026-08-14", "label": "telecom", "reviewer": "luis.mendez"}
+{"id": "TX-01181", "descriptor": "GUSTO HD3Q3TWX", "amount": 160.87, "posted": "2026-08-14", "label": "software", "reviewer": "tom.becker"}
+{"id": "TX-00471", "descriptor": "ALASKA AIR 9538429660437", "amount": 416.53, "posted": "2026-08-15", "label": "airfare", "reviewer": "dana.okafor"}
+{"id": "TX-00978", "descriptor": "VISTAPRINT.COM 382974", "amount": 170.35, "posted": "2026-08-15", "label": "advertising", "reviewer": "priya.raman"}
+{"id": "TX-01009", "descriptor": "GOOGLE *WORKSPACE F9B20M63U", "amount": 2366.6, "posted": "2026-08-15", "label": "software", "reviewer": "priya.raman"}
+{"id": "TX-00069", "descriptor": "UNITED     5412198043 HOUSTON TX", "amount": 311.04, "posted": "2026-08-16", "label": "airfare", "reviewer": "tom.becker"}
+{"id": "TX-00260", "descriptor": "GUSTO ZAQVEP", "amount": 69.43, "posted": "2026-08-16", "label": "software", "reviewer": "dana.okafor"}
+{"id": "TX-00355", "descriptor": "HILTON HOTELS SEATTLE WA", "amount": 369.57, "posted": "2026-08-16", "label": "lodging", "reviewer": "tom.becker"}
+{"id": "TX-00466", "descriptor": "DELTA AIR LINES ATLANTA", "amount": 431.08, "posted": "2026-08-16", "label": "airfare", "reviewer": "tom.becker"}
+{"id": "TX-00570", "descriptor": "OPENAI *CHATGPT SUBSCR", "amount": 1223.12, "posted": "2026-08-16", "label": "software", "reviewer": "priya.raman"}
+{"id": "TX-00988", "descriptor": "AMAZON.COM*5YJTCF AMZN.COM/BILL", "amount": 21.99, "posted": "2026-08-16", "label": "office_supplies", "reviewer": "dana.okafor"}
+{"id": "TX-00033", "descriptor": "CANVA* FP33KU1Z", "amount": 31.78, "posted": "2026-08-17", "label": "software", "reviewer": "tom.becker"}
+{"id": "TX-00297", "descriptor": "NTTA AUTOCHARGE TX", "amount": 14.63, "posted": "2026-08-17", "label": "ground_transport", "reviewer": "luis.mendez"}
+{"id": "TX-00497", "descriptor": "FEDEX OFFIC60313 BOSTON MA", "amount": 162.12, "posted": "2026-08-17", "label": "shipping", "reviewer": "priya.raman"}
+{"id": "TX-00552", "descriptor": "HERMAN MILLER STORE NY", "amount": 469.64, "posted": "2026-08-17", "label": "office_supplies", "reviewer": "dana.okafor"}
+{"id": "TX-00865", "descriptor": "REDDIT ADS HQ5ZGB", "amount": 698.02, "posted": "2026-08-17", "label": "advertising", "reviewer": "luis.mendez"}
+{"id": "TX-01162", "descriptor": "UBER   *EATS HELP.UBER.COM CA", "amount": 59.71, "posted": "2026-08-17", "label": "meals", "reviewer": "luis.mendez"}
+{"id": "TX-00034", "descriptor": "PAYPAL *COPPERSTUDIO", "amount": 742.16, "posted": "2026-08-18", "label": "professional_services", "reviewer": "priya.raman"}
+{"id": "TX-00311", "descriptor": "SHELL OIL 13334764634", "amount": 71.3, "posted": "2026-08-18", "label": "ground_transport", "reviewer": "tom.becker"}
+{"id": "TX-00496", "descriptor": "AMZN Mktp US*GLLML2HK", "amount": 132.96, "posted": "2026-08-18", "label": "office_supplies", "reviewer": "priya.raman"}
+{"id": "TX-00535", "descriptor": "GOOGLE *WORKSPACE YA0ZRZ", "amount": 1434.67, "posted": "2026-08-18", "label": "software", "reviewer": "priya.raman"}
+{"id": "TX-00603", "descriptor": "AT&T*BILL PAYMENT WA", "amount": 458.59, "posted": "2026-08-18", "label": "telecom", "reviewer": "dana.okafor"}
+{"id": "TX-00187", "descriptor": "UBER* TRIP", "amount": 49.49, "posted": "2026-08-19", "label": "ground_transport", "reviewer": "luis.mendez"}
+{"id": "TX-00687", "descriptor": "GITHUB 23JMH33NR", "amount": 376.55, "posted": "2026-08-19", "label": "software", "reviewer": "dana.okafor"}
+{"id": "TX-00165", "descriptor": "TST* MARIGOLD BBQ DENVER CO", "amount": 280.15, "posted": "2026-08-20", "label": "meals", "reviewer": "dana.okafor"}
+{"id": "TX-00407", "descriptor": "STAPLES 78660 LOS ANGELES CA", "amount": 343.45, "posted": "2026-08-20", "label": "office_supplies", "reviewer": "dana.okafor"}
+{"id": "TX-00650", "descriptor": "SQ *BLUE OAK BBQ FL", "amount": 113.1, "posted": "2026-08-21", "label": "meals", "reviewer": "tom.becker"}
+{"id": "TX-00773", "descriptor": "JUNIPER INN & SUITES TX", "amount": 442.66, "posted": "2026-08-21", "label": "lodging", "reviewer": "priya.raman"}
+{"id": "TX-00993", "descriptor": "UBER* EATS NVG3NH", "amount": 62.6, "posted": "2026-08-21", "label": "meals", "reviewer": "dana.okafor"}
+{"id": "TX-01021", "descriptor": "HAMPTON INN 8798 WA", "amount": 188.99, "posted": "2026-08-21", "label": "lodging", "reviewer": "luis.mendez"}
+{"id": "TX-00621", "descriptor": "GOOGLE *ADS8540208598", "amount": 4317.68, "posted": "2026-08-22", "label": "advertising", "reviewer": "tom.becker"}
+{"id": "TX-00854", "descriptor": "APPLE.COM/US 849340", "amount": 2.33, "posted": "2026-08-22", "label": "software", "reviewer": "priya.raman"}
+{"id": "TX-00969", "descriptor": "SQ *MARIGOLD EVENTS", "amount": 506.16, "posted": "2026-08-22", "label": "advertising", "reviewer": "luis.mendez"}
+{"id": "TX-00482", "descriptor": "CLEAR *CLEARME.COM NY", "amount": 189.0, "posted": "2026-08-23", "label": "airfare", "reviewer": "luis.mendez"}
+{"id": "TX-00729", "descriptor": "GRUBHUB*COPPER", "amount": 123.68, "posted": "2026-08-23", "label": "meals", "reviewer": "priya.raman"}
+{"id": "TX-00837", "descriptor": "HAMPTON INN 7662 GA", "amount": 339.24, "posted": "2026-08-23", "label": "lodging", "reviewer": "luis.mendez"}
+{"id": "TX-00813", "descriptor": "AIRBNB * HMHDYTWC", "amount": 556.47, "posted": "2026-08-24", "label": "lodging", "reviewer": "luis.mendez"}
+{"id": "TX-01037", "descriptor": "AMZN Mktp US*D4AAJS", "amount": 35.19, "posted": "2026-08-24", "label": "office_supplies", "reviewer": "priya.raman"}
+{"id": "TX-00227", "descriptor": "SQ *BLUE OAK TRATTORIA CA", "amount": 35.87, "posted": "2026-08-25", "label": "meals", "reviewer": "dana.okafor"}
+{"id": "TX-00472", "descriptor": "FEDEX OFFIC08363 DENVER CO", "amount": 154.54, "posted": "2026-08-25", "label": "shipping", "reviewer": "priya.raman"}
+{"id": "TX-00573", "descriptor": "UBER* EATS 7NBTQDQS1", "amount": 33.72, "posted": "2026-08-25", "label": "meals", "reviewer": "luis.mendez"}
+{"id": "TX-00670", "descriptor": "VERIZON WRLS 69719-01", "amount": 188.11, "posted": "2026-08-25", "label": "telecom", "reviewer": "luis.mendez"}
+{"id": "TX-01107", "descriptor": "AMAZON.COM*VSMG71G0S AMZN.COM/BILL", "amount": 180.25, "posted": "2026-08-25", "label": "office_supplies", "reviewer": "dana.okafor"}
+{"id": "TX-00051", "descriptor": "MORALES & MORALES LLP", "amount": 4060.11, "posted": "2026-08-26", "label": "professional_services", "reviewer": "luis.mendez"}
+{"id": "TX-00131", "descriptor": "TST* KESTREL DELI CHICAGO IL", "amount": 290.33, "posted": "2026-08-26", "label": "meals", "reviewer": "dana.okafor"}
+{"id": "TX-00205", "descriptor": "CHEVRON 3441196 ATLANTA GA", "amount": 41.89, "posted": "2026-08-26", "label": "ground_transport", "reviewer": "luis.mendez"}
+{"id": "TX-00791", "descriptor": "TWILIO SENDGRID", "amount": 741.9, "posted": "2026-08-26", "label": "software", "reviewer": "tom.becker"}
+{"id": "TX-00951", "descriptor": "SOUTHWEST AIRLINES DALLAS TX", "amount": 209.06, "posted": "2026-08-26", "label": "airfare", "reviewer": "dana.okafor"}
+{"id": "TX-01012", "descriptor": "ANTHROPIC SAN FRANCISCO CA", "amount": 1434.73, "posted": "2026-08-26", "label": "software", "reviewer": "luis.mendez"}
+{"id": "TX-01100", "descriptor": "SQ *WILLOW RAMEN GA", "amount": 73.39, "posted": "2026-08-26", "label": "meals", "reviewer": "dana.okafor"}
+{"id": "TX-00141", "descriptor": "DOORDASH*NOMAD GJLZ685", "amount": 117.34, "posted": "2026-08-27", "label": "meals", "reviewer": "priya.raman"}
+{"id": "TX-00157", "descriptor": "HERMAN MILLER STORE CO", "amount": 1367.7, "posted": "2026-08-27", "label": "office_supplies", "reviewer": "tom.becker"}
+{"id": "TX-00787", "descriptor": "CHIPOTLE 0095", "amount": 29.13, "posted": "2026-08-27", "label": "meals", "reviewer": "luis.mendez"}
+{"id": "TX-00935", "descriptor": "NOTION LABS, INC.", "amount": 752.18, "posted": "2026-08-27", "label": "software", "reviewer": "dana.okafor"}
+{"id": "TX-00379", "descriptor": "UNITED     8972005502 HOUSTON TX", "amount": 616.2, "posted": "2026-08-28", "label": "airfare", "reviewer": "priya.raman"}
+{"id": "TX-00784", "descriptor": "GITHUB, INC. GITHUB.COM CA", "amount": 218.73, "posted": "2026-08-28", "label": "software", "reviewer": "priya.raman"}
+{"id": "TX-00936", "descriptor": "E-ZPASS NY REBILL", "amount": 24.12, "posted": "2026-08-28", "label": "ground_transport", "reviewer": "tom.becker"}
+{"id": "TX-00198", "descriptor": "MARRIOTT COPPER BAR CA", "amount": 102.4, "posted": "2026-08-29", "label": "meals", "reviewer": "luis.mendez"}
+{"id": "TX-00539", "descriptor": "GITHUB CKF218K", "amount": 287.16, "posted": "2026-08-29", "label": "software", "reviewer": "priya.raman"}
+{"id": "TX-00897", "descriptor": "MORALES CPA PLLC", "amount": 2839.09, "posted": "2026-08-29", "label": "professional_services", "reviewer": "priya.raman"}
+{"id": "TX-00019", "descriptor": "NOTION LABS, INC.", "amount": 95.83, "posted": "2026-08-30", "label": "software", "reviewer": "luis.mendez"}
+{"id": "TX-00026", "descriptor": "APPLE.COM/BILL 866-712-7753 CA", "amount": 5.7, "posted": "2026-08-30", "label": "software", "reviewer": "dana.okafor"}
+{"id": "TX-00061", "descriptor": "HOTEL AT BOOKING.COM 118001", "amount": 653.49, "posted": "2026-08-30", "label": "lodging", "reviewer": "priya.raman"}
+{"id": "TX-00091", "descriptor": "GOOGLE *CLOUD CC077T", "amount": 2862.1, "posted": "2026-08-30", "label": "software", "reviewer": "dana.okafor"}
+{"id": "TX-00574", "descriptor": "OPENAI *CHATGPT SUBSCR", "amount": 2106.45, "posted": "2026-08-30", "label": "software", "reviewer": "tom.becker"}
