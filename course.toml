@@ -174,7 +174,7 @@ owns = "memory across sessions"
 job = "Remember what a user said across sessions and let them correct it, as ChatGPT memory does"
 truth = "what the user actually said, and their corrections"
 metric = "share of recalled facts the user confirms, and wrong memories"
-status = "planned"
+status = "ready"
 
 [[lab]]
 n = 15

@@ -32,7 +32,7 @@ print what the README promises.
 | 11 | [Build an AI Agent Loop from Scratch](labs/11-agent-loop) | Klarna's assistant handled two thirds of support chats | ready |
 | 12 | [Design Tools for AI Agents with MCP](labs/12-mcp-tools) | Shopify Sidekick tool design | ready |
 | 13 | [Cut Agent Token Costs with Context Engineering](labs/13-context-engineering) | Manus KV-cache hit rate | ready |
-| 14 | Give AI Agents Long-Term Memory with Mem0 | ChatGPT memory and its controls | planned |
+| 14 | [Give AI Agents Long-Term Memory with Mem0](labs/14-agent-memory) | ChatGPT memory and its controls | ready |
 | 15 | [Build a Deep Research Agent with Subagents](labs/15-research-subagents) | Anthropic's multi-agent research system | ready |
 | 16 | Build a Voice AI Agent with Pipecat | SoundHound takes restaurant phone orders | planned |
 | 17 | Put a Voice AI Agent on a Phone Line | LiveKit behind ChatGPT voice | planned |

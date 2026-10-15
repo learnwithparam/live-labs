@@ -1,0 +1,400 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="icon" href="data:,">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pawsley support chat</title>
+<style>
+:root {
+  --paper: #FAFAFA; --card: #FFFFFF; --ink: #151515; --ink-2: #414141; --muted: #606060; --faint: #808080;
+  --line: #DFDFDF; --accent: #FAFF69; --accent-deep: #4F5101; --fill-dark: #1F1F1C;
+  --pass: #008138; --fail: #BF000F; --wait: #B75000;
+  --sans: Inter, Helvetica, Arial, sans-serif; --mono: Inconsolata, "Courier New", Courier, monospace;
+}
+* { box-sizing: border-box }
+html, body { margin: 0 }
+body { background: var(--paper); color: var(--ink); font: 15px/1.5 var(--sans) }
+button, input, textarea { font: inherit; color: inherit }
+button { cursor: pointer }
+button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px }
+
+.topbar { background: var(--fill-dark); color: var(--paper); padding: 14px 24px; display: flex; flex-wrap: wrap;
+  align-items: center; justify-content: space-between; gap: 12px 24px }
+.brand { display: flex; align-items: baseline; gap: 10px }
+.brand strong { font-size: 20px; letter-spacing: -0.01em }
+.brand span { color: var(--line); font-size: 14px }
+.policies { display: flex; flex-wrap: wrap; gap: 8px }
+.policy { background: transparent; border: 1px solid var(--faint); color: var(--paper); border-radius: 4px; padding: 6px 12px;
+  text-align: left; line-height: 1.3 }
+.policy small { display: block; color: var(--line); font-size: 13px }
+.policy[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--ink) }
+.policy[aria-pressed="true"] small { color: var(--ink-2) }
+
+.customers { display: flex; gap: 8px; overflow-x: auto; padding: 12px 24px; border-bottom: 1px solid var(--line); background: var(--card) }
+.customer { flex: none; border: 1px solid var(--line); background: var(--paper); border-radius: 18px; padding: 5px 14px; font-size: 14px }
+.customer[aria-pressed="true"] { border-color: var(--ink); background: var(--ink); color: var(--paper) }
+.customer .alert { color: var(--fail); font-weight: 700 }
+.customer[aria-pressed="true"] .alert { color: var(--accent) }
+
+.desk { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(320px, 1fr); gap: 20px; padding: 20px 24px 40px;
+  max-width: 1360px; margin: 0 auto }
+
+.conversation { background: var(--card); border: 1px solid var(--line); border-radius: 4px; display: flex; flex-direction: column;
+  min-height: 560px }
+.conversation header { padding: 14px 18px; border-bottom: 1px solid var(--line) }
+.conversation h1 { margin: 0; font-size: 17px }
+.conversation header p { margin: 2px 0 0; color: var(--muted); font-size: 14px }
+.thread { flex: 1; padding: 14px 18px; display: flex; flex-direction: column; gap: 10px; overflow-y: auto; max-height: 64vh }
+.divider { align-self: stretch; text-align: center; color: var(--muted); font-size: 13px; border-top: 1px solid var(--line);
+  padding-top: 6px; margin-top: 6px }
+.divider.fresh { color: var(--accent-deep); border-top: 2px solid var(--accent-deep); font-weight: 600 }
+.bubble { max-width: 80%; padding: 8px 12px; border-radius: 12px; white-space: pre-wrap; overflow-wrap: anywhere }
+.bubble.customer-says { align-self: flex-end; background: var(--fill-dark); color: var(--paper); border-bottom-right-radius: 3px }
+.bubble.agent-says { align-self: flex-start; background: var(--paper); border: 1px solid var(--line); border-bottom-left-radius: 3px }
+.bubble.earlier { opacity: .78 }
+.recalled { align-self: flex-start; font-size: 13px; color: var(--muted); max-width: 80% }
+.recalled summary { cursor: pointer }
+.recalled ul { margin: 4px 0 0; padding-left: 18px }
+.changes { align-self: flex-end; font-size: 13px; color: var(--ink-2); max-width: 80%; text-align: right }
+.probes { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 18px 10px }
+.probe { border: 1px dashed var(--muted); background: var(--card); border-radius: 14px; padding: 3px 10px; font-size: 13px }
+.composer { display: flex; gap: 8px; padding: 12px 18px; border-top: 1px solid var(--line) }
+.composer textarea { flex: 1; resize: vertical; min-height: 44px; border: 1px solid var(--line); border-radius: 4px; padding: 8px 10px }
+.send { background: var(--ink); color: var(--paper); border: 0; border-radius: 4px; padding: 0 18px }
+.send:disabled { opacity: .5; cursor: progress }
+.status { padding: 0 18px 12px; color: var(--muted); font-size: 13px; min-height: 1.5em }
+.status.failed { color: var(--fail) }
+
+.panel { display: flex; flex-direction: column; gap: 12px }
+.panel h2 { margin: 0; font-size: 16px }
+.panel .lead { margin: 0; color: var(--muted); font-size: 14px }
+.score { background: var(--card); border: 1px solid var(--line); border-radius: 4px; padding: 12px 14px; font-size: 14px }
+.score b { font-size: 22px; margin-right: 4px }
+.score .bad { color: var(--fail) }
+.score .good { color: var(--pass) }
+.score p { margin: 4px 0 0; color: var(--muted) }
+.waiting { border: 2px solid var(--wait); background: var(--card); border-radius: 4px; padding: 12px 14px }
+.waiting h3 { margin: 0 0 4px; font-size: 14px; color: var(--wait); text-transform: uppercase; letter-spacing: .04em }
+.waiting .question { margin: 0 0 8px; font-weight: 600 }
+.waiting dl { margin: 0 0 8px; font-size: 14px }
+.waiting dt { color: var(--muted); font-size: 13px }
+.waiting dd { margin: 0 0 6px }
+.waiting .reason { margin: 0 0 10px; color: var(--ink-2); font-size: 13px }
+.decide { display: flex; gap: 8px; flex-wrap: wrap }
+.decide button, .memory-actions button { border: 1px solid var(--ink); background: var(--card); border-radius: 4px; padding: 4px 12px; font-size: 14px }
+.decide button.primary { background: var(--ink); color: var(--paper) }
+.memories { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px }
+.memory { background: var(--card); border: 1px solid var(--line); border-left: 4px solid var(--line); border-radius: 4px; padding: 10px 12px }
+.memory.confirmed { border-left-color: var(--pass) }
+.memory.wrong { border-left-color: var(--fail) }
+.memory.pending { border-left-color: var(--wait) }
+.memory .text { margin: 0; overflow-wrap: anywhere }
+.memory .was { margin: 2px 0 0; color: var(--muted); font-size: 13px }
+.memory .was s { color: var(--ink-2) }
+.memory-foot { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 8px; flex-wrap: wrap }
+.badge { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em }
+.badge.confirmed { color: var(--pass) }
+.badge.wrong { color: var(--fail) }
+.badge.unconfirmed { color: var(--muted) }
+.badge.pending { color: var(--wait) }
+.memory-actions { display: flex; gap: 6px }
+.memory input { width: 100%; border: 1px solid var(--ink); border-radius: 4px; padding: 6px 8px }
+.empty { color: var(--muted); font-size: 14px; margin: 0 }
+
+/* The one motion: a memory that just changed flashes yellow, so the eye finds what the chat did. */
+.memory.changed { animation: flash 1.6s ease-out }
+@keyframes flash { from { background: var(--accent) } to { background: var(--card) } }
+@media (prefers-reduced-motion: reduce) { .memory.changed { animation: none; outline: 2px solid var(--accent-deep) } }
+
+@media (max-width: 860px) {
+  .desk { grid-template-columns: minmax(0, 1fr); padding: 14px 12px 32px }
+  .topbar, .customers { padding-left: 12px; padding-right: 12px }
+  .thread { max-height: none }
+  .bubble, .recalled, .changes { max-width: 92% }
+}
+</style>
+</head>
+<body data-surface="pet food support chat with saved memories">
+<div class="topbar">
+  <div class="brand"><strong>Pawsley</strong><span>Support chat</span></div>
+  <div class="policies" id="policies" role="group" aria-label="How memories are kept"></div>
+</div>
+<nav class="customers" id="customers" aria-label="Customers"></nav>
+<div class="desk">
+  <section class="conversation" aria-labelledby="chat-title">
+    <header>
+      <h1 id="chat-title">Chat</h1>
+      <p id="chat-sub"></p>
+    </header>
+    <div class="thread" id="thread" aria-live="polite"></div>
+    <div class="probes" id="probes"></div>
+    <form class="composer" id="composer">
+      <textarea id="message" rows="2" aria-label="Message" placeholder="Write as the customer in a new session"></textarea>
+      <button class="send" id="send" type="submit">Send</button>
+    </form>
+    <div class="status" id="status" role="status"></div>
+  </section>
+  <aside class="panel" aria-labelledby="panel-title">
+    <div>
+      <h2 id="panel-title">Saved memories</h2>
+      <p class="lead" id="panel-lead"></p>
+    </div>
+    <div class="score" id="score"></div>
+    <div id="waiting"></div>
+    <ul class="memories" id="memories"></ul>
+  </aside>
+</div>
+<script>
+const $ = (selector) => document.querySelector(selector);
+const VERDICTS = { confirmed: "Matches what they said", wrong: "Stale or forgotten", unconfirmed: "Not in the script",
+  pending: "Waiting on the customer" };
+let state = null;
+let policy = "kept";
+let customerId = "C-101";
+let liveTurns = {};
+let changedIds = new Set();
+
+function make(tag, className, text) {
+  const node = document.createElement(tag);
+  if (className) node.className = className;
+  // Model and customer text always goes in as text, never as markup.
+  if (text !== undefined) node.textContent = text;
+  return node;
+}
+
+async function call(path, body) {
+  // A chat makes up to three model calls; past this the page says so instead of waiting for ever.
+  const options = { signal: AbortSignal.timeout(90000) };
+  if (body) Object.assign(options, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  const response = await fetch(path, options);
+  if (!response.ok) throw new Error(await response.text());
+  return response.json();
+}
+
+function firstName() {
+  return currentCustomer().name.split(" ")[0];
+}
+
+function currentCustomer() {
+  return state.customers.find((each) => each.id === customerId);
+}
+
+function turnsKey() {
+  return `${policy}/${customerId}`;
+}
+
+function drawPolicies() {
+  const holder = $("#policies");
+  holder.replaceChildren();
+  for (const name of Object.keys(state.policies)) {
+    const totals = state.policies[name].score;
+    const button = make("button", "policy", state.names[name]);
+    button.type = "button";
+    button.setAttribute("aria-pressed", String(name === policy));
+    button.append(make("small", "", `${totals.wrong} wrong memories, ${totals.asked} waiting`));
+    button.addEventListener("click", () => { policy = name; refresh(); });
+    holder.append(button);
+  }
+}
+
+function drawCustomers() {
+  const holder = $("#customers");
+  holder.replaceChildren();
+  const rows = state.policies[policy].rows;
+  for (const customer of state.customers) {
+    const row = rows.find((each) => each.customer === customer.id);
+    const button = make("button", "customer", `${customer.name} `);
+    button.type = "button";
+    button.setAttribute("aria-pressed", String(customer.id === customerId));
+    const flags = row.wrong.length ? `${row.wrong.length} wrong` : row.asked.length ? "1 question" : "";
+    if (flags) button.append(make("span", "alert", flags));
+    button.addEventListener("click", () => { customerId = customer.id; refresh(); });
+    holder.append(button);
+  }
+}
+
+function drawThread() {
+  const customer = currentCustomer();
+  $("#chat-title").textContent = `${customer.name}, ${customer.pets}`;
+  $("#chat-sub").textContent = `${customer.id}. Earlier sessions are shown for you; the agent sees none of them, only saved memories.`;
+  const thread = $("#thread");
+  thread.replaceChildren();
+  customer.sessions.forEach((session, number) => {
+    thread.append(make("div", "divider", `Session ${number + 1}`));
+    for (const message of session) thread.append(make("div", "bubble customer-says earlier", message));
+  });
+  thread.append(make("div", "divider fresh", "New session: no transcript, only memories"));
+  for (const turn of liveTurns[turnsKey()] || []) {
+    thread.append(make("div", "bubble customer-says", turn.message));
+    if (turn.recalled) {
+      const details = make("details", "recalled");
+      details.append(make("summary", "", `Recalled ${turn.recalled.length} memories`));
+      const list = make("ul");
+      for (const item of turn.recalled) list.append(make("li", "", item.text));
+      details.append(list);
+      thread.append(details);
+    }
+    if (turn.reply) thread.append(make("div", "bubble agent-says", turn.reply.trim()));
+    if (turn.events && turn.events.length) {
+      thread.append(make("div", "changes", turn.events.map((event) => `${event.event}: ${event.text || event.was}`).join("\n")));
+    }
+  }
+  thread.scrollTop = thread.scrollHeight;
+  const probes = $("#probes");
+  probes.replaceChildren();
+  for (const probe of customer.probes) {
+    const chip = make("button", "probe", probe);
+    chip.type = "button";
+    chip.addEventListener("click", () => send(probe));
+    probes.append(chip);
+  }
+}
+
+function drawScore() {
+  const row = state.policies[policy].rows.find((each) => each.customer === customerId);
+  const totals = state.policies[policy].score;
+  const box = $("#score");
+  box.replaceChildren();
+  const line = make("div");
+  line.append(make("b", row.wrong.length ? "bad" : "good", String(row.wrong.length)), `wrong memories for ${firstName()}. `);
+  line.append(make("b", "", String(row.confirmed)), `of ${row.recalled.length} recalled facts confirmed.`);
+  box.append(line);
+  const bill = state.bills[policy];
+  const cost = bill ? ` Replaying all six cost ${bill.calls} calls, $${bill.cost.toFixed(4)} on ${bill.model}.` : "";
+  box.append(make("p", "", `All customers: ${totals.wrong} wrong, ${totals.confirmed} of ${totals.recalled} confirmed, ` +
+    `${totals.facts_kept} of ${totals.facts} facts kept.${cost}`));
+}
+
+function drawWaiting(memories) {
+  const holder = $("#waiting");
+  holder.replaceChildren();
+  for (const item of memories.filter((each) => each.pending)) {
+    const card = make("section", "waiting");
+    card.append(make("h3", "", `Waiting on ${firstName()}`));
+    card.append(make("p", "question", item.question || "Which is true?"));
+    const facts = make("dl");
+    facts.append(make("dt", "", "Saved before"), make("dd", "", item.conflicts_with || "(gone)"));
+    facts.append(make("dt", "", "New, not used yet"), make("dd", "", item.text));
+    card.append(facts);
+    card.append(make("p", "reason", "Why it waits: the new message disagrees with a saved fact and does not say the old one is wrong."));
+    const decide = make("div", "decide");
+    const useNew = make("button", "primary", "Use new");
+    const keepOld = make("button", "", "Keep old");
+    useNew.addEventListener("click", () => act("settle", { id: item.id, use_new: true }));
+    keepOld.addEventListener("click", () => act("settle", { id: item.id, use_new: false }));
+    decide.append(useNew, keepOld);
+    card.append(decide);
+    holder.append(card);
+  }
+}
+
+function drawMemories(memories) {
+  $("#panel-lead").textContent = `${memories.length} memories kept for ${firstName()}. Edit or forget any of them, as in ChatGPT's Manage memories.`;
+  const list = $("#memories");
+  list.replaceChildren();
+  if (!memories.length) list.append(make("p", "empty", "Nothing saved yet."));
+  for (const item of memories) {
+    const kind = item.pending ? "pending" : item.verdict;
+    const card = make("li", `memory ${kind}${changedIds.has(item.id) ? " changed" : ""}`);
+    const text = make("p", "text", item.text);
+    card.append(text);
+    if (item.was) {
+      const was = make("p", "was", "Was: ");
+      was.append(make("s", "", item.was));
+      card.append(was);
+    }
+    const foot = make("div", "memory-foot");
+    foot.append(make("span", `badge ${kind}`, VERDICTS[kind]));
+    const actions = make("div", "memory-actions");
+    const editButton = make("button", "", "Edit");
+    const forgetButton = make("button", "", "Forget");
+    editButton.addEventListener("click", () => startEdit(card, text, item));
+    forgetButton.addEventListener("click", () => act("forget", { id: item.id }));
+    actions.append(editButton, forgetButton);
+    foot.append(actions);
+    card.append(foot);
+    list.append(card);
+  }
+  changedIds = new Set();
+}
+
+function startEdit(card, text, item) {
+  const input = make("input");
+  input.value = item.text;
+  input.setAttribute("aria-label", "Memory text");
+  text.replaceWith(input);
+  input.focus();
+  const save = () => act("edit", { id: item.id, text: input.value });
+  input.addEventListener("keydown", (event) => { if (event.key === "Enter") save(); if (event.key === "Escape") drawAll(); });
+  card.querySelector(".memory-actions").replaceChildren(make("button", "", "Save"));
+  card.querySelector(".memory-actions button").addEventListener("click", save);
+}
+
+let lastMemories = [];
+
+function drawAll() {
+  drawPolicies();
+  drawCustomers();
+  drawThread();
+  drawScore();
+  drawWaiting(lastMemories);
+  drawMemories(lastMemories);
+}
+
+async function refresh() {
+  state = await call("/api/state");
+  lastMemories = await call(`/api/memories?policy=${encodeURIComponent(policy)}&customer=${encodeURIComponent(customerId)}`);
+  drawAll();
+}
+
+function setStatus(text, failed) {
+  $("#status").textContent = text;
+  $("#status").classList.toggle("failed", Boolean(failed));
+}
+
+async function act(action, body) {
+  try {
+    const result = await call(`/api/${action}`, { policy, customer: customerId, ...body });
+    changedIds = new Set([body.id, result.id].filter(Boolean));
+    setStatus(action === "forget" ? "Forgotten, and scrubbed from Mem0's history." : "Saved.");
+    await refresh();
+  } catch (error) {
+    setStatus(error.message, true);
+  }
+}
+
+async function send(message) {
+  const text = message.trim();
+  if (!text) return;
+  const key = turnsKey();
+  liveTurns[key] = [...(liveTurns[key] || []), { message: text }];
+  $("#message").value = "";
+  $("#send").disabled = true;
+  setStatus("Recalling memories, answering, then saving what was said.");
+  drawThread();
+  const earlier = (liveTurns[key] || []).slice(0, -1).flatMap((turn) => turn.reply
+    ? [{ role: "user", content: turn.message }, { role: "assistant", content: turn.reply }] : []);
+  try {
+    const result = await call("/api/chat", { policy, customer: customerId, message: text, earlier });
+    Object.assign(liveTurns[key].at(-1), result);
+    changedIds = new Set(result.events.map((event) => event.id));
+    setStatus("");
+    await refresh();
+  } catch (error) {
+    liveTurns[key].pop();
+    setStatus(error.message, true);
+    drawThread();
+  } finally {
+    $("#send").disabled = false;
+  }
+}
+
+$("#composer").addEventListener("submit", (event) => { event.preventDefault(); send($("#message").value); });
+$("#message").addEventListener("keydown", (event) => {
+  if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); send($("#message").value); }
+});
+refresh().catch((error) => setStatus(error.message, true));
+</script>
+</body>
+</html>
