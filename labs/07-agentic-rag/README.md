@@ -106,9 +106,9 @@ uv run policy review
 
 Expect: /agentic\s+\d+ of 16/
 
-In our runs plain RAG was accepted on 10 or 11 of 16 and the agent on 16 of 16. The agent had 31 or
-32 of the 33 sections the expert used in front of it, against 26 for plain RAG. It cost about 4 model calls a
-question instead of 1, under a fifth of a cent. `out/review.json` holds every answer and grade, and each miss names the expert's point it missed.
+In our run on `openai/gpt-6-luna`, graded by `anthropic/claude-haiku-5.5`, plain RAG was accepted on 8
+of 16 and the agent on 14 of 16. The agent had all 33 sections the expert used in front of it, against
+26 for plain RAG. It cost about 3 model calls a question instead of 1, under a tenth of a cent. `out/review.json` holds every answer and grade, and each miss names the expert's point it missed.
 
 ## 4. See it
 
