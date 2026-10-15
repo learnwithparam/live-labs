@@ -1,0 +1,393 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="icon" href="data:,">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wrenfield agent session</title>
+<style>
+:root {
+  --paper: #FAFAFA; --card: #FFFFFF; --ink: #151515; --ink-2: #414141; --muted: #606060; --faint: #808080;
+  --line: #DFDFDF; --accent: #FAFF69; --accent-deep: #4F5101; --fill-dark: #1F1F1C;
+  --pass: #008138; --fail: #BF000F; --wait: #B75000;
+  --sans: Inter, Helvetica, Arial, sans-serif; --mono: Inconsolata, "Courier New", Courier, monospace;
+}
+* { box-sizing: border-box }
+[hidden] { display: none !important }
+html, body { margin: 0 }
+body { background: var(--paper); color: var(--ink); font: 14px/1.5 var(--sans); min-height: 100vh }
+button, select, input, textarea { font: inherit; color: inherit }
+button { cursor: pointer }
+:focus-visible { outline: 3px solid var(--accent-deep); outline-offset: 2px }
+
+/* The window bar of a coding agent: which repo, which branch, who is driving, and which guard is on. */
+.bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; padding: 10px 20px; background: var(--card); border-bottom: 1px solid var(--line) }
+.bar .repo { font: 600 15px var(--mono) }
+.bar .repo b { background: var(--accent); padding: 0 6px; border-radius: 4px; font-weight: 700 }
+.bar .branch { font: 13px var(--mono); color: var(--muted) }
+.bar label { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 6px }
+.bar select { border: 1px solid var(--line); border-radius: 6px; padding: 4px 8px; background: var(--card) }
+.guard { display: inline-flex; border: 1px solid var(--ink); border-radius: 999px; overflow: hidden; margin-left: auto }
+.guard button { border: 0; background: none; padding: 5px 14px; font-size: 13px }
+.guard button[aria-pressed="true"] { background: var(--ink); color: var(--paper) }
+
+/* The metric, said once at the top: how many destructive actions ran with nobody's yes, per mode. */
+.tally { display: flex; flex-wrap: wrap; gap: 8px 28px; padding: 10px 20px; border-bottom: 1px solid var(--line); background: var(--paper); font-size: 13px }
+.tally strong { font: 700 22px var(--mono); margin-right: 6px; vertical-align: -2px }
+.tally .bad strong { color: var(--fail) }
+.tally .good strong { color: var(--pass) }
+.tally .note { color: var(--muted) }
+
+/* Requests on the left, the live session in the middle, the policy and its audit trail on the right. */
+/* On a desktop the window never scrolls: each column scrolls on its own, like an editor's panes. */
+body { display: flex; flex-direction: column; height: 100vh }
+.desk { display: grid; grid-template-columns: 13.5rem minmax(0, 1fr) 25rem; flex: 1; min-height: 0 }
+.session { min-height: 0 }
+.requests { border-right: 1px solid var(--line); padding: 14px 10px; overflow-y: auto; background: var(--card) }
+.requests h2, .side h2 { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 12px 8px 6px }
+.requests button { display: block; width: 100%; text-align: left; border: 0; background: none; padding: 7px 8px; border-radius: 6px; font-size: 13px; color: var(--ink-2) }
+.requests button:hover { background: var(--paper) }
+.requests button { overflow-wrap: anywhere }
+.requests button .who { display: block; font-size: 11px; color: var(--faint) }
+
+.session { display: flex; flex-direction: column; background: var(--fill-dark); color: var(--paper); min-width: 0 }
+.transcript { flex: 1; overflow-y: auto; padding: 18px 22px; font: 14px/1.55 var(--mono) }
+.transcript .empty { color: var(--faint) }
+.line { margin: 0 0 8px; white-space: pre-wrap; word-break: break-word }
+.line.you { color: var(--accent) }
+.line.you::before { content: "> " }
+.line.agent { color: var(--paper); font-family: var(--sans); background: #FFFFFF10; border-radius: 8px; padding: 10px 12px }
+.line.developer { color: var(--accent) }
+.call { display: grid; grid-template-columns: 1.1rem minmax(0, 1fr) auto; gap: 8px; align-items: baseline; margin: 0 0 6px }
+.call .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--faint); align-self: center }
+.call.allow .dot { background: var(--pass) }
+.call.ask .dot { background: var(--wait) }
+.call.deny .dot { background: var(--fail) }
+.call .what { overflow-wrap: anywhere; color: var(--line) }
+.call .what b { color: var(--paper); font-weight: 600 }
+.call .why { grid-column: 2 / 4; color: var(--faint); font-size: 12px }
+.tag { font: 600 11px var(--sans); padding: 1px 8px; border-radius: 999px; background: #FFFFFF18; color: var(--line); white-space: nowrap }
+.tag.ran-anyway { background: var(--fail); color: var(--card) }
+.tag.denied { background: var(--card); color: var(--fail) }
+.tag.approved { background: var(--pass); color: var(--card) }
+
+/* The approval card is the one place the agent stops. It waits in the transcript like a permission prompt. */
+.approval { background: var(--card); color: var(--ink); border-radius: 10px; padding: 14px 16px; margin: 8px 0 14px; border-left: 6px solid var(--wait); font-family: var(--sans) }
+.approval .says { font-size: 16px; font-weight: 600; margin: 0 0 4px }
+.approval .policy { margin: 0 0 4px; color: var(--ink-2) }
+.approval .rule { margin: 0 0 12px; font: 12px var(--mono); color: var(--muted) }
+.approval .answer { display: flex; flex-wrap: wrap; gap: 8px }
+.approval button { border-radius: 6px; padding: 7px 16px; border: 1px solid var(--ink); background: var(--card); font-weight: 600 }
+.approval button.yes { background: var(--ink); color: var(--paper) }
+.approval input { flex: 1 1 12rem; border: 1px solid var(--line); border-radius: 6px; padding: 6px 10px }
+.approval.answered { border-left-color: var(--faint); padding: 10px 16px }
+.approval .decision { margin: 0; font-weight: 700 }
+.approval.live { animation: waiting 1.6s ease-in-out infinite }
+@keyframes waiting { 50% { box-shadow: 0 0 0 4px var(--accent) } }
+@media (prefers-reduced-motion: reduce) { .approval.answered { border-left-color: var(--faint); padding: 10px 16px }
+.approval .decision { margin: 0; font-weight: 700 }
+.approval.live { animation: none; box-shadow: 0 0 0 4px var(--accent) } }
+
+.compose { display: flex; gap: 8px; padding: 12px 22px 16px; border-top: 1px solid #FFFFFF20 }
+.compose textarea { flex: 1; resize: none; height: 46px; background: #FFFFFF10; color: var(--paper); border: 1px solid #FFFFFF30; border-radius: 8px; padding: 10px 12px; font-family: var(--mono) }
+.compose button { background: var(--accent); color: var(--ink); border: 0; border-radius: 8px; padding: 0 18px; font-weight: 700 }
+.compose button:disabled { opacity: .5; cursor: default }
+
+.side { border-left: 1px solid var(--line); padding: 6px 16px 20px; overflow-y: auto; background: var(--card) }
+.case { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; margin: 0 0 8px; font-size: 13px }
+.case p { margin: 0 0 3px }
+.case .decision { font-weight: 700 }
+.policy-table { width: 100%; border-collapse: collapse; font-size: 12px }
+.policy-table th { text-align: left; font-weight: 600; color: var(--muted); padding: 4px 4px; border-bottom: 1px solid var(--line) }
+.policy-table td { padding: 4px 4px; border-bottom: 1px solid var(--line) }
+.policy-table th.you, .policy-table td.you { background: var(--accent) }
+.verdict { font: 700 11px var(--mono); text-transform: uppercase }
+.verdict.allow { color: var(--pass) }
+.verdict.ask { color: var(--wait) }
+.verdict.deny { color: var(--fail) }
+.checked { font-size: 12px; color: var(--muted); margin: 6px 0 0 }
+.audit { list-style: none; margin: 0; padding: 0; font-size: 12px }
+.audit li { display: grid; grid-template-columns: 4.2rem minmax(0, 1fr) 4.4rem; gap: 6px; padding: 5px 0; border-bottom: 1px solid var(--line) }
+.audit .at { font-family: var(--mono); color: var(--faint) }
+.audit .entry { overflow-wrap: anywhere }
+.audit .entry span { color: var(--muted) }
+
+@media (max-width: 900px) {
+  body { display: block; height: auto }
+  .desk { grid-template-columns: minmax(0, 1fr) }
+  .requests { border-right: 0; border-bottom: 1px solid var(--line); display: flex; gap: 6px; overflow-x: auto; padding: 10px 16px }
+  .requests h2 { display: none }
+  .requests button { flex: 0 0 13rem; border: 1px solid var(--line) }
+  .session { min-height: 70vh }
+  .transcript, .compose { padding-left: 16px; padding-right: 16px }
+  .side { border-left: 0; padding: 6px 16px 20px }
+  .bar, .tally { padding-left: 16px; padding-right: 16px }
+  .guard { margin-left: 0 }
+}
+</style>
+</head>
+<body data-surface="coding agent session with approval prompts">
+<header class="bar">
+  <span class="repo"><b>W</b> wrenfield/payroll-api</span>
+  <span class="branch">on main</span>
+  <label>Developer <select id="person"></select></label>
+  <div class="guard" role="group" aria-label="Guard">
+    <button type="button" data-mode="prompt" aria-pressed="false">Prompt only</button>
+    <button type="button" data-mode="policy" aria-pressed="true">Policy enforced</button>
+  </div>
+</header>
+<section class="tally" id="tally" aria-live="polite"></section>
+<main class="desk">
+  <nav class="requests" id="requests" aria-label="Requests"></nav>
+  <section class="session" aria-label="Agent session">
+    <div class="transcript" id="transcript" aria-live="polite">
+      <p class="line empty">Pick a request on the left, or type one. Reads run at once. Anything destructive stops here for a yes or a no.</p>
+    </div>
+    <form class="compose" id="compose">
+      <textarea id="message" aria-label="Ask the agent" placeholder="Ask the coding agent"></textarea>
+      <button type="submit" id="send">Run</button>
+    </form>
+  </section>
+  <aside class="side">
+    <h2>From the last review</h2>
+    <div id="cases"></div>
+    <h2>Policy (Cerbos)</h2>
+    <table class="policy-table" id="table"></table>
+    <p class="checked" id="checked"></p>
+    <h2>Audit log</h2>
+    <ul class="audit" id="audit"></ul>
+  </aside>
+</main>
+<script>
+const $ = (selector) => document.querySelector(selector);
+const ROLE_NAMES = { intern: "Intern", engineer: "Engineer", release_manager: "Release manager" };
+let state = null, mode = "policy", currentTask = null, shownSteps = 0, shownPending = null;
+
+// Every piece of model or task text goes in through textContent, so a reply can never become markup.
+function make(tag, className, text) {
+  const node = document.createElement(tag);
+  if (className) node.className = className;
+  if (text !== undefined) node.textContent = text;
+  return node;
+}
+
+function person() { return state.people.find((each) => each.id === $("#person").value); }
+
+async function load() {
+  state = await (await fetch("/api/state")).json();
+  if (!$("#person").options.length) {
+    for (const each of state.people) $("#person").append(new Option(`${each.name}, ${ROLE_NAMES[each.role].toLowerCase()}`, each.id));
+    $("#person").value = "priya.shah";
+    drawRequests();
+  }
+  drawTally();
+  drawCases();
+  drawTable();
+  drawAudit();
+}
+
+function drawTally() {
+  const tally = $("#tally");
+  tally.replaceChildren();
+  const review = state.review;
+  if (!review) {
+    tally.append(make("span", "note", "No review yet. Run `uv run agent review` to count destructive actions run without approval in both modes."));
+    return;
+  }
+  for (const [key, label] of Object.entries(state.modes)) {
+    const totals = review[key].score;
+    const item = make("span", totals.unapproved_destructive ? "bad" : "good");
+    item.append(make("strong", "", String(totals.unapproved_destructive)), `destructive actions ran without approval, ${label.toLowerCase()}`);
+    tally.append(item);
+  }
+  const enforced = review.policy.score;
+  tally.append(make("span", "note", `Reads wrongly blocked: ${enforced.reads_blocked} of ${enforced.reads}. Sent to a person: ${enforced.asked}. Denied: ${enforced.denied}.`));
+}
+
+// One human-in-the-loop case per answer: what the agent wanted, the rule's reason, and what the person said.
+function drawCases() {
+  const cases = $("#cases");
+  cases.replaceChildren();
+  if (!state.review) return;
+  const asked = state.review.policy.rows.flatMap((row) => row.asked.map((call) => ({ row, call })));
+  const shown = ["card", "declined"].map((answer) => asked.find((pair) => pair.call.approved_by === answer)).filter(Boolean);
+  const naive = state.review.prompt.rows.find((row) => row.unapproved_destructive || row.forbidden_ran);
+  for (const { row, call } of shown) {
+    const box = make("div", "case");
+    box.append(make("p", "", `${row.who.name} (${ROLE_NAMES[row.who.role].toLowerCase()}): ${row.ask}`),
+      make("p", "", `Agent wanted: ${call.tool.replace("_", " ")} ${call.args.branch || call.args.name || call.args.path || ""}`),
+      make("p", "", `Policy: ${call.reason}`),
+      make("p", "decision", call.approved_by === "card" ? "Decision: approved, then it ran" : "Decision: declined, nothing ran"));
+    cases.append(box);
+  }
+  if (naive) {
+    const call = naive.calls.find((each) => each.destructive && each.ran);
+    const box = make("div", "case");
+    box.append(make("p", "", `Prompt only, ${naive.task}: ${naive.ask}`),
+      make("p", "decision", `Ran ${call ? call.tool.replace("_", " ") : "a destructive call"} with ${call && call.approved_by ? "a yes typed in chat" : "nobody's yes"}. The policy would ${call ? call.policy_verdict : "deny"} it.`));
+    cases.append(box);
+  }
+}
+
+function drawTable() {
+  const table = $("#table");
+  table.replaceChildren();
+  const role = person().role;
+  const head = make("tr");
+  head.append(make("th", "", "Case"));
+  for (const [key, label] of Object.entries(ROLE_NAMES)) head.append(make("th", key === role ? "you" : "", label));
+  table.append(head);
+  for (let start = 0; start < state.cells.length; start += 3) {
+    const row = make("tr");
+    row.append(make("td", "", state.cells[start].case));
+    for (const cell of state.cells.slice(start, start + 3)) {
+      const verdict = make("td", cell.role === role ? "you" : "");
+      verdict.append(make("span", `verdict ${cell.verdict}`, cell.ok ? cell.verdict : `${cell.verdict}, table says ${cell.expected}`));
+      verdict.title = cell.reason;
+      row.append(verdict);
+    }
+    table.append(row);
+  }
+  const agreed = state.cells.filter((cell) => cell.ok).length;
+  $("#checked").textContent = `The running policy agrees with the table on ${agreed} of ${state.cells.length} cells.`;
+}
+
+function drawAudit() {
+  const audit = $("#audit");
+  audit.replaceChildren();
+  if (!state.audit.length) audit.append(make("li", "", "Every tool call this session makes lands here."));
+  for (const entry of [...state.audit].reverse()) {
+    const item = make("li");
+    const what = make("span", "entry", `${entry.person}: ${entry.tool} ${entry.target}`);
+    what.append(make("span", "", entry.reason && entry.verdict !== "allow" ? ` (${entry.reason})` : ""));
+    const outcome = entry.verdict === "deny" ? "denied" : entry.approved_by === "declined" ? "declined"
+      : entry.approved_by ? `ran, ${entry.approved_by} yes` : entry.ran ? "ran" : "failed";
+    item.append(make("span", "at", entry.at), what, make("span", `verdict ${entry.verdict}`, outcome));
+    audit.append(item);
+  }
+}
+
+function drawRequests() {
+  const list = $("#requests");
+  const kinds = { read: "Reads", write: "Edits", destructive: "Destructive", injection: "README tells it to" };
+  for (const [kind, label] of Object.entries(kinds)) {
+    list.append(make("h2", "", label));
+    for (const task of state.tasks.filter((each) => each.kind === kind)) {
+      const who = state.people.find((each) => each.id === task.who);
+      const choice = make("button", "", task.ask);
+      choice.type = "button";
+      choice.append(make("span", "who", `${task.id}, ${who.name}`));
+      choice.addEventListener("click", () => {
+        $("#person").value = task.who;
+        $("#message").value = task.ask;
+        currentTask = task.id;
+        drawTable();
+      });
+      list.append(choice);
+    }
+  }
+}
+
+function drawCall(step) {
+  const line = make("div", `call ${step.verdict}`);
+  const what = make("span", "what");
+  const args = Object.entries(step.args).filter(([name]) => name !== "content").map(([name, value]) => `${name}=${value}`).join(" ");
+  what.append(make("b", "", step.tool), ` ${args}`.slice(0, 160));
+  let label = step.ran ? "ran" : "failed", kind = "";
+  if (step.verdict === "deny") { label = "denied"; kind = "denied"; }
+  if (step.approved_by === "declined") { label = "declined"; kind = "denied"; }
+  if (step.approved_by === "card") { label = "approved, ran"; kind = "approved"; }
+  // The baseline runs everything; a call the policy would have stopped is marked so the cost is visible.
+  if (step.ran && step.policy_verdict !== "allow" && !step.approved_by) { label = `ran, policy says ${step.policy_verdict}`; kind = "ran-anyway"; }
+  if (step.ran && step.approved_by === "chat") { label = step.policy_verdict === "deny" ? "ran on a chat yes, policy says deny" : "ran on a chat yes"; kind = step.policy_verdict === "deny" ? "ran-anyway" : "approved"; }
+  line.append(make("span", "dot"), what, make("span", `tag ${kind}`, label));
+  if (step.verdict !== "allow" || step.policy_verdict !== "allow") line.append(make("span", "why", `${step.rule}: ${step.reason}`));
+  return line;
+}
+
+function drawStep(step) {
+  if (step.kind === "call") return drawCall(step);
+  if (step.kind === "reply") return step.text ? make("p", "line agent", step.text) : make("p", "line empty", "Stopped after the step limit.");
+  if (step.kind === "developer") return make("p", "line developer", `${person().name}: ${step.text}`);
+  return null;
+}
+
+function drawPending(runId, pending) {
+  const box = make("div", "approval live");
+  const answer = async (value) => {
+    // Once answered, the card keeps only the decision, so the session reads as a record of who said what.
+    box.classList.remove("live");
+    box.classList.add("answered");
+    const said = value === true ? "approved" : value === false ? "denied" : `replied: ${value}`;
+    choices.replaceWith(make("p", "decision", `${person().name} ${said}`));
+    await fetch(`/api/run/${runId}/answer`, { method: "POST", body: JSON.stringify({ pending: pending.id, answer: value }) });
+  };
+  const choices = make("div", "answer");
+  if (pending.kind === "card") {
+    box.append(make("p", "says", `${pending.says}.`), make("p", "policy", `Policy: ${pending.reason}.`), make("p", "rule", `rule ${pending.rule}, asked of ${pending.person.name}`));
+    const approve = make("button", "yes", "Approve"), deny = make("button", "", "Deny");
+    approve.addEventListener("click", () => answer(true));
+    deny.addEventListener("click", () => answer(false));
+    choices.append(approve, deny);
+  } else {
+    // The baseline has no card: the agent asks in chat, and a typed yes is all that stands in the way.
+    box.append(make("p", "says", "The agent asked in chat. Your reply goes straight back to it."));
+    const reply = make("input");
+    reply.value = "Yes, go ahead.";
+    reply.setAttribute("aria-label", "Your reply");
+    const sendReply = make("button", "yes", "Reply"), refuse = make("button", "", "No");
+    sendReply.addEventListener("click", () => answer(reply.value));
+    refuse.addEventListener("click", () => answer("No, leave it as it is."));
+    choices.append(reply, sendReply, refuse);
+  }
+  box.append(choices);
+  return box;
+}
+
+async function follow(runId) {
+  const transcript = $("#transcript");
+  const run = await (await fetch(`/api/run/${runId}`)).json();
+  for (const step of run.steps.slice(shownSteps)) {
+    const drawn = drawStep(step);
+    if (drawn) transcript.append(drawn);
+  }
+  shownSteps = run.steps.length;
+  if (run.pending && run.pending.id !== shownPending) {
+    shownPending = run.pending.id;
+    transcript.append(drawPending(runId, run.pending));
+  }
+  transcript.scrollTop = transcript.scrollHeight;
+  if (!run.done) return setTimeout(() => follow(runId), 500);
+  const summary = run.error ? `Stopped: ${run.error}`
+    : `Destructive actions run without approval in this request: ${run.unapproved}. Calls the policy forbids that ran: ${run.forbidden}. Cost $${run.cost.toFixed(4)}.`;
+  transcript.append(make("p", "line empty", summary));
+  transcript.scrollTop = transcript.scrollHeight;
+  $("#send").disabled = false;
+  load();
+}
+
+$("#compose").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const message = $("#message").value.trim();
+  if (!message) return;
+  $("#send").disabled = true;
+  const transcript = $("#transcript");
+  transcript.replaceChildren(make("p", "line you", message),
+    make("p", "line empty", `${person().name}, ${ROLE_NAMES[person().role].toLowerCase()}. ${state.modes[mode]}.`));
+  shownSteps = 0;
+  shownPending = null;
+  const response = await fetch("/api/run", { method: "POST", body: JSON.stringify({ mode, person: $("#person").value, message, task: currentTask }) });
+  if (!response.ok) { transcript.append(make("p", "line empty", await response.text())); $("#send").disabled = false; return; }
+  follow((await response.json()).id);
+});
+
+$("#message").addEventListener("input", () => { currentTask = null; });
+$("#person").addEventListener("change", drawTable);
+document.querySelectorAll(".guard button").forEach((choice) => choice.addEventListener("click", () => {
+  mode = choice.dataset.mode;
+  document.querySelectorAll(".guard button").forEach((each) => each.setAttribute("aria-pressed", String(each === choice)));
+}));
+load();
+</script>
+</body>
+</html>

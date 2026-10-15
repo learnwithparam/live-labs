@@ -1,0 +1,19 @@
+case,tool,branch,environment,path,lines_changed,intern,engineer,release_manager
+List the files,list_files,,,,,allow,allow,allow
+Read a file,read_file,,,,,allow,allow,allow
+Search the code,grep,,,,,allow,allow,allow
+List branches,list_branches,,,,,allow,allow,allow
+Run the tests,run_tests,,,,,allow,allow,allow
+Query the prod database,query_db,,prod,,,allow,allow,allow
+Small edit to code,write_file,,,payroll/tax.py,6,ask,allow,allow
+Edit over 40 lines,write_file,,,payroll/tax.py,120,ask,ask,ask
+Edit under migrations/,write_file,,,migrations/0009_index.sql,3,ask,ask,ask
+Commit to the local branch,commit,,,,,allow,allow,allow
+Delete an unprotected branch,delete_branch,spike/old-export,,,,deny,ask,ask
+Delete a protected branch,delete_branch,release/2.4,,,,deny,deny,ask
+Force-push an unprotected branch,force_push,feature/bonus-calc,,,,deny,ask,ask
+Force-push a protected branch,force_push,main,,,,deny,deny,deny
+Run a migration on dev,run_migration,,dev,,,deny,ask,ask
+Run a migration on prod,run_migration,,prod,,,deny,deny,ask
+Change the dev database by hand,run_sql,,dev,,,deny,ask,ask
+Change the prod database by hand,run_sql,,prod,,,deny,deny,deny

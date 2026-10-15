@@ -1,0 +1,222 @@
+# Wrenfield's policy for the coding agent's tool calls: who may run each tool, and when a person decides.
+# Two actions per call. `run` means the call may happen at all; `run_unattended` means with no person.
+# The agent runs a call alone only when both are allowed; `run` alone sends it to a person; neither denies it.
+# A rule's name starts with what it decides (allow-, ask-, deny-) so the agent can show why.
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  version: default
+  resource: tool
+  rules:
+    # Goose's rule: read-only tools never ask, for anyone.
+    - name: allow-reads
+      actions: [run, run_unattended]
+      effect: EFFECT_ALLOW
+      roles: ["*"]
+      condition:
+        match:
+          expr: R.attr.read_only == true
+      output:
+        when:
+          ruleActivated: '"Read-only tool: runs without asking"'
+
+    # And its other half: a destructive tool always waits for a person, whatever else allows it.
+    - name: ask-every-destructive-call
+      actions: [run_unattended]
+      effect: EFFECT_DENY
+      roles: ["*"]
+      condition:
+        match:
+          expr: R.attr.destructive == true
+      output:
+        when:
+          ruleActivated: '"Destructive: a person approves every call"'
+
+    # Edits: small changes outside migrations/ run alone for engineers; the rest go to a person.
+    - name: allow-small-edits
+      actions: [run, run_unattended]
+      effect: EFFECT_ALLOW
+      roles: [engineer, release_manager]
+      condition:
+        match:
+          all:
+            of:
+              - expr: R.attr.tool == "write_file"
+              - expr: R.attr.under_migrations == false
+              - expr: R.attr.lines_changed <= 40
+      output:
+        when:
+          ruleActivated: '"Small edit outside migrations/: runs without asking"'
+
+    # A local commit is undone with one reset, so it never waits; pushing it is what the rules guard.
+    - name: allow-local-commits
+      actions: [run, run_unattended]
+      effect: EFFECT_ALLOW
+      roles: ["*"]
+      condition:
+        match:
+          expr: R.attr.tool == "commit"
+      output:
+        when:
+          ruleActivated: '"Local commit: runs without asking"'
+
+    - name: ask-other-edits
+      actions: [run]
+      effect: EFFECT_ALLOW
+      roles: ["*"]
+      condition:
+        match:
+          expr: R.attr.tool == "write_file"
+      output:
+        when:
+          ruleActivated: >-
+            R.attr.under_migrations ? "File under migrations/: a person reviews it"
+            : R.attr.lines_changed > 40 ? "Change over 40 lines: a person reviews it"
+            : "An intern's edit: a person reviews it"
+
+    # Branches. A protected branch is main or release/*, read from the repo's settings, not the model.
+    - name: ask-release-manager-deletes-branch
+      actions: [run]
+      effect: EFFECT_ALLOW
+      roles: [release_manager]
+      condition:
+        match:
+          expr: R.attr.tool == "delete_branch"
+      output:
+        when:
+          ruleActivated: 'R.attr.branch_protected ? "Release manager only, protected branch" : "Deleting a branch: a person approves"'
+
+    - name: ask-engineer-deletes-unprotected-branch
+      actions: [run]
+      effect: EFFECT_ALLOW
+      roles: [engineer]
+      condition:
+        match:
+          all:
+            of:
+              - expr: R.attr.tool == "delete_branch"
+              - expr: R.attr.branch_protected == false
+      output:
+        when:
+          ruleActivated: '"Unprotected branch: an engineer may delete it once a person approves"'
+
+    - name: deny-engineer-deletes-protected-branch
+      actions: [run]
+      effect: EFFECT_DENY
+      roles: [engineer]
+      condition:
+        match:
+          all:
+            of:
+              - expr: R.attr.tool == "delete_branch"
+              - expr: R.attr.branch_protected == true
+      output:
+        when:
+          ruleActivated: '"Release manager only, protected branch"'
+
+    - name: deny-force-push-protected-branch
+      actions: [run]
+      effect: EFFECT_DENY
+      roles: ["*"]
+      condition:
+        match:
+          all:
+            of:
+              - expr: R.attr.tool == "force_push"
+              - expr: R.attr.branch_protected == true
+      output:
+        when:
+          ruleActivated: '"Never force-push a protected branch: it rewrites history others build on"'
+
+    - name: ask-force-push-unprotected-branch
+      actions: [run]
+      effect: EFFECT_ALLOW
+      roles: [engineer, release_manager]
+      condition:
+        match:
+          all:
+            of:
+              - expr: R.attr.tool == "force_push"
+              - expr: R.attr.branch_protected == false
+      output:
+        when:
+          ruleActivated: '"Force-push to an unprotected branch: a person approves"'
+
+    # Databases. Prod changes go through a reviewed migration that a release manager runs.
+    - name: ask-release-manager-runs-migration
+      actions: [run]
+      effect: EFFECT_ALLOW
+      roles: [release_manager]
+      condition:
+        match:
+          expr: R.attr.tool == "run_migration"
+      output:
+        when:
+          ruleActivated: 'R.attr.environment == "prod" ? "Prod migration: release manager only, a person approves" : "Migration on dev: a person approves"'
+
+    - name: ask-engineer-runs-dev-migration
+      actions: [run]
+      effect: EFFECT_ALLOW
+      roles: [engineer]
+      condition:
+        match:
+          all:
+            of:
+              - expr: R.attr.tool == "run_migration"
+              - expr: R.attr.environment != "prod"
+      output:
+        when:
+          ruleActivated: '"Migration on dev: a person approves"'
+
+    - name: deny-engineer-runs-prod-migration
+      actions: [run]
+      effect: EFFECT_DENY
+      roles: [engineer]
+      condition:
+        match:
+          all:
+            of:
+              - expr: R.attr.tool == "run_migration"
+              - expr: R.attr.environment == "prod"
+      output:
+        when:
+          ruleActivated: '"Prod migrations: release manager only"'
+
+    - name: deny-sql-changes-on-prod
+      actions: [run]
+      effect: EFFECT_DENY
+      roles: ["*"]
+      condition:
+        match:
+          all:
+            of:
+              - expr: R.attr.tool == "run_sql"
+              - expr: R.attr.environment == "prod"
+      output:
+        when:
+          ruleActivated: '"No hand-written changes on prod: ship a migration"'
+
+    - name: ask-sql-changes-on-dev
+      actions: [run]
+      effect: EFFECT_ALLOW
+      roles: [engineer, release_manager]
+      condition:
+        match:
+          all:
+            of:
+              - expr: R.attr.tool == "run_sql"
+              - expr: R.attr.environment != "prod"
+      output:
+        when:
+          ruleActivated: '"Changing the dev database: a person approves"'
+
+    # Interns read and edit; anything destructive is out of reach, whatever they ask.
+    - name: deny-intern-destructive
+      actions: [run]
+      effect: EFFECT_DENY
+      roles: [intern]
+      condition:
+        match:
+          expr: R.attr.destructive == true
+      output:
+        when:
+          ruleActivated: '"Interns cannot run destructive tools"'

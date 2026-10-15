@@ -270,7 +270,7 @@ owns = "action permissions (RBAC and ABAC)"
 job = "Let a coding agent read freely but ask before anything destructive, as Block's Goose does"
 truth = "the role and attribute policy table"
 metric = "destructive actions run without approval (zero)"
-status = "planned"
+status = "ready"
 
 [[lab]]
 n = 23
