@@ -170,11 +170,11 @@ uv run listing review
 
 Expect: /NeMo Guardrails\s+\d+ of 34/
 
-Our four runs with the final policy, each with both versions:
+Our five runs with the final policy, each with both versions:
 
 | Version | Violations caught | Good answers wrongly blocked | To a human | Cost |
 | --- | --- | --- | --- | --- |
-| Rule in the prompt | 18 to 22 of 34 | 0 of 34 | 0 | about $0.01 |
+| Rule in the prompt | 17 to 22 of 34 | 0 of 34 | 0 | about $0.01 |
 | NeMo Guardrails | 34 of 34 | 0 to 1 of 34 | 4 to 6 | about $0.012 |
 
 The prompt alone caught every jailbreak, 9 to 12 of 14 steering requests, and 2 to 4 of 12
