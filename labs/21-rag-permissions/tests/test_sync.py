@@ -85,3 +85,62 @@ def test_every_relation_in_the_dsl_is_in_the_loaded_json_model():
     loaded = {(definition["type"], relation) for definition in model["type_definitions"]
               for relation in definition.get("relations") or {}}
     assert written == loaded
+
+
+def edited_export(monkeypatch, source: str, edit) -> None:
+    """Change one source export the way a real system might send it, for the next build."""
+    real_load = sync.load
+
+    def edited(name: str) -> dict:
+        exported = real_load(name)
+        if name == f"sources/{source}.json":
+            edit(exported)
+        return exported
+
+    monkeypatch.setattr(sync, "load", edited)
+
+
+def test_an_unknown_security_level_holds_the_ticket_instead_of_opening_it_to_the_project(monkeypatch):
+    def rename_level(tickets: dict) -> None:
+        issue = next(issue for issue in tickets["issues"] if issue["security_level"] == "hr-confidential")
+        issue["security_level"] = "hr-confidental"
+
+    edited_export(monkeypatch, "tickets", rename_level)
+    built = build(admin_decisions=AUDIT_MAP)
+    [held] = built["held"]
+    assert "hr-confidental" in held["reasons"][0]
+    assert viewers_of(built["tuples"], held["document"]) == {f"user:{held['owner']}"}
+    assert not any(relation == "parent" and target == f"document:{held['document']}" for _, relation, target in built["tuples"])
+
+
+def test_a_domain_grant_to_another_company_is_not_all_staff(monkeypatch):
+    def share_outside(drive: dict) -> None:
+        drive["files"][0]["permissions"].append({"type": "domain", "role": "reader", "domain": "studiokim.design"})
+
+    edited_export(monkeypatch, "drive", share_outside)
+    built = build(admin_decisions=AUDIT_MAP)
+    [held] = built["held"]
+    assert "studiokim.design" in held["reasons"][0]
+    assert "group:all-staff#member" not in viewers_of(built["tuples"], held["document"])
+
+
+def test_a_held_document_goes_to_its_owner_by_directory_lookup_not_by_email_prefix(monkeypatch):
+    # Jo's email is jo.kim@studiokim.design; the user id is jo. Cutting the email at "@" would name nobody.
+    def jo_owns_a_badly_shared_file(drive: dict) -> None:
+        drive["files"][0]["owner"] = "jo.kim@studiokim.design"
+        drive["files"][0]["permissions"].append({"type": "user", "role": "reader", "emailAddress": "nobody@example.com"})
+
+    edited_export(monkeypatch, "drive", jo_owns_a_badly_shared_file)
+    built = build(admin_decisions=AUDIT_MAP)
+    [held] = built["held"]
+    assert held["owner"] == "jo" and viewers_of(built["tuples"], held["document"]) == {"user:jo"}
+
+
+def test_a_held_document_whose_owner_is_unknown_is_seen_by_no_one(monkeypatch):
+    def stranger_owns_a_file(drive: dict) -> None:
+        drive["files"][0]["owner"] = "stranger@example.com"
+
+    edited_export(monkeypatch, "drive", stranger_owns_a_file)
+    built = build(admin_decisions=AUDIT_MAP)
+    [held] = built["held"]
+    assert held["owner"] is None and viewers_of(built["tuples"], held["document"]) == set()

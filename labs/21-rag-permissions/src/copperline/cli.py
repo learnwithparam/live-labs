@@ -35,7 +35,7 @@ def sync() -> int:
     print(f"Synced {len(built['tuples'])} tuples from drive, wiki and tickets into OpenFGA store {ids['store_id']}.")
     for held in built["held"]:
         print(f"Held for an admin: {held['document']}, its access list {held['reasons'][0]}. "
-              f"Visible to {held['owner']} only until an admin decides.")
+              f"Visible to {held['owner'] or 'an admin'} only until an admin decides.")
     return 0
 
 

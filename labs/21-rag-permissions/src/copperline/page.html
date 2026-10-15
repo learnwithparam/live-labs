@@ -200,7 +200,7 @@ function drawHeld() {
   box.replaceChildren();
   for (const held of view.state.held) {
     const card = make("section", "held");
-    card.append(make("h2", "", "Held for an admin"), make("p", "tag", `${held.title} is visible to ${personName(held.owner)} only`));
+    card.append(make("h2", "", "Held for an admin"), make("p", "tag", `${held.title} is visible to ${held.owner ? personName(held.owner) : "an admin"} only`));
     card.append(make("p", "reason", `Its access list ${held.reasons[0]}. Search will not guess who that is.`));
     if (held.decision) {
       card.append(make("p", "line", "The admin kept it owner-only."));

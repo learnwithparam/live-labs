@@ -14,6 +14,8 @@ from pathlib import Path
 
 from copperline.config import DATA, OUT
 
+# The domain Copperline's directory covers. A Drive "domain" grant to any other domain is a stranger's.
+COMPANY_DOMAIN = "copperline.io"
 DECISIONS = OUT / "decisions.json"
 # Drive roles collapse to the two relations search cares about; commenters may read, so they view.
 DRIVE_ROLES = {"owner": "owner", "writer": "editor", "commenter": "viewer", "reader": "viewer"}
@@ -78,9 +80,11 @@ def drive_tuples(drive: dict, names: Translator) -> list[tuple[str, str, str]]:
             relation = DRIVE_ROLES[grant["role"]]
             if grant["type"] in ("user", "group"):
                 tuples.append((names.email(grant["emailAddress"]), relation, target))
-            elif grant["type"] == "domain":
+            elif grant["type"] == "domain" and grant["domain"] == COMPANY_DOMAIN:
                 # Everyone at copperline.io, which is all staff; a contractor's own domain is not in it.
                 tuples.append(("group:all-staff#member", relation, target))
+            elif grant["type"] == "domain":
+                names.problems.append(f"is shared with the domain {grant['domain']}, which is not Copperline's")
             elif grant["type"] == "anyone":
                 # "Anyone with the link" is not "everyone": only people who opened the link hold it.
                 link = f"link:{item['id']}"
@@ -117,9 +121,14 @@ def ticket_tuples(tickets: dict, names: Translator) -> list[tuple[str, str, str]
         tuples += [(names.user(key), "viewer", target) for key in project["browse"]["users"]]
     for issue in tickets["issues"]:
         target = f"document:{issue['key']}"
+        if issue["security_level"] is None:
+            tuples.append((f"folder:project-{issue['project']}", "parent", target))
+            continue
         level = levels.get(issue["security_level"])
         if level is None:
-            tuples.append((f"folder:project-{issue['project']}", "parent", target))
+            # Falling back to the project would show a restricted ticket to everyone on it, so hold it instead.
+            names.problems.append(f"has the security level {issue['security_level']!r}, which the ticket tool does not define")
+            tuples.append((names.user(issue["reporter"]), "viewer", target))
             continue
         # A security level replaces the project's audience; Copperline's levels always include the reporter.
         tuples.append((names.user(issue["reporter"]), "viewer", target))
@@ -141,15 +150,23 @@ def documents() -> list[dict]:
                 "place": issue["project"], "text": issue["description"]} for issue in tickets["issues"]])
 
 
-def owner_of(document_id: str) -> str:
-    """Who a held document stays visible to: its Drive owner, wiki author or ticket reporter."""
+def owner_of(document_id: str) -> str | None:
+    """Who a held document stays visible to: its Drive owner, wiki author or ticket reporter.
+
+    The owner is looked up in the directory, never guessed from an email: jo.kim@studiokim.design is the
+    user `jo`, not `jo.kim`. An owner the directory does not know gets None, and only an admin sees it.
+    """
+    users = directory()["users"]
+    by_email = {user["email"]: user["id"] for user in users}
+    known = {user["id"] for user in users}
     for item in load("sources/drive.json")["files"]:
         if item["id"] == document_id:
-            return item["owner"].split("@")[0]
+            return by_email.get(item["owner"])
     for page in load("sources/wiki.json")["pages"]:
         if page["id"] == document_id:
-            return page["author"]
-    return next(issue["reporter"] for issue in load("sources/tickets.json")["issues"] if issue["key"] == document_id)
+            return page["author"] if page["author"] in known else None
+    reporter = next(issue["reporter"] for issue in load("sources/tickets.json")["issues"] if issue["key"] == document_id)
+    return reporter if reporter in known else None
 
 
 def build(admin_decisions: dict | None = None) -> dict:
@@ -178,7 +195,8 @@ def build(admin_decisions: dict | None = None) -> dict:
                 owner = owner_of(document_id)
                 held.append({"document": document_id, "source": source, "reasons": names.problems, "owner": owner,
                              "decision": admin_decisions.get(document_id, {}).get("keep") and "kept private"})
-                tuples.append((f"user:{owner}", "viewer", f"document:{document_id}"))
+                if owner:
+                    tuples.append((f"user:{owner}", "viewer", f"document:{document_id}"))
             else:
                 tuples += translated
     return {"tuples": sorted(set(tuples)), "held": held}
