@@ -46,7 +46,9 @@ The caller: {caller}
 What you can do:
 - Book a tune-up, a repair or an estimate for new equipment. Call find_windows first and offer only
   open windows. Read back the kind and the window and get a yes before you call book_visit.
-- Move or cancel one of the caller's booked visits. Get a yes before you change it.
+- Move or cancel one of the caller's booked visits. Caller ID can be faked, so first get the house number
+  of the address on file and pass it to the tool. Never say the address yourself. Get a yes before you
+  change it.
 - A new caller needs a name, street address and zip before you book. If book_visit says the zip is
   outside the service area, say so kindly and do not transfer.
 - Answer questions about prices and hours from the facts above, and nothing else.
@@ -144,15 +146,26 @@ class FrontDesk(Agent):
                            self.book.book(self.number, kind, window_id, problem, name, address, zip_code))
 
     @function_tool
-    async def move_visit(self, context: RunContext, visit_id: str, window_id: str) -> str:
-        """Move one of the caller's booked visits to another open window, after they said yes."""
+    async def move_visit(self, context: RunContext, visit_id: str, window_id: str, house_number: str) -> str:
+        """Move one of the caller's booked visits to another open window, after they said yes.
+
+        Args:
+            visit_id: The visit to move, such as V-2041.
+            window_id: An id from find_windows.
+            house_number: The house number the caller gave for the address on file.
+        """
         return self.record("move_visit", {"visit_id": visit_id, "window_id": window_id},
-                           self.book.move(self.number, visit_id, window_id))
+                           self.book.move(self.number, visit_id, window_id, house_number))
 
     @function_tool
-    async def cancel_visit(self, context: RunContext, visit_id: str) -> str:
-        """Cancel one of the caller's booked visits, after they said yes."""
-        return self.record("cancel_visit", {"visit_id": visit_id}, self.book.cancel(self.number, visit_id))
+    async def cancel_visit(self, context: RunContext, visit_id: str, house_number: str) -> str:
+        """Cancel one of the caller's booked visits, after they said yes.
+
+        Args:
+            visit_id: The visit to cancel, such as V-2043.
+            house_number: The house number the caller gave for the address on file.
+        """
+        return self.record("cancel_visit", {"visit_id": visit_id}, self.book.cancel(self.number, visit_id, house_number))
 
     @function_tool
     async def transfer_to_human(self, context: RunContext, reason: Literal["safety", "billing", "caller_asked", "other"],

@@ -2,7 +2,7 @@
 
 from northfield.schedule import Schedule, changes, original
 
-SANDRA, PRIYA, NEW_CALLER = "+16145550101", "+16145550112", "+16145550163"
+SANDRA, PRIYA, MARCUS, NEW_CALLER = "+16145550101", "+16145550112", "+16145550178", "+16145550163"
 
 
 def test_each_call_gets_its_own_copy_of_the_week(tmp_path):
@@ -31,11 +31,21 @@ def test_a_new_caller_needs_details_and_an_address_in_the_service_area(tmp_path)
 
 def test_moving_returns_the_old_spot_and_cancelling_frees_the_window(tmp_path):
     book = Schedule(tmp_path / "schedule.json")
-    assert book.move(PRIYA, "V-2043", "FRI-AM")["ok"]
+    assert book.move(PRIYA, "V-2043", "FRI-AM", "3360")["ok"]
     assert book.window("TUE-PM")["spots"] == 1 and book.window("FRI-AM")["spots"] == 1
-    assert book.cancel(PRIYA, "V-2043")["ok"]
+    assert book.cancel(PRIYA, "V-2043", "3,360")["ok"]
     assert book.window("FRI-AM")["spots"] == 2
-    assert not book.cancel(SANDRA, "V-2041")["ok"]
+    assert not book.cancel(SANDRA, "V-2041", "92")["ok"]
+
+
+def test_caller_id_alone_cannot_change_a_visit(tmp_path):
+    """A spoofed number gets past caller ID; it does not know the house number on file."""
+    book = Schedule(tmp_path / "schedule.json")
+    for house_number in ("", "1208", "Wyandotte"):
+        assert "house number" in book.move(MARCUS, "V-2041", "FRI-AM", house_number)["reason"]
+        assert "house number" in book.cancel(MARCUS, "V-2041", house_number)["reason"]
+    assert changes(original(), book.book_of_record)["visits"] == []
+    assert "Wyandotte" not in book.caller_card(MARCUS)
 
 
 def test_a_handoff_needs_a_known_reason(tmp_path):

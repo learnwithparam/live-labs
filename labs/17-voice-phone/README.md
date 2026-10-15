@@ -138,6 +138,8 @@ Read `src/northfield/agent.py` from the top:
    recorded. It is spoken once per worker and replayed, so the line picks up at once.
 2. `answer` waits for the SIP participant and reads `sip.phoneNumber`. A real trunk sets that
    attribute too, and `caller_card` turns it into the customer's record.
+   Caller ID can be spoofed, so the card leaves out the home address. Moving or cancelling a visit
+   also needs the house number on file, which `schedule.py` checks.
 3. The tools: `find_windows`, `book_visit`, `move_visit`, `cancel_visit` and `transfer_to_human`. A
    transfer files the reason and a one-line summary, says who will pick up, then leaves the line.
 4. `turn_handling` uses LiveKit's turn detector with a 0.8 second minimum delay. A caller's pause

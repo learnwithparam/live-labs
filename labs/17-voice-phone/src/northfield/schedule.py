@@ -46,8 +46,10 @@ class Schedule:
             return f"Caller ID {phone} is not a customer yet. Ask for their name, street address and zip before booking."
         visits = "; ".join(f"{visit['id']} {visit['kind']} in {self.label(visit['window'])}" for visit in self.visits_of(phone))
         member = "a Comfort Club member" if person["member"] else "not a Comfort Club member"
-        return (f"Caller ID {phone} is {person['name']}, {person['address']}, {member}, equipment "
-                f"{person['equipment']}. Booked visits: {visits or 'none'}.")
+        # The address stays out: caller ID can be faked, and the agent must never read a home address to a stranger.
+        return (f"Caller ID {phone} is {person['name']}, {member}, equipment {person['equipment']}. "
+                f"Booked visits: {visits or 'none'}. To move or cancel one, the caller must give the house number "
+                f"of the address on file.")
 
     def label(self, window_id: str) -> str:
         slot = self.window(window_id)
@@ -94,10 +96,27 @@ class Schedule:
     def owned_visit(self, phone: str, visit_id: str) -> dict | None:
         return next((visit for visit in self.visits_of(phone) if visit["id"] == visit_id), None)
 
-    def move(self, phone: str, visit_id: str, window_id: str) -> dict:
+    def verified(self, phone: str, house_number: str) -> bool:
+        """Caller ID can be spoofed, so changing a visit also needs the house number on file."""
+        person = self.customer(phone)
+        # Speech to text may write "1,207" or "12 07"; only the digits are compared.
+        digits = "".join(character for character in house_number if character.isdigit())
+        return bool(person and digits and person["address"].split()[0] == digits)
+
+    def changeable_visit(self, phone: str, visit_id: str, house_number: str) -> tuple[dict | None, dict | None]:
+        """The caller's visit, or the refusal the agent reads back. Ownership first, then the house number."""
         visit = self.owned_visit(phone, visit_id)
         if not visit:
-            return {"ok": False, "reason": f"{visit_id} is not a booked visit for this caller."}
+            return None, {"ok": False, "reason": f"{visit_id} is not a booked visit for this caller."}
+        if not self.verified(phone, house_number):
+            return None, {"ok": False, "reason": "That house number does not match the address on file. Ask the caller "
+                                                 "for it again, and do not say the address yourself."}
+        return visit, None
+
+    def move(self, phone: str, visit_id: str, window_id: str, house_number: str) -> dict:
+        visit, refusal = self.changeable_visit(phone, visit_id, house_number)
+        if refusal:
+            return refusal
         refusal = self.take_spot(window_id)
         if refusal:
             return {"ok": False, "reason": refusal}
@@ -107,10 +126,10 @@ class Schedule:
         self.save()
         return {"ok": True, "visit": visit_id, "when": self.label(window_id)}
 
-    def cancel(self, phone: str, visit_id: str) -> dict:
-        visit = self.owned_visit(phone, visit_id)
-        if not visit:
-            return {"ok": False, "reason": f"{visit_id} is not a booked visit for this caller."}
+    def cancel(self, phone: str, visit_id: str, house_number: str) -> dict:
+        visit, refusal = self.changeable_visit(phone, visit_id, house_number)
+        if refusal:
+            return refusal
         visit["status"] = "cancelled"
         self.window(visit["window"])["spots"] += 1
         self.save()

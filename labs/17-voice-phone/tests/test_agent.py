@@ -49,7 +49,7 @@ def test_a_full_window_is_refused_and_nothing_is_booked(tmp_path):
 
 
 def test_a_caller_cannot_move_someone_elses_visit(tmp_path):
-    replies = [[tool_call("move_visit", visit_id="V-2041", window_id="THU-PM")], "I can't find that visit."]
+    replies = [[tool_call("move_visit", visit_id="V-2041", window_id="THU-PM", house_number="92")], "I can't find that visit."]
     book, _ = talk(tmp_path, SANDRA, replies, "Move V-2041 to Thursday.")
     assert changes(original(), book.book_of_record)["visits"] == []
 
