@@ -342,7 +342,7 @@ owns = "tracing and cost per run"
 job = "Tell finance what each customer's AI usage cost last month, and which step made a run slow"
 truth = "the provider's invoice"
 metric = "share of the invoice attributed to a customer and a feature"
-status = "planned"
+status = "ready"
 
 [[lab]]
 n = 29

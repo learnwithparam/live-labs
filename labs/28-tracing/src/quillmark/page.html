@@ -1,0 +1,484 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="icon" href="data:,">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quillmark finance: AI usage close</title>
+<style>
+:root {
+  --paper: #FAFAFA; --card: #FFFFFF; --ink: #151515; --ink-2: #414141; --muted: #606060; --faint: #808080;
+  --line: #DFDFDF; --accent: #FAFF69; --accent-deep: #4F5101; --fill-dark: #1F1F1C;
+  --pass: #008138; --fail: #BF000F; --wait: #B75000;
+  --sans: Inter, Helvetica, Arial, sans-serif; --mono: Inconsolata, "Courier New", Courier, monospace;
+}
+* { box-sizing: border-box }
+html, body { margin: 0 }
+body { background: var(--paper); color: var(--ink); font: 15px/1.5 var(--sans); min-height: 100vh }
+button, select { font: inherit }
+button { cursor: pointer }
+button:focus-visible, select:focus-visible, a:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px }
+h1, h2, h3, p { margin: 0 }
+.num { font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap }
+.mono { font-family: var(--mono) }
+
+/* The finance tool's own bar: this is the close, not an engineering dashboard. */
+.bar { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 28px; padding: 16px 32px; background: var(--fill-dark); color: var(--paper) }
+.bar .brand { font-weight: 800; font-size: 18px; letter-spacing: -0.02em }
+.bar .where { opacity: .85 }
+.bar .period { margin-left: auto; font-size: 14px }
+
+main { max-width: 1320px; margin: 0 auto; padding: 28px 32px 48px }
+.lede { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 20px; margin-bottom: 24px }
+.lede h1 { font-size: 28px; letter-spacing: -0.02em; font-weight: 800 }
+.lede p { color: var(--ink-2); max-width: 62ch }
+
+/* The close: a reconciliation statement on the left, the customer by feature split on the right. */
+.close { display: grid; grid-template-columns: minmax(17rem, 21.5rem) minmax(0, 1fr); gap: 28px; align-items: start }
+
+.statement { background: var(--card); border: 1px solid var(--line); padding: 22px 22px 18px }
+.statement h2 { font-size: 15px; font-weight: 700; margin-bottom: 14px }
+.tape { width: 100%; border-collapse: collapse; font-size: 14px }
+.tape td { padding: 6px 0; border-bottom: 1px dotted var(--line) }
+.tape .lead td { font-weight: 700; font-size: 16px; border-bottom: 1px solid var(--ink) }
+.tape .less td:first-child::before { content: "less "; color: var(--muted) }
+.tape .open td { color: var(--fail); font-weight: 700 }
+.tape .sum td { border-bottom: 3px double var(--ink); font-weight: 700; padding-top: 10px }
+.tape .finance td:last-child::after { content: " by finance"; color: var(--muted); font-weight: 400; font-size: 12px }
+.verdict { margin-top: 14px; font-size: 14px; color: var(--ink-2) }
+.verdict strong.ok { color: var(--pass) }
+.verdict strong.bad { color: var(--fail) }
+
+.metric { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line) }
+.metric .share { font-size: 40px; font-weight: 800; letter-spacing: -0.03em; line-height: 1 }
+.metric p { font-size: 14px; color: var(--ink-2); margin-top: 6px }
+.metric .against { display: flex; gap: 10px; align-items: baseline; margin-top: 12px; font-size: 14px }
+.metric .against b { font-size: 20px; color: var(--muted) }
+
+.split { background: var(--card); border: 1px solid var(--line); padding: 22px }
+.split h2 { font-size: 15px; font-weight: 700 }
+.split .hint { color: var(--muted); font-size: 13px; margin: 2px 0 14px }
+.matrix { width: 100%; border-collapse: collapse; font-size: 14px }
+.matrix th { font-weight: 600; text-align: right; color: var(--ink-2); padding: 6px 10px; border-bottom: 1px solid var(--ink) }
+.matrix th:first-child { text-align: left; padding-left: 0 }
+.matrix td { padding: 0; border-bottom: 1px solid var(--line) }
+.matrix td.who { padding: 10px 10px 10px 0; font-weight: 600 }
+.matrix td.who small { display: block; font-weight: 400; color: var(--muted); font-size: 12px }
+.matrix td.total { padding: 10px; font-weight: 700 }
+.cell { width: 100%; border: 0; background: none; padding: 10px; position: relative; text-align: right; font-variant-numeric: tabular-nums }
+.cell .fill { position: absolute; right: 10px; bottom: 4px; height: 4px; background: var(--accent); }
+.cell:hover, .cell.on { background: var(--paper) }
+.cell.on { outline: 2px solid var(--ink); outline-offset: -2px }
+.cell .assigned { display: block; font-size: 11px; color: var(--muted) }
+.matrix tr.open td { color: var(--fail); font-weight: 700; border-bottom: 0 }
+.matrix tfoot td { border-top: 3px double var(--ink); border-bottom: 0; padding: 10px; font-weight: 700 }
+.matrix tfoot td:first-child { padding-left: 0 }
+
+/* What only a person can settle: billed lines with no customer on them. */
+.review { margin-top: 28px; border: 2px solid var(--fail); background: var(--card) }
+.review header { display: flex; flex-wrap: wrap; gap: 4px 16px; align-items: baseline; padding: 14px 20px; border-bottom: 1px solid var(--line) }
+.review header h2 { font-size: 16px; color: var(--fail) }
+.review header p { color: var(--ink-2); font-size: 14px }
+.line { display: grid; grid-template-columns: 7.5rem minmax(0, 1fr) minmax(15rem, 19rem); gap: 18px; padding: 16px 20px; border-bottom: 1px solid var(--line) }
+.line:last-child { border-bottom: 0 }
+.line .amount { font-size: 20px; font-weight: 800; color: var(--fail) }
+.line .reason { font-size: 14px }
+.line .facts { font-size: 13px; color: var(--muted); margin-top: 4px; overflow-wrap: anywhere }
+.line .decide { display: flex; flex-direction: column; gap: 8px }
+.line .decide .pick { display: flex; gap: 8px }
+.line select { flex: 1; min-width: 0; padding: 6px 8px; border: 1px solid var(--ink-2); background: var(--card); color: var(--ink) }
+.primary { background: var(--ink); color: var(--paper); border: 1px solid var(--ink); padding: 8px 12px; font-weight: 600 }
+.primary:disabled { background: var(--line); border-color: var(--line); color: var(--muted); cursor: not-allowed }
+.secondary { background: var(--card); color: var(--ink); border: 1px solid var(--ink); padding: 8px 12px }
+.flagged { color: var(--wait); font-weight: 600; font-size: 14px }
+.none { padding: 16px 20px; color: var(--pass); font-weight: 600 }
+
+/* The drill-down: why a run was slow, step by step, on one time axis. */
+.trace { margin-top: 28px; background: var(--card); border: 1px solid var(--line) }
+.trace > header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 16px; padding: 16px 20px; border-bottom: 1px solid var(--line) }
+.trace > header h2 { font-size: 16px }
+.trace > header a { margin-left: auto; color: var(--ink); font-size: 14px }
+.drill { display: flex; flex-wrap: wrap }
+.runs { flex: 0 0 15.5rem; border-right: 1px solid var(--line); max-height: 31rem; overflow: auto }
+.runs .filter { padding: 10px 14px; font-size: 13px; color: var(--muted); border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; gap: 8px }
+.runs .filter button { border: 0; background: none; color: var(--ink); text-decoration: underline; padding: 0; font-size: 13px }
+.run { display: block; width: 100%; text-align: left; border: 0; border-bottom: 1px solid var(--line); background: none; padding: 9px 14px; color: var(--ink) }
+.run.on { background: var(--accent) }
+.run .top { display: flex; justify-content: space-between; gap: 8px; font-weight: 600; font-size: 14px }
+.run .sub { font-size: 12px; color: var(--muted) }
+.run.on .sub { color: var(--ink-2) }
+.run .gauge { height: 3px; background: var(--line); margin-top: 6px }
+.run .gauge i { display: block; height: 3px; background: var(--ink-2) }
+.detail { flex: 1 1 30rem; min-width: 0; padding: 18px 20px }
+.finding { font-size: 17px; font-weight: 700; margin-bottom: 4px }
+.finding .slow { background: var(--accent); padding: 0 4px }
+.detail .sub { color: var(--muted); font-size: 13px; margin-bottom: 16px }
+.axis { display: grid; grid-template-columns: 13.5rem minmax(0, 1fr) 5.5rem; font-size: 12px; color: var(--muted); border-bottom: 1px solid var(--line); padding-bottom: 4px }
+.axis span:nth-child(2) { display: flex; justify-content: space-between }
+.step { display: grid; grid-template-columns: 13.5rem minmax(0, 1fr) 5.5rem; align-items: center; min-height: 34px; border-bottom: 1px dotted var(--line); font-size: 13px }
+.step .label { padding-right: 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.step .label small { color: var(--muted) }
+.step .lane { position: relative; height: 16px }
+.step .lane i { position: absolute; top: 2px; height: 12px; background: var(--ink-2); transform-origin: left center }
+.step.root .lane i { background: var(--fill-dark); height: 6px; top: 5px }
+.step.slowest .lane i { background: var(--accent); outline: 1.5px solid var(--ink) }
+.step.slowest .label { font-weight: 700 }
+.step .num { padding-left: 8px }
+.step .cost { display: block; color: var(--muted); font-size: 11px }
+.reply { margin-top: 16px; padding: 12px 14px; background: var(--paper); border-left: 3px solid var(--line); font-size: 14px; white-space: pre-wrap; color: var(--ink-2) }
+.reply b { display: block; color: var(--ink); margin-bottom: 4px; font-size: 13px }
+.export { margin-top: 14px; font-size: 13px; color: var(--ink-2) }
+.export strong { color: var(--fail) }
+.empty { padding: 40px 32px; max-width: 46rem }
+.empty code { font-family: var(--mono); background: var(--card); border: 1px solid var(--line); padding: 1px 5px }
+
+/* One moment of motion: a run's steps draw along the time axis when it opens, in the order they ran. */
+@media (prefers-reduced-motion: no-preference) {
+  .step .lane i { animation: draw .5s cubic-bezier(.2, .7, .2, 1) both; animation-delay: var(--delay, 0s) }
+  @keyframes draw { from { transform: scaleX(0) } to { transform: scaleX(1) } }
+}
+
+@media (max-width: 900px) {
+  .bar, main { padding-left: 16px; padding-right: 16px }
+  .bar .period { margin-left: 0 }
+  .close { grid-template-columns: minmax(0, 1fr) }
+  .split { overflow-x: auto }
+  .line { grid-template-columns: minmax(0, 1fr) }
+  .runs { flex-basis: 100%; border-right: 0; border-bottom: 1px solid var(--line); max-height: 15rem }
+  .axis, .step { grid-template-columns: 8.5rem minmax(0, 1fr) 4.5rem }
+  .detail { padding: 14px 12px }
+}
+</style>
+</head>
+<body data-surface="month-end AI cost reconciliation with trace drill-down">
+<div class="bar">
+  <span class="brand">Quillmark</span>
+  <span class="where">Finance, AI usage close</span>
+  <span class="period" id="period"></span>
+</div>
+<main id="main" aria-live="polite"></main>
+
+<script>
+const $ = (selector, root = document) => root.querySelector(selector);
+let report = null;
+let selectedCell = null;
+let selectedTrace = null;
+
+function make(tag, className, text) {
+  const node = document.createElement(tag);
+  if (className) node.className = className;
+  if (text !== undefined) node.textContent = text;
+  return node;
+}
+const dollars = (amount) => "$" + amount.toFixed(6);
+const seconds = (milliseconds) => (milliseconds / 1000).toFixed(milliseconds < 1000 ? 3 : 1) + " s";
+const percent = (share) => (share * 100).toFixed(1) + "%";
+const customerName = (customer) => report.customers[customer] || customer;
+
+async function load() {
+  const response = await fetch("/api/report", { signal: AbortSignal.timeout(10000) });
+  const body = await response.json();
+  if (!response.ok) return showEmpty(body.error);
+  report = body;
+  selectedTrace = selectedTrace || (report.slowest && report.slowest.trace_id);
+  render();
+}
+
+function showEmpty(message) {
+  const main = $("#main");
+  main.replaceChildren();
+  const box = make("div", "empty");
+  box.append(make("h1", "", "The close has no numbers yet"));
+  const help = make("p");
+  help.append("The report is built from a real month of traced runs. Run ");
+  help.append(make("code", "", "uv run quill month"));
+  help.append(", then ");
+  help.append(make("code", "", "uv run quill report"));
+  help.append(", and reload this page. ");
+  help.append(make("span", "", message || ""));
+  box.append(help);
+  main.append(box);
+}
+
+function render() {
+  const started = new Date(report.period.started), finished = new Date(report.period.finished);
+  $("#period").textContent = `Billing window ${started.toLocaleString()} to ${finished.toLocaleTimeString()}, ${report.model}`;
+  const main = $("#main");
+  main.replaceChildren();
+  const lede = make("div", "lede");
+  lede.append(make("h1", "", "Who did the AI bill pay for?"));
+  lede.append(make("p", "", "Every line of the provider's invoice is matched to the trace of the call that made it. " +
+    "The trace carries the customer and the feature, so the bill splits without guessing."));
+  main.append(lede);
+  const close = make("section", "close");
+  close.append(statement(), split());
+  main.append(close, review(), drill());
+}
+
+function statement() {
+  const attribution = report.attribution;
+  const box = make("div", "statement");
+  box.append(make("h2", "", "Reconciliation to the provider's invoice"));
+  const tape = make("table", "tape");
+  const row = (className, label, amount) => {
+    const line = make("tr", className);
+    line.append(make("td", "", label), make("td", "num", amount));
+    tape.append(line);
+  };
+  row("lead", `Invoice, ${attribution.invoice_lines} generations`, dollars(attribution.invoice_total));
+  const byCustomer = {};
+  attribution.cells.forEach((cell) => { byCustomer[cell.customer] = (byCustomer[cell.customer] || 0) + cell.cost; });
+  Object.keys(byCustomer).sort().forEach((customer) => row("less", customerName(customer), dollars(byCustomer[customer])));
+  row("open", "Left unattributed", dollars(attribution.unattributed_cost));
+  if (attribution.finance_cost) row("finance", "Assigned in review", dollars(attribution.finance_cost));
+  row("sum", "Difference", dollars(attribution.invoice_total - attribution.traced_cost - attribution.finance_cost - attribution.unattributed_cost));
+  box.append(tape);
+  const verdict = make("p", "verdict");
+  const status = make("strong", attribution.reconciles ? "ok" : "bad", attribution.reconciles ? "Reconciles." : "Does not reconcile.");
+  verdict.append(status, " Unattributed cost stays on its own line. It is never spread across customers.");
+  box.append(verdict);
+
+  const metric = make("div", "metric");
+  metric.append(make("div", "share", percent(attribution.share_traced)));
+  const tracedLines = attribution.invoice_lines - attribution.unattributed.length -
+    attribution.cells.reduce((count, cell) => count + (cell.by_finance ? 1 : 0), 0);
+  metric.append(make("p", "", `of the invoice attributed to a customer and a feature by tracing. ` +
+    `${attribution.unattributed.length} of ${attribution.invoice_lines} lines need finance.`));
+  if (attribution.finance_cost) metric.append(make("p", "", `${percent(attribution.share_after_review)} after finance's review.`));
+  const against = make("div", "against");
+  against.append(make("b", "", percent(report.logs_only.share)),
+    make("span", "", `from logs alone. ${report.logs_only.ambiguous_lines} calls overlapped more than one customer's request.`));
+  metric.append(against);
+  metric.dataset.tracedLines = tracedLines;
+  box.append(metric);
+  return box;
+}
+
+function split() {
+  const attribution = report.attribution;
+  const box = make("div", "split");
+  box.append(make("h2", "", "Cost by customer and feature"));
+  box.append(make("p", "hint", "Pick a cell to list its runs below. The bar under each figure is its size against the largest cell."));
+  const table = make("table", "matrix");
+  const head = make("tr");
+  head.append(make("th", "", "Customer"));
+  report.features.forEach((feature) => head.append(make("th", "", feature)));
+  head.append(make("th", "", "Total"));
+  const thead = make("thead");
+  thead.append(head);
+  const body = make("tbody");
+  const customers = Object.keys(report.customers).sort();
+  const largestCell = Math.max(...attribution.cells.map((each) => each.cost));
+  customers.forEach((customer) => {
+    const line = make("tr");
+    const who = make("td", "who", customerName(customer));
+    who.append(make("small", "", customer));
+    line.append(who);
+    let total = 0;
+    report.features.forEach((feature) => {
+      const cell = attribution.cells.find((each) => each.customer === customer && each.feature === feature);
+      const holder = make("td");
+      const button = make("button", "cell", cell ? dollars(cell.cost) : "-");
+      button.setAttribute("aria-label", `${customerName(customer)}, ${feature}`);
+      if (cell) {
+        total += cell.cost;
+        const fill = make("span", "fill");
+        fill.style.width = (70 * cell.cost / largestCell).toFixed(1) + "%";
+        button.append(fill);
+        if (cell.by_finance) button.append(make("span", "assigned", "assigned by finance"));
+      }
+      if (selectedCell && selectedCell.customer === customer && selectedCell.feature === feature) button.classList.add("on");
+      button.addEventListener("click", () => {
+        selectedCell = { customer, feature };
+        const first = filteredRuns()[0];
+        if (first) selectedTrace = first.trace_id;
+        render();
+        $(".trace").scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+      holder.append(button);
+      line.append(holder);
+    });
+    line.append(make("td", "total num", dollars(total)));
+    body.append(line);
+  });
+  const open = make("tr", "open");
+  open.append(make("td", "who", "Unattributed"));
+  report.features.forEach(() => open.append(make("td")));
+  open.append(make("td", "total num", dollars(attribution.unattributed_cost)));
+  body.append(open);
+  const foot = make("tfoot");
+  const footLine = make("tr");
+  footLine.append(make("td", "", "Invoice total"));
+  report.features.forEach(() => footLine.append(make("td")));
+  footLine.append(make("td", "num", dollars(attribution.invoice_total)));
+  foot.append(footLine);
+  table.append(thead, body, foot);
+  box.append(table);
+  return box;
+}
+
+function review() {
+  const lines = report.attribution.unattributed;
+  const box = make("section", "review");
+  const header = make("header");
+  header.append(make("h2", "", `Needs finance: ${lines.length} billed ${lines.length === 1 ? "line" : "lines"} with no customer`));
+  header.append(make("p", "", "You decide who pays. Assign moves the line into that customer and feature, marked as yours. " +
+    "Flag leaves it red and asks engineering to tag the feature."));
+  box.append(header);
+  if (!lines.length) box.append(make("p", "none", "Every billed line has a customer and a feature."));
+  lines.forEach((line) => {
+    const row = make("div", "line");
+    row.append(make("div", "amount num", dollars(line.cost)));
+    const middle = make("div");
+    middle.append(make("p", "reason", line.reason));
+    const facts = line.run_name ? `From the run ${line.run_name}, span ${line.span_name}.` : "No trace was stored for this call.";
+    middle.append(make("p", "facts", `${facts} Generation ${line.generation_id}, billed ${new Date(line.billed_at).toLocaleTimeString()}, ` +
+      `${line.input_tokens} tokens in, ${line.output_tokens} out.`));
+    row.append(middle);
+    const decide = make("div", "decide");
+    if (line.flag) decide.append(make("p", "flagged", "Flagged to engineering. Assign it when they say who it was for."));
+    const pick = make("div", "pick");
+    const customer = make("select");
+    customer.setAttribute("aria-label", "Customer");
+    // No customer is picked for finance: the line stays unattributed until a person chooses one.
+    const prompt = make("option", "", "Pick a customer");
+    prompt.value = "";
+    customer.append(prompt);
+    Object.keys(report.customers).sort().forEach((key) => {
+      const option = make("option", "", report.customers[key]);
+      option.value = key;
+      customer.append(option);
+    });
+    const feature = make("select");
+    feature.setAttribute("aria-label", "Feature");
+    report.features.forEach((name) => {
+      const option = make("option", "", name);
+      option.value = name;
+      if (line.run_name && line.run_name.endsWith(name)) option.selected = true;
+      feature.append(option);
+    });
+    pick.append(customer, feature);
+    const assign = make("button", "primary", "Assign to this customer");
+    assign.disabled = true;
+    customer.addEventListener("change", () => { assign.disabled = !customer.value; });
+    assign.addEventListener("click", () => decideLine({ generation_id: line.generation_id, customer: customer.value, feature: feature.value }));
+    decide.append(pick, assign);
+    if (!line.flag) {
+      const flag = make("button", "secondary", "Flag to engineering");
+      flag.addEventListener("click", () => decideLine({ generation_id: line.generation_id, flag: true }));
+      decide.append(flag);
+    }
+    row.append(decide);
+    box.append(row);
+  });
+  const exportCounts = report.export;
+  const exportNote = make("p", "export");
+  exportNote.style.padding = "0 20px 14px";
+  const failed = make("strong", "", `${exportCounts.failed_exports} failed trace ${exportCounts.failed_exports === 1 ? "export" : "exports"}`);
+  exportNote.append(failed, `, ${exportCounts.lost_spans} spans lost, ${exportCounts.exported_spans} stored. Every customer still got an answer.`);
+  box.append(exportNote);
+  return box;
+}
+
+async function decideLine(decision) {
+  const response = await fetch("/api/decide", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(decision), signal: AbortSignal.timeout(10000) });
+  const body = await response.json();
+  if (!response.ok) return alert(body.error);
+  report = body;
+  render();
+}
+
+function filteredRuns() {
+  if (!selectedCell) return report.runs;
+  return report.runs.filter((run) => run.customer === selectedCell.customer && run.feature === selectedCell.feature);
+}
+
+function drill() {
+  const box = make("section", "trace");
+  const header = make("header");
+  header.append(make("h2", "", "Trace drill-down"));
+  const slowest = report.slowest;
+  if (slowest) header.append(make("span", "", `Slowest run this month: ${slowest.run}, ${customerName(slowest.customer)}, ${seconds(slowest.duration_ms)}`));
+  const link = make("a", "", "Open in Jaeger");
+  link.href = `${report.jaeger_url}/trace/${selectedTrace}`;
+  link.target = "_blank";
+  link.rel = "noopener";
+  header.append(link);
+  box.append(header);
+  const area = make("div", "drill");
+  const list = make("div", "runs");
+  const filter = make("div", "filter");
+  filter.append(make("span", "", selectedCell ? `${customerName(selectedCell.customer)}, ${selectedCell.feature}` : "All runs, slowest first"));
+  if (selectedCell) {
+    const reset = make("button", "", "All runs");
+    reset.addEventListener("click", () => { selectedCell = null; render(); });
+    filter.append(reset);
+  }
+  list.append(filter);
+  const longest = Math.max(...report.runs.map((run) => run.duration_ms));
+  filteredRuns().forEach((run) => {
+    const button = make("button", "run" + (run.trace_id === selectedTrace ? " on" : ""));
+    const top = make("span", "top");
+    top.append(make("span", "", run.run), make("span", "num", seconds(run.duration_ms)));
+    button.append(top, make("span", "sub", `${run.customer ? customerName(run.customer) : "No customer"}, ${run.feature}`));
+    const gauge = make("span", "gauge");
+    const bar = make("i");
+    bar.style.width = (100 * run.duration_ms / longest).toFixed(1) + "%";
+    gauge.append(bar);
+    button.append(gauge);
+    button.addEventListener("click", () => { selectedTrace = run.trace_id; render(); });
+    list.append(button);
+  });
+  area.append(list, waterfall(report.waterfalls[selectedTrace]));
+  box.append(area);
+  return box;
+}
+
+function waterfall(run) {
+  const detail = make("div", "detail");
+  if (!run) {
+    detail.append(make("p", "", "No run in this cell."));
+    return detail;
+  }
+  const finding = make("p", "finding");
+  finding.append(`${run.run} took ${seconds(run.duration_ms)}. Slow step: `);
+  finding.append(make("span", "slow mono", run.slow_step || "none"));
+  if (run.slow_step_ms) finding.append(`, ${seconds(run.slow_step_ms)} of it.`);
+  detail.append(finding);
+  detail.append(make("p", "sub", `${run.customer ? customerName(run.customer) : "No customer on this trace"}, ${run.feature}. Trace ${run.trace_id}.`));
+  const axis = make("div", "axis");
+  const ticks = make("span");
+  ticks.append(make("span", "", "0 s"), make("span", "", seconds(run.duration_ms / 2)), make("span", "", seconds(run.duration_ms)));
+  axis.append(make("span", "", "Step"), ticks, make("span", "num", "Took"));
+  detail.append(axis);
+  run.rows.forEach((step, position) => {
+    const className = "step" + (step.depth === 0 ? " root" : "") + (step.depth === 1 && step.name === run.slow_step && step.duration_ms === run.slow_step_ms ? " slowest" : "");
+    const line = make("div", className);
+    const label = make("span", "label", (step.depth > 1 ? "  " : "") + step.name);
+    label.style.paddingLeft = (step.depth * 14) + "px";
+    if (step.input_tokens) label.append(make("small", "", ` ${step.input_tokens} in, ${step.output_tokens} out`));
+    label.title = step.name;
+    const lane = make("span", "lane");
+    const bar = make("i");
+    bar.style.left = (100 * step.offset_ms / run.duration_ms).toFixed(2) + "%";
+    bar.style.width = Math.max(0.4, 100 * step.duration_ms / run.duration_ms).toFixed(2) + "%";
+    bar.style.setProperty("--delay", (position * 0.06).toFixed(2) + "s");
+    lane.append(bar);
+    const took = make("span", "num", seconds(step.duration_ms));
+    if (step.cost) took.append(make("span", "cost", dollars(step.cost)));
+    line.append(label, lane, took);
+    detail.append(line);
+  });
+  if (run.reply) {
+    const reply = make("div", "reply");
+    reply.append(make("b", "", "What the agent wrote"));
+    reply.append(document.createTextNode(run.reply));
+    detail.append(reply);
+  }
+  return detail;
+}
+
+load();
+</script>
+</body>
+</html>

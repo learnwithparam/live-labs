@@ -1,0 +1,58 @@
+{
+  "brightwater": {
+    "name": "Brightwater Outfitters",
+    "plan": "Growth",
+    "order_system": {"name": "Shopify Plus", "latency_ms": 180},
+    "articles": [
+      {"id": "BW-KB-12", "title": "Returns and exchanges", "text": "Unused gear can be returned within 60 days for a refund to the original payment method. Damaged on arrival items are replaced free, and we email a prepaid label within one business day."},
+      {"id": "BW-KB-31", "title": "Tent and shelter warranty", "text": "Poles, zips and seams are covered for 2 years. A broken pole is replaced by mail, so the customer keeps the tent. Photos of the break speed up the claim."},
+      {"id": "BW-KB-07", "title": "Shipping times", "text": "Standard shipping takes 3 to 5 business days by UPS Ground. Orders placed before 1pm Pacific leave the same day."}
+    ],
+    "orders": {
+      "BW-48211": {"item": "Ridgeline 3 tent", "status": "delivered", "carrier": "UPS", "delivered": "2026-10-09"},
+      "BW-48390": {"item": "Kestrel 40L pack, size M", "status": "delivered", "carrier": "UPS", "delivered": "2026-10-11"}
+    }
+  },
+  "ferrovia": {
+    "name": "Ferrovia Rail Parts",
+    "plan": "Enterprise",
+    "order_system": {"name": "on-premises SAP ERP over a site-to-site VPN", "latency_ms": 14000},
+    "articles": [
+      {"id": "FR-KB-04", "title": "Lead times for brake components", "text": "Composite brake blocks ship from the Leeds warehouse in 5 working days. Cast iron blocks are made to order, with a lead time of 6 weeks."},
+      {"id": "FR-KB-19", "title": "Expediting an order", "text": "An order can be expedited for a fee of 8 percent of the order value when stock exists in another warehouse. The account manager confirms the new date in writing."},
+      {"id": "FR-KB-22", "title": "Certificates of conformity", "text": "Every safety-critical part ships with a certificate of conformity. A missing certificate is reissued from the ERP within 24 hours."}
+    ],
+    "orders": {
+      "FR-7730": {"item": "Composite brake blocks, 120 units", "status": "picking", "warehouse": "Leeds", "promised": "2026-10-20"},
+      "FR-7744": {"item": "Pantograph carbon strips, 40 units", "status": "shipped", "warehouse": "Derby", "promised": "2026-10-16", "certificate": "missing"}
+    }
+  },
+  "larkspur": {
+    "name": "Larkspur Dental Supply",
+    "plan": "Growth",
+    "order_system": {"name": "NetSuite", "latency_ms": 240},
+    "articles": [
+      {"id": "LD-KB-02", "title": "Backorders", "text": "Backordered items ship as soon as stock arrives, with no extra shipping charge. A customer can cancel a backordered line at any time before it ships."},
+      {"id": "LD-KB-15", "title": "Substitute products", "text": "When a glove or mask is backordered, support may offer an equivalent product from the approved substitute list at the same price."},
+      {"id": "LD-KB-09", "title": "Invoices and credit", "text": "Invoices are due in 30 days. A credit for a short shipment is applied to the next invoice automatically."}
+    ],
+    "orders": {
+      "LD-20417": {"item": "Nitrile exam gloves, medium, 20 cases", "status": "backordered", "expected": "2026-10-24"},
+      "LD-20452": {"item": "Prophy paste, mint, 12 boxes", "status": "shipped short", "shipped": "9 of 12 boxes"}
+    }
+  },
+  "tidewell": {
+    "name": "Tidewell Pet Co",
+    "plan": "Starter",
+    "order_system": {"name": "Recharge subscriptions", "latency_ms": 150},
+    "articles": [
+      {"id": "TW-KB-03", "title": "Change or skip a delivery", "text": "Subscribers can skip, delay or change a delivery up to 3 days before it ships, from the account page or by asking support."},
+      {"id": "TW-KB-08", "title": "Food that a pet will not eat", "text": "If a pet refuses a new food, we refund the first bag in full and suggest a different protein. The customer does not need to send it back."},
+      {"id": "TW-KB-11", "title": "Billing dates", "text": "A subscription is charged on the day its box ships, not the day it was ordered."}
+    ],
+    "orders": {
+      "TW-1189": {"item": "Salmon and rice kibble, 12 kg, every 4 weeks", "status": "active", "next_ship": "2026-10-18"},
+      "TW-1203": {"item": "Turkey recipe, 6 kg, every 2 weeks", "status": "active", "next_ship": "2026-10-17", "first_box": true}
+    }
+  }
+}

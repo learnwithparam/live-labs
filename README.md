@@ -46,7 +46,7 @@ print what the README promises.
 | 25 | [Control AI Agent Tool Access with an MCP Gateway](labs/25-mcp-gateway) | Block's curated list of approved MCP servers | ready |
 | 26 | [Route LLM Calls with an LLM Gateway](labs/26-llm-gateway) | RouteLLM and Instacart's AI gateway | ready |
 | 27 | [Manage Prompts Outside Your Code](labs/27-prompt-registry) | Langfuse and PromptLayer prompt registries | ready |
-| 28 | Trace AI Agents with OpenTelemetry | OpenTelemetry GenAI conventions | planned |
+| 28 | [Trace AI Agents with OpenTelemetry](labs/28-tracing) | OpenTelemetry GenAI conventions | ready |
 | 29 | Gate AI Releases with Evals in CI | Shopify Sidekick evals before release | planned |
 | 30 | Govern AI Systems with an Inventory and Audit Log | EU AI Act transparency duties from Aug 2026 | planned |
 | 31 | Ship a Streaming AI Agent API with an API Gateway | The chat endpoint behind every in-app assistant | planned |
