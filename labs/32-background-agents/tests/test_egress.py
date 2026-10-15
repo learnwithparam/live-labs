@@ -2,8 +2,10 @@
 
 import json
 import threading
+import time
 import urllib.error
 import urllib.request
+from concurrent.futures import ThreadPoolExecutor
 from http.server import ThreadingHTTPServer
 
 import pytest
@@ -79,3 +81,36 @@ def test_list_prices_cost_a_call_when_the_provider_sends_no_bill():
     ledger = Ledger((0.10, 0.01, 0.50))
     usage = {"prompt_tokens": 2000, "completion_tokens": 400, "prompt_tokens_details": {"cached_tokens": 1000}}
     assert ledger.cost_of(usage) == pytest.approx((1000 * 0.10 + 1000 * 0.01 + 400 * 0.50) / 1e6)
+
+
+def test_concurrent_calls_cannot_spend_past_the_budget():
+    # Each call costs $0.02 and takes a moment upstream. A budget checked before the call and charged after
+    # it would let all eight through at once; only two fit in $0.03 once spend is settled call by call.
+    def slow_upstream(body: bytes) -> tuple[int, bytes]:
+        time.sleep(0.2)
+        return 200, json.dumps({"choices": [], "usage": {"cost": 0.02}}).encode()
+
+    ledger = Ledger((0.10, 0.01, 0.50))
+    server = ThreadingHTTPServer(("127.0.0.1", 0), handler(ledger, "http://upstream", REAL_KEY, "m", ADMIN,
+                                                           slow_upstream))
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    url = f"http://127.0.0.1:{server.server_port}"
+    call(url, "/admin/sessions", {"token": "tok-5", "session": "FH-105", "budget": 0.03}, admin=ADMIN)
+    with ThreadPoolExecutor(8) as pool:
+        statuses = list(pool.map(lambda _: call(url, "/v1/chat/completions", {"messages": []}, token="tok-5")[0],
+                                 range(8)))
+    server.shutdown()
+    assert sorted(statuses) == [200, 200] + [402] * 6
+    assert ledger.report()["FH-105"]["spent"] == pytest.approx(0.04)
+
+
+def test_only_the_fields_the_agent_needs_reach_the_model_api(proxy):
+    # OpenRouter reads more than `model`: `models` picks fallback models, `plugins` can fetch the web, and `n`
+    # multiplies the bill. None of those may ride along on a chat completion.
+    url, _, sent = proxy
+    call(url, "/admin/sessions", {"token": "tok-6", "session": "FH-106", "budget": 0.05}, admin=ADMIN)
+    status, _ = call(url, "/v1/chat/completions", token="tok-6", body={
+        "messages": [], "tools": [], "tool_choice": "auto", "models": ["openai/most-expensive"],
+        "plugins": [{"id": "web"}], "n": 50, "provider": {"order": ["somewhere"]}})
+    assert status == 200
+    assert sorted(sent[0]) == ["messages", "model", "tool_choice", "tools", "usage"]

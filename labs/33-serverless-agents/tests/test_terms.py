@@ -70,3 +70,24 @@ def test_a_missing_usage_export_raises_so_the_retry_budget_decides():
         assert "MC-117" in str(error)
     else:
         raise AssertionError("MC-117 has no usage row and must raise")
+
+
+def test_a_quote_cut_from_inside_a_number_states_no_new_number():
+    # "20 per 1,000 calls" is a substring of "$1.20 per 1,000 calls", but the contract never states a 20.
+    job = job_for("MC-101")
+    reading = read_like_a_model(job["contract"])
+    reading["overage_discount_percent"] = 20
+    reading["quotes"].append("20 per 1,000 calls")
+    decision = decide(json.dumps(reading), job)
+    assert decision["action"] == "hold"
+    assert decision["reasons"] == ["overage_discount_percent = 20 is not stated in any quote from the contract."]
+
+
+def test_a_price_written_without_a_leading_zero_is_read_as_cents():
+    contract = "Customer pays $500.00 a month for 1,000 API calls. Overage is $.75 per 1,000 calls."
+    reading = {"monthly_fee": 500.0, "included_calls": 1000, "overage_per_1000": 75.0,
+               "overage_discount_percent": 0, "monthly_cap": None, "quotes": contract.split(". ")}
+    _, problems = check_terms(json.dumps(reading), contract, 2000)
+    assert problems == ["overage_per_1000 = 75.0 is not stated in any quote from the contract."]
+    reading["overage_per_1000"] = 0.75
+    assert check_terms(json.dumps(reading), contract, 2000)[1] == []

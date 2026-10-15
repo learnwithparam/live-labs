@@ -18,16 +18,24 @@ import urllib.error
 import urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
+# The request fields the agent sends. Anything else, such as OpenRouter's `models`, `plugins` or `n`, could
+# switch the model, reach the web or multiply the bill, so it is dropped rather than forwarded.
+FORWARDED_FIELDS = ("messages", "tools", "tool_choice")
+
 
 class Ledger:
     """Budget and spend per session token, plus every refused request, for the orchestrator to read."""
 
     def __init__(self, prices: tuple[float, float, float]):
         self.prices, self.sessions, self.lock = prices, {}, threading.Lock()
+        # One call in flight per session: the budget is checked before a call and charged after it, so
+        # concurrent calls would all pass the check on the same unspent balance.
+        self.turns: dict[str, threading.Lock] = {}
 
     def open(self, token: str, session: str, budget: float) -> None:
         with self.lock:
             self.sessions[token] = {"session": session, "budget": budget, "spent": 0.0, "calls": 0, "refused": []}
+            self.turns[token] = threading.Lock()
 
     def cost_of(self, usage: dict) -> float:
         """The bill when the upstream reports it, else list prices. A budget needs a number either way."""
@@ -99,18 +107,20 @@ def handler(ledger: Ledger, upstream: str, upstream_key: str, model: str, admin_
                 return self.reply(403, {"error": {"message": "egress denied: only chat completions to the model API"}})
             if entry is None:
                 return self.reply(401, {"error": {"message": "unknown session token"}})
-            if entry["spent"] >= entry["budget"]:
-                ledger.refuse(token, f"cost budget ${entry['budget']:g} spent")
-                return self.reply(402, {"error": {"message": f"session cost budget ${entry['budget']:g} is spent"}})
-            request = json.loads(body)
-            # The proxy, not the agent, decides the model and asks for the bill on every call.
-            request.update(model=model, usage={"include": True})
-            status, answer = send(json.dumps(request).encode())
-            if status == 200:
-                usage = json.loads(answer).get("usage") or {}
-                with ledger.lock:
-                    entry["spent"] += ledger.cost_of(usage)
-                    entry["calls"] += 1
+            with ledger.turns[token]:
+                if entry["spent"] >= entry["budget"]:
+                    ledger.refuse(token, f"cost budget ${entry['budget']:g} spent")
+                    return self.reply(402, {"error": {"message": f"session cost budget ${entry['budget']:g} is spent"}})
+                request = json.loads(body)
+                # The proxy, not the agent, decides the model and asks for the bill on every call.
+                forwarded = {key: request[key] for key in FORWARDED_FIELDS if key in request}
+                forwarded.update(model=model, usage={"include": True})
+                status, answer = send(json.dumps(forwarded).encode())
+                if status == 200:
+                    usage = json.loads(answer).get("usage") or {}
+                    with ledger.lock:
+                        entry["spent"] += ledger.cost_of(usage)
+                        entry["calls"] += 1
             self.reply(status, answer)
 
     return Handler

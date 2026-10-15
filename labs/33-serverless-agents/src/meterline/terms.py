@@ -31,7 +31,8 @@ TERMS_SCHEMA = {
     "required": ["monthly_fee", "included_calls", "overage_per_1000", "overage_discount_percent", "monthly_cap", "quotes"],
     "additionalProperties": False,
 }
-NUMBER = re.compile(r"\d[\d,]*(?:\.\d+)?")
+# Commas only between digit groups, and ".75" is 0.75, not 75.
+NUMBER = re.compile(r"\d+(?:,\d{3})*(?:\.\d+)?|\.\d+")
 
 
 def model_client(base_url: str, api_key: str) -> OpenAI:
@@ -63,8 +64,23 @@ def read_contract(client: OpenAI, model: str, contract: str) -> tuple[str, dict]
     return response.choices[0].message.content or "", usage_of(response, model)
 
 
-def numbers_in(text: str) -> set[float]:
-    return {float(found.replace(",", "")) for found in NUMBER.findall(text)}
+def numbers_quoted(quotes: list[str], contract: str) -> set[float]:
+    """The contract's own numbers that sit wholly inside a quoted span.
+
+    Reading numbers out of the quote text instead would let a fragment such as "20 per 1,000 calls", cut
+    from "$1.20 per 1,000 calls", state a 20 that the contract never states.
+    """
+    flat = " ".join(contract.split())
+    numbers = [(found.start(), found.end(), float(found.group().replace(",", ""))) for found in NUMBER.finditer(flat)]
+    quoted = set()
+    for quote in quotes:
+        quote = " ".join(quote.split())
+        start = flat.find(quote) if quote else -1
+        while start != -1:
+            end = start + len(quote)
+            quoted |= {value for first, last, value in numbers if start <= first and last <= end}
+            start = flat.find(quote, start + 1)
+    return quoted
 
 
 def check_terms(reply: str, contract: str, api_calls: int) -> tuple[dict | None, list[str]]:
@@ -80,7 +96,7 @@ def check_terms(reply: str, contract: str, api_calls: int) -> tuple[dict | None,
     # A quote must be in the contract word for word, or it is the model's paraphrase, not evidence.
     invented = [quote for quote in quotes if " ".join(quote.split()) not in " ".join(contract.split())]
     problems += [f"Quote not found in the contract: {quote[:90]}" for quote in invented]
-    quoted_numbers = numbers_in(" ".join(quote for quote in quotes if quote not in invented))
+    quoted_numbers = numbers_quoted([quote for quote in quotes if quote not in invented], contract)
     for field in ("monthly_fee", "included_calls", "overage_per_1000", "monthly_cap"):
         value = terms[field]
         if value is not None and float(value) not in quoted_numbers:

@@ -20,7 +20,13 @@ from fernhill.config import REPO_SOURCE
 AUTHOR = ["-c", "user.name=Fernhill background agent", "-c", "user.email=agents@fernhill.example",
           "-c", "core.hooksPath=/dev/null", "-c", "init.defaultBranch=main"]
 # Generated files a session may leave behind. The repo's .gitignore names them too.
-IGNORED = shutil.ignore_patterns(".git", "__pycache__", ".pytest_cache", ".ruff_cache", ".acceptance")
+GENERATED = {"__pycache__", ".pytest_cache", ".ruff_cache", ".acceptance"}
+
+
+def ignored(folder: str, names: list[str]) -> set[str]:
+    """What copytree skips. ".git" in any case: on a case-insensitive disk ".GIT" is the clone's own .git
+    folder, and a config planted there runs commands on the host at the next git call."""
+    return {name for name in names if name.casefold() == ".git" or name in GENERATED}
 
 
 def git(*arguments: str, cwd: Path, check: bool = True) -> str:
@@ -48,7 +54,7 @@ class Forge:
         git("init", "--bare", "--quiet", str(self.bare), cwd=self.root)
         with tempfile.TemporaryDirectory() as scratch:
             clone = Path(scratch) / "clone"
-            shutil.copytree(source, clone, ignore=IGNORED)
+            shutil.copytree(source, clone, ignore=ignored)
             git("init", "--quiet", cwd=clone)
             git("add", "-A", cwd=clone)
             git("commit", "--quiet", "-m", "fernhill-invoices 1.14.0", cwd=clone)
@@ -86,7 +92,7 @@ class Forge:
                 if item.name != ".git":
                     shutil.rmtree(item) if item.is_dir() and not item.is_symlink() else item.unlink()
             # symlinks=True copies a link as a link: a session cannot smuggle a host file in by pointing at it.
-            shutil.copytree(workspace, clone, ignore=IGNORED, symlinks=True, dirs_exist_ok=True)
+            shutil.copytree(workspace, clone, ignore=ignored, symlinks=True, dirs_exist_ok=True)
             git("add", "-A", cwd=clone)
             if not git("status", "--porcelain", cwd=clone).strip():
                 return None

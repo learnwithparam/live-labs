@@ -98,3 +98,19 @@ def test_attention_names_what_a_reviewer_should_read_first():
     pushed = {"files": [{"path": "tests/test_money.py", "added": 1, "removed": 3}], "deleted": ["tests/test_invoice.py"]}
     reasons = attention(pushed, {"status": "passed", "steps": []})
     assert reasons == ["changes existing tests: tests/test_money.py", "deletes a test file"]
+
+
+def test_a_session_cannot_plant_git_config_that_runs_on_the_host(tmp_path):
+    # On a case-insensitive disk (macOS by default) a workspace folder named ".GIT" is the clone's own .git
+    # folder, so its config would run `core.fsmonitor` on the host at the next `git add`.
+    forge = Forge(tmp_path / "forge")
+    base = forge.reset()
+    workspace, ran_on_host = tmp_path / "workspace", tmp_path / "ran-on-host"
+    forge.export("main", workspace)
+    (workspace / ".GIT").mkdir()
+    (workspace / ".GIT" / "config").write_text(
+        f"[core]\n\trepositoryformatversion = 0\n\tbare = false\n\tfsmonitor = \"touch {ran_on_host}; false\"\n")
+    (workspace / "README.md").write_text("changed by the session\n")
+    pushed = forge.push_branch(workspace, "agent/fh-199", base, "Plant a git config")
+    assert not ran_on_host.exists()
+    assert [file["path"] for file in pushed["files"]] == ["README.md"]
