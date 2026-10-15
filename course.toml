@@ -234,7 +234,7 @@ owns = "risk scores, thresholds and calibration"
 job = "Decide which refunds to pay, hold or review, as Stripe Radar does for payments"
 truth = "chargebacks and fraud found later"
 metric = "fraud caught at a fixed review rate"
-status = "planned"
+status = "ready"
 
 [[lab]]
 n = 20

@@ -1,0 +1,458 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="icon" href="data:,">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fennick Refund Risk</title>
+<style>
+:root {
+  --paper: #FAFAFA; --card: #FFFFFF; --ink: #151515; --ink-2: #414141; --muted: #606060; --faint: #808080;
+  --line: #DFDFDF; --accent: #FAFF69; --accent-deep: #4F5101; --fill-dark: #1F1F1C;
+  --pass: #008138; --fail: #BF000F; --wait: #B75000;
+  --sans: Inter, Helvetica, Arial, sans-serif; --mono: Inconsolata, "Courier New", Courier, monospace;
+}
+* { box-sizing: border-box }
+html, body { margin: 0 }
+body { background: var(--paper); color: var(--ink); font: 15px/1.5 var(--sans); min-height: 100vh }
+button, input { font: inherit }
+button { cursor: pointer }
+button:focus-visible, input:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px }
+h1, h2, h3, p { margin: 0 }
+h1, h2 { letter-spacing: -0.02em }
+.num { font-variant-numeric: tabular-nums }
+
+/* Fennick's back office bar: whose queue this is and which model version scored it. */
+.bar { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 18px; padding: 12px 28px; background: var(--fill-dark); color: var(--paper) }
+.bar .brand { font-weight: 800; font-size: 17px }
+.bar .where { color: var(--line); font-size: 14px }
+.bar .version { margin-left: auto; color: var(--line); font-size: 13px; font-family: var(--mono) }
+
+main { max-width: 1240px; margin: 0 auto; padding: 26px 28px 60px; display: flex; flex-direction: column; gap: 34px }
+.empty { padding: 18px 20px; background: var(--card); border: 1px solid var(--line); border-left: 4px solid var(--wait); border-radius: 4px }
+.empty code { font-family: var(--mono); background: var(--paper); padding: 0 4px }
+
+/* The budget: one decision the team makes each morning. Every refund in the window is a tick on the
+   ribbon, sorted by risk; the slider moves the review line, and the counts follow. */
+.budget { display: grid; grid-template-columns: minmax(0, 2.15fr) minmax(16rem, 1fr); gap: 22px 36px; align-items: start }
+.budget h1 { font-size: 30px; line-height: 1.15; max-width: 22ch }
+.budget .lead { color: var(--ink-2); margin: 8px 0 18px; max-width: 62ch }
+.ribbon { position: relative; height: 92px; background: var(--card); border: 1px solid var(--line); border-radius: 4px; overflow: hidden }
+.ribbon canvas { position: absolute; inset: 0; width: 100%; height: 100% }
+.ribbon .zone { position: absolute; top: 0; bottom: 0; right: 0; background: var(--accent); mix-blend-mode: multiply; transition: width 220ms ease-out }
+.ribbon .edge { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--ink); transition: right 220ms ease-out }
+.axis { display: flex; justify-content: space-between; color: var(--muted); font-size: 13px; margin-top: 4px }
+.dial { margin-top: 16px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px }
+.dial label { font-weight: 600 }
+.dial input[type=range] { flex: 1 1 260px; accent-color: var(--ink); height: 28px }
+.dial output { font-size: 22px; font-weight: 800; min-width: 4.2ch; text-align: right }
+.key { display: flex; flex-wrap: wrap; gap: 4px 16px; color: var(--muted); font-size: 13px; margin-top: 8px }
+.key i { display: inline-block; width: 3px; height: 12px; margin-right: 6px; vertical-align: -1px }
+
+.tally { background: var(--card); border: 1px solid var(--line); border-radius: 4px; padding: 18px 20px; display: flex; flex-direction: column; gap: 14px }
+.tally .big { font-size: 46px; font-weight: 800; line-height: 1; letter-spacing: -0.03em }
+.tally .big small { font-size: 20px; font-weight: 600; color: var(--muted); letter-spacing: 0 }
+.tally .says { color: var(--ink-2) }
+.tally dl { margin: 0; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 6px 12px; border-top: 1px solid var(--line); padding-top: 12px }
+.tally dt { font-weight: 700; text-align: right }
+.tally dd { margin: 0; color: var(--ink-2) }
+.tally .rule dt { color: var(--fail) }
+.tally .human dt { color: var(--wait) }
+
+/* The queue a reviewer works: the stopped refunds, riskiest first, held ones marked. */
+.queue-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 18px; margin-bottom: 12px }
+.queue-head h2 { font-size: 21px }
+.queue-head p { color: var(--muted) }
+.queue { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(16.5rem, 1fr)); gap: 10px }
+.ticket { width: 100%; height: 100%; text-align: left; background: var(--card); border: 1px solid var(--line); border-radius: 4px; padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; color: var(--ink) }
+.ticket:hover { border-color: var(--ink) }
+.ticket .top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px }
+.ticket .risk { font-size: 22px; font-weight: 800 }
+.ticket .risk small { font-size: 13px; color: var(--muted); font-weight: 500 }
+.ticket .what { font-weight: 600 }
+.ticket .why { color: var(--muted); font-size: 13px }
+.ticket .meter { height: 4px; background: var(--line); border-radius: 2px; overflow: hidden }
+.ticket .meter span { display: block; height: 100%; background: var(--ink) }
+.ticket.decided { border-color: var(--accent-deep) }
+.tag { font-size: 12px; font-weight: 700; border-radius: 2px; padding: 0 6px; white-space: nowrap }
+.tag.hold { background: var(--fail); color: var(--card) }
+.tag.review { border: 1px solid var(--wait); color: var(--wait) }
+.tag.done { background: var(--accent); color: var(--ink) }
+.more { margin-top: 12px; border: 1px solid var(--ink); background: var(--card); border-radius: 4px; padding: 6px 14px }
+
+/* Does a stated chance hold up? Each dot is a group of refunds: what the model said against what happened. */
+.trust { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(14rem, 1fr); gap: 20px 36px; align-items: start }
+.trust h2 { font-size: 21px }
+.trust .lead { color: var(--ink-2); margin: 6px 0 14px; max-width: 60ch }
+.trust svg { width: 100%; max-width: 500px; height: auto; background: var(--card); border: 1px solid var(--line); border-radius: 4px }
+.versus { display: flex; flex-direction: column; gap: 12px }
+.versus table { width: 100%; border-collapse: collapse; background: var(--card); border: 1px solid var(--line) }
+.versus th, .versus td { padding: 7px 10px; border-bottom: 1px solid var(--line); text-align: right }
+.versus th:first-child, .versus td:first-child { text-align: left }
+.versus caption { text-align: left; color: var(--muted); font-size: 13px; padding-bottom: 6px }
+.versus .win td { font-weight: 700 }
+
+/* The case sheet: what a reviewer reads before paying or holding one refund. */
+dialog { border: 0; padding: 0; width: min(560px, calc(100vw - 24px)); max-height: calc(100vh - 32px); border-radius: 6px; background: var(--card); color: var(--ink); box-shadow: 0 18px 50px rgba(21, 21, 21, 0.3) }
+dialog::backdrop { background: rgba(31, 31, 28, 0.55) }
+dialog[open] { animation: rise 200ms ease-out }
+@keyframes rise { from { transform: translateY(18px); opacity: 0 } to { transform: none; opacity: 1 } }
+.sheet { padding: 20px 22px 22px; display: flex; flex-direction: column; gap: 14px }
+.sheet header { display: flex; justify-content: space-between; gap: 12px; align-items: start }
+.sheet h3 { font-size: 20px }
+.sheet .sub { color: var(--muted); font-size: 14px }
+.sheet .close { border: 1px solid var(--line); background: var(--card); border-radius: 4px; padding: 2px 10px }
+.sheet .reason { background: var(--paper); border-left: 4px solid var(--wait); padding: 8px 12px }
+.sheet .reason.hold { border-left-color: var(--fail) }
+.sheet ul { margin: 0; padding-left: 18px }
+.sheet .facts { display: grid; grid-template-columns: 10.5rem minmax(0, 1fr); gap: 2px 12px; font-size: 14px; margin: 0 }
+.sheet .facts dt { color: var(--muted) }
+.sheet .facts dd { margin: 0 }
+.sheet .choose { display: flex; flex-wrap: wrap; gap: 8px }
+.sheet .choose button { border-radius: 4px; padding: 8px 14px; font-weight: 700; border: 1px solid var(--ink); background: var(--card); color: var(--ink) }
+.sheet .choose button[data-decision="hold"] { background: var(--ink); color: var(--paper) }
+.sheet .choose button[aria-pressed="true"] { outline: 3px solid var(--accent-deep); outline-offset: 2px }
+.sheet .later { padding: 8px 12px; border-radius: 4px; border: 1px solid var(--line) }
+.sheet .later.fraud { border-color: var(--fail); color: var(--fail) }
+.sheet .later.honest { border-color: var(--pass); color: var(--pass) }
+
+@media (max-width: 860px) {
+  .bar { padding: 10px 16px }
+  .bar .version { margin-left: 0 }
+  main { padding: 18px 16px 48px; gap: 28px }
+  .budget, .trust { grid-template-columns: minmax(0, 1fr) }
+  .budget h1 { font-size: 24px }
+  .sheet .facts { grid-template-columns: 8.5rem minmax(0, 1fr) }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ribbon .zone, .ribbon .edge { transition: none }
+  dialog[open] { animation: none }
+}
+</style>
+</head>
+<body data-surface="refund risk review queue">
+<header class="bar">
+  <span class="brand">Fennick Market</span>
+  <span class="where">Refund risk, back-test of June and July 2026</span>
+  <span class="version" id="version"></span>
+</header>
+<main id="main">
+  <p class="empty" id="empty" hidden>No back-test yet. Run <code>uv run refunds train</code> and
+    <code>uv run refunds backtest</code>, then reload this page.</p>
+
+  <section class="budget" id="budget" hidden aria-labelledby="budget-title">
+    <div>
+      <h1 id="budget-title">How many refunds can the team look at?</h1>
+      <p class="lead" id="lead"></p>
+      <div class="ribbon" id="ribbon" role="img" aria-label="Every refund in the window as a tick, lowest risk on the left; red ticks were found to be fraud later">
+        <canvas id="ticks"></canvas>
+        <div class="zone" id="zone"></div>
+        <div class="edge" id="edge"></div>
+      </div>
+      <div class="axis"><span>Lowest risk, paid at once</span><span>Highest risk, to a person</span></div>
+      <div class="dial">
+        <label for="rate">Share of refunds a person reviews</label>
+        <input type="range" id="rate" min="1" max="20" step="1" value="5">
+        <output id="rate-out" for="rate" class="num">5%</output>
+      </div>
+      <div class="key"><span><i style="background: var(--fail)"></i>fraud found later</span><span><i style="background: var(--faint)"></i>nothing found</span><span><i style="background: var(--accent)"></i>sent to review</span></div>
+    </div>
+    <aside class="tally" aria-live="polite">
+      <p class="big num" id="caught"></p>
+      <p class="says" id="caught-says"></p>
+      <dl>
+        <div style="display: contents" class="human"><dt class="num" id="to-person"></dt><dd>refunds stopped for a person, the uncertain ones first</dd></div>
+        <div style="display: contents"><dt class="num" id="paid"></dt><dd id="paid-says"></dd></div>
+        <div style="display: contents" class="rule"><dt class="num" id="rule"></dt><dd id="rule-says"></dd></div>
+      </dl>
+    </aside>
+  </section>
+
+  <section id="queue-section" hidden aria-labelledby="queue-title">
+    <div class="queue-head">
+      <h2 id="queue-title">Review queue</h2>
+      <p id="queue-says"></p>
+    </div>
+    <ol class="queue" id="queue"></ol>
+    <button class="more" id="more" type="button" hidden>Show more refunds</button>
+  </section>
+
+  <section class="trust" id="trust" hidden aria-labelledby="trust-title">
+    <div>
+      <h2 id="trust-title">When the model says 30%, is it fraud 3 times in 10?</h2>
+      <p class="lead">Refunds grouped by the chance the model gave them, groups of 10 or more. A dot on the diagonal means the
+        chance held up. The hold line at 80% only works when the dots sit there.</p>
+      <svg id="reliability" viewBox="0 0 420 300" role="img" aria-label="Reliability chart: stated chance against fraud rate found later"></svg>
+    </div>
+    <div class="versus">
+      <table id="calibration-table"><caption>Graded on fraud found later in the test window</caption></table>
+      <table id="llm-table" hidden></table>
+    </div>
+  </section>
+</main>
+
+<dialog id="sheet" aria-labelledby="sheet-title">
+  <div class="sheet">
+    <header>
+      <div><h3 id="sheet-title"></h3><p class="sub" id="sheet-sub"></p></div>
+      <button class="close" id="close" type="button">Close</button>
+    </header>
+    <p class="reason" id="sheet-reason"></p>
+    <div><strong>What to check</strong><ul id="sheet-signals"></ul></div>
+    <dl class="facts" id="sheet-facts"></dl>
+    <div>
+      <p><strong>You decide</strong></p>
+      <div class="choose" id="choose"></div>
+    </div>
+    <p class="later" id="later" hidden></p>
+  </div>
+</dialog>
+
+<script>
+const $ = (selector) => document.querySelector(selector);
+const PAGE_SIZE = window.matchMedia("(max-width: 860px)").matches ? 8 : 24;
+const state = { backtest: null, llm: null, reviews: {}, choices: {}, ranked: [], shown: PAGE_SIZE, open: null };
+const count = (number) => number.toLocaleString("en-GB");
+const percent = (share, digits = 0) => `${(share * 100).toFixed(digits)}%`;
+// A chance is never shown as 100%: the model is sure enough to hold, not certain.
+const risk = (score) => `${Math.min(99, Math.round(score * 100))}%`;
+const money = (amount) => `$${Number(amount).toFixed(2)}`;
+const words = (code) => code.replaceAll("_", " ");
+
+function make(tag, className, text) {
+  const node = document.createElement(tag);
+  if (className) node.className = className;
+  if (text !== undefined) node.textContent = text;
+  return node;
+}
+
+// The same rule as measure.caught_at_rate: the riskiest share of refunds goes to review.
+function stoppedAt(rate) {
+  const reviewed = Math.max(1, Math.round(state.ranked.length * rate));
+  return state.ranked.slice(0, reviewed);
+}
+
+function ruleCaughtAt(rate) {
+  const point = state.backtest.curve.hand_rule.find((entry) => Math.abs(entry.rate - rate) < 1e-9);
+  return point ? point.caught : null;
+}
+
+function drawTicks() {
+  const canvas = $("#ticks");
+  const box = canvas.getBoundingClientRect();
+  const scale = window.devicePixelRatio || 1;
+  canvas.width = box.width * scale;
+  canvas.height = box.height * scale;
+  const pen = canvas.getContext("2d");
+  pen.scale(scale, scale);
+  const styles = getComputedStyle(document.documentElement);
+  const ascending = [...state.ranked].reverse();
+  const step = box.width / ascending.length;
+  // Honest refunds first and short, fraud on top and tall, so a red tick is never hidden.
+  for (const fraudPass of [false, true]) {
+    pen.fillStyle = styles.getPropertyValue(fraudPass ? "--fail" : "--faint");
+    ascending.forEach((refund, position) => {
+      if (refund.fraud !== fraudPass) return;
+      const height = fraudPass ? box.height * 0.82 : box.height * 0.3;
+      pen.fillRect(position * step, box.height - height, Math.max(1, step), height);
+    });
+  }
+}
+
+function showRate() {
+  const rate = Number($("#rate").value) / 100;
+  const stopped = stoppedAt(rate);
+  const frauds = state.backtest.window.frauds;
+  const caught = stopped.filter((refund) => refund.fraud).length;
+  const total = state.ranked.length;
+  $("#rate-out").textContent = percent(rate);
+  $("#zone").style.width = percent(stopped.length / total, 2);
+  $("#edge").style.right = percent(stopped.length / total, 2);
+  $("#caught").replaceChildren(document.createTextNode(count(caught)), make("small", "", ` of ${count(frauds)}`));
+  $("#caught-says").textContent = `frauds found later are in the ${count(stopped.length)} refunds a person reviews, ${percent(caught / frauds)} of them.`;
+  $("#to-person").textContent = count(stopped.length);
+  $("#paid").textContent = count(total - stopped.length);
+  $("#paid-says").textContent = `paid at once with no person; ${frauds - caught} of them were fraud`;
+  const ruleCaught = ruleCaughtAt(rate);
+  $("#rule").textContent = ruleCaught === null ? "" : count(ruleCaught);
+  $("#rule-says").textContent = ruleCaught === null ? "" : `frauds the old hand rule catches with the same ${count(stopped.length)} reviews`;
+  state.shown = PAGE_SIZE;
+  showQueue();
+}
+
+function showQueue() {
+  const rate = Number($("#rate").value) / 100;
+  const stopped = stoppedAt(rate);
+  const held = stopped.filter((refund) => refund.score >= state.backtest.lines.hold).length;
+  const decided = stopped.filter((refund) => state.reviews[refund.refund_id]).length;
+  $("#queue-says").textContent = `${count(stopped.length - held)} waiting for review, ${count(held)} held at once at 80% or more, ${count(decided)} decided by you.`;
+  // The grey zone comes first: held refunds already wait on the buyer's proof, so a reviewer's time
+  // goes to the ones the model was least sure about.
+  const isHeldRefund = (refund) => refund.score >= state.backtest.lines.hold;
+  const ordered = [...stopped.filter((refund) => !isHeldRefund(refund)), ...stopped.filter(isHeldRefund)];
+  const list = $("#queue");
+  list.replaceChildren(...ordered.slice(0, state.shown).map((refund) => {
+    const item = make("li");
+    const ticket = make("button", "ticket" + (state.reviews[refund.refund_id] ? " decided" : ""));
+    ticket.type = "button";
+    const top = make("div", "top");
+    const riskLabel = make("span", "risk num", risk(refund.score));
+    riskLabel.append(make("small", "", " risk"));
+    const isHeld = refund.score >= state.backtest.lines.hold;
+    const tag = state.reviews[refund.refund_id]
+      ? make("span", "tag done", state.reviews[refund.refund_id] === "pay" ? "You paid" : "You held")
+      : make("span", "tag " + (isHeld ? "hold" : "review"), isHeld ? "Held" : "To review");
+    top.append(riskLabel, tag);
+    const meter = make("div", "meter");
+    const fill = make("span");
+    fill.style.width = percent(refund.score, 1);
+    meter.append(fill);
+    ticket.append(top, meter,
+      make("span", "what", `${refund.item}, ${money(refund.amount)}`),
+      make("span", "why", refund.signals[0] || `${words(refund.reason)}, no single red flag`));
+    ticket.addEventListener("click", () => openCase(refund));
+    item.append(ticket);
+    return item;
+  }));
+  $("#more").hidden = state.shown >= stopped.length;
+}
+
+function openCase(refund) {
+  state.open = refund;
+  const isHeld = refund.score >= state.backtest.lines.hold;
+  $("#sheet-title").textContent = `${refund.refund_id}: ${refund.item}`;
+  $("#sheet-sub").textContent = `${money(refund.amount)}, asked on ${refund.requested_at} by ${refund.buyer_id}`;
+  const reason = $("#sheet-reason");
+  reason.className = "reason" + (isHeld ? " hold" : "");
+  reason.textContent = isHeld
+    ? `Held at once: the model gives a ${risk(refund.score)} chance of fraud, above the 80% hold line. The buyer has been asked for proof; you confirm or release it.`
+    : `Sent to review: a ${risk(refund.score)} chance of fraud puts it in the riskiest ${$("#rate").value}% of refunds, below the 80% hold line.`;
+  $("#sheet-signals").replaceChildren(...(refund.signals.length ? refund.signals : ["No single red flag; the combination scored high"]).map((signal) => make("li", "", signal)));
+  const facts = [["Reason given", words(refund.reason)], ["Delivery scan", words(refund.delivery_scan)],
+    ["Days since delivery", refund.days_since_delivery || "not delivered"], ["Return scanned", refund.return_scanned || "no return asked"],
+    ["Account age", `${refund.account_age_days} days`], ["Orders on account", refund.orders_lifetime],
+    ["Refunds, last 30 days", refund.refunds_30d], ["Category", words(refund.category)]];
+  $("#sheet-facts").replaceChildren(...facts.flatMap(([label, value]) => [make("dt", "", label), make("dd", "", String(value))]));
+  $("#choose").replaceChildren(...Object.entries(state.choices).map(([decision, label]) => {
+    const choice = make("button", "", label);
+    choice.type = "button";
+    choice.dataset.decision = decision;
+    choice.setAttribute("aria-pressed", String(state.reviews[refund.refund_id] === decision));
+    choice.addEventListener("click", () => decide(refund, decision));
+    return choice;
+  }));
+  showLater(refund);
+  $("#sheet").showModal();
+}
+
+// The truth is shown only after a decision, the way it arrives in real life: weeks later.
+function showLater(refund) {
+  const later = $("#later");
+  const decision = state.reviews[refund.refund_id];
+  later.hidden = !decision;
+  if (!decision) return;
+  later.className = "later " + (refund.fraud ? "fraud" : "honest");
+  later.textContent = refund.fraud
+    ? `Found later: ${words(refund.found_later)} on ${refund.found_on}. ${decision === "hold" ? "Holding it saved the refund." : "Paying it lost the refund."}`
+    : `Nothing found later: an honest buyer. ${decision === "pay" ? "Paying was right." : "Holding it made an honest buyer wait."}`;
+}
+
+async function decide(refund, decision) {
+  const response = await fetch("/api/decide", { method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ refund: refund.refund_id, decision }) });
+  if (!response.ok) return;
+  state.reviews = await response.json();
+  for (const choice of document.querySelectorAll("#choose button")) choice.setAttribute("aria-pressed", String(choice.dataset.decision === decision));
+  showLater(refund);
+  showQueue();
+}
+
+function svgNode(tag, attributes, text) {
+  const node = document.createElementNS("http://www.w3.org/2000/svg", tag);
+  for (const [name, value] of Object.entries(attributes)) node.setAttribute(name, value);
+  if (text !== undefined) node.textContent = text;
+  return node;
+}
+
+function drawReliability() {
+  const chart = $("#reliability");
+  const [left, top, width, height] = [46, 14, 356, 246];
+  const place = (said, happened) => [left + said * width, top + height - happened * height];
+  const parts = [svgNode("rect", { x: left, y: top, width, height, fill: "var(--paper)" }),
+    svgNode("line", { x1: left, y1: top + height, x2: left + width, y2: top, stroke: "var(--faint)", "stroke-dasharray": "4 4" })];
+  for (const tick of [0, 0.5, 1]) {
+    const [tickX] = place(tick, 0);
+    const [, tickY] = place(0, tick);
+    parts.push(svgNode("text", { x: tickX, y: top + height + 16, "text-anchor": "middle", "font-size": 12, fill: "var(--muted)" }, percent(tick)));
+    parts.push(svgNode("text", { x: left - 6, y: tickY + 4, "text-anchor": "end", "font-size": 12, fill: "var(--muted)" }, percent(tick)));
+  }
+  parts.push(svgNode("text", { x: left + width / 2, y: 296, "text-anchor": "middle", "font-size": 12, fill: "var(--ink-2)" }, "chance the model gave"));
+  const series = [["raw", "var(--fail)", "Before calibration"], ["calibrated", "var(--ink)", "Calibrated"]];
+  series.forEach(([name, colour, label], position) => {
+    // Groups of fewer than 10 refunds are left off: one refund makes a dot at 0% or 100% that says nothing.
+    for (const group of state.backtest.calibration[name].bins.filter((bin) => bin.refunds >= 10)) {
+      const [dotX, dotY] = place(group.said, group.happened);
+      const radius = Math.min(11, 3 + Math.sqrt(group.refunds) / 4);
+      parts.push(svgNode("circle", { cx: dotX, cy: dotY, r: radius, fill: name === "raw" ? "none" : colour, stroke: colour, "stroke-width": 2 }));
+    }
+    parts.push(svgNode("circle", { cx: left + 14, cy: top + 16 + position * 20, r: 5, fill: name === "raw" ? "none" : colour, stroke: colour, "stroke-width": 2 }));
+    parts.push(svgNode("text", { x: left + 26, y: top + 20 + position * 20, "font-size": 12, fill: "var(--ink)" }, label));
+  });
+  chart.replaceChildren(...parts);
+}
+
+function table(target, caption, head, rows, winner) {
+  const body = rows.map((row) => {
+    const line = make("tr", row[0] === winner ? "win" : "");
+    line.append(...row.map((cell) => make("td", "num", cell)));
+    return line;
+  });
+  const header = make("tr");
+  header.append(...head.map((cell) => make("th", "", cell)));
+  target.replaceChildren(make("caption", "", caption), header, ...body);
+}
+
+function showTrust() {
+  const { calibrated, raw } = state.backtest.calibration;
+  table($("#calibration-table"), "Decision model on every refund in June and July", ["", "Brier", "Calibration error"], [
+    ["Before calibration", raw.brier.toFixed(4), percent(raw.error, 1)],
+    ["Calibrated", calibrated.brier.toFixed(4), percent(calibrated.error, 1)]], "Calibrated");
+  const llm = state.llm;
+  if (!llm) return;
+  const budget = llm.at_budget;
+  table($("#llm-table"), `Same ${count(llm.refunds)} sampled refunds, ${llm.frauds} fraud, each scorer reviews its riskiest 5%`,
+    ["", "Fraud caught", "Brier"], [
+      ["Decision model", `${budget.model.caught} of ${llm.frauds}`, llm.calibration.model.brier.toFixed(4)],
+      [`LLM score (${llm.model.split("/").pop()})`, `${budget.llm.caught} of ${llm.frauds}`, llm.calibration.llm.brier.toFixed(4)],
+      ["Hand rule", `${budget.hand_rule.caught} of ${llm.frauds}`, "no chance given"]], "Decision model");
+  $("#llm-table").hidden = false;
+}
+
+async function load() {
+  const loaded = await (await fetch("/api/state")).json();
+  Object.assign(state, loaded);
+  if (!state.backtest) {
+    $("#empty").hidden = false;
+    return;
+  }
+  const backtest = state.backtest;
+  state.ranked = [...backtest.queue].sort((first, second) => second.score - first.score);
+  $("#version").textContent = `model ${backtest.model_version}`;
+  $("#lead").textContent = `${count(backtest.window.refunds)} refunds came in between ${backtest.window.from} and ${backtest.window.to}. `
+    + `${backtest.window.frauds} turned out to be fraud, found weeks later by chargebacks, carrier proof and seller disputes. `
+    + "Move the line and see how many a person would have stopped.";
+  for (const id of ["#budget", "#queue-section", "#trust"]) $(id).hidden = false;
+  drawTicks();
+  showRate();
+  drawReliability();
+  showTrust();
+}
+
+$("#rate").addEventListener("input", showRate);
+$("#more").addEventListener("click", () => { state.shown += PAGE_SIZE; showQueue(); });
+$("#close").addEventListener("click", () => $("#sheet").close());
+window.addEventListener("resize", () => state.ranked.length && drawTicks());
+load();
+</script>
+</body>
+</html>
