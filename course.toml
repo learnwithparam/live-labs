@@ -138,7 +138,7 @@ owns = "the agent loop and its budgets"
 job = "Resolve an order-support chat by calling order and refund tools in a loop"
 truth = "the order system's state after the run"
 metric = "share of chats resolved with no human handoff, inside the step and cost budget"
-status = "planned"
+status = "ready"
 
 [[lab]]
 n = 12

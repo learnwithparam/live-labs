@@ -29,7 +29,7 @@ print what the README promises.
 | 8 | [Build an AI Workflow with Mastra](labs/08-ai-workflow) | Shopify Magic writes product descriptions from merchant details | ready |
 | 9 | [Route Support Tickets with a Decision Model](labs/09-request-routing) | Zendesk intelligent triage | ready |
 | 10 | [Make an AI Workflow Survive a Crash](labs/10-durable-workflow) | Temporal case studies: Coinbase and Netflix | ready |
-| 11 | Build an AI Agent Loop from Scratch | Klarna's assistant handled two thirds of support chats | planned |
+| 11 | [Build an AI Agent Loop from Scratch](labs/11-agent-loop) | Klarna's assistant handled two thirds of support chats | ready |
 | 12 | Design Tools for AI Agents with MCP | Shopify Sidekick tool design | planned |
 | 13 | Cut Agent Token Costs with Context Engineering | Manus KV-cache hit rate | planned |
 | 14 | Give AI Agents Long-Term Memory with Mem0 | ChatGPT memory and its controls | planned |

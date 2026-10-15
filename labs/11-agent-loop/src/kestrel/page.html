@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kestrel Outdoor help</title>
+<style>
+:root {
+  --paper: #FAFAFA; --card: #FFFFFF; --ink: #151515; --ink-2: #414141; --muted: #606060; --faint: #808080;
+  --line: #DFDFDF; --accent: #FAFF69; --accent-deep: #4F5101; --fill-dark: #1F1F1C;
+  --pass: #008138; --fail: #BF000F; --wait: #B75000;
+  --sans: Inter, Helvetica, Arial, sans-serif; --mono: Inconsolata, "Courier New", Courier, monospace;
+}
+* { box-sizing: border-box }
+html, body { margin: 0 }
+body { background: var(--paper); color: var(--ink); font: 15px/1.5 var(--sans); min-height: 100vh }
+button, textarea { font: inherit }
+button { cursor: pointer }
+button:focus-visible, textarea:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px }
+h1, h2, h3 { margin: 0; letter-spacing: -0.01em }
+
+/* The store's own header: this is the customer's account page, not a back office. */
+.store { display: flex; align-items: center; gap: 28px; padding: 14px 32px; background: var(--card); border-bottom: 1px solid var(--line) }
+.store .brand { font-weight: 800; font-size: 19px; letter-spacing: -0.02em }
+.store nav { display: flex; gap: 22px; color: var(--muted) }
+.store nav .on { color: var(--ink); font-weight: 600 }
+.store .who { margin-left: auto; color: var(--ink-2) }
+
+.page { display: grid; grid-template-columns: minmax(0, 1fr) minmax(380px, 470px); min-height: calc(100vh - 56px) }
+
+/* Left: the account, read live from the order system after every tool call. */
+.account { padding: 28px 36px 40px; display: flex; flex-direction: column; gap: 26px }
+.account h1 { font-size: 26px }
+.account .sub { color: var(--muted); margin-top: 4px }
+.convos { display: flex; flex-wrap: wrap; gap: 8px }
+.convos button { border: 1px solid var(--line); background: var(--card); border-radius: 999px; padding: 6px 12px; color: var(--ink-2) }
+.convos button[aria-pressed="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink) }
+.convos button .person { color: var(--faint) }
+.convos button[aria-pressed="true"] .person { color: var(--line) }
+
+.orders { display: flex; flex-direction: column; gap: 12px }
+.order { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px;
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 18px }
+.order .item { font-weight: 600; font-size: 16px }
+.order .meta { color: var(--muted); font-size: 14px }
+.order .total { font-weight: 700; text-align: right }
+.order .ship { grid-column: 1 / -1; color: var(--ink-2); font-size: 14px }
+.order .right { display: flex; flex-direction: column; align-items: flex-end; gap: 6px }
+.status { font-size: 13px; font-weight: 600; padding: 2px 10px; border-radius: 999px; border: 1px solid var(--line); color: var(--ink-2) }
+.status.cancelled, .status.refunded { color: var(--fail); border-color: var(--fail) }
+.status.delivered { color: var(--pass); border-color: var(--pass) }
+.status.processing, .status.return-started { color: var(--wait); border-color: var(--wait) }
+/* The one motion on the page: an order the agent changed lights up, so the room sees the system move. */
+.order.changed { border-color: var(--ink); animation: moved 1.6s ease-out }
+.order .what { grid-column: 1 / -1; background: var(--accent); color: var(--ink); border-radius: 6px; padding: 6px 10px; font-size: 14px; font-weight: 600 }
+@keyframes moved { from { box-shadow: 0 0 0 6px var(--accent) } to { box-shadow: 0 0 0 0 var(--accent) } }
+@media (prefers-reduced-motion: reduce) { .order.changed { animation: none } }
+
+/* How each way of answering did on all ten conversations, from the last `support review`. */
+.tally h2 { font-size: 17px; margin-bottom: 8px }
+.tally table { width: 100%; border-collapse: collapse; background: var(--card); border: 1px solid var(--line); border-radius: 10px; overflow: hidden }
+.tally th, .tally td { text-align: left; padding: 9px 14px; border-bottom: 1px solid var(--line); font-size: 14px }
+.tally th { color: var(--muted); font-weight: 500 }
+.tally td.n { font-variant-numeric: tabular-nums }
+.tally .note { color: var(--muted); font-size: 14px; margin-top: 8px }
+
+/* Right: the help chat, docked like the widget on any store. */
+.chat { background: var(--card); border-left: 1px solid var(--line); display: flex; flex-direction: column; position: sticky; top: 0; height: calc(100vh - 56px) }
+.chat header { padding: 16px 20px 12px; border-bottom: 1px solid var(--line) }
+.chat header h2 { font-size: 17px }
+.engines { display: flex; gap: 4px; margin-top: 10px; background: var(--paper); border: 1px solid var(--line); border-radius: 8px; padding: 3px }
+.engines button { flex: 1; border: 0; background: transparent; border-radius: 6px; padding: 6px 8px; color: var(--ink-2) }
+.engines button[aria-pressed="true"] { background: var(--ink); color: var(--paper) }
+.meter { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; font-size: 13px; color: var(--ink-2) }
+.meter .bar { height: 6px; background: var(--paper); border: 1px solid var(--line); border-radius: 999px; margin-top: 4px; overflow: hidden }
+.meter .bar i { display: block; height: 100%; width: 0; background: var(--ink); transition: width 0.3s }
+.meter .bar.over i { background: var(--fail) }
+
+.thread { flex: 1; overflow-y: auto; padding: 18px 20px; display: flex; flex-direction: column; gap: 10px }
+.bubble { max-width: 86%; padding: 10px 14px; border-radius: 14px; white-space: pre-wrap }
+.bubble.customer { align-self: flex-end; background: var(--ink); color: var(--paper); border-bottom-right-radius: 4px }
+.bubble.agent { align-self: flex-start; background: var(--paper); border: 1px solid var(--line); border-bottom-left-radius: 4px }
+.empty { color: var(--muted); text-align: center; margin: auto 0 }
+/* Tool steps sit between the bubbles: what the agent did in the order system, not what it said. */
+.step { align-self: flex-start; font-family: var(--mono); font-size: 14px; color: var(--ink-2); border-left: 3px solid var(--line); padding: 2px 0 2px 10px; max-width: 100% }
+.step b { color: var(--ink) }
+.step.ok { border-left-color: var(--pass) }
+.step.no { border-left-color: var(--fail) }
+.step .said { display: block; font-family: var(--sans); color: var(--muted) }
+.person { color: var(--muted) }
+.handoff { border: 1px solid var(--wait); border-radius: 10px; padding: 12px 14px; background: var(--card) }
+.handoff h3 { font-size: 15px; color: var(--wait) }
+.handoff p { margin: 6px 0 0 }
+
+.result { border-top: 1px solid var(--line); padding: 12px 20px; font-size: 14px }
+.result .verdict { font-weight: 700 }
+.result .verdict.good { color: var(--pass) }
+.result .verdict.bad { color: var(--fail) }
+.result .verdict.person { color: var(--wait) }
+.compose { border-top: 1px solid var(--line); padding: 12px 20px 16px; display: flex; gap: 10px; align-items: flex-end }
+.compose textarea { flex: 1; resize: none; height: 66px; border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; color: var(--ink) }
+.compose button { border: 1px solid var(--ink); background: var(--ink); color: var(--paper); border-radius: 10px; padding: 10px 16px; font-weight: 600 }
+.compose button[disabled] { opacity: 0.45; cursor: progress }
+
+@media (max-width: 900px) {
+  .page { grid-template-columns: minmax(0, 1fr) }
+  .chat { position: static; height: auto; min-height: 560px; border-left: 0; border-top: 1px solid var(--line) }
+  .store { padding: 12px 16px; gap: 16px } .store nav { display: none }
+  .account { padding: 20px 16px }
+}
+</style>
+</head>
+<body data-surface="customer help chat">
+<header class="store">
+  <span class="brand">Kestrel Outdoor</span>
+  <nav><span>Tents</span><span>Sleep</span><span>Cook</span><span class="on">Help</span></nav>
+  <span class="who" id="who">Signed in</span>
+</header>
+<main class="page">
+  <section class="account">
+    <div>
+      <h1 id="hello">Your orders</h1>
+      <p class="sub">Pick a conversation a real customer started. The orders below are read from the order system after every step.</p>
+    </div>
+    <div class="convos" id="convos" role="group" aria-label="Conversations"></div>
+    <div class="orders" id="orders"></div>
+    <div class="tally" id="tally"></div>
+  </section>
+  <aside class="chat" aria-label="Help chat">
+    <header>
+      <h2>Chat with Kestrel help</h2>
+      <div class="engines" id="engines" role="group" aria-label="Who answers">
+        <button data-engine="reply">Reply only</button>
+        <button data-engine="loop" aria-pressed="true">Our loop</button>
+        <button data-engine="adk">Google ADK</button>
+      </div>
+      <div class="meter">
+        <div><span id="steps">Step 0 of 8</span><div class="bar" id="stepbar"><i></i></div></div>
+        <div><span id="cost">$0.0000 of $0.01</span><div class="bar" id="costbar"><i></i></div></div>
+      </div>
+    </header>
+    <div class="thread" id="thread" aria-live="polite"><p class="empty">Pick a conversation, then send.</p></div>
+    <div class="result" id="result" hidden></div>
+    <form class="compose" id="compose">
+      <textarea id="message" aria-label="Message"></textarea>
+      <button id="send">Send</button>
+    </form>
+  </aside>
+</main>
+<script>
+const $ = (id) => document.getElementById(id);
+const money = (n) => "$" + Number(n).toFixed(2);
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+const NAMES = { reply: "Reply only", loop: "Our loop", adk: "Google ADK" };
+let data, chat, engine = "loop", budget = { max_steps: 8, max_cost: 0.01 };
+
+function showOrders(orders, changes = []) {
+  // An order the agent changed carries the change, so the left side shows what really moved.
+  const moved = Object.fromEntries(changes.map((c) => [c.order_id, c]));
+  $("orders").innerHTML = orders.map((o) => {
+    const c = moved[o.id];
+    const what = c ? `<div class="what">Changed by the agent: ${esc(c.kind)}${c.amount ? " " + money(c.amount) : ""}${c.detail ? ", " + esc(c.detail) : ""}</div>` : "";
+    return `<article class="order${c ? " changed" : ""}">
+      <div><div class="item">${esc(o.item)}</div><div class="meta">${esc(o.id)}${o.delivered ? ", delivered " + esc(o.delivered) : ""}</div></div>
+      <div class="right"><div class="total">${money(o.total)}</div><span class="status ${esc(o.status.replace(/ /g, "-"))}">${esc(o.status)}</span></div>
+      <div class="ship">Ships to ${esc(o.address)}</div>${what}</article>`;
+  }).join("");
+}
+
+function pick(c) {
+  chat = c;
+  document.querySelectorAll("#convos button").forEach((b) => b.setAttribute("aria-pressed", b.dataset.id === c.id));
+  $("who").textContent = "Signed in as " + c.name;
+  $("hello").textContent = c.name.split(" ")[0] + "'s orders";
+  $("message").value = c.message;
+  $("thread").innerHTML = '<p class="empty">Press Send to start the conversation.</p>';
+  $("result").hidden = true;
+  meter({ steps: 0, cost: 0, ...budget });
+  showOrders(c.orders);
+}
+
+function meter(b) {
+  $("steps").textContent = `Step ${b.steps} of ${b.max_steps}`;
+  $("cost").textContent = `$${Number(b.cost).toFixed(4)} of $${b.max_cost}`;
+  const fill = (id, part) => { $(id).querySelector("i").style.width = Math.min(100, part * 100) + "%"; $(id).classList.toggle("over", part >= 1); };
+  fill("stepbar", b.steps / b.max_steps);
+  fill("costbar", b.cost / b.max_cost);
+}
+
+function stepHtml(s) {
+  // Each event the engine reports becomes one line in the thread, in the order it happened.
+  if (s.kind === "call") return `<div class="step"><b>${esc(s.tool)}</b>(${esc(Object.entries(s.args || {}).map(([k, v]) => `${k}=${JSON.stringify(v)}`).join(", "))})</div>`;
+  if (s.kind === "result") {
+    const r = s.result || {};
+    const said = r.error || r.ok || (r.orders ? r.orders.map((o) => `${o.id} ${o.status}`).join(", ") : r.id ? `${r.id} ${r.status}` : JSON.stringify(r));
+    return `<div class="step ${r.error ? "no" : "ok"}">${esc(s.tool)} returned<span class="said">${esc(said)}</span></div>`;
+  }
+  if (s.kind === "reply" && s.text) return `<div class="bubble agent">${esc(s.text)}</div>`;
+  if (s.kind === "handoff") return `<div class="step no">Stopped by the ${esc(s.by)}<span class="said">${esc(s.reason)}</span></div>`;
+  return "";
+}
+
+const VERDICT = {
+  "resolved": ["good", "Resolved. The order system now matches what support would have done."],
+  "handed off": ["person", "Passed to a person, as it should be."],
+  "wrong state": ["bad", "Not resolved. The order system does not match what support would have done."],
+  "missed hand-off": ["bad", "Missed hand-off. This one needed a person, and the agent acted or did nothing."],
+  "handed off needlessly": ["bad", "Handed off a chat the agent could have resolved."],
+  "over budget": ["bad", "Over budget. The loop was stopped and the chat went to a person."],
+};
+
+// What the person decides depends on why the chat came to her.
+function decides(reason) {
+  if (/chargeback|dispute|bank|legal/i.test(reason)) return "Mira answers the bank's dispute and decides whether to refund before it does.";
+  if (/budget/i.test(reason)) return "Mira reads the chat and does what the agent could not finish.";
+  return "Mira looks at the photos and approves or refuses the refund over $300.";
+}
+
+function finish(run) {
+  const r = $("result");
+  r.hidden = false;
+  if (run.error) { r.innerHTML = `<span class="verdict bad">The engine failed: ${esc(run.error)}</span>`; return; }
+  // A person's case: the reason the agent gave, and what the person on the support team decides.
+  if (run.handoffs && run.handoffs.length) {
+    $("thread").insertAdjacentHTML("beforeend", `<div class="handoff"><h3>Passed to Mira on the support team</h3>
+      <p>Reason: ${esc(run.handoffs.join("; "))}</p>
+      <p class="person">${esc(decides(run.handoffs.join(" ")))} Nothing changed in the order system before she does.</p></div>`);
+  }
+  if (!run.scored) { r.innerHTML = `<span class="verdict">Your own message: not scored.</span> ${run.changes.length} change(s), ${run.handoffs.length} hand-off(s).`; return; }
+  const [tone, text] = VERDICT[run.outcome] || ["", run.outcome];
+  const want = run.expect.length ? "Support would have: " + run.expect.map((e) => `${e.kind} ${e.order}`).join(", ") + "." : "Support would have changed nothing.";
+  r.innerHTML = `<span class="verdict ${tone}">${esc(text)}</span><br>${esc(want)} ${esc(NAMES[run.engine])} made ${run.changes.length} change(s).`;
+}
+
+async function send(ev) {
+  ev.preventDefault();
+  if (!chat) return;
+  $("send").disabled = true;
+  $("result").hidden = true;
+  $("thread").innerHTML = `<div class="bubble customer">${esc($("message").value)}</div>`;
+  showOrders(chat.orders);
+  meter({ steps: 0, cost: 0, ...budget });
+  const { id } = await (await fetch("/api/run", { method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ chat: chat.id, engine, message: $("message").value }) })).json();
+  let shown = 0;
+  for (;;) {
+    const run = await (await fetch("/api/run/" + id)).json();
+    // Only new steps are drawn, so the thread grows like a live chat.
+    for (const s of run.steps.slice(shown)) {
+      if (s.kind === "budget") meter(s); else $("thread").insertAdjacentHTML("beforeend", stepHtml(s));
+    }
+    shown = run.steps.length;
+    $("thread").scrollTop = $("thread").scrollHeight;
+    if (run.done) {
+      if (run.budget) meter(run.budget);
+      if (run.orders) showOrders(run.orders, run.changes || []);
+      finish(run);
+      break;
+    }
+    await new Promise((r) => setTimeout(r, 400));
+  }
+  $("send").disabled = false;
+}
+
+function tally(review) {
+  if (!review) { $("tally").innerHTML = '<p class="note">Run <code>uv run support review</code> to score every way on all ten conversations.</p>'; return; }
+  const rows = Object.entries(review).map(([e, s]) => `<tr><td>${NAMES[e]}</td><td class="n">${s.resolved} of ${s.resolvable}</td>
+    <td class="n">${s.actions_done} of ${s.actions}</td><td class="n">${s.handed_off_right} of ${s.should_hand_off}</td>
+    <td class="n">${s.wrong_state}</td><td class="n">$${s.cost.toFixed(4)}</td></tr>`).join("");
+  $("tally").innerHTML = `<h2>All ten conversations, last review</h2><table><thead><tr><th>Who answers</th><th>Resolved</th>
+    <th>Changes made</th><th>Passed to a person</th><th>Wrong</th><th>Cost</th></tr></thead><tbody>${rows}</tbody></table>
+    <p class="note">Resolved means the order system matches what support would have done, read from the system, not the reply.</p>`;
+}
+
+document.querySelectorAll("#engines button").forEach((b) => b.addEventListener("click", () => {
+  engine = b.dataset.engine;
+  document.querySelectorAll("#engines button").forEach((x) => x.setAttribute("aria-pressed", x === b));
+}));
+$("compose").addEventListener("submit", send);
+
+fetch("/api/chats").then((r) => r.json()).then((d) => {
+  data = d;
+  budget = d.budget;
+  $("convos").innerHTML = d.chats.map((c) => `<button data-id="${c.id}" aria-pressed="false">${c.id} <span class="person">${esc(c.name)}</span></button>`).join("");
+  document.querySelectorAll("#convos button").forEach((b) => b.addEventListener("click", () => pick(d.chats.find((c) => c.id === b.dataset.id))));
+  tally(d.review);
+  pick(d.chats[0]);
+});
+</script>
+</body>
+</html>

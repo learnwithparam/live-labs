@@ -1,0 +1,130 @@
+{
+ "today": "2026-10-14",
+ "orders": [
+  {
+   "id": "KO-1046",
+   "customer": "C-110",
+   "name": "Dev Shah",
+   "item": "Isobutane fuel canister, 4 pack",
+   "total": 36.0,
+   "status": "processing",
+   "address": "8 Harbour Rd, Bristol BS1 4QA"
+  },
+  {
+   "id": "KO-1044",
+   "customer": "C-104",
+   "name": "Tom Becker",
+   "item": "Kestrel Down 0C sleeping bag",
+   "total": 229.0,
+   "status": "processing",
+   "address": "14 Elm Street, Leeds LS6 2AB"
+  },
+  {
+   "id": "KO-1041",
+   "customer": "C-101",
+   "name": "Maya Lin",
+   "item": "Ridgeline 2 tent",
+   "total": 289.0,
+   "status": "processing",
+   "address": "22 Kiln Lane, Sheffield S1 2GH"
+  },
+  {
+   "id": "KO-1038",
+   "customer": "C-101",
+   "name": "Maya Lin",
+   "item": "Trail runner shoes, size 39",
+   "total": 139.0,
+   "status": "delivered",
+   "address": "22 Kiln Lane, Sheffield S1 2GH",
+   "delivered": "2026-10-02"
+  },
+  {
+   "id": "KO-1039",
+   "customer": "C-103",
+   "name": "Priya Nair",
+   "item": "Alpine 1 burner stove",
+   "total": 79.0,
+   "status": "delivered",
+   "address": "5 Mill Court, York YO1 7EP",
+   "delivered": "2026-10-08"
+  },
+  {
+   "id": "KO-1035",
+   "customer": "C-105",
+   "name": "Lena Ruiz",
+   "item": "Merino base layer top",
+   "total": 89.0,
+   "status": "delivered",
+   "address": "31 Quay Street, Cardiff CF10 1EG",
+   "delivered": "2026-09-28"
+  },
+  {
+   "id": "KO-1020",
+   "customer": "C-106",
+   "name": "Jon Park",
+   "item": "Stormline rain shell",
+   "total": 199.0,
+   "status": "delivered",
+   "address": "9 Abbey Road, Bath BA1 1LY",
+   "delivered": "2026-08-30"
+  },
+  {
+   "id": "KO-1036",
+   "customer": "C-107",
+   "name": "Ava Stone",
+   "item": "Ultralight 1 person tent",
+   "total": 449.0,
+   "status": "delivered",
+   "address": "77 Castle View, Durham DH1 3RW",
+   "delivered": "2026-10-05"
+  },
+  {
+   "id": "KO-1045",
+   "customer": "C-108",
+   "name": "Ben Ortiz",
+   "item": "Beacon 400 headlamp",
+   "total": 49.0,
+   "status": "shipped",
+   "address": "3 Brook Close, Exeter EX4 4QJ",
+   "shipment": {
+    "carrier": "DHL",
+    "tracking": "JD014600003829",
+    "eta": "2026-10-16"
+   }
+  },
+  {
+   "id": "KO-1040",
+   "customer": "C-108",
+   "name": "Ben Ortiz",
+   "item": "Folding camp chair",
+   "total": 69.0,
+   "status": "delivered",
+   "address": "3 Brook Close, Exeter EX4 4QJ",
+   "delivered": "2026-10-10"
+  },
+  {
+   "id": "KO-1037",
+   "customer": "C-109",
+   "name": "Kim Hall",
+   "item": "Summit GPS watch",
+   "total": 259.0,
+   "status": "delivered",
+   "address": "18 Glen Road, Perth PH1 5PB",
+   "delivered": "2026-10-01"
+  },
+  {
+   "id": "KO-1043",
+   "customer": "C-102",
+   "name": "Sam Okafor",
+   "item": "Summit 30L day pack",
+   "total": 119.0,
+   "status": "shipped",
+   "address": "40 High Street, Oxford OX1 4AP",
+   "shipment": {
+    "carrier": "UPS",
+    "tracking": "1Z999AA10123456784",
+    "eta": "2026-10-15"
+   }
+  }
+ ]
+}

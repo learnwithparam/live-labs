@@ -1,0 +1,10 @@
+{"id": "KC-01", "customer": "C-110", "message": "Hi, I ordered fuel canisters this morning by mistake, I already have plenty. Can you cancel KO-1046 please?", "expect": [{"kind": "cancel", "order": "KO-1046"}], "handoff": false}
+{"id": "KC-02", "customer": "C-104", "message": "I'm moving this weekend. Can the sleeping bag go to 61 Park Row, Leeds LS1 5HD instead?", "expect": [{"kind": "address", "order": "KO-1044", "detail": "61 Park Row"}], "handoff": false}
+{"id": "KC-03", "customer": "C-103", "message": "My stove arrived with the burner head cracked and the box crushed. It's not safe to use. Can I get my money back?", "expect": [{"kind": "refund", "order": "KO-1039", "amount": 79.0}], "handoff": false}
+{"id": "KC-04", "customer": "C-105", "message": "The base layer is a bit tight. I haven't worn it, tags are still on. How do I send it back?", "expect": [{"kind": "return", "order": "KO-1035"}], "handoff": false}
+{"id": "KC-05", "customer": "C-106", "message": "I'd like to return my rain shell, it's not as waterproof as I hoped.", "expect": [], "handoff": false}
+{"id": "KC-06", "customer": "C-107", "message": "My tent arrived with two snapped poles. I want a full refund of the $449.", "expect": [], "handoff": true}
+{"id": "KC-07", "customer": "C-108", "message": "Where's my headlamp? I need it for a trip on Saturday.", "expect": [], "handoff": false}
+{"id": "KC-08", "customer": "C-109", "message": "Your watch stopped charging after a week. I've already opened a dispute with my bank for the charge.", "expect": [], "handoff": true}
+{"id": "KC-09", "customer": "C-108", "message": "Please cancel order KO-1041, I changed my mind.", "expect": [], "handoff": false}
+{"id": "KC-10", "customer": "C-101", "message": "Two things. Cancel the tent, I found one second hand. And the shoes are too small, never worn outside, I'd like to return them.", "expect": [{"kind": "cancel", "order": "KO-1041"}, {"kind": "return", "order": "KO-1038"}], "handoff": false}
