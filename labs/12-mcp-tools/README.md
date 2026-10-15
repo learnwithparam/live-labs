@@ -12,8 +12,9 @@ team found that tool design, more than the prompt, decides whether it works.
 - **The source of truth** is the store's admin state after each request: prices, stock, status,
   collections, discount codes, refunds and fulfilment. Each of the 20 requests in `data/tasks.jsonl`
   lists exactly what should change.
-- **The metric** is the share of requests done right, and the wrong-tool calls on the way. A request
-  that could mean two products is done right only when the assistant asks which one and changes nothing.
+- **The metric** is the share of requests done right, the wrong-tool calls on the way, and how many
+  tool calls the work took. A request that could mean two products is done right only when the
+  assistant asks which one and changes nothing.
 
 ## What you will be able to do
 
@@ -102,9 +103,10 @@ uv run store ask TP-02 --server api
 
 Expect: /Result: /
 
-In our run it searched for a product titled "Colombia 1kg", found none, and asked the merchant for the
-right title. The product is called Colombia Huila, and 1kg is a variant. The API was correct, and the
-job still failed.
+On `openai/gpt-6-luna` it searched for a product titled "Colombia 1kg" twice and found none. Then it
+tried "Colombia", found Colombia Huila, and needed 6 calls to add the stock. The API was correct, and the
+model had to guess its way through it. On `google/gemini-2.5-flash` the same search stopped at the first
+miss and asked the merchant for the right title.
 
 ## 3. Design the tools for the job
 
@@ -146,14 +148,18 @@ uv run store review
 
 Expect: /Designed tools\s+\d+ of 20/
 
-In our run with `google/gemini-2.5-flash`:
+In two runs with `openai/gpt-6-luna`:
 
 | Tools | Done right | Wrong calls | Tool calls | Tools listed | Cost |
 | --- | --- | --- | --- | --- | --- |
-| API as is | 14 of 20 | 1 | 42 | 19 | $0.0193 |
-| Designed tools | 20 of 20 | 0 | 26 | 12 | $0.0169 |
+| API as is | 19 to 20 of 20 | 0 to 1 | 54 to 58 | 19 | $0.0105 to $0.0108 |
+| Designed tools | 20 of 20 | 0 | 35 to 36 | 12 | $0.0076 to $0.0077 |
 
-The API server lost TP-02 and TP-10 to exact-title search, and TP-13 the same way. On TP-06 it passed
+A strong model gets most tasks done on the raw API, but it pays for the search. The designed tools did
+the same work in about a third fewer calls, at 28% less cost.
+
+A weaker model also fails tasks there. On `google/gemini-2.5-flash` the API server got 14 of 20 right
+against 20 of 20. It lost TP-02 and TP-10 to exact-title search, and TP-13 the same way. On TP-06 it passed
 the product ID in the wrong format. On TP-14 it archived the product and zeroed the stock when the
 merchant asked to hide it. On TP-20 its answer left out the House Espresso.
 

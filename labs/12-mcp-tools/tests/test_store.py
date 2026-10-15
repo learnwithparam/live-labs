@@ -13,11 +13,12 @@ from mcp.client import Client
 from fakes import FakeOpenAI, call
 from tidepool import api_server, tools_server
 from tidepool.assistant import ask
+from tidepool.config import PRICES
 from tidepool.review import judge, run_task, score, task, tasks
 from tidepool.serve import Admin, serve
 from tidepool.store import Store
 
-MODEL = "google/gemini-2.5-flash"
+MODEL = "openai/gpt-6-luna"
 
 
 def call_tool(build, store: Store, tool: str, **args):
@@ -129,7 +130,7 @@ def test_a_scripted_run_scores_success_wrong_calls_and_cost():
     totals = score([row])
     assert totals["succeeded"] == 1 and totals["wrong_calls"] == 1 and totals["calls"] == 2
     # Three model turns of a million prompt tokens each, at the default model's list price.
-    assert totals["cost"] == pytest.approx(3 * 0.30)
+    assert totals["cost"] == pytest.approx(3 * PRICES[MODEL][0])
 
 
 def test_serve_answers_only_its_own_page(tmp_path):
