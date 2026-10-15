@@ -1,0 +1,37 @@
+[project]
+name = "lab-31-agent-api"
+version = "0.1.0"
+description = "Ship a Streaming AI Agent API with an API Gateway: Mosswood's in-app assistant streams over SSE from FastAPI behind Envoy, with short-lived JWTs, per-user and per-tenant rate limits, and the gateway's logs as the truth"
+requires-python = ">=3.11,<3.14"
+dependencies = [
+    "fastapi==0.141.1",
+    "sse-starlette==3.4.11",
+    "uvicorn==0.54.0",
+    "httpx==0.28.1",
+    "openai==2.54.0",
+    "pyjwt[crypto]==2.14.0",
+    "locust==2.46.5",
+]
+
+[project.scripts]
+assistant = "mosswood.cli:main"
+
+[dependency-groups]
+dev = ["pytest>=8.4"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/mosswood"]
+
+[tool.uv]
+# Every dependency resolves to a release at least two weeks old, so a fresh one never lands untested.
+exclude-newer = "2026-10-01T00:00:00Z"
+
+[tool.pytest.ini_options]
+markers = ["proof: runs the gateway in Docker and calls a real model; needs LLM_API_KEY"]
+addopts = "-m 'not proof'"
+# Only tests/: importing the Locust file patches the whole process for gevent.
+testpaths = ["tests"]

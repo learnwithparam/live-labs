@@ -378,7 +378,7 @@ owns = "the agent API and the API gateway"
 job = "Serve an assistant to a web app with streaming, auth and rate limits"
 truth = "the gateway's logs under a load test"
 metric = "time to first token at p95, and error rate"
-status = "planned"
+status = "ready"
 
 [[lab]]
 n = 32

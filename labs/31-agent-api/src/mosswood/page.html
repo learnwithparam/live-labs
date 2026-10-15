@@ -1,0 +1,454 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mosswood Projects</title>
+<link rel="icon" href="data:,">
+<style>
+:root {
+  --paper: #FAFAFA; --card: #FFFFFF; --ink: #151515; --ink-2: #414141; --muted: #606060; --faint: #808080;
+  --line: #DFDFDF; --accent: #FAFF69; --accent-deep: #4F5101; --fill-dark: #1F1F1C;
+  --pass: #008138; --fail: #BF000F; --wait: #B75000;
+  --sans: Inter, Helvetica, Arial, sans-serif; --mono: Inconsolata, "Courier New", Courier, monospace;
+}
+* { box-sizing: border-box }
+[hidden] { display: none !important }
+html, body { margin: 0 }
+body { background: var(--paper); color: var(--ink); font: 15px/1.5 var(--sans); min-height: 100vh }
+button, input, select, textarea { font: inherit }
+button { cursor: pointer }
+button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px }
+h1, h2, h3, p { margin: 0 }
+.mono { font-family: var(--mono) }
+
+/* The app's own header: a customer is signed in to their workspace, the assistant is one feature of it. */
+.appbar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 22px; padding: 12px 24px; background: var(--card); border-bottom: 1px solid var(--line) }
+.brand { font-weight: 800; font-size: 19px; letter-spacing: -0.02em }
+.brand span { background: var(--accent); padding: 0 5px; margin-right: 2px }
+.appbar nav { display: flex; gap: 18px; color: var(--muted) }
+.appbar nav .on { color: var(--ink); font-weight: 600 }
+.signed-in { margin-left: auto; display: flex; align-items: center; gap: 8px; color: var(--ink-2) }
+.signed-in select { border: 1px solid var(--line); border-radius: 8px; padding: 5px 8px; background: var(--card); max-width: 100% }
+
+/* The workspace and the assistant side by side: the plan on the left, a question about it on the right. */
+.workspace { display: grid; grid-template-columns: minmax(0, 1fr) minmax(21rem, 25.5rem); gap: 20px; padding: 20px 24px; max-width: 1440px; margin: 0 auto; align-items: start }
+.timeline { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px }
+.timeline header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; margin-bottom: 12px }
+.timeline h1 { font-size: 22px; letter-spacing: -0.02em }
+.timeline .plan { color: var(--muted); font-size: 14px }
+.project { margin-top: 14px }
+.project h2 { font-size: 15px; display: flex; gap: 10px; align-items: baseline }
+.project h2 small { color: var(--muted); font-weight: 400; font-size: 13px }
+/* Each task is a row: its title, a bar to its due date on a six-week scale, and its state. */
+.task { display: grid; grid-template-columns: minmax(9rem, 15rem) minmax(0, 1fr) 6.25rem; gap: 12px; align-items: center; padding: 7px 0; border-top: 1px solid var(--line); font-size: 14px }
+.task .title small { display: block; color: var(--muted); font-size: 12px }
+.track { position: relative; height: 12px; background: var(--paper); border-radius: 999px }
+.track .today { position: absolute; top: -4px; bottom: -4px; width: 2px; background: var(--ink) }
+.track .bar { position: absolute; top: 0; bottom: 0; border-radius: 999px; background: var(--ink-2) }
+.track .bar.late { background: var(--fail) }
+.track .bar.done { background: var(--line) }
+.state { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; text-align: right }
+.state.blocked, .state.late { color: var(--fail) }
+.state.done { color: var(--pass) }
+
+/* The assistant panel: the answer is drawn as it streams, with the time the first word arrived. */
+.assistant { background: var(--fill-dark); color: var(--paper); border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 12px; position: sticky; top: 16px }
+.assistant h2 { font-size: 16px; display: flex; justify-content: space-between; gap: 8px }
+.assistant h2 small { font-weight: 400; color: var(--faint); font-size: 13px }
+.suggest { display: flex; flex-wrap: wrap; gap: 6px }
+.suggest button { background: transparent; color: var(--paper); border: 1px solid var(--ink-2); border-radius: 999px; padding: 3px 10px; font-size: 13px }
+.thread { min-height: 12rem; background: var(--ink); border-radius: 10px; padding: 12px; display: flex; flex-direction: column; gap: 8px; font-size: 14px }
+.thread .asked { align-self: flex-end; background: var(--accent); color: var(--ink); border-radius: 10px; padding: 5px 10px; max-width: 90% }
+.thread .tool { font-family: var(--mono); font-size: 13px; color: var(--faint) }
+.thread .answer { white-space: pre-wrap }
+.thread .notice { border: 1px solid var(--fail); border-radius: 8px; padding: 6px 10px; color: var(--paper) }
+.thread .empty { color: var(--faint) }
+/* One motion: the caret blinks while words are arriving, and holds still for people who ask for less motion. */
+.caret { display: inline-block; width: 7px; height: 15px; margin-left: 2px; vertical-align: -2px; background: var(--accent); animation: blink 900ms steps(2, start) infinite }
+@keyframes blink { to { visibility: hidden } }
+@media (prefers-reduced-motion: reduce) { .caret { animation: none } }
+.timing { display: flex; flex-wrap: wrap; gap: 6px 14px; font-family: var(--mono); font-size: 13px; color: var(--faint) }
+.timing strong { color: var(--accent) }
+.ask { display: flex; gap: 8px }
+.ask input { flex: 1; min-width: 0; border: 1px solid var(--ink-2); background: var(--ink); color: var(--paper); border-radius: 8px; padding: 8px 10px }
+.ask button { border: 0; border-radius: 8px; padding: 8px 14px; font-weight: 700; background: var(--accent); color: var(--ink) }
+.ask button.stop { background: var(--paper) }
+
+/* The operator view, docked under the app: the same requests, read from the gateway's log. */
+.ops { background: var(--ink); color: var(--paper); padding: 22px 24px 40px; margin-top: 12px }
+.ops-inner { max-width: 1440px; margin: 0 auto; display: flex; flex-direction: column; gap: 18px }
+.ops-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 16px }
+.ops-head h2 { font-size: 18px }
+.ops-head p { color: var(--faint); font-size: 13px }
+.gauges { display: flex; flex-wrap: wrap; gap: 12px }
+.gauge { border: 1px solid var(--ink-2); border-radius: 10px; padding: 10px 14px; min-width: 10rem; flex: 1 }
+.gauge .label { color: var(--faint); font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em }
+.gauge .figure { font: 800 26px/1.2 var(--sans); letter-spacing: -0.02em }
+.gauge .figure.hot { color: var(--accent) }
+/* One row per tenant, each a customer with its own plan limit. */
+.tenant-row { display: grid; grid-template-columns: minmax(9rem, 1.4fr) repeat(4, minmax(4.5rem, 0.8fr)) minmax(9rem, 1.2fr); gap: 10px; align-items: center; padding: 8px 0; border-top: 1px solid var(--ink-2); font-size: 14px }
+.tenant-row.head { color: var(--faint); font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; border-top: 0 }
+.tenant-row .num { font-family: var(--mono) }
+.tenant-row .over { color: var(--accent); font-weight: 700 }
+.meter { height: 8px; background: var(--fill-dark); border-radius: 999px; overflow: hidden }
+.meter span { display: block; height: 100%; background: var(--accent) }
+.case { border: 2px solid var(--accent); border-radius: 12px; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px }
+.case h3 { font-size: 16px }
+.case p { color: var(--line); font-size: 14px }
+.case .choices { display: flex; flex-wrap: wrap; gap: 8px; align-items: center }
+.case input[type=number] { width: 5.5rem; border: 1px solid var(--ink-2); background: var(--fill-dark); color: var(--paper); border-radius: 8px; padding: 6px 8px }
+.case input[type=text] { flex: 1; min-width: 12rem; border: 1px solid var(--ink-2); background: var(--fill-dark); color: var(--paper); border-radius: 8px; padding: 6px 8px }
+.case button { border: 0; border-radius: 8px; padding: 7px 12px; font-weight: 700 }
+.case .raise { background: var(--accent); color: var(--ink) }
+.case .keep { background: var(--paper); color: var(--ink) }
+.decided { color: var(--faint); font-size: 13px }
+.feed { font-family: var(--mono); font-size: 13px; display: flex; flex-direction: column; gap: 2px }
+.feed div { display: flex; flex-wrap: wrap; gap: 4px 14px; color: var(--line) }
+.feed .code-429 { color: var(--accent) }
+.feed .code-5xx { color: var(--paper); text-decoration: underline var(--fail) 2px }
+
+@media (max-width: 900px) {
+  .workspace { grid-template-columns: minmax(0, 1fr); padding: 16px }
+  .assistant { position: static }
+  .appbar { padding: 12px 16px }
+  .ops { padding: 18px 16px 32px }
+  .tenant-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); row-gap: 4px }
+  .tenant-row.head { display: none }
+  .tenant-row .name { grid-column: 1 / -1 }
+  .tenant-row [data-label]::before { content: attr(data-label) " "; color: var(--faint); font-family: var(--sans) }
+}
+@media (max-width: 520px) {
+  .task { grid-template-columns: minmax(0, 1fr) 5rem; gap: 4px 10px }
+  .task .track { grid-column: 1 / -1; grid-row: 2 }
+  .appbar nav { display: none }
+  .signed-in { margin-left: 0; width: 100% }
+  .signed-in select { flex: 1 }
+}
+</style>
+</head>
+<body data-surface="project timeline with a streaming assistant and gateway operator view">
+<header class="appbar">
+  <div class="brand"><span>M</span>Mosswood</div>
+  <nav aria-label="Workspace"><span class="on">Timeline</span><span>Board</span><span>Docs</span></nav>
+  <label class="signed-in">Signed in as <select id="who" aria-label="Signed in as"></select></label>
+</header>
+
+<main class="workspace">
+  <section class="timeline" aria-labelledby="workspace-name">
+    <header><h1 id="workspace-name">Workspace</h1><span class="plan" id="workspace-plan"></span></header>
+    <div id="projects"></div>
+  </section>
+
+  <aside class="assistant" aria-label="Assistant">
+    <h2>Ask Mosswood <small id="route">through the gateway</small></h2>
+    <div class="suggest" id="suggest"></div>
+    <div class="thread" id="thread" aria-live="polite"><p class="empty">Ask about your projects. The answer streams in as it is written.</p></div>
+    <div class="timing" id="timing" hidden></div>
+    <form class="ask" id="ask">
+      <input id="question" autocomplete="off" placeholder="What is overdue?" aria-label="Question">
+      <button id="send" type="submit">Ask</button>
+    </form>
+  </aside>
+</main>
+
+<section class="ops" aria-labelledby="ops-title">
+  <div class="ops-inner">
+    <div class="ops-head">
+      <h2 id="ops-title">Gateway operator view</h2>
+      <p id="ops-source">Read from the gateway's access log.</p>
+    </div>
+    <div class="gauges" id="gauges"></div>
+    <div id="cases"></div>
+    <div id="tenants"></div>
+    <div>
+      <p class="decided" id="feed-title">Latest requests at the gateway</p>
+      <div class="feed" id="feed"></div>
+    </div>
+  </div>
+</section>
+
+<script>
+const $ = (selector) => document.querySelector(selector);
+const QUESTIONS = ["What is overdue?", "Which tasks are blocked, and why?", "Write a full report on every project"];
+const DAY = 86400000;
+let data = null;
+let reading = null;  // the AbortController of the answer being streamed, so Stop can hang up
+
+function make(tag, className, text) {
+  const node = document.createElement(tag);
+  if (className) node.className = className;
+  if (text !== undefined) node.textContent = text;
+  return node;
+}
+
+function signedIn() {
+  const [tenant, user] = $("#who").value.split("/");
+  return { tenant, user };
+}
+
+function gatewayUrl() {
+  // The page and the gateway are both on this machine; the gateway allows this page's origin by CORS.
+  return `http://${location.hostname}:${data.gateway_port}/v1/chat`;
+}
+
+function drawWorkspace() {
+  const { tenant } = signedIn();
+  const info = data.tenants[tenant];
+  const plan = data.plans[info.plan];
+  $("#workspace-name").textContent = info.name;
+  $("#workspace-plan").textContent = `${plan.name} plan`;
+  const today = new Date(data.today).getTime();
+  const start = today - 14 * DAY, span = 42 * DAY;
+  const place = (time) => Math.max(0, Math.min(100, ((time - start) / span) * 100));
+  const projects = $("#projects");
+  projects.replaceChildren();
+  for (const project of info.projects) {
+    const block = make("section", "project");
+    const heading = make("h2", "", project.name);
+    heading.append(make("small", "", `due ${project.due}`));
+    block.append(heading);
+    for (const task of info.tasks.filter((item) => item.project === project.id)) {
+      const due = new Date(task.due).getTime();
+      const late = task.status !== "done" && due < today;
+      const row = make("div", "task");
+      const title = make("div", "title", task.title);
+      title.append(make("small", "", `${task.id} · ${info.users[task.owner].name} · due ${task.due}`));
+      const track = make("div", "track");
+      const bar = make("span", `bar ${task.status === "done" ? "done" : late ? "late" : ""}`);
+      bar.style.left = `${place(due - 10 * DAY)}%`;
+      bar.style.width = `${Math.max(2, place(due) - place(due - 10 * DAY))}%`;
+      const marker = make("span", "today");
+      marker.style.left = `${place(today)}%`;
+      track.append(bar, marker);
+      const label = task.status === "blocked" ? "blocked" : late ? "late" : task.status.replace("_", " ");
+      row.append(title, track, make("div", `state ${label}`, label));
+      block.append(row);
+    }
+    projects.append(block);
+  }
+}
+
+function setBusy(busy) {
+  const button = $("#send");
+  button.textContent = busy ? "Stop" : "Ask";
+  button.classList.toggle("stop", busy);
+}
+
+function* parseEvents(buffer) {
+  // Server-Sent Events: blocks split by a blank line, each with an `event:` and a `data:` line.
+  for (const block of buffer) {
+    let name = "message", payload = "";
+    for (const line of block.split("\n")) {
+      if (line.startsWith("event:")) name = line.slice(6).trim();
+      else if (line.startsWith("data:")) payload += line.slice(5).trim();
+    }
+    if (payload) yield { name, payload: JSON.parse(payload) };
+  }
+}
+
+async function ask(question) {
+  const thread = $("#thread");
+  thread.replaceChildren(make("p", "asked", question));
+  const timing = $("#timing");
+  timing.hidden = false;
+  timing.replaceChildren(make("span", "", "waiting for the first word"));
+  const { tenant, user } = signedIn();
+  const tokenResponse = await fetch("/api/token", { method: "POST", signal: AbortSignal.timeout(5000), headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tenant, user }) });
+  const { token } = await tokenResponse.json();
+  reading = new AbortController();
+  setBusy(true);
+  const started = performance.now();
+  let firstWord = null, words = 0;
+  const answer = make("p", "answer");
+  const caret = make("span", "caret");
+  try {
+    // A plain streaming POST, not EventSource, because EventSource cannot send the Authorization header.
+    const response = await fetch(gatewayUrl(), {
+      method: "POST", signal: reading.signal,
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ question }),
+    });
+    if (!(response.headers.get("content-type") || "").startsWith("text/event-stream")) {
+      const detail = (await response.text()).trim();
+      const retry = response.headers.get("retry-after");
+      const scope = response.headers.get("x-limit-scope");
+      const text = response.status === 429
+        ? `Too many questions at once from ${scope === "tenant" ? "your workspace" : "you"}. Try again in ${retry} seconds.`
+        : `The gateway answered ${response.status}: ${detail}`;
+      thread.append(make("p", "notice", text));
+      timing.replaceChildren(make("span", "", `${response.status} after ${Math.round(performance.now() - started)} ms`));
+      return;
+    }
+    thread.append(answer);
+    answer.append(caret);
+    const reader = response.body.pipeThrough(new TextDecoderStream()).getReader();
+    let pending = "";
+    for (;;) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      pending += value.replaceAll("\r\n", "\n");
+      const blocks = pending.split("\n\n");
+      pending = blocks.pop();
+      for (const { name, payload } of parseEvents(blocks)) {
+        if (name === "tool") {
+          thread.insertBefore(make("p", "tool", `looked up ${payload.name} ${JSON.stringify(payload.arguments)}`), answer);
+        } else if (name === "token") {
+          if (firstWord === null) firstWord = performance.now() - started;
+          words += 1;
+          caret.before(document.createTextNode(payload.text));
+          timing.replaceChildren(make("span", "", "first word "), make("strong", "", `${Math.round(firstWord)} ms`),
+                                 make("span", "", `${words} tokens so far`));
+        } else if (name === "error") {
+          thread.append(make("p", "notice", payload.message));
+        } else if (name === "done") {
+          timing.append(make("span", "", `finished at ${Math.round(performance.now() - started)} ms`),
+                        make("span", "", `$${payload.cost.toFixed(6)}`));
+        }
+      }
+    }
+  } catch (error) {
+    if (error.name === "AbortError") {
+      thread.append(make("p", "tool", `You stopped it after ${words} tokens. The gateway closed the stream, and the agent closed the model call.`));
+    } else {
+      thread.append(make("p", "notice", "Could not reach the assistant. Is the gateway running?"));
+    }
+  } finally {
+    caret.remove();
+    reading = null;
+    setBusy(false);
+    refreshOperator();
+  }
+}
+
+function gauge(label, figure, hot) {
+  const box = make("div", "gauge");
+  box.append(make("div", "label", label), make("div", `figure ${hot ? "hot" : ""}`, figure));
+  return box;
+}
+
+const ms = (value) => (value === null || value === undefined ? "none" : `${Math.round(value)} ms`);
+
+function drawOperator(state) {
+  const overall = state.summary.overall;
+  $("#ops-source").textContent = state.gateway_running
+    ? `Read from the gateway's access log${state.since ? " since the last load test started" : ""}. ${overall.requests} requests.`
+    : "The gateway is not running. Start it with `assistant up`.";
+  $("#gauges").replaceChildren(
+    gauge("p95 time to first token", ms(overall.p95_first_token_ms)),
+    gauge("error rate", `${(overall.error_rate * 100).toFixed(1)}%`, overall.errors > 0),
+    gauge("429 at a user limit", String(overall.refused_user)),
+    gauge("429 at a workspace limit", String(overall.refused_tenant), overall.refused_tenant > 0),
+    gauge("401 that reached the agent", String(state.summary.unauthorized_reached_agent)));
+
+  const cases = $("#cases");
+  cases.replaceChildren();
+  for (const item of state.summary.needs_operator) {
+    const decided = state.decisions[item.tenant];
+    const box = make("div", "case");
+    box.append(make("h3", "", `${item.name} is at its workspace limit`), make("p", "", item.reason));
+    if (decided) {
+      box.append(make("p", "decided", `Decided: ${decided.decision}${decided.limit ? ` to ${decided.limit}` : ""} by ${decided.by}. ${decided.reason}`));
+    }
+    const choices = make("div", "choices");
+    const amount = make("input");
+    amount.type = "number"; amount.min = "1"; amount.max = "200"; amount.value = String(item.limit * 2);
+    amount.setAttribute("aria-label", `New limit for ${item.name}`);
+    const reason = make("input");
+    reason.type = "text"; reason.placeholder = "Why, for the account team";
+    reason.setAttribute("aria-label", `Reason for ${item.name}`);
+    const raise = make("button", "raise", "Raise the limit");
+    const keep = make("button", "keep", `Keep ${item.limit} per ${state.window_seconds} s`);
+    raise.addEventListener("click", () => decide(item.tenant, false, Number(amount.value), reason.value));
+    keep.addEventListener("click", () => decide(item.tenant, true, null, reason.value));
+    choices.append(amount, raise, keep, reason);
+    box.append(choices);
+    cases.append(box);
+  }
+
+  const table = $("#tenants");
+  const head = make("div", "tenant-row head");
+  for (const label of ["Workspace", "Limit", "Answered", "p95 first token", "Errors", "429s, user and workspace"]) head.append(make("span", "", label));
+  table.replaceChildren(head);
+  for (const [tenantId, row] of Object.entries(state.summary.tenants)) {
+    const info = data.tenants[tenantId];
+    const line = make("div", "tenant-row");
+    const name = make("span", "name", info.name);
+    const limit = make("span", "num", `${state.limits[tenantId]} / ${state.window_seconds} s`);
+    limit.dataset.label = "limit";
+    const answered = make("span", "num", String(row.answered));
+    answered.dataset.label = "answered";
+    const p95 = make("span", "num", ms(row.p95_first_token_ms));
+    p95.dataset.label = "p95";
+    const errors = make("span", "num", String(row.errors));
+    errors.dataset.label = "errors";
+    const refused = make("span", `num ${row.refused_tenant ? "over" : ""}`, `${row.refused_user} user · ${row.refused_tenant} workspace`);
+    refused.dataset.label = "429s";
+    line.append(name, limit, answered, p95, errors, refused);
+    table.append(line);
+  }
+
+  const feed = $("#feed");
+  feed.replaceChildren();
+  for (const row of state.recent) {
+    const status = row.status || 0;
+    const line = make("div", status === 429 ? "code-429" : status >= 500 ? "code-5xx" : "");
+    line.append(make("span", "", String(status)), make("span", "", `${row.tenant || "no token"}/${row.user || "-"}`),
+                make("span", "", `first byte ${ms(row.first_byte_ms)}`), make("span", "", `total ${ms(row.duration_ms)}`),
+                make("span", "", row.limit_scope ? `${row.limit_scope} limit` : row.flags === "-" ? row.details : `${row.flags} ${row.details}`));
+    feed.append(line);
+  }
+}
+
+async function refreshOperator() {
+  try {
+    const response = await fetch("/api/gateway", { signal: AbortSignal.timeout(5000) });
+    drawOperator(await response.json());
+  } catch (error) {
+    $("#ops-source").textContent = "Could not read the gateway's log.";
+  }
+}
+
+async function decide(tenant, keep, limit, reason) {
+  $("#ops-source").textContent = "Saving the decision and reloading the gateway.";
+  const response = await fetch("/api/limit", { method: "POST", signal: AbortSignal.timeout(60000), headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tenant, keep, limit, reason }) });
+  if (!response.ok) {
+    $("#ops-source").textContent = await response.text();
+    return;
+  }
+  drawOperator(await response.json());
+}
+
+async function start() {
+  data = await (await fetch("/api/workspaces", { signal: AbortSignal.timeout(5000) })).json();
+  const who = $("#who");
+  for (const [tenantId, info] of Object.entries(data.tenants)) {
+    for (const [userId, person] of Object.entries(info.users)) {
+      const option = make("option", "", `${person.name}, ${info.name}`);
+      option.value = `${tenantId}/${userId}`;
+      who.append(option);
+    }
+  }
+  who.value = "pemberton/priya.raman";
+  who.addEventListener("change", drawWorkspace);
+  for (const question of QUESTIONS) {
+    const chip = make("button", "", question);
+    chip.type = "button";
+    chip.addEventListener("click", () => { if (!reading) ask(question); });
+    $("#suggest").append(chip);
+  }
+  $("#ask").addEventListener("submit", (event) => {
+    event.preventDefault();
+    if (reading) return reading.abort();
+    const question = $("#question").value.trim();
+    if (question) ask(question);
+  });
+  drawWorkspace();
+  refreshOperator();
+  setInterval(refreshOperator, 3000);
+}
+
+start();
+</script>
+</body>
+</html>

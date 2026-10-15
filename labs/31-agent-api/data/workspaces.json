@@ -1,0 +1,287 @@
+{
+  "today": "2026-10-15",
+  "plans": {
+    "starter": {
+      "name": "Starter",
+      "requests_per_window": 6,
+      "price_per_month": 9
+    },
+    "business": {
+      "name": "Business",
+      "requests_per_window": 25,
+      "price_per_month": 18
+    },
+    "team": {
+      "name": "Team",
+      "requests_per_window": 40,
+      "price_per_month": 24
+    }
+  },
+  "tenants": {
+    "harlow": {
+      "name": "Harlow Studio",
+      "plan": "team",
+      "users": {
+        "amara.osei": {
+          "name": "Amara Osei",
+          "role": "Creative director"
+        },
+        "jonah.weiss": {
+          "name": "Jonah Weiss",
+          "role": "Producer"
+        }
+      },
+      "projects": [
+        {
+          "id": "HS-RB",
+          "name": "Fenwick Bank rebrand",
+          "due": "2026-11-20",
+          "owner": "amara.osei"
+        },
+        {
+          "id": "HS-WEB",
+          "name": "Fenwick Bank website",
+          "due": "2026-12-11",
+          "owner": "jonah.weiss"
+        }
+      ],
+      "tasks": [
+        {
+          "id": "HS-101",
+          "project": "HS-RB",
+          "title": "Logo lockups, three directions",
+          "owner": "amara.osei",
+          "status": "done",
+          "due": "2026-10-02"
+        },
+        {
+          "id": "HS-102",
+          "project": "HS-RB",
+          "title": "Colour palette sign-off with the client",
+          "owner": "amara.osei",
+          "status": "in_progress",
+          "due": "2026-10-14"
+        },
+        {
+          "id": "HS-103",
+          "project": "HS-RB",
+          "title": "Typeface licence for print and web",
+          "owner": "jonah.weiss",
+          "status": "blocked",
+          "due": "2026-10-10",
+          "blocked_by": "Client legal has not approved the licence spend"
+        },
+        {
+          "id": "HS-104",
+          "project": "HS-RB",
+          "title": "Brand guidelines PDF",
+          "owner": "amara.osei",
+          "status": "todo",
+          "due": "2026-11-06"
+        },
+        {
+          "id": "HS-201",
+          "project": "HS-WEB",
+          "title": "Sitemap and page inventory",
+          "owner": "jonah.weiss",
+          "status": "done",
+          "due": "2026-10-09"
+        },
+        {
+          "id": "HS-202",
+          "project": "HS-WEB",
+          "title": "Homepage wireframe",
+          "owner": "jonah.weiss",
+          "status": "in_progress",
+          "due": "2026-10-21"
+        },
+        {
+          "id": "HS-203",
+          "project": "HS-WEB",
+          "title": "Accessibility audit of the mortgage calculator",
+          "owner": "amara.osei",
+          "status": "todo",
+          "due": "2026-11-13"
+        }
+      ]
+    },
+    "pemberton": {
+      "name": "Pemberton Foods",
+      "plan": "team",
+      "users": {
+        "priya.raman": {
+          "name": "Priya Raman",
+          "role": "Head of product"
+        },
+        "tom.alvarez": {
+          "name": "Tom Alvarez",
+          "role": "Packaging lead"
+        },
+        "pf-sync-bot": {
+          "name": "pf-sync-bot",
+          "role": "A script an engineer wrote to copy answers into a spreadsheet"
+        }
+      },
+      "projects": [
+        {
+          "id": "PF-Q4",
+          "name": "Q4 menu relaunch",
+          "due": "2026-11-28",
+          "owner": "priya.raman"
+        },
+        {
+          "id": "PF-PKG",
+          "name": "Recyclable packaging switch",
+          "due": "2027-01-29",
+          "owner": "tom.alvarez"
+        }
+      ],
+      "tasks": [
+        {
+          "id": "PF-311",
+          "project": "PF-Q4",
+          "title": "Final recipes for the four winter bowls",
+          "owner": "priya.raman",
+          "status": "done",
+          "due": "2026-10-01"
+        },
+        {
+          "id": "PF-312",
+          "project": "PF-Q4",
+          "title": "Allergen labels reviewed by food safety",
+          "owner": "tom.alvarez",
+          "status": "blocked",
+          "due": "2026-10-09",
+          "blocked_by": "Waiting on the sesame test results from the lab in Leeds"
+        },
+        {
+          "id": "PF-313",
+          "project": "PF-Q4",
+          "title": "Photo shoot for the new menu",
+          "owner": "priya.raman",
+          "status": "in_progress",
+          "due": "2026-10-13"
+        },
+        {
+          "id": "PF-314",
+          "project": "PF-Q4",
+          "title": "Price list to the 40 franchise stores",
+          "owner": "priya.raman",
+          "status": "todo",
+          "due": "2026-10-30"
+        },
+        {
+          "id": "PF-315",
+          "project": "PF-Q4",
+          "title": "Train store staff on the new bowls",
+          "owner": "tom.alvarez",
+          "status": "todo",
+          "due": "2026-11-18"
+        },
+        {
+          "id": "PF-401",
+          "project": "PF-PKG",
+          "title": "Shortlist two compostable tray suppliers",
+          "owner": "tom.alvarez",
+          "status": "in_progress",
+          "due": "2026-10-24"
+        },
+        {
+          "id": "PF-402",
+          "project": "PF-PKG",
+          "title": "Cost model for the switch",
+          "owner": "priya.raman",
+          "status": "todo",
+          "due": "2026-11-14"
+        }
+      ]
+    },
+    "ninebark": {
+      "name": "Ninebark Labs",
+      "plan": "starter",
+      "users": {
+        "lena.fischer": {
+          "name": "Lena Fischer",
+          "role": "Lab manager"
+        },
+        "dev.kapoor": {
+          "name": "Dev Kapoor",
+          "role": "Research scientist"
+        },
+        "sam.okafor": {
+          "name": "Sam Okafor",
+          "role": "Research scientist"
+        },
+        "rui.tanaka": {
+          "name": "Rui Tanaka",
+          "role": "Operations"
+        }
+      },
+      "projects": [
+        {
+          "id": "NB-GLP",
+          "name": "GLP audit readiness",
+          "due": "2026-11-02",
+          "owner": "lena.fischer"
+        },
+        {
+          "id": "NB-MOVE",
+          "name": "Move to the Wharf Road lab",
+          "due": "2026-12-18",
+          "owner": "rui.tanaka"
+        }
+      ],
+      "tasks": [
+        {
+          "id": "NB-11",
+          "project": "NB-GLP",
+          "title": "Calibrate the two plate readers",
+          "owner": "dev.kapoor",
+          "status": "done",
+          "due": "2026-10-06"
+        },
+        {
+          "id": "NB-12",
+          "project": "NB-GLP",
+          "title": "Update the freezer temperature log SOP",
+          "owner": "lena.fischer",
+          "status": "in_progress",
+          "due": "2026-10-12"
+        },
+        {
+          "id": "NB-13",
+          "project": "NB-GLP",
+          "title": "Training records for new starters",
+          "owner": "sam.okafor",
+          "status": "todo",
+          "due": "2026-10-20"
+        },
+        {
+          "id": "NB-14",
+          "project": "NB-GLP",
+          "title": "Mock audit with the QA consultant",
+          "owner": "lena.fischer",
+          "status": "blocked",
+          "due": "2026-10-28",
+          "blocked_by": "Consultant has not confirmed a date"
+        },
+        {
+          "id": "NB-21",
+          "project": "NB-MOVE",
+          "title": "Quote for moving the -80 freezers",
+          "owner": "rui.tanaka",
+          "status": "in_progress",
+          "due": "2026-10-17"
+        },
+        {
+          "id": "NB-22",
+          "project": "NB-MOVE",
+          "title": "Biosafety sign-off for the new bench layout",
+          "owner": "sam.okafor",
+          "status": "todo",
+          "due": "2026-11-21"
+        }
+      ]
+    }
+  }
+}

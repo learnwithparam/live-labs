@@ -49,7 +49,7 @@ print what the README promises.
 | 28 | [Trace AI Agents with OpenTelemetry](labs/28-tracing) | OpenTelemetry GenAI conventions | ready |
 | 29 | [Gate AI Releases with Evals in CI](labs/29-evals-ci) | Shopify Sidekick evals before release | ready |
 | 30 | [Govern AI Systems with an Inventory and Audit Log](labs/30-ai-governance) | EU AI Act transparency duties from Aug 2026 | ready |
-| 31 | Ship a Streaming AI Agent API with an API Gateway | The chat endpoint behind every in-app assistant | planned |
+| 31 | [Ship a Streaming AI Agent API with an API Gateway](labs/31-agent-api) | The chat endpoint behind every in-app assistant | ready |
 | 32 | [Run Background Coding Agents with Cloud Sandboxes](labs/32-background-agents) | Ramp Inspect, run on Modal sandboxes | ready |
 | 33 | [Run AI Agents on Serverless with Durable Functions](labs/33-serverless-agents) | AWS Lambda durable functions and Bedrock AgentCore | ready |
 | 34 | Fine-Tune a Small LLM with Reviewed Data | Checkr and Ramp replaced a large model with a tuned small one | planned |
