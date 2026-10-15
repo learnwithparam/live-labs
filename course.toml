@@ -126,7 +126,7 @@ owns = "durable execution and waiting for a human"
 job = "Run a refund that waits days for a manager's approval and pays out exactly once"
 truth = "the payments ledger"
 metric = "refunds paid twice or lost after a crash (zero)"
-status = "planned"
+status = "ready"
 
 [[lab]]
 n = 11

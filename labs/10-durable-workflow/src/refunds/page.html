@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fernhill refunds desk</title>
+<style>
+:root {
+  --paper: #FAFAFA; --card: #FFFFFF; --ink: #151515; --ink-2: #414141; --muted: #606060; --faint: #808080;
+  --line: #DFDFDF; --accent: #FAFF69; --accent-deep: #4F5101; --fill-dark: #1F1F1C;
+  --pass: #008138; --fail: #BF000F; --wait: #B75000;
+  --sans: Inter, Helvetica, Arial, sans-serif; --mono: Inconsolata, "Courier New", Courier, monospace;
+}
+* { box-sizing: border-box }
+html, body { margin: 0 }
+body { background: var(--paper); color: var(--ink); font: 15px/1.5 var(--sans); min-height: 100vh }
+button { font: inherit; cursor: pointer }
+button:focus-visible, input:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px }
+.btn { padding: 8px 14px; border-radius: 6px; border: 1px solid var(--ink); background: var(--ink); color: var(--paper) }
+.btn.quiet { background: var(--card); color: var(--ink) }
+.btn.danger { background: var(--fail); border-color: var(--fail) }
+.btn[disabled] { opacity: 0.45; cursor: not-allowed }
+
+/* The store's back office bar. */
+.bar { display: flex; align-items: center; gap: 24px; padding: 12px 28px; border-bottom: 1px solid var(--line); background: var(--card) }
+.bar .brand { font-weight: 700; font-size: 17px }
+.bar nav { display: flex; gap: 18px; color: var(--muted) }
+.bar nav .on { color: var(--ink); font-weight: 600; box-shadow: inset 0 -2px 0 var(--ink); padding-bottom: 2px }
+.bar .who { margin-left: auto; color: var(--muted); font-size: 14px }
+
+/* The worker: one process, shown as the thing you can kill. Everything below survives it or not. */
+.engine { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 22px; padding: 14px 28px; background: var(--fill-dark); color: var(--paper) }
+.engine .state { display: flex; align-items: center; gap: 10px; font-weight: 600; min-width: 250px }
+.engine .dot { width: 12px; height: 12px; border-radius: 50%; background: var(--fail) }
+.engine .dot.on { background: var(--pass) }
+.engine .note { color: var(--line); font-size: 14px; max-width: 60ch }
+.engine label { display: flex; gap: 8px; align-items: center; color: var(--line); font-size: 14px }
+.engine .btn.quiet { background: transparent; color: var(--paper); border-color: var(--line) }
+.engine .tally { margin-left: auto; display: flex; gap: 22px }
+.engine .tally div { font-size: 13px; color: var(--line) }
+.engine .tally b { display: block; font-size: 22px; color: var(--paper); line-height: 1.1 }
+.engine .tally b.bad { color: var(--accent) }
+
+/* The desk: the refund requests and, beside them, the payments ledger the money really left from. */
+.desk { display: grid; grid-template-columns: minmax(0, 1fr) minmax(340px, 410px); gap: 28px; padding: 24px 28px 40px; align-items: start }
+h2 { font-size: 18px; margin: 0 0 4px }
+.sub { color: var(--muted); margin: 0 0 14px; font-size: 14px }
+
+.requests { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line) }
+.req { border-bottom: 1px solid var(--line) }
+.req > button { display: grid; grid-template-columns: 76px minmax(0, 1fr) 110px 300px; align-items: center; gap: 16px; width: 100%; text-align: left; background: none; border: 0; padding: 14px 6px; color: inherit }
+.req > button:hover { background: var(--card) }
+.req .rid { font-family: var(--mono); color: var(--muted) }
+.req .what b { display: block; font-weight: 600 }
+.req .what span { color: var(--muted); font-size: 14px; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+.req .amt { text-align: right; font-variant-numeric: tabular-nums }
+.req .amt small { display: block; color: var(--muted); font-size: 12px }
+
+/* The stage track, like a parcel's: decided, manager, paid. A wait is amber, a payment that landed green. */
+.track { display: flex; align-items: center; gap: 0 }
+.track span { flex: 1; text-align: center; font-size: 12px; color: var(--faint); position: relative; padding-top: 16px }
+.track span::before { content: ""; position: absolute; top: 4px; left: 50%; width: 10px; height: 10px; margin-left: -5px; border-radius: 50%; border: 2px solid var(--line); background: var(--card) }
+.track span::after { content: ""; position: absolute; top: 9px; left: calc(50% + 7px); right: calc(-50% + 7px); height: 2px; background: var(--line) }
+.track span:last-child::after { display: none }
+.track span.done { color: var(--ink) }
+.track span.done::before { background: var(--ink); border-color: var(--ink) }
+.track span.done::after { background: var(--ink) }
+.track span.now { color: var(--wait); font-weight: 600 }
+.track span.now::before { border-color: var(--wait); background: var(--wait) }
+.track span.paid { color: var(--pass); font-weight: 600 }
+.track span.paid::before { background: var(--pass); border-color: var(--pass) }
+.track span.off { color: var(--muted) }
+.track.idle span { color: var(--faint) }
+
+/* One refund opened: what the customer wrote, what the model decided, and Temporal's history of it. */
+.open { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 24px; padding: 6px 6px 22px 98px }
+.msg { margin: 0 0 12px; color: var(--ink-2) }
+.facts { font-size: 14px; color: var(--muted); margin: 0 0 14px }
+.decision { border-left: 3px solid var(--ink); padding: 4px 0 4px 14px; margin-bottom: 14px }
+.decision .big { font-size: 26px; font-weight: 700; font-variant-numeric: tabular-nums }
+.decision p { margin: 4px 0 0; color: var(--ink-2); font-size: 14px }
+.approve { background: var(--card); border: 1px solid var(--wait); border-radius: 8px; padding: 14px }
+.approve p { margin: 0 0 10px; font-size: 14px }
+.approve .row { display: flex; gap: 10px }
+.verdict { font-size: 14px; color: var(--ink-2) }
+.history h3 { font-size: 14px; margin: 0 0 8px; color: var(--ink-2) }
+.history ol { list-style: none; margin: 0; padding: 0 0 0 14px; border-left: 2px solid var(--line) }
+.history li { position: relative; padding: 3px 0 7px 6px; font-size: 14px }
+.history li::before { content: ""; position: absolute; left: -20px; top: 10px; width: 8px; height: 8px; border-radius: 50%; background: var(--faint) }
+.history li.retry::before { background: var(--wait) }
+.history li.retry b { color: var(--wait) }
+.history time { color: var(--muted); font-family: var(--mono); font-size: 13px; margin-right: 8px }
+.history .empty { color: var(--muted); font-size: 14px }
+
+/* The ledger reads like a bank statement. A second payout for the same refund is the bug, in red. */
+.ledger { background: var(--card); border: 1px solid var(--ink); border-radius: 4px; position: sticky; top: 16px }
+.ledger header { padding: 14px 16px 10px; border-bottom: 1px dashed var(--faint) }
+.ledger table { width: 100%; border-collapse: collapse; font-size: 14px }
+.ledger td { padding: 8px 16px; border-bottom: 1px solid var(--line); vertical-align: top }
+.ledger td.money { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; white-space: nowrap }
+.ledger td small { display: block; color: var(--muted); font-family: var(--mono); font-size: 12px; word-break: break-all }
+.ledger tr.twice td { background: var(--fail); color: var(--paper) }
+.ledger tr.twice small { color: var(--paper) }
+.ledger tr.fresh td { animation: land 1.6s ease-out }
+@keyframes land { from { background: var(--accent) } to { background: transparent } }
+.ledger footer { display: flex; justify-content: space-between; padding: 12px 16px; font-weight: 700 }
+.ledger .none { padding: 18px 16px; color: var(--muted); font-size: 14px }
+.tools { display: flex; gap: 10px; margin: 0 0 12px }
+
+@media (max-width: 1100px) {
+  .desk { grid-template-columns: 1fr }
+  .req > button { grid-template-columns: 64px minmax(0, 1fr) 96px }
+  .track { grid-column: 1 / -1 }
+  .open { grid-template-columns: 1fr; padding-left: 6px }
+}
+@media (prefers-reduced-motion: reduce) { .ledger tr.fresh td { animation: none } }
+</style>
+</head>
+<body data-surface="refund approvals back office">
+<div class="bar">
+  <span class="brand">Fernhill Home</span>
+  <nav aria-label="Back office"><span>Orders</span><span class="on">Refunds</span><span>Customers</span><span>Payouts</span></nav>
+  <span class="who" id="who"></span>
+</div>
+
+<section class="engine" aria-label="Refund worker">
+  <div class="state"><span class="dot" id="dot"></span><span id="state">Worker stopped</span></div>
+  <button class="btn quiet" id="start-worker">Start the worker</button>
+  <button class="btn danger" id="kill">Kill the worker</button>
+  <label><input type="checkbox" id="crashy"> Crash right after each payout</label>
+  <span class="note" id="note"></span>
+  <div class="tally" id="tally"></div>
+</section>
+
+<main class="desk">
+  <section aria-label="Refund requests">
+    <h2>Refund requests this week</h2>
+    <p class="sub">Each refund is a Temporal workflow: decide, wait for a manager over $500, then pay once.</p>
+    <div class="tools">
+      <button class="btn" id="start-all">Start every refund</button>
+      <button class="btn quiet" id="reset">Clear the desk</button>
+    </div>
+    <ol class="requests" id="requests"></ol>
+  </section>
+  <aside class="ledger" aria-label="Payments ledger">
+    <header><h2>Payments ledger</h2><p class="sub" style="margin:0">What the payments provider paid out. The truth.</p></header>
+    <div id="ledger"></div>
+  </aside>
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+const money = (n) => "$" + Number(n).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const clock = (iso) => new Date(iso).toLocaleTimeString("en-GB", { hour12: false });
+const state = { desk: null, open: null, seen: new Set() };
+
+async function post(path, body = {}) {
+  const res = await fetch(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  if (res.ok) { state.desk = await res.json(); draw(); }
+}
+
+// Where a refund is on its track: decided, a manager's answer when needed, paid.
+function track(flow) {
+  if (!flow) return `<div class="track idle"><span>Decide</span><span>Manager</span><span>Pay</span></div>`;
+  const s = flow.status || {}, d = s.decision, stage = s.stage;
+  const needs = d && d.needs_approval;
+  const decide = stage === "deciding" ? "now" : "done";
+  let mgr = "off", mgrText = needs === false ? "Not needed" : "Manager";
+  if (needs) mgr = s.verdict ? "done" : "now";
+  if (needs && s.verdict) mgrText = s.verdict === "approved" ? "Approved" : "Rejected";
+  if (stage === "escalated") mgrText = "Escalated";
+  let pay = "", payText = "Pay";
+  if (stage === "paying") { pay = "now"; payText = "Paying"; }
+  if (stage === "paid") { pay = "paid"; payText = "Paid"; }
+  if (stage === "declined") { pay = "off"; payText = "Nothing due"; }
+  if (stage === "rejected") { pay = "off"; payText = "Not paid"; }
+  return `<div class="track"><span class="${decide}">${stage === "deciding" ? "Deciding" : "Decided"}</span><span class="${needs ? mgr : "off"}">${mgrText}</span><span class="${pay}">${payText}</span></div>`;
+}
+
+function events(flow) {
+  if (!flow || !flow.events) return `<p class="empty">Not started. Start it and Temporal records every step here.</p>`;
+  const words = { started: "started", scheduled: "scheduled", completed: "finished", "timed out": "timed out", failed: "failed", signal: "arrived", timer: "set" };
+  return `<ol>${flow.events.map((e) => {
+    const retry = e.attempt > 1;
+    const step = e.step === "workflow" ? "Workflow" : e.event === "signal" ? `Manager's ${esc(e.step)}` : e.event === "timer" ? "Approval deadline, 3 days," : `Step <b>${esc(e.step)}</b>`;
+    return `<li class="${retry ? "retry" : ""}"><time>${clock(e.at)}</time>${step} ${words[e.event] || esc(e.event)}${retry ? ` <b>on attempt ${e.attempt}</b>, after the worker died` : ""}</li>`;
+  }).join("")}</ol>`;
+}
+
+function opened(r, flow) {
+  const s = flow && flow.status, d = s && s.decision, o = r.order;
+  const calls = state.desk.calls[r.id] || 0;
+  let decision = `<p class="facts">The model has not decided yet.</p>`;
+  if (d) decision = `<div class="decision"><div class="big">${money(d.amount)}</div>
+      <p>${esc(d.reason)}</p><p>Rules ${esc((d.rules || []).join(", "))}. The model was asked ${calls} time${calls === 1 ? "" : "s"}.</p></div>`;
+  let manager = "";
+  if (d && d.needs_approval && !s.verdict && !s.done)
+    manager = `<div class="approve"><p><b>Over $500, so it waits for you.</b> Nothing runs while it waits, even for days. After ${state.desk.deadline_days} days it is escalated.</p>
+      <div class="row"><button class="btn" data-verdict="approve" data-id="${r.id}">Approve ${money(d.amount)}</button><button class="btn quiet" data-verdict="reject" data-id="${r.id}">Reject</button></div></div>`;
+  else if (s && s.verdict) manager = `<p class="verdict">The manager ${esc(s.verdict)} it.</p>`;
+  return `<div class="open"><div>
+      <p class="msg">"${esc(r.message)}"</p>
+      <p class="facts">${esc(o.customer)}, ${esc(o.item)}. Paid ${money(o.price)} plus ${money(o.delivery_fee)} delivery.</p>
+      ${decision}${manager}
+      <div class="row" style="display:flex;gap:10px;margin-top:12px">${flow ? "" : `<button class="btn" data-start="${r.id}">Start this refund</button>`}
+        <button class="btn quiet" data-plain="${r.id}">Run it as a plain script, with a crash</button></div>
+    </div><div class="history"><h3>Temporal's event history</h3>${events(flow)}</div></div>`;
+}
+
+function draw() {
+  const desk = state.desk; if (!desk) return;
+  $("who").textContent = `Signed in as ${desk.manager}`;
+  const w = desk.worker;
+  $("dot").className = "dot" + (w.alive ? " on" : "");
+  $("state").textContent = w.alive ? `Worker running, process ${w.pid}` : "Worker stopped";
+  $("kill").disabled = !w.alive; $("start-worker").disabled = w.alive; $("crashy").disabled = w.alive;
+  const open = Object.values(desk.flows).filter((f) => f.status && !f.status.done).length;
+  $("note").textContent = w.alive
+    ? (w.crash_after_pay ? "It will die right after each payout, once per refund. Start it again and watch it carry on." : "Refunds run as soon as they are started.")
+    : open ? `${open} refund${open === 1 ? "" : "s"} still open. Their history is safe on the Temporal server. Start the worker and they carry on.` : "Start the worker to run refunds.";
+  const r = desk.review;
+  $("tally").innerHTML = r ? ["naive", "durable"].map((how) => `<div>${how === "naive" ? "Plain script" : "Temporal"}, last review<b class="${r[how].paid_twice + r[how].lost ? "bad" : ""}">${r[how].paid_twice} paid twice, ${r[how].lost} lost</b></div>`).join("") : "";
+
+  $("requests").innerHTML = desk.refunds.map((x) => {
+    const flow = desk.flows[x.id], d = flow && flow.status && flow.status.decision;
+    return `<li class="req"><button data-open="${x.id}" aria-expanded="${state.open === x.id}">
+      <span class="rid">${x.id}</span>
+      <span class="what"><b>${esc(x.order.customer)}</b><span>${esc(x.order.item)}</span></span>
+      <span class="amt">${d ? money(d.amount) : "-"}<small>${d ? "decided" : "order " + money(x.order.price)}</small></span>
+      ${track(flow)}</button>${state.open === x.id ? opened(x, flow) : ""}</li>`;
+  }).join("");
+
+  const per = {};
+  // Paid twice means twice by the same program: one refund can appear once per way.
+  for (const p of desk.payouts) per[p.refund + p.how] = (per[p.refund + p.how] || 0) + 1;
+  const total = desk.payouts.reduce((t, p) => t + p.cents, 0);
+  $("ledger").innerHTML = desk.payouts.length ? `<table>${desk.payouts.map((p) => {
+      const fresh = !state.seen.has(p.id); state.seen.add(p.id);
+      return `<tr class="${per[p.refund + p.how] > 1 ? "twice" : ""} ${fresh ? "fresh" : ""}"><td>${esc(p.customer)}, ${p.refund}, ${p.how === "naive" ? "plain script" : "Temporal"}<small>${p.idempotency_key ? "key " + esc(p.idempotency_key) : "no idempotency key"}</small></td><td class="money">${money(p.cents / 100)}</td></tr>`;
+    }).join("")}</table><footer><span>Paid out</span><span>${money(total / 100)}</span></footer>`
+    : `<p class="none">No payouts yet.</p>`;
+}
+
+async function load() {
+  const res = await fetch("/api/desk").catch(() => null);
+  if (res && res.ok) { state.desk = await res.json(); draw(); }
+}
+
+document.addEventListener("click", (e) => {
+  const t = e.target.closest("button"); if (!t) return;
+  if (t.dataset.open) { state.open = state.open === t.dataset.open ? null : t.dataset.open; return draw(); }
+  if (t.dataset.start) return post("/api/start", { refund: t.dataset.start });
+  if (t.dataset.plain) { t.disabled = true; t.textContent = "Running, crashing, running again..."; return post("/api/plain", { refund: t.dataset.plain }); }
+  if (t.dataset.verdict) return post("/api/verdict", { refund: t.dataset.id, reject: t.dataset.verdict === "reject" });
+});
+$("start-worker").addEventListener("click", () => post("/api/worker/start", { crash_after_pay: $("crashy").checked }));
+$("kill").addEventListener("click", () => post("/api/worker/kill"));
+$("start-all").addEventListener("click", async () => { for (const r of state.desk.refunds) await post("/api/start", { refund: r.id }); });
+$("reset").addEventListener("click", () => { state.seen.clear(); post("/api/reset"); });
+
+load().then(() => { state.seen = new Set((state.desk?.payouts || []).map((p) => p.id)); });
+// The desk follows the workflows on the server: a refund moves on its own once a worker is running.
+setInterval(load, 1000);
+</script>
+</body>
+</html>

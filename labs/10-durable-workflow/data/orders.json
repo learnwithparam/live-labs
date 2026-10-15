@@ -1,0 +1,10 @@
+[
+ {"order": "FH-20418", "customer": "Ana Ruiz", "item": "Linden 3-seat sofa, oat linen", "price": 1290.00, "delivery_fee": 89.00, "made_to_order": false, "promised": "2026-09-02", "delivered": "2026-09-03"},
+ {"order": "FH-20433", "customer": "Ben Carter", "item": "Ashby oak side table", "price": 189.00, "delivery_fee": 29.00, "made_to_order": false, "promised": "2026-09-20", "delivered": "2026-09-19"},
+ {"order": "FH-20451", "customer": "Chloe Park", "item": "Marlow armchair, custom velvet in moss", "price": 840.00, "delivery_fee": 59.00, "made_to_order": true, "promised": "2026-09-10", "delivered": "2026-09-11"},
+ {"order": "FH-20467", "customer": "Dev Patel", "item": "Holt queen bed frame", "price": 760.00, "delivery_fee": 69.00, "made_to_order": false, "promised": "2026-08-25", "delivered": "2026-09-16"},
+ {"order": "FH-20472", "customer": "Ella Moss", "item": "Pell table lamp", "price": 74.00, "delivery_fee": 9.00, "made_to_order": false, "promised": "2026-09-28", "delivered": "2026-09-27"},
+ {"order": "FH-20480", "customer": "Finn Doyle", "item": "Rowan 6-seat dining table", "price": 1450.00, "delivery_fee": 99.00, "made_to_order": false, "promised": "2026-09-30", "delivered": "2026-10-01"},
+ {"order": "FH-20486", "customer": "Gita Rao", "item": "Wren bookshelf, walnut", "price": 420.00, "delivery_fee": 49.00, "made_to_order": false, "promised": "2026-08-01", "delivered": "2026-08-02"},
+ {"order": "FH-20491", "customer": "Hugo Lind", "item": "Tamsin rug 200x300", "price": 610.00, "delivery_fee": 39.00, "made_to_order": false, "promised": "2026-09-15", "delivered": "2026-10-04"}
+]
