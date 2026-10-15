@@ -47,7 +47,7 @@ print what the README promises.
 | 26 | [Route LLM Calls with an LLM Gateway](labs/26-llm-gateway) | RouteLLM and Instacart's AI gateway | ready |
 | 27 | [Manage Prompts Outside Your Code](labs/27-prompt-registry) | Langfuse and PromptLayer prompt registries | ready |
 | 28 | [Trace AI Agents with OpenTelemetry](labs/28-tracing) | OpenTelemetry GenAI conventions | ready |
-| 29 | Gate AI Releases with Evals in CI | Shopify Sidekick evals before release | planned |
+| 29 | [Gate AI Releases with Evals in CI](labs/29-evals-ci) | Shopify Sidekick evals before release | ready |
 | 30 | Govern AI Systems with an Inventory and Audit Log | EU AI Act transparency duties from Aug 2026 | planned |
 | 31 | Ship a Streaming AI Agent API with an API Gateway | The chat endpoint behind every in-app assistant | planned |
 | 32 | Run Background Coding Agents with Cloud Sandboxes | Ramp Inspect, run on Boat sandboxes | planned |

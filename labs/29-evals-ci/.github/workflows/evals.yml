@@ -1,0 +1,39 @@
+# The release gate. On every pull request that touches the assistant, run the golden set on live and
+# on each changed release, three times per case, and fail the check if any golden case got worse.
+# Locally it is the same command: uv run kettlebay check releases/<name>.json
+name: evals
+
+on:
+  pull_request:
+    paths: ["releases/**", "prompts/**", "tools/**", "data/**", "src/**", "pyproject.toml", "uv.lock"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: evals-${{ github.head_ref }}
+  cancel-in-progress: true
+
+jobs:
+  release-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: astral-sh/setup-uv@v6
+      - name: Set up uv and the golden set
+        run: uv sync --locked
+      - name: Gate each changed release
+        env:
+          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+        run: |
+          releases=$(uv run kettlebay changed --base "origin/${{ github.base_ref }}" | grep '^releases/' || true)
+          if [ -z "$releases" ]; then echo "No release changed."; exit 0; fi
+          status=0
+          for release in $releases; do
+            # One blocked release fails the check; keep going so the summary names all of them.
+            uv run kettlebay check "$release" || status=1
+          done
+          exit $status

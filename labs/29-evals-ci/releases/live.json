@@ -1,0 +1,8 @@
+{
+ "name": "live",
+ "title": "Kettlebay Assist v41, in production",
+ "author": "release bot",
+ "branch": "main",
+ "prompt": "prompts/live.txt",
+ "tools": "tools/live.json"
+}

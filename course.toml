@@ -354,7 +354,7 @@ owns = "release gates and trajectory evals"
 job = "Block a release that makes an assistant worse, as Shopify runs evals before Sidekick ships"
 truth = "the golden set and expected tool trajectories"
 metric = "regressions caught before release"
-status = "planned"
+status = "ready"
 
 [[lab]]
 n = 30

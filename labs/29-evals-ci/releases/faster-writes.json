@@ -1,0 +1,9 @@
+{
+ "name": "faster-writes",
+ "pull_request": 214,
+ "title": "Drop the extra confirmation on prices, refunds and discounts",
+ "author": "Ravi Menon",
+ "branch": "ravi/faster-writes",
+ "prompt": "prompts/live.txt",
+ "tools": "tools/faster-writes.json"
+}

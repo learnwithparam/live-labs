@@ -1,0 +1,9 @@
+{
+ "name": "shorter-replies",
+ "pull_request": 212,
+ "title": "Shorten assistant replies for the mobile admin",
+ "author": "Dana Whitlock",
+ "branch": "dana/shorter-replies",
+ "prompt": "prompts/shorter-replies.txt",
+ "tools": "tools/live.json"
+}

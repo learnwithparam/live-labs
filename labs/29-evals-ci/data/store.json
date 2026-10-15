@@ -1,0 +1,237 @@
+{
+ "merchant": "Halden & Rye Coffee",
+ "currency": "USD",
+ "today": "2026-10-15",
+ "products": [
+  {
+   "sku": "HR-GUJI-250",
+   "name": "Ethiopia Guji, 250 g",
+   "price": 16.0,
+   "stock": 34,
+   "reorder_at": 12
+  },
+  {
+   "sku": "HR-GUJI-1K",
+   "name": "Ethiopia Guji, 1 kg",
+   "price": 52.0,
+   "stock": 6,
+   "reorder_at": 8
+  },
+  {
+   "sku": "HR-KENYA-250",
+   "name": "Kenya Nyeri AA, 250 g",
+   "price": 13.5,
+   "stock": 40,
+   "reorder_at": 12
+  },
+  {
+   "sku": "HR-KENYA-1K",
+   "name": "Kenya Nyeri AA, 1 kg",
+   "price": 38.0,
+   "stock": 11,
+   "reorder_at": 6
+  },
+  {
+   "sku": "HR-DECAF-250",
+   "name": "Colombia Swiss Water Decaf, 250 g",
+   "price": 14.0,
+   "stock": 22,
+   "reorder_at": 10
+  },
+  {
+   "sku": "HR-DECAF-1K",
+   "name": "Colombia Swiss Water Decaf, 1 kg",
+   "price": 46.0,
+   "stock": 3,
+   "reorder_at": 5
+  },
+  {
+   "sku": "HR-HOUSE-1K",
+   "name": "House Espresso, 1 kg",
+   "price": 34.0,
+   "stock": 58,
+   "reorder_at": 20
+  },
+  {
+   "sku": "HR-V60-100",
+   "name": "V60 filter papers, 100 pack",
+   "price": 7.5,
+   "stock": 0,
+   "reorder_at": 25
+  }
+ ],
+ "orders": [
+  {
+   "order_id": "1047",
+   "customer": "Priya Raman",
+   "placed": "2026-10-09",
+   "status": "shipped",
+   "carrier": "UPS",
+   "tracking": "1Z84F2E10319482277",
+   "total": 29.5,
+   "refunded": 0.0,
+   "lines": [
+    {
+     "sku": "HR-GUJI-250",
+     "quantity": 1
+    },
+    {
+     "sku": "HR-KENYA-250",
+     "quantity": 1
+    }
+   ]
+  },
+  {
+   "order_id": "1052",
+   "customer": "Tomás Ibarra",
+   "placed": "2026-10-12",
+   "status": "paid, not shipped",
+   "carrier": null,
+   "tracking": null,
+   "total": 68.0,
+   "refunded": 0.0,
+   "lines": [
+    {
+     "sku": "HR-HOUSE-1K",
+     "quantity": 2
+    }
+   ]
+  },
+  {
+   "order_id": "1055",
+   "customer": "Grace Okafor",
+   "placed": "2026-10-06",
+   "status": "delivered",
+   "carrier": "USPS",
+   "tracking": "9400111899561844091243",
+   "total": 52.0,
+   "refunded": 0.0,
+   "lines": [
+    {
+     "sku": "HR-GUJI-1K",
+     "quantity": 1
+    }
+   ]
+  },
+  {
+   "order_id": "1058",
+   "customer": "Lena Vogt",
+   "placed": "2026-10-03",
+   "status": "delivered",
+   "carrier": "USPS",
+   "tracking": "9400111899561844087711",
+   "total": 27.0,
+   "refunded": 27.0,
+   "lines": [
+    {
+     "sku": "HR-KENYA-250",
+     "quantity": 2
+    }
+   ]
+  },
+  {
+   "order_id": "1061",
+   "customer": "Sam Whitfield",
+   "placed": "2026-10-13",
+   "status": "cancelled by customer",
+   "carrier": null,
+   "tracking": null,
+   "total": 14.0,
+   "refunded": 14.0,
+   "lines": [
+    {
+     "sku": "HR-DECAF-250",
+     "quantity": 1
+    }
+   ]
+  }
+ ],
+ "daily_sales": [
+  {
+   "date": "2026-09-28",
+   "orders": 17,
+   "revenue": 627.5
+  },
+  {
+   "date": "2026-09-29",
+   "orders": 18,
+   "revenue": 830.5
+  },
+  {
+   "date": "2026-09-30",
+   "orders": 13,
+   "revenue": 481.5
+  },
+  {
+   "date": "2026-10-01",
+   "orders": 14,
+   "revenue": 570.0
+  },
+  {
+   "date": "2026-10-02",
+   "orders": 9,
+   "revenue": 429.0
+  },
+  {
+   "date": "2026-10-03",
+   "orders": 10,
+   "revenue": 461.5
+  },
+  {
+   "date": "2026-10-04",
+   "orders": 19,
+   "revenue": 735.5
+  },
+  {
+   "date": "2026-10-05",
+   "orders": 14,
+   "revenue": 518.5
+  },
+  {
+   "date": "2026-10-06",
+   "orders": 16,
+   "revenue": 639.0
+  },
+  {
+   "date": "2026-10-07",
+   "orders": 18,
+   "revenue": 765.0
+  },
+  {
+   "date": "2026-10-08",
+   "orders": 12,
+   "revenue": 496.5
+  },
+  {
+   "date": "2026-10-09",
+   "orders": 11,
+   "revenue": 425.0
+  },
+  {
+   "date": "2026-10-10",
+   "orders": 15,
+   "revenue": 661.5
+  },
+  {
+   "date": "2026-10-11",
+   "orders": 19,
+   "revenue": 812.5
+  },
+  {
+   "date": "2026-10-12",
+   "orders": 12,
+   "revenue": 510.5
+  },
+  {
+   "date": "2026-10-13",
+   "orders": 15,
+   "revenue": 593.5
+  },
+  {
+   "date": "2026-10-14",
+   "orders": 17,
+   "revenue": 765.0
+  }
+ ],
+ "discounts": []
+}

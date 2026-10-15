@@ -1,0 +1,9 @@
+{
+ "name": "order-numbers",
+ "pull_request": 216,
+ "title": "Lead order replies with the order number",
+ "author": "Mei Tanaka",
+ "branch": "mei/order-numbers",
+ "prompt": "prompts/order-numbers.txt",
+ "tools": "tools/live.json"
+}

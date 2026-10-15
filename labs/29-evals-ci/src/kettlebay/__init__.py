@@ -1,0 +1,1 @@
+"""Kettlebay Assist release checks."""

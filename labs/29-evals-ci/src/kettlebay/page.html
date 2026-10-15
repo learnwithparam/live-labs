@@ -1,0 +1,446 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Release check: Kettlebay Assist</title>
+<link rel="icon" href="data:,">
+<style>
+:root {
+  --paper: #FAFAFA; --card: #FFFFFF; --ink: #151515; --ink-2: #414141; --muted: #606060; --faint: #808080;
+  --line: #DFDFDF; --accent: #FAFF69; --accent-deep: #4F5101; --fill-dark: #1F1F1C;
+  --pass: #008138; --fail: #BF000F; --wait: #B75000;
+  --sans: Inter, Helvetica, Arial, sans-serif; --mono: Inconsolata, "Courier New", Courier, monospace;
+}
+* { box-sizing: border-box }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 15px/1.5 var(--sans) }
+button, input, textarea { font: inherit; color: inherit }
+button { cursor: pointer }
+:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px }
+code, .mono { font-family: var(--mono) }
+
+.repo { background: var(--fill-dark); color: var(--paper); padding: 12px 28px 0 }
+.repo-name { font-size: 14px; margin: 0 0 10px }
+.repo-name b { font-weight: 600 }
+.pulls { display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none }
+.pull { background: none; border: 0; color: var(--paper); padding: 9px 14px 11px; border-radius: 6px 6px 0 0;
+  white-space: nowrap; display: flex; align-items: center; gap: 8px; font-size: 14px }
+.pull[aria-selected="true"] { background: var(--paper); color: var(--ink) }
+.pull .number { opacity: .8 }
+
+.state-mark { width: 10px; height: 10px; border-radius: 50%; flex: none; background: var(--faint) }
+.state-mark.passed { background: var(--pass) }
+.state-mark.blocked { background: var(--fail) }
+.state-mark.overridden { background: var(--wait) }
+
+.pr-head { padding: 22px 28px 18px; border-bottom: 1px solid var(--line) }
+.pr-head h1 { font-size: 24px; line-height: 1.25; margin: 0 0 6px; font-weight: 650 }
+.pr-head h1 .number { color: var(--muted); font-weight: 400 }
+.pr-meta { color: var(--muted); font-size: 14px; display: flex; flex-wrap: wrap; gap: 6px 14px }
+.branch { font-family: var(--mono); background: var(--card); border: 1px solid var(--line); padding: 0 6px; border-radius: 4px; color: var(--ink-2) }
+
+.run { display: grid; grid-template-columns: 11.75rem minmax(0, 1fr); gap: 28px; padding: 22px 28px 60px; max-width: 1240px }
+.job h2 { font-size: 13px; color: var(--muted); font-weight: 500; margin: 4px 0 10px }
+.steps { list-style: none; margin: 0; padding: 0; counter-reset: step }
+.step { display: grid; grid-template-columns: 1.15rem minmax(0, 1fr); gap: 8px; padding: 7px 0; font-size: 13.5px; border-top: 1px solid var(--line) }
+.step .tick { width: 14px; height: 14px; margin-top: 3px; border-radius: 50%; border: 2px solid var(--faint) }
+.step.ok .tick { background: var(--pass); border-color: var(--pass) }
+.step.bad .tick { background: var(--fail); border-color: var(--fail) }
+.step .took { display: block; color: var(--muted); font-size: 12.5px }
+@media (prefers-reduced-motion: no-preference) {
+  .steps.playing .tick { animation: settle .35s ease-out backwards; animation-delay: calc(var(--order) * 220ms) }
+  @keyframes settle { from { background: var(--card); border-color: var(--faint); transform: scale(.6) } }
+}
+
+.verdict { background: var(--card); border: 1px solid var(--line); border-left: 6px solid var(--faint); border-radius: 8px; padding: 18px 20px; margin-bottom: 18px }
+.verdict.blocked { border-left-color: var(--fail) }
+.verdict.passed { border-left-color: var(--pass) }
+.verdict.overridden { border-left-color: var(--wait) }
+.verdict h2 { margin: 0 0 4px; font-size: 20px }
+.verdict.blocked h2 { color: var(--fail) }
+.verdict.passed h2 { color: var(--pass) }
+.verdict.overridden h2 { color: var(--wait) }
+.verdict p { margin: 0; color: var(--ink-2) }
+.gate-mode { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; margin-top: 14px; overflow: hidden }
+.gate-mode button { border: 0; background: var(--card); padding: 6px 12px; font-size: 13.5px }
+.gate-mode button[aria-pressed="true"] { background: var(--ink); color: var(--paper) }
+.caught { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); font-size: 14px; color: var(--ink-2) }
+.caught strong { color: var(--ink); font-size: 17px }
+
+section h3 { font-size: 15px; margin: 26px 0 8px }
+.diff { background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden }
+.diff-file { font-family: var(--mono); font-size: 13.5px; padding: 6px 12px; border-bottom: 1px solid var(--line); color: var(--ink-2) }
+.diff pre { margin: 0; padding: 4px 0; font: 13.5px/1.5 var(--mono); white-space: pre-wrap; overflow-wrap: anywhere }
+.diff .line { display: block; padding: 0 12px }
+.diff .add { background: var(--accent) }
+.diff .del { color: var(--fail) }
+.diff .hunk { color: var(--muted) }
+
+.cases { background: var(--card); border: 1px solid var(--line); border-radius: 8px }
+.case { border-top: 1px solid var(--line) }
+.case:first-child { border-top: 0 }
+.case-row { width: 100%; background: none; border: 0; text-align: left; padding: 10px 14px;
+  display: grid; grid-template-columns: 6.6rem 2.8rem minmax(0, 1fr) 4.4rem 5.4rem; gap: 12px; align-items: center }
+.case-row:hover { background: var(--paper) }
+.pill { font-size: 12.5px; font-weight: 600; border-radius: 999px; padding: 1px 9px; border: 1.5px solid currentColor; justify-self: start; white-space: nowrap }
+.pill.held, .pill.fixed { color: var(--pass) }
+.pill.regressed, .pill.unsafe, .pill.error, .pill.missing { color: var(--fail) }
+.pill.failing { color: var(--wait) }
+.case-id { font-family: var(--mono); color: var(--muted) }
+.request { overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.tally { font-size: 13px; color: var(--muted) }
+.dots { display: flex; gap: 4px }
+.dot { width: 12px; height: 12px; border-radius: 3px; background: var(--pass) }
+.dot.no { background: var(--fail) }
+
+.case-open { padding: 4px 14px 18px; border-top: 1px dashed var(--line) }
+.runs { display: flex; gap: 6px; margin: 10px 0 12px; flex-wrap: wrap }
+.runs button { border: 1px solid var(--line); background: var(--card); border-radius: 6px; padding: 3px 10px; font-size: 13.5px }
+.runs button[aria-pressed="true"] { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink) }
+.track { display: grid; grid-template-columns: 1.6rem minmax(0, 1fr) minmax(0, 1fr); border: 1px solid var(--line); border-radius: 6px; font-size: 13.5px }
+.track > div { padding: 6px 10px; border-top: 1px solid var(--line); min-width: 0; overflow-wrap: anywhere }
+.track .head { border-top: 0; color: var(--muted); font-size: 12.5px }
+.track .mark { text-align: center; font-weight: 700; padding-left: 0; padding-right: 0 }
+.track .match { color: var(--pass) }
+.track .missing, .track .unsafe { color: var(--fail) }
+.track .arguments { color: var(--accent-deep) }
+.track .flag { background: var(--accent) }
+.track .tool { font-family: var(--mono); font-weight: 600 }
+.track .args { font-family: var(--mono); color: var(--ink-2) }
+.track .none { color: var(--muted); font-style: italic }
+.reply { margin-top: 12px; display: grid; gap: 6px }
+.reply blockquote { margin: 0; padding: 8px 12px; background: var(--paper); border-left: 3px solid var(--line); white-space: pre-wrap }
+.problems { margin: 0; padding-left: 18px; color: var(--fail); font-size: 14px }
+.note { color: var(--muted); font-size: 13.5px; margin: 0 }
+
+.decide { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 16px 18px }
+.decide p { margin: 0 0 10px; color: var(--ink-2) }
+.decide label { display: block; font-size: 13.5px; color: var(--muted); margin: 10px 0 4px }
+.decide input, .decide textarea { width: 100%; border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; background: var(--paper) }
+.decide textarea { min-height: 76px; resize: vertical }
+.decide button { margin-top: 12px; background: var(--ink); color: var(--paper); border: 0; border-radius: 6px; padding: 8px 14px; font-weight: 600 }
+.decide button:disabled { background: var(--line); color: var(--muted); cursor: not-allowed }
+.decide .error { color: var(--fail); font-size: 14px; margin-top: 8px }
+.record { border-left: 3px solid var(--wait); padding: 6px 12px; margin-top: 10px; font-size: 14px }
+.empty { color: var(--muted); padding: 18px }
+
+@media (max-width: 760px) {
+  .repo { padding: 10px 16px 0 }
+  .pr-head { padding: 18px 16px 14px }
+  .pr-head h1 { font-size: 20px }
+  .run { grid-template-columns: minmax(0, 1fr); gap: 14px; padding: 16px 16px 48px }
+  .steps { display: flex; flex-wrap: wrap; gap: 6px }
+  .step { border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px 3px 6px; display: flex; gap: 6px; align-items: center; font-size: 12.5px }
+  .step .tick { margin: 0 }
+  .step .took { display: none }
+  .case-row { grid-template-columns: 2.8rem minmax(0, 1fr) auto; row-gap: 4px }
+  .case-row .pill { grid-column: 3; grid-row: 1 }
+  .case-row .request { grid-column: 1 / -1; grid-row: 2; white-space: normal }
+  .case-row .tally { grid-row: 3; grid-column: 1 / 3 }
+  .case-row .dots { grid-row: 3; grid-column: 3 }
+  .track { grid-template-columns: 1.4rem minmax(0, 1fr) minmax(0, 1fr); font-size: 12.5px }
+}
+</style>
+</head>
+<body data-surface="CI check run on a pull request">
+<header class="repo">
+  <p class="repo-name">halden-rye / <b>kettlebay-assist</b> pull requests</p>
+  <nav class="pulls" id="pulls" role="tablist" aria-label="Open pull requests"></nav>
+</header>
+<div class="pr-head">
+  <h1 id="title">Loading release checks</h1>
+  <div class="pr-meta" id="meta"></div>
+</div>
+<main class="run">
+  <aside class="job" aria-label="Check run steps">
+    <h2>evals / release-gate</h2>
+    <ol class="steps" id="steps"></ol>
+  </aside>
+  <div>
+    <div class="verdict" id="verdict"></div>
+    <section><h3>What this pull request changes</h3><div class="diff" id="changes"></div></section>
+    <section><h3 id="cases-title">Golden cases</h3><div class="cases" id="cases"></div></section>
+    <section><h3>Ship it anyway</h3><div class="decide" id="decide"></div></section>
+  </div>
+</main>
+<script>
+const $ = (selector) => document.querySelector(selector);
+let current = null;
+let overview = null;
+let answersOnly = false;
+const opened = new Set();
+const chosenRun = {};
+
+function make(tag, className, text) {
+  const node = document.createElement(tag);
+  if (className) node.className = className;
+  // Model replies and tool arguments are untrusted text, so they only ever go in as textContent.
+  if (text !== undefined && text !== null) node.textContent = text;
+  return node;
+}
+
+const STATUS_WORDS = { held: "held", fixed: "fixed", regressed: "regressed", unsafe: "unsafe", error: "errored",
+  missing: "no result", "failing on live too": "failing on live" };
+
+function statusOf(item) { return answersOnly ? item.answers_only_status : item.status; }
+
+async function load() {
+  overview = await (await fetch("/api/checks")).json();
+  const pulls = $("#pulls");
+  pulls.replaceChildren();
+  for (const check of overview.checks) {
+    const tab = make("button", "pull");
+    tab.setAttribute("role", "tab");
+    tab.dataset.name = check.name;
+    tab.append(make("span", "state-mark " + check.state.replace(" ", "-")), make("span", "number", "#" + check.pull_request), make("span", "", check.title));
+    tab.addEventListener("click", () => open(check.name));
+    pulls.append(tab);
+  }
+  const wanted = new URLSearchParams(location.search).get("pr");
+  const first = overview.checks.find((check) => check.name === wanted) || overview.checks.find((check) => check.state === "blocked") || overview.checks[0];
+  if (first) open(first.name);
+}
+
+async function open(name) {
+  current = await (await fetch("/api/check/" + name)).json();
+  opened.clear();
+  for (const tab of document.querySelectorAll(".pull")) {
+    tab.setAttribute("aria-selected", String(tab.dataset.name === name));
+    // On a phone the tabs scroll sideways; bring the open pull request into view.
+    if (tab.dataset.name === name) $("#pulls").scrollLeft = tab.offsetLeft - 16;
+  }
+  history.replaceState(null, "", "?pr=" + name);
+  render(true);
+}
+
+function render(replay) {
+  const spec = current.spec;
+  const title = $("#title");
+  title.replaceChildren(make("span", "", spec.title + " "), make("span", "number", "#" + spec.pull_request));
+  const meta = $("#meta");
+  meta.replaceChildren(make("span", "", spec.author + " wants to merge"), make("span", "branch", spec.branch),
+    make("span", "", "into"), make("span", "branch", "main"), make("span", "", "model " + current.model));
+  renderSteps(replay);
+  renderVerdict();
+  renderChanges();
+  renderCases();
+  renderDecide();
+}
+
+function renderSteps(replay) {
+  const steps = $("#steps");
+  const cases = current.cases;
+  const ran = cases.length > 0;
+  const answerFails = cases.some((item) => item.answers_only_status === "regressed");
+  const pathFails = cases.some((item) => ["regressed", "unsafe"].includes(item.status) && item.answers_only_status !== "regressed");
+  const errors = cases.some((item) => ["error", "missing"].includes(item.status));
+  const rows = [
+    ["Set up uv and the golden set", ran, ""],
+    ["Run 12 cases on live", ran && !errors, ""],
+    ["Run 12 cases on this change", ran && !errors, ran ? current.seconds + "s, $" + current.cost.toFixed(4) : ""],
+    ["Score answers", ran && !answerFails, ""],
+    ["Score tool calls with DeepEval", answersOnly ? null : ran && !pathFails, answersOnly ? "skipped in answers only" : ""],
+    ["Gate the release", ran && (answersOnly ? !current.summary.answers_only_blocked : current.state !== "blocked"),
+      current.state === "overridden" && !answersOnly ? "overridden by a person" : ""],
+  ];
+  steps.replaceChildren();
+  steps.classList.toggle("playing", Boolean(replay));
+  rows.forEach(([label, good, took], order) => {
+    // null means the step did not run in this mode, so it gets no verdict colour.
+    const step = make("li", "step " + (ran && good !== null ? (good ? "ok" : "bad") : ""));
+    step.style.setProperty("--order", order);
+    const words = make("span", "", label);
+    if (took) words.append(make("span", "took", took));
+    step.append(make("span", "tick"), words);
+    steps.append(step);
+  });
+}
+
+function renderVerdict() {
+  const box = $("#verdict");
+  box.replaceChildren();
+  const summary = current.summary;
+  if (!summary) {
+    box.className = "verdict";
+    box.append(make("h2", "", "Not run yet"), make("p", "", "Run kettlebay check releases/" + current.name + ".json, then reload."));
+    return;
+  }
+  let state = current.state;
+  if (answersOnly) state = summary.answers_only_blocked ? "blocked" : "passed";
+  box.className = "verdict " + state;
+  const headline = { blocked: "Merging is blocked", passed: "All checks passed", overridden: "Blocked, then overridden by a person" }[state];
+  const shown = current.cases.filter((item) => ["regressed", "unsafe", "error", "missing"].includes(statusOf(item)));
+  let detail = "No golden case is worse than on live. Each case passed in at least " + current.needed + " of " + current.repeats + " runs.";
+  if (shown.length) {
+    detail = shown.length + " of " + current.cases.length + " golden cases are worse than on live: " +
+      shown.map((item) => item.id + " " + STATUS_WORDS[statusOf(item)]).join(", ") + ".";
+  }
+  box.append(make("h2", "", headline), make("p", "", detail));
+  const mode = make("div", "gate-mode");
+  mode.setAttribute("role", "group");
+  mode.setAttribute("aria-label", "Which checks the gate reads");
+  for (const [label, value] of [["Answers and tool calls", false], ["Answers only", true]]) {
+    const toggle = make("button", "", label);
+    toggle.setAttribute("aria-pressed", String(answersOnly === value));
+    toggle.addEventListener("click", () => { answersOnly = value; render(false); });
+    mode.append(toggle);
+  }
+  const metric = overview.metric;
+  const caught = make("div", "caught");
+  caught.append(make("strong", "", metric.blocked + " of " + metric.judged),
+    make("span", "", " pull requests blocked before release by answers and tool calls. Answers only would block " + metric.blocked_answers_only + "."));
+  box.append(mode, caught);
+}
+
+function renderChanges() {
+  const holder = $("#changes");
+  holder.replaceChildren();
+  for (const file of current.changes) {
+    holder.append(make("div", "diff-file", file.file));
+    const block = make("pre");
+    for (const line of file.lines) block.append(make("span", "line " + line.kind, line.text));
+    holder.append(block);
+  }
+  if (!current.changes.length) holder.append(make("div", "empty", "No change against live."));
+}
+
+function argsText(args) {
+  if (!args || !Object.keys(args).length) return "";
+  return Object.entries(args).map(([key, value]) => key + "=" + JSON.stringify(value)).join(", ");
+}
+
+function renderTrack(item, run) {
+  const track = make("div", "track");
+  track.append(make("div", "head"), make("div", "head", "Expected, signed off"), make("div", "head", "This run called"));
+  const marks = { match: "✓", arguments: "≠", missing: "✗", extra: "+" };
+  for (const row of run.diff) {
+    const unsafe = row.kind === "extra" && run.unsafe.some((line) => line.includes(row.tool));
+    const kind = unsafe ? "unsafe" : row.kind;
+    track.append(make("div", "mark " + kind, unsafe ? "!" : marks[row.kind]));
+    for (const side of ["expected", "actual"]) {
+      const cell = make("div", (side === "actual" && (row.kind === "arguments" || unsafe)) ? "flag" : "");
+      if (row[side] === null) {
+        cell.append(make("span", "none", side === "expected" ? "not in the golden case" : "not called"));
+      } else {
+        cell.append(make("div", "tool", row.tool), make("div", "args", argsText(row[side])));
+      }
+      track.append(cell);
+    }
+  }
+  if (!run.diff.length) {
+    track.append(make("div", "mark match", "✓"), make("div", "none", "no tools: refuse"), make("div", "none", "no tools called"));
+  }
+  return track;
+}
+
+function renderOpen(item) {
+  const panel = make("div", "case-open");
+  const choice = chosenRun[item.id] ?? Math.max(0, item.runs.findIndex((run) => !(run.answer_ok && run.trajectory_ok)));
+  const picker = make("div", "runs");
+  item.runs.forEach((run, index) => {
+    const good = run.answer_ok && (answersOnly || run.trajectory_ok);
+    const pick = make("button", "", "Run " + (index + 1) + (good ? " passed" : " failed"));
+    pick.setAttribute("aria-pressed", String(index === choice));
+    pick.addEventListener("click", () => { chosenRun[item.id] = index; renderCases(); });
+    picker.append(pick);
+  });
+  const run = item.runs[choice];
+  panel.append(make("p", "note", "Signed off by " + item.signed_off + ". Live passed " + item.live_passes + " of " + current.repeats + " runs."), picker);
+  if (!run) return panel;
+  if (run.error) panel.append(make("ul", "problems")).append(make("li", "", run.error));
+  panel.append(renderTrack(item, run));
+  if (!answersOnly) {
+    panel.append(make("p", "note", "DeepEval tool correctness " + run.trajectory_score + ": " + run.trajectory_reason.replace(" See more details above.", "")));
+  }
+  const reply = make("div", "reply");
+  reply.append(make("span", "note", "Reply to the merchant"), make("blockquote", "", run.answer || "(no reply)"));
+  const problems = [...run.answer_problems, ...(answersOnly ? [] : run.unsafe)];
+  if (problems.length) {
+    const list = make("ul", "problems");
+    for (const problem of problems) list.append(make("li", "", problem));
+    reply.append(list);
+  }
+  panel.append(reply);
+  return panel;
+}
+
+function renderCases() {
+  const holder = $("#cases");
+  holder.replaceChildren();
+  $("#cases-title").textContent = "Golden cases, " + current.repeats + " runs each" + (answersOnly ? ", answers only" : "");
+  if (!current.cases.length) {
+    holder.append(make("div", "empty", "No run for this release yet."));
+    return;
+  }
+  for (const item of current.cases) {
+    const status = statusOf(item);
+    const wrapper = make("div", "case");
+    const row = make("button", "case-row");
+    row.setAttribute("aria-expanded", String(opened.has(item.id)));
+    const pill = make("span", "pill " + status.split(" ")[0], STATUS_WORDS[status]);
+    const dots = make("span", "dots");
+    dots.setAttribute("aria-label", "runs passed");
+    for (const run of item.runs) dots.append(make("span", "dot" + (run.answer_ok && (answersOnly || run.trajectory_ok) ? "" : " no")));
+    const passes = answersOnly ? item.answer_passes : item.passes;
+    row.append(pill, make("span", "case-id", item.id), make("span", "request", item.request),
+      make("span", "tally", "live " + item.live_passes + "/" + current.repeats), dots);
+    row.title = passes + " of " + current.repeats + " runs passed";
+    row.addEventListener("click", () => {
+      if (opened.has(item.id)) opened.delete(item.id); else opened.add(item.id);
+      renderCases();
+    });
+    wrapper.append(row);
+    if (opened.has(item.id)) wrapper.append(renderOpen(item));
+    holder.append(wrapper);
+  }
+}
+
+function renderDecide() {
+  const box = $("#decide");
+  box.replaceChildren();
+  for (const entry of current.overrides) {
+    const record = make("div", "record");
+    record.append(make("strong", "", entry.by + " overrode the gate"), make("div", "", entry.reason),
+      make("div", "note", "Waived " + entry.waived.join(", ") + " at " + entry.at));
+    box.append(record);
+  }
+  const summary = current.summary;
+  if (!summary || !summary.blocked) {
+    box.prepend(make("p", "", summary ? "The gate passed, so this pull request merges with no one's sign-off." : "Run the check first."));
+    return;
+  }
+  if (summary.broken.length) {
+    box.prepend(make("p", "", "Some cases have no result, so nothing was measured. That cannot be overridden: run the check again."));
+    return;
+  }
+  if (current.state === "overridden") return;
+  box.append(make("p", "", "The gate blocked this change. A person can still ship it: read the failing cases above, " +
+    "then decide whether the change is wrong or the golden case is. The reason is kept with this exact release."));
+  const nameLabel = make("label", "", "Your name");
+  const nameInput = make("input");
+  nameInput.id = "override-by";
+  nameLabel.htmlFor = "override-by";
+  const reasonLabel = make("label", "", "Why this ships anyway");
+  const reasonInput = make("textarea");
+  reasonInput.id = "override-reason";
+  reasonLabel.htmlFor = "override-reason";
+  const submit = make("button", "", "Override and allow merge");
+  const message = make("div", "error");
+  submit.addEventListener("click", async () => {
+    submit.disabled = true;
+    const response = await fetch("/api/check/" + current.name + "/override", { method: "POST",
+      headers: { "Content-Type": "application/json" }, body: JSON.stringify({ by: nameInput.value, reason: reasonInput.value }) });
+    const body = await response.json();
+    submit.disabled = false;
+    if (!response.ok) { message.textContent = body.error; return; }
+    current = body;
+    overview = await (await fetch("/api/checks")).json();
+    render(false);
+  });
+  box.append(nameLabel, nameInput, reasonLabel, reasonInput, submit, message);
+}
+
+load();
+</script>
+</body>
+</html>

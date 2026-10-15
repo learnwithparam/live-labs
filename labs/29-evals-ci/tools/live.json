@@ -1,0 +1,201 @@
+[
+ {
+  "type": "function",
+  "function": {
+   "name": "search_products",
+   "description": "Find products by name. Returns each match's SKU, name and price, not its stock.",
+   "parameters": {
+    "type": "object",
+    "properties": {
+     "query": {
+      "type": "string",
+      "description": "Words from the product name, such as 'guji 1 kg'."
+     }
+    },
+    "required": [
+     "query"
+    ]
+   }
+  }
+ },
+ {
+  "type": "function",
+  "function": {
+   "name": "get_inventory",
+   "description": "Units in stock and the reorder point for one SKU.",
+   "parameters": {
+    "type": "object",
+    "properties": {
+     "sku": {
+      "type": "string"
+     }
+    },
+    "required": [
+     "sku"
+    ]
+   }
+  }
+ },
+ {
+  "type": "function",
+  "function": {
+   "name": "get_order",
+   "description": "One order: customer, status, carrier, tracking number, total and any amount already refunded.",
+   "parameters": {
+    "type": "object",
+    "properties": {
+     "order_id": {
+      "type": "string",
+      "description": "The order number without '#', such as '1047'."
+     }
+    },
+    "required": [
+     "order_id"
+    ]
+   }
+  }
+ },
+ {
+  "type": "function",
+  "function": {
+   "name": "get_sales",
+   "description": "Revenue and order count between two dates, both included.",
+   "parameters": {
+    "type": "object",
+    "properties": {
+     "start_date": {
+      "type": "string",
+      "description": "YYYY-MM-DD"
+     },
+     "end_date": {
+      "type": "string",
+      "description": "YYYY-MM-DD"
+     }
+    },
+    "required": [
+     "start_date",
+     "end_date"
+    ]
+   }
+  }
+ },
+ {
+  "type": "function",
+  "function": {
+   "name": "list_low_stock",
+   "description": "Every product at or below its reorder point.",
+   "parameters": {
+    "type": "object",
+    "properties": {},
+    "required": []
+   }
+  }
+ },
+ {
+  "type": "function",
+  "function": {
+   "name": "request_approval",
+   "description": "Show the merchant the exact change and wait for approved or declined. Required before update_price, refund_order or create_discount, every time.",
+   "parameters": {
+    "type": "object",
+    "properties": {
+     "action": {
+      "type": "string",
+      "description": "The tool you will call next."
+     },
+     "summary": {
+      "type": "string",
+      "description": "The change in one line, with the amounts, such as 'Refund $68.00 on order 1052'."
+     }
+    },
+    "required": [
+     "action",
+     "summary"
+    ]
+   }
+  }
+ },
+ {
+  "type": "function",
+  "function": {
+   "name": "update_price",
+   "description": "Set a product's price in USD. It changes the live store, so call it only after request_approval returned approved for this exact change.",
+   "parameters": {
+    "type": "object",
+    "properties": {
+     "sku": {
+      "type": "string"
+     },
+     "price": {
+      "type": "number"
+     }
+    },
+    "required": [
+     "sku",
+     "price"
+    ]
+   }
+  }
+ },
+ {
+  "type": "function",
+  "function": {
+   "name": "refund_order",
+   "description": "Refund an amount in USD on an order to the customer's card. It changes the live store, so call it only after request_approval returned approved for this exact change.",
+   "parameters": {
+    "type": "object",
+    "properties": {
+     "order_id": {
+      "type": "string"
+     },
+     "amount": {
+      "type": "number"
+     }
+    },
+    "required": [
+     "order_id",
+     "amount"
+    ]
+   }
+  }
+ },
+ {
+  "type": "function",
+  "function": {
+   "name": "create_discount",
+   "description": "Create a discount code for some SKUs between two dates. It changes the live store, so call it only after request_approval returned approved for this exact change.",
+   "parameters": {
+    "type": "object",
+    "properties": {
+     "code": {
+      "type": "string"
+     },
+     "percent": {
+      "type": "number"
+     },
+     "skus": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      }
+     },
+     "starts": {
+      "type": "string",
+      "description": "YYYY-MM-DD"
+     },
+     "ends": {
+      "type": "string",
+      "description": "YYYY-MM-DD"
+     }
+    },
+    "required": [
+     "code",
+     "percent",
+     "skus",
+     "starts",
+     "ends"
+    ]
+   }
+  }
+ }
+]

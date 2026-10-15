@@ -1,0 +1,10 @@
+{
+ "name": "cheaper-model",
+ "pull_request": 215,
+ "title": "Move Assist to a cheaper model",
+ "author": "Jo Ahn",
+ "branch": "jo/cheaper-model",
+ "model": "qwen/qwen3.7-flash",
+ "prompt": "prompts/live.txt",
+ "tools": "tools/live.json"
+}
