@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tallyroll triage board</title>
+<style>
+:root {
+  --paper: #FAFAFA; --card: #FFFFFF; --ink: #151515; --ink-2: #414141; --muted: #606060; --faint: #808080;
+  --line: #DFDFDF; --accent: #FAFF69; --accent-deep: #4F5101; --fill-dark: #1F1F1C;
+  --pass: #008138; --fail: #BF000F; --wait: #B75000;
+  --sans: Inter, Helvetica, Arial, sans-serif; --mono: Inconsolata, "Courier New", Courier, monospace;
+}
+* { box-sizing: border-box }
+html, body { margin: 0; height: 100% }
+body { background: var(--paper); color: var(--ink); font: 15px/1.45 var(--sans); display: flex; flex-direction: column; min-height: 100vh }
+button { font: inherit; cursor: pointer }
+button:focus-visible, input:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px }
+
+/* The helpdesk's own bar: product, view, and who is on triage today. */
+.bar { display: flex; align-items: center; gap: 20px; padding: 12px 24px; background: var(--fill-dark); color: var(--paper) }
+.bar .brand { font-weight: 700; letter-spacing: -0.01em }
+.bar nav { display: flex; gap: 4px }
+.bar nav span { padding: 6px 12px; border-radius: 6px; color: var(--line) }
+.bar nav span.on { background: var(--paper); color: var(--ink) }
+.bar .rota { margin-left: auto; color: var(--line); font-size: 14px }
+
+/* The router switch and the score it earns: the one number the support lead watches, big. */
+.head { display: grid; grid-template-columns: minmax(560px, 2.4fr) repeat(4, minmax(0, 1fr)); gap: 0; border-bottom: 1px solid var(--line); background: var(--card) }
+.head > div { padding: 16px 24px; border-right: 1px solid var(--line) }
+.head > div:last-child { border-right: 0 }
+.switch { display: inline-flex; border: 1px solid var(--ink); border-radius: 8px; overflow: hidden; margin-top: 8px }
+.switch button { white-space: nowrap; border: 0; background: var(--card); padding: 8px 14px; color: var(--ink) }
+.switch button + button { border-left: 1px solid var(--ink) }
+.switch button[aria-pressed="true"] { background: var(--ink); color: var(--paper) }
+.label { color: var(--muted); font-size: 13px }
+.num { font-size: 34px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; margin-top: 4px }
+.num small { font-size: 15px; font-weight: 400; color: var(--muted); letter-spacing: 0 }
+.num.bad { color: var(--fail) }
+.how { margin-top: 8px; color: var(--ink-2); font-size: 14px; max-width: 62ch }
+
+/* A new ticket, routed live by every router. */
+.compose { display: flex; gap: 10px; padding: 12px 24px; border-bottom: 1px solid var(--line); align-items: center }
+.compose input { flex: 1; min-width: 0; padding: 10px 12px; border: 1px solid var(--faint); border-radius: 8px; font: inherit; background: var(--card); color: var(--ink) }
+.btn { padding: 9px 14px; border-radius: 8px; border: 1px solid var(--ink); background: var(--ink); color: var(--paper) }
+.btn.quiet { background: var(--card); color: var(--ink) }
+.btn[disabled] { opacity: 0.55; cursor: progress }
+.status { color: var(--muted); font-size: 14px; white-space: nowrap }
+
+/* The board: the person lane first and darker, then the six queues. Cards move when the router changes. */
+.board { flex: 1; overflow-x: auto; padding: 16px 24px 24px }
+.lanes { display: grid; grid-template-columns: minmax(270px, 1.25fr) repeat(6, minmax(200px, 1fr)); gap: 12px; min-width: 1500px; align-items: start }
+.lane { background: var(--card); border: 1px solid var(--line); border-radius: 10px; min-height: 420px }
+.lane header { padding: 10px 12px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: baseline; gap: 8px }
+.lane:not(.person) header b { text-transform: capitalize }
+.lane header span { color: var(--muted); font-size: 13px }
+.lane.person { background: var(--fill-dark); border-color: var(--fill-dark); color: var(--paper) }
+.lane.person header { border-color: var(--ink-2) }
+.lane.person header span { color: var(--line) }
+.lane ol { list-style: none; margin: 0; padding: 8px; display: flex; flex-direction: column; gap: 8px }
+.ticket { width: 100%; text-align: left; border: 1px solid var(--line); border-left: 4px solid var(--line); border-radius: 8px; padding: 8px 10px; background: var(--card); color: var(--ink) }
+.ticket .id { font-family: var(--mono); font-size: 13px; color: var(--muted) }
+.ticket .subj { display: block; margin: 2px 0 6px; line-height: 1.3 }
+.ticket .meta { display: flex; justify-content: space-between; gap: 6px; font-size: 13px; color: var(--muted) }
+.ticket.right { border-left-color: var(--pass) }
+.ticket.wrong { border-left-color: var(--fail) }
+.ticket.wrong .moved { color: var(--fail); font-weight: 600 }
+.ticket.new { box-shadow: 0 0 0 3px var(--accent) }
+.person .ticket { background: var(--ink); border-color: var(--ink-2); border-left-color: var(--accent); color: var(--paper) }
+.person .ticket .id, .person .ticket .meta { color: var(--line) }
+.person .ticket.done { border-left-color: var(--pass) }
+.empty { color: var(--faint); font-size: 14px; padding: 8px 4px }
+.person .empty { color: var(--line) }
+
+/* The drawer: one ticket, why it went where it did, and the human in the loop's choice. */
+.drawer { position: fixed; top: 0; right: 0; bottom: 0; width: min(520px, 100vw); background: var(--card); border-left: 1px solid var(--ink); padding: 20px 24px; overflow-y: auto; transform: translateX(100%); transition: transform 0.2s ease-out; z-index: 5 }
+.drawer.open { transform: none }
+.drawer h2 { font-size: 20px; margin: 4px 0 8px; line-height: 1.25 }
+.drawer .body { color: var(--ink-2); margin: 0 0 16px }
+.drawer h3 { font-size: 14px; margin: 18px 0 8px; color: var(--ink-2) }
+.close { float: right; border: 1px solid var(--line); background: var(--card); color: var(--ink); border-radius: 6px; padding: 4px 10px }
+.verdict { padding: 10px 12px; border-radius: 8px; background: var(--paper); border: 1px solid var(--line) }
+.verdict.person { background: var(--fill-dark); color: var(--paper); border-color: var(--fill-dark) }
+.verdict.wrong { border-color: var(--fail) }
+.bars { position: relative }
+.barrow { display: grid; grid-template-columns: 104px minmax(0, 1fr) 44px; gap: 8px; align-items: center; margin: 4px 0; font-size: 14px }
+.barrow .track { height: 14px; background: var(--paper); border: 1px solid var(--line); border-radius: 4px; position: relative; overflow: hidden }
+.barrow .fill { position: absolute; inset: 0 auto 0 0; background: var(--ink-2) }
+.barrow.top .fill { background: var(--ink) }
+.barrow.truth b { text-decoration: underline; text-decoration-color: var(--pass); text-decoration-thickness: 3px }
+.barrow .p { font-family: var(--mono); text-align: right }
+.cut { position: absolute; top: 0; bottom: 0; width: 0; border-left: 2px dashed var(--wait) }
+.legend { font-size: 13px; color: var(--muted) }
+.saids { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px }
+.said { border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; font-size: 14px }
+.said b { display: block }
+.assign { display: flex; flex-wrap: wrap; gap: 6px }
+.assign button { border: 1px solid var(--ink); background: var(--card); color: var(--ink); border-radius: 999px; padding: 6px 12px; text-transform: capitalize }
+.assign button.picked { background: var(--pass); border-color: var(--pass); color: var(--paper) }
+.note { font-size: 14px; color: var(--ink-2) }
+@media (max-width: 760px) {
+  .head { grid-template-columns: 1fr 1fr } .switch { flex-wrap: wrap } .head > div:first-child { grid-column: 1 / -1 }
+  .bar nav, .bar .rota { display: none } .compose { flex-wrap: wrap }
+}
+@media (prefers-reduced-motion: reduce) { .drawer, .ticket { transition: none !important } }
+</style>
+</head>
+<body data-surface="helpdesk triage board">
+<div class="bar">
+  <span class="brand">Tallyroll Support</span>
+  <nav aria-label="Views"><span>Inbox</span><span class="on">Triage</span><span>Queues</span><span>Reports</span></nav>
+  <span class="rota">Triage rota today: Dana Okafor</span>
+</div>
+
+<section class="head" aria-label="Router and score">
+  <div>
+    <span class="label">Who routes this morning's tickets</span><br>
+    <div class="switch" id="ways" role="group" aria-label="Router"></div>
+    <p class="how" id="how"></p>
+  </div>
+  <div><span class="label">Reassigned after routing</span><div class="num" id="s-re">-</div></div>
+  <div><span class="label">Sent to a person</span><div class="num" id="s-person">-</div></div>
+  <div><span class="label">Right queue first time</span><div class="num" id="s-right">-</div></div>
+  <div><span class="label">Slowest 1 in 20, and the bill</span><div class="num" id="s-speed">-</div></div>
+</section>
+
+<form class="compose" id="compose">
+  <label for="text" class="label">New ticket</label>
+  <input id="text" autocomplete="off" placeholder="Describe a customer's problem, as they would write it">
+  <button class="btn" id="route">Route it</button>
+  <button class="btn quiet" type="button" id="rerun">Route the inbox again</button>
+  <span class="status" id="status" role="status"></span>
+</form>
+
+<main class="board"><div class="lanes" id="lanes"></div></main>
+
+<aside class="drawer" id="drawer" aria-label="Ticket" aria-hidden="true"></aside>
+
+<script>
+const NAMES = { embedding: "Embedding", llm: "LLM", decision: "Decision model", both: "LLM + decision" };
+const HOW = {
+  embedding: "Last quarter's five most similar tickets vote. Confidence is the share that agree.",
+  llm: "The LLM reads the routing guide and writes a queue and a confidence. The confidence is a number it wrote.",
+  decision: "The decision model answers one choice question and returns a probability for every queue.",
+  both: "The LLM picks. It goes to that queue only when the decision model picks the same one with 0.6 or more."
+};
+const $ = (id) => document.getElementById(id);
+const state = { room: null, way: "both", rows: {}, live: [], open: null, handoffs: {} };
+
+function esc(s) { return String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
+
+async function load() {
+  state.room = await (await fetch("/api/room")).json();
+  for (const h of state.room.handoffs) state.handoffs[h.id] = h.queue;
+  if (state.room.review) take(state.room.review.rows);
+  $("ways").innerHTML = state.room.ways.map((w) => `<button type="button" data-way="${w}" aria-pressed="${w === state.way}">${NAMES[w]}</button>`).join("");
+  draw();
+  if (!state.room.review) $("status").textContent = "No review yet. Route the inbox to fill the board.";
+}
+
+function take(rows) { for (const r of rows) state.rows[r.how + ":" + r.id] = r; }
+
+// Where each ticket sits for the router on screen, with what it was finally solved in beside it.
+function placed() {
+  const out = [];
+  for (const t of state.room.tickets) {
+    const r = state.rows[state.way + ":" + t.id];
+    if (r) out.push({ t, r });
+  }
+  return state.live.filter((l) => l.result[state.way]).map((l) => ({ t: l.ticket, r: l.result[state.way], fresh: true })).concat(out);
+}
+
+function score() {
+  const s = state.room.review && state.room.review[state.way];
+  const n = state.room.tickets.length;
+  $("s-re").innerHTML = s ? `${s.reassigned} <small>of ${n}</small>` : "-";
+  $("s-re").classList.toggle("bad", !!s && s.reassigned > 4);
+  $("s-person").innerHTML = s ? `${s.to_person} <small>of ${n}</small>` : "-";
+  $("s-right").innerHTML = s ? `${s.right_first_time} <small>of ${n}</small>` : "-";
+  $("s-speed").innerHTML = s ? `${(s.p95_ms / 1000).toFixed(2)} s<br><small>${s.cost_per_1000 ? "$" + s.cost_per_1000.toFixed(3) + " per 1,000 tickets" : "No API bill: it runs here"}</small>` : "-";
+  $("how").textContent = HOW[state.way];
+}
+
+// Why a ticket is in doubt, in the router's own numbers. For the pair, both picks: they disagreed or the decision was low.
+function doubt(t, r) {
+  if (state.way !== "both") return `${esc(r.queue)} at ${r.confidence.toFixed(2)}`;
+  const at = (how) => state.rows[how + ":" + t.id] || (state.live.find((l) => l.ticket.id === t.id) || { result: {} }).result[how];
+  const llm = at("llm"), dec = at("decision");
+  return llm && dec ? `LLM ${esc(llm.queue)}, decision ${esc(dec.queue)} ${dec.confidence.toFixed(2)}` : esc(r.queue);
+}
+
+function card({ t, r, fresh }) {
+  const person = r.to === "person";
+  const handed = state.handoffs[t.id];
+  const known = t.solved_in && !fresh;
+  const cls = ["ticket", fresh ? "new" : "", person ? (handed ? "done" : "") : known ? (r.to === t.solved_in ? "right" : "wrong") : ""].join(" ");
+  const meta = person
+    ? (handed ? `You routed it to ${handed}` : doubt(t, r))
+    : known && r.to !== t.solved_in ? `<span class="moved">Moved to ${esc(t.solved_in)}</span>` : `confidence ${r.confidence.toFixed(2)}`;
+  return `<li><button class="${cls}" data-id="${esc(t.id)}"><span class="id">${esc(t.id)}</span><span class="subj">${esc(t.subject || t.body.slice(0, 70))}</span><span class="meta">${meta}</span></button></li>`;
+}
+
+function draw() {
+  const before = positions();
+  const lanes = ["person", ...Object.keys(state.room.queues)];
+  const all = placed();
+  $("lanes").innerHTML = lanes.map((q) => {
+    const here = all.filter((x) => x.r.to === q);
+    const wrong = here.filter((x) => q !== "person" && !x.fresh && x.t.solved_in && x.t.solved_in !== q).length;
+    const title = q === "person" ? "Needs a person" : q;
+    const sub = q === "person" ? `${here.length} to route by hand` : `${here.length}${wrong ? `, ${wrong} wrong` : ""}`;
+    return `<section class="lane ${q === "person" ? "person" : ""}" aria-label="${title}"><header><b>${title}</b><span>${sub}</span></header>
+      <ol>${here.map(card).join("") || `<li class="empty">${q === "person" ? "Nothing in doubt." : "Empty."}</li>`}</ol></section>`;
+  }).join("");
+  score();
+  glide(before);
+  for (const b of $("ways").children) b.setAttribute("aria-pressed", b.dataset.way === state.way);
+}
+
+// The one motion on the page: when the router changes, each ticket slides from its old lane to its new one.
+function positions() {
+  const at = {};
+  for (const el of document.querySelectorAll(".ticket")) at[el.dataset.id] = el.getBoundingClientRect();
+  return at;
+}
+function glide(before) {
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  for (const el of document.querySelectorAll(".ticket")) {
+    const was = before[el.dataset.id];
+    if (!was) continue;
+    const now = el.getBoundingClientRect();
+    const dx = was.left - now.left, dy = was.top - now.top;
+    if (!dx && !dy) continue;
+    el.style.transform = `translate(${dx}px, ${dy}px)`;
+    el.style.transition = "none";
+    requestAnimationFrame(() => { el.style.transition = "transform 0.45s ease-in-out"; el.style.transform = ""; });
+  }
+}
+
+function bars(probs, top, truth) {
+  const qs = Object.keys(state.room.queues);
+  const cut = state.room.confident * 100;
+  return `<div class="bars">${qs.map((q) => {
+    const p = probs[q] || 0;
+    return `<div class="barrow ${q === top ? "top" : ""} ${q === truth ? "truth" : ""}"><b>${q}</b><span class="track"><span class="fill" style="width:${(p * 100).toFixed(1)}%"></span><span class="cut" style="left:${cut}%"></span></span><span class="p">${p.toFixed(2)}</span></div>`;
+  }).join("")}</div>`;
+}
+
+function verdict(r, truth) {
+  const name = NAMES[state.way];
+  if (r.to === "person") {
+    if (state.way === "both") return `<div class="verdict person">The LLM said ${esc(r.queue)}, and the decision model ${r.confidence ? "agreed" : "did not agree with 0.6 or more"}. A person routes it.</div>`;
+    return `<div class="verdict person">${name} picked ${esc(r.queue)} at ${r.confidence.toFixed(2)}, under 0.6. A person routes it.</div>`;
+  }
+  if (truth && r.to !== truth) return `<div class="verdict wrong">${name} sent it to ${esc(r.to)} at ${r.confidence.toFixed(2)}. It was solved in ${esc(truth)}, so an agent had to move it.</div>`;
+  return `<div class="verdict">${name} sent it to ${esc(r.to)} at ${r.confidence.toFixed(2)}${truth ? ", where it was solved" : ""}.</div>`;
+}
+
+function openTicket(id) {
+  const live = state.live.find((l) => l.ticket.id === id);
+  const t = live ? live.ticket : state.room.tickets.find((x) => x.id === id);
+  const get = (how) => live ? live.result[how] : state.rows[how + ":" + id];
+  const r = get(state.way), llm = get("llm"), dec = get("decision");
+  const truth = live ? "" : t.solved_in;
+  const handed = state.handoffs[id];
+  state.open = id;
+  $("drawer").innerHTML = `<button class="close" id="close">Close</button>
+    <span class="label">${esc(t.id)}${truth ? `, finally solved in <b>${esc(truth)}</b>` : ""}</span>
+    <h2>${esc(t.subject || "New ticket")}</h2><p class="body">${esc(t.body)}</p>
+    ${verdict(r, truth)}
+    <div class="saids" style="margin-top:12px">${llm ? `<div class="said"><b>LLM</b>${esc(llm.queue)}, confidence ${llm.confidence.toFixed(2)} it wrote itself</div>` : ""}
+      ${dec ? `<div class="said"><b>Decision model</b>${esc(dec.queue)}, probability ${dec.confidence.toFixed(2)}</div>` : ""}</div>
+    ${dec ? `<h3>The decision model's probability for every queue</h3>${bars(dec.probabilities, dec.queue, truth)}
+      <p class="legend">The dashed line is 0.6. Under it, a ticket goes to a person.${truth ? " The underlined queue is where it was solved." : ""}</p>` : ""}
+    ${r.to === "person" ? `<h3>You are on triage. Pick its queue.</h3>
+      <div class="assign">${Object.keys(state.room.queues).map((q) => `<button data-assign="${q}" class="${handed === q ? "picked" : ""}">${q}</button>`).join("")}</div>
+      <p class="note">${handed ? `Sent to ${esc(handed)}. It is logged in out/handoffs.jsonl for the routing review.` : "Your choice is logged, so next quarter's history can teach the routers."}</p>` : ""}`;
+  $("drawer").classList.add("open");
+  $("drawer").setAttribute("aria-hidden", "false");
+  $("close").focus();
+}
+
+function closeDrawer() { $("drawer").classList.remove("open"); $("drawer").setAttribute("aria-hidden", "true"); state.open = null; }
+
+$("ways").addEventListener("click", (e) => {
+  const b = e.target.closest("button"); if (!b) return;
+  state.way = b.dataset.way; draw();
+  if (state.open) openTicket(state.open);
+});
+$("lanes").addEventListener("click", (e) => { const b = e.target.closest(".ticket"); if (b) openTicket(b.dataset.id); });
+$("drawer").addEventListener("click", async (e) => {
+  if (e.target.id === "close") return closeDrawer();
+  const q = e.target.dataset.assign; if (!q) return;
+  const got = await (await fetch("/api/handoff", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: state.open, queue: q }) })).json();
+  for (const h of got) state.handoffs[h.id] = h.queue;
+  draw(); openTicket(state.open);
+});
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && state.open) closeDrawer(); });
+
+$("compose").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const text = $("text").value.trim(); if (!text) return;
+  $("route").disabled = true; $("status").textContent = "Routing with every router...";
+  const res = await fetch("/api/route", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text }), signal: AbortSignal.timeout(120000) }).catch(() => ({ ok: false }));
+  $("route").disabled = false;
+  if (!res.ok) { $("status").textContent = "Could not route it. Check the terminal running triage serve."; return; }
+  const id = "NEW-" + (state.live.length + 1);
+  state.live.unshift({ ticket: { id, subject: "", body: text }, result: await res.json() });
+  $("status").textContent = `${id} routed.`; $("text").value = "";
+  draw(); openTicket(id);
+});
+
+$("rerun").addEventListener("click", async () => {
+  $("rerun").disabled = true; state.rows = {}; draw();
+  let n = 0;
+  const res = await fetch("/api/review", { method: "POST" });
+  const reader = res.body.getReader(); const dec = new TextDecoder(); let buf = "";
+  for (;;) {
+    const { done, value } = await reader.read(); if (done) break;
+    buf += dec.decode(value, { stream: true });
+    const lines = buf.split("\n"); buf = lines.pop();
+    for (const line of lines) {
+      if (!line) continue;
+      const ev = JSON.parse(line);
+      if (ev.row) { take([ev.row]); n++; $("status").textContent = `${n} routings so far`; if (ev.row.how === state.way) draw(); }
+      if (ev.summary) { state.room.review = Object.assign({ rows: Object.values(state.rows) }, ev.summary); $("status").textContent = "Inbox routed."; draw(); }
+    }
+  }
+  $("rerun").disabled = false;
+});
+
+load();
+</script>
+</body>
+</html>

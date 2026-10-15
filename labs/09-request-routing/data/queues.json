@@ -1,0 +1,8 @@
+{
+  "payroll": "Pay runs and paychecks: a run that failed, went out late or paid the wrong gross or net amount, off-cycle and bonus runs, direct deposit timing, paper checks, pay stubs and court-ordered garnishments. Not benefit deductions, not tax forms, not imported hours.",
+  "tax": "Payroll taxes: federal and state filings and payments, Form 941 and 940, W-2 and 1099 forms and corrections, letters and penalties from the IRS or a state, state tax account registration, and withholding set up wrong for an employee.",
+  "benefits": "Benefits and deductions: health, dental and vision plans, 401(k) and other retirement contributions, enrolment and plan changes, benefit deductions on a paycheck, COBRA, HSA and FSA, and time-off accrual policies.",
+  "billing": "Tallyroll's own charges to the business: the monthly subscription invoice, plan and price changes, per-employee fees, a card or bank account charged by Tallyroll, refunds of Tallyroll fees, and cancelling the Tallyroll account.",
+  "access": "Signing in and permissions: passwords, two-factor codes, locked accounts, adding or removing admins, user roles, employee portal invitations and single sign-on.",
+  "integrations": "Connections to other software: accounting sync with QuickBooks or Xero, hours imported from time-tracking apps, the Tallyroll API and webhooks, and errors from a connected app."
+}

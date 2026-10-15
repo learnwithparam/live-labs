@@ -114,7 +114,7 @@ owns = "request routing"
 job = "Send each incoming support ticket to the queue that can solve it"
 truth = "the queue each past ticket was finally resolved in"
 metric = "share of tickets reassigned after routing"
-status = "planned"
+status = "ready"
 
 [[lab]]
 n = 10
