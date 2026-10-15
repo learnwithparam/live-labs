@@ -1,0 +1,20 @@
+# Colang flows for the two rails we wrote. `self check input` ships with NeMo Guardrails; its refusal
+# is replaced here so the buyer hears what the assistant can still do.
+
+define bot refuse to respond
+  "I can't help choose homes or areas by who lives there. I can tell you about this home, its schools and their public ratings, the commute and what is nearby."
+
+define bot refuse planted listing
+  "This listing's description holds text aimed at the assistant, so I won't answer from it. A Brightdoor agent has been told. I can still give you the price, size, taxes and commute."
+
+define flow check listing
+  $outcome = execute check_listing
+  if $outcome.is_blocked
+    bot refuse planted listing
+    stop
+
+define flow check answer
+  $outcome = execute check_answer
+  # A transform keeps the conversation going with the compliant rewrite in place of the answer.
+  if $outcome.is_transform
+    $bot_message = $outcome.transform_text["bot_message"]

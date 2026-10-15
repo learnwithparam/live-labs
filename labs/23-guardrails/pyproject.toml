@@ -1,0 +1,27 @@
+[project]
+name = "lab-23-guardrails"
+version = "0.1.0"
+description = "Block Prompt Injection with Guardrails: a home listing assistant behind NeMo Guardrails input and output rails, scored on a labelled set of fair housing messages"
+requires-python = ">=3.11,<3.14"
+dependencies = ["nemoguardrails==0.24.1", "openai==2.54.0"]
+
+[project.scripts]
+listing = "brightdoor.cli:main"
+
+[dependency-groups]
+dev = ["pytest>=8.4"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/brightdoor"]
+
+[tool.uv]
+# Every dependency resolves to a release at least two weeks old, so a fresh one never lands untested.
+exclude-newer = "2026-10-01T00:00:00Z"
+
+[tool.pytest.ini_options]
+markers = ["proof: calls a real model; needs LLM_API_KEY"]
+addopts = "-m 'not proof'"

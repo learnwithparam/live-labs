@@ -282,7 +282,7 @@ owns = "input and output guardrails"
 job = "Block a listing assistant from answers that break fair housing law, as Zillow does"
 truth = "a labelled set of compliant and violating messages"
 metric = "violations caught and good answers wrongly blocked"
-status = "planned"
+status = "ready"
 
 [[lab]]
 n = 24

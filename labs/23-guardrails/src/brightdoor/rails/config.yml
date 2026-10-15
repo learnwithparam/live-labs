@@ -1,0 +1,14 @@
+# NeMo Guardrails configuration for Brightdoor's listing assistant. The rails run around the assistant
+# call the app already makes, so the same assistant can be scored with and without them. The rails'
+# model is handed in by `guard.py` (RAIL_MODEL), so this file names no model or key.
+rails:
+  input:
+    flows:
+      # Built in: the rails model answers the policy question in prompts.yml with Yes or No.
+      - self check input
+      # Ours: the listing text is untrusted, so it is read as data for planted instructions.
+      - check listing
+  output:
+    flows:
+      # Ours: block, rewrite or hold an answer that steers by a protected class.
+      - check answer

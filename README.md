@@ -41,7 +41,7 @@ print what the README promises.
 | 20 | [Ship a Remote MCP Server with OAuth](labs/20-remote-mcp-oauth) | Remote MCP servers from Linear, Sentry and Atlassian | ready |
 | 21 | [Enforce Document Permissions in RAG with OpenFGA](labs/21-rag-permissions) | Glean permission-aware search | ready |
 | 22 | Authorize AI Agent Actions with RBAC and ABAC | Block's Goose: read-only and destructive tools | planned |
-| 23 | Block Prompt Injection with Guardrails | Zillow Fair Housing Classifier | planned |
+| 23 | [Block Prompt Injection with Guardrails](labs/23-guardrails) | Zillow Fair Housing Classifier | ready |
 | 24 | [Redact PII and PHI before the LLM](labs/24-pii-phi) | Clinical scribe products under HIPAA | ready |
 | 25 | Control AI Agent Tool Access with an MCP Gateway | Block's curated list of approved MCP servers | planned |
 | 26 | Route LLM Calls with an LLM Gateway | RouteLLM and Instacart's AI gateway | planned |
