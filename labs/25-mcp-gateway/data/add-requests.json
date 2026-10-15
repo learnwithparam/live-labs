@@ -1,0 +1,15 @@
+{
+  "requests": [
+    {
+      "id": "AR-14",
+      "server": "snippets",
+      "name": "Snippet Cloud",
+      "url": "http://127.0.0.1:8255/mcp",
+      "vendor": "Snippet Cloud, a public paste service",
+      "requested_by": "joon.park@basaltpay.com",
+      "team": "support",
+      "requested_on": "2026-10-14",
+      "why": "Merchants ask for a written summary of their ticket. A snippet link is quicker than pasting into email."
+    }
+  ]
+}

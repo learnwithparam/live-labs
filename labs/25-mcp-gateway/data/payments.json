@@ -1,0 +1,13 @@
+{
+  "payments": [
+    {"id": "PAY-88412", "merchant": "Copperleaf Bakery", "amount": 12.50, "currency": "USD", "card": "visa 4417", "captured_at": "2026-10-13T08:41:07Z", "status": "captured", "refunded": 0.0, "note": "Same card, same amount, 4 seconds after PAY-88411"},
+    {"id": "PAY-88411", "merchant": "Copperleaf Bakery", "amount": 12.50, "currency": "USD", "card": "visa 4417", "captured_at": "2026-10-13T08:41:03Z", "status": "captured", "refunded": 0.0, "note": ""},
+    {"id": "PAY-87990", "merchant": "Northgate Cycles", "amount": 1249.00, "currency": "USD", "card": "mastercard 0921", "captured_at": "2026-09-28T16:02:55Z", "status": "disputed", "refunded": 0.0, "note": ""},
+    {"id": "PAY-88105", "merchant": "Harbor Lane Florist", "amount": 86.40, "currency": "USD", "card": "amex 1006", "captured_at": "2026-10-09T11:20:31Z", "status": "captured", "refunded": 0.0, "note": ""}
+  ],
+  "disputes": [
+    {"id": "DSP-3307", "merchant": "Northgate Cycles", "payment": "PAY-87990", "amount": 1249.00, "reason": "product not received", "opened": "2026-10-02", "status": "open", "respond_by": "2026-10-23"},
+    {"id": "DSP-3291", "merchant": "Northgate Cycles", "payment": "PAY-87655", "amount": 189.99, "reason": "duplicate", "opened": "2026-09-24", "status": "open", "respond_by": "2026-10-15"},
+    {"id": "DSP-3240", "merchant": "Northgate Cycles", "payment": "PAY-87102", "amount": 64.00, "reason": "fraudulent", "opened": "2026-09-11", "status": "won", "respond_by": "2026-10-02"}
+  ]
+}

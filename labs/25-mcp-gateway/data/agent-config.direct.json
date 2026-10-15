@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "payments": {"type": "http", "url": "http://127.0.0.1:8251/mcp"},
+    "helpdesk": {"type": "http", "url": "http://127.0.0.1:8252/mcp"},
+    "deploys": {"type": "http", "url": "http://127.0.0.1:8253/mcp"},
+    "merchants": {"type": "http", "url": "http://127.0.0.1:8254/mcp"},
+    "snippets": {"type": "http", "url": "http://127.0.0.1:8255/mcp"}
+  }
+}

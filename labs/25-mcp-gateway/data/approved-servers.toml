@@ -1,0 +1,74 @@
+# Basalt Pay's approved MCP servers. The platform team reviews every change to this file.
+# `sha256` pins each tool's definition as the reviewer read it: a changed description is blocked.
+
+[[server]]
+name = "payments"
+url = "http://127.0.0.1:8251/mcp"
+owner = "ola.mensah@basaltpay.com"
+owning_team = "payments"
+approved_by = "priya.shah@basaltpay.com"
+approved_on = "2026-06-02"
+
+[[server.tool]]
+name = "find_payment"
+teams = ["support", "support-contractors", "risk"]
+sha256 = "9ddb8ece0fd482d1f1ad7e09af90e1cbf4adcad5cbbb0a42f2d9e35f734856dd"
+
+[[server.tool]]
+name = "refund_payment"
+teams = ["risk"]
+sha256 = "01f1b4c467b2d4356584b54a81d7d53f78b7689cca2a7c0b221f8c419069e54a"
+
+[[server.tool]]
+name = "list_disputes"
+teams = ["support", "risk"]
+sha256 = "061274612a4eb676d8ae5db979e9a0aefb0a56ed344a1195291e07315acb2cdc"
+
+[[server]]
+name = "helpdesk"
+url = "http://127.0.0.1:8252/mcp"
+owner = "maya.lindqvist@basaltpay.com"
+owning_team = "support"
+approved_by = "priya.shah@basaltpay.com"
+approved_on = "2026-06-02"
+
+[[server.tool]]
+name = "find_ticket"
+teams = ["support", "support-contractors"]
+sha256 = "941260d5b4d411ec0e96d85004d929c3e704ad58a7e015decef878fd638f9c07"
+
+[[server.tool]]
+name = "add_ticket_note"
+teams = ["support", "support-contractors"]
+sha256 = "740cff867359f79c7149583f94333e83f39b0b33af342ab842a9d5348b8ee1f7"
+
+[[server]]
+name = "deploys"
+url = "http://127.0.0.1:8253/mcp"
+owner = "dev.raghunathan@basaltpay.com"
+owning_team = "engineering"
+approved_by = "priya.shah@basaltpay.com"
+approved_on = "2026-07-14"
+
+[[server.tool]]
+name = "service_status"
+teams = ["engineering", "support"]
+sha256 = "8a4d64ebeac3fdeafdc2e1fa752ddc759e9c9609318a01be14e0bda1d757ba9e"
+
+[[server.tool]]
+name = "recent_incidents"
+teams = ["engineering"]
+sha256 = "e97acd9fefb43311328dad95fe1338c5080553f0fa0078668359da2378d7bdb9"
+
+[[server]]
+name = "merchants"
+url = "http://127.0.0.1:8254/mcp"
+owner = "Ledgerline (vendor), sponsor ola.mensah@basaltpay.com"
+owning_team = "risk"
+approved_by = "priya.shah@basaltpay.com"
+approved_on = "2026-08-21"
+
+[[server.tool]]
+name = "lookup_merchant"
+teams = ["support", "risk"]
+sha256 = "0235ff824bea5185365a62a7e7c7ec99e52ad32ace2295baffd7eeb58c380196"

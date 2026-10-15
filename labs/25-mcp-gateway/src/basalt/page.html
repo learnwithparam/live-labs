@@ -1,0 +1,446 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="icon" href="data:,">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Basalt Pay MCP servers</title>
+<style>
+:root {
+  --paper: #FAFAFA; --card: #FFFFFF; --ink: #151515; --ink-2: #414141; --muted: #606060; --faint: #808080;
+  --line: #DFDFDF; --accent: #FAFF69; --accent-deep: #4F5101; --fill-dark: #1F1F1C;
+  --pass: #008138; --fail: #BF000F; --wait: #B75000;
+  --sans: Inter, Helvetica, Arial, sans-serif; --mono: Inconsolata, "Courier New", Courier, monospace;
+}
+* { box-sizing: border-box }
+html, body { margin: 0 }
+body { background: var(--paper); color: var(--ink); font: 15px/1.5 var(--sans); min-height: 100vh }
+button, select, textarea { font: inherit }
+button { cursor: pointer }
+button:focus-visible, select:focus-visible, textarea:focus-visible, input:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px }
+h1, h2, h3 { margin: 0; letter-spacing: -0.01em }
+code, .mono { font-family: var(--mono) }
+
+/* The platform team's own tool bar: which environment, and that the gateway refuses when in doubt. */
+.bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 22px; padding: 12px 28px; background: var(--card); border-bottom: 1px solid var(--line) }
+.bar .brand { font-weight: 800; font-size: 18px; letter-spacing: -0.02em }
+.bar .crumbs { color: var(--muted) }
+.bar .crumbs b { color: var(--ink); font-weight: 600 }
+.bar .gate { font-size: 13px; padding: 3px 10px; border-radius: 999px; background: var(--fill-dark); color: var(--paper) }
+.bar .gate .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); margin-right: 6px }
+.bar .who { margin-left: auto; color: var(--ink-2); font-size: 14px }
+
+/* The metric, from the last review: what got through with and without the gateway. */
+.verdict { display: flex; flex-wrap: wrap; gap: 18px 40px; align-items: flex-end; padding: 22px 28px 20px; border-bottom: 1px solid var(--line) }
+.verdict .big { display: flex; align-items: baseline; gap: 14px }
+.verdict .count { font-size: 64px; font-weight: 800; line-height: 1; letter-spacing: -0.04em }
+.verdict .count.zero { color: var(--pass) }
+.verdict .label { max-width: 34rem; color: var(--ink-2) }
+.verdict .label b { color: var(--ink) }
+.verdict .versus { display: flex; flex-wrap: wrap; gap: 8px 26px; color: var(--muted); font-size: 14px }
+.verdict .versus b { display: block; color: var(--ink); font-size: 22px; font-weight: 700 }
+.verdict .versus .bad b { color: var(--fail) }
+
+.desk { display: grid; grid-template-columns: minmax(0, 1fr) 23.5rem; align-items: start }
+.work { padding: 22px 28px 48px; display: flex; flex-direction: column; gap: 30px; min-width: 0 }
+.section-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; margin-bottom: 12px }
+.section-head h2 { font-size: 18px }
+.section-head p { margin: 0; color: var(--muted); font-size: 14px }
+.section-head button { margin-left: auto }
+
+.plain { border: 1px solid var(--line); background: var(--card); border-radius: 8px; padding: 6px 12px; color: var(--ink) }
+.dark { border: 1px solid var(--ink); background: var(--ink); color: var(--paper); border-radius: 8px; padding: 8px 14px; font-weight: 600 }
+.danger { border: 1px solid var(--fail); background: var(--card); color: var(--fail); border-radius: 8px; padding: 8px 14px; font-weight: 600 }
+button:disabled { opacity: .5; cursor: default }
+
+/* A changed tool: the case a person decides, with the exact text the model would now read. */
+.alert { background: var(--card); border: 1px solid var(--line); border-left: 6px solid var(--fail); border-radius: 10px; padding: 18px 20px; display: flex; flex-direction: column; gap: 12px }
+.alert.decided { border-left-color: var(--line) }
+.alert .kicker { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--fail) }
+.alert.decided .kicker { color: var(--muted) }
+.alert h3 { font-size: 18px }
+.alert .why { color: var(--ink-2); margin: 0 }
+.alert pre { margin: 0; white-space: pre-wrap; background: var(--paper); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; font: 15px/1.45 var(--mono); color: var(--ink) }
+.alert .hashes { display: flex; flex-wrap: wrap; gap: 4px 22px; font-size: 13px; color: var(--muted) }
+.alert .hashes code { color: var(--ink) }
+.alert .choice { display: flex; flex-wrap: wrap; gap: 10px; align-items: center }
+.alert .choice span { color: var(--muted); font-size: 14px }
+
+/* The approved list: one card per server, each tool with its teams and its pin. */
+.servers { display: grid; grid-template-columns: repeat(auto-fill, minmax(14.5rem, 1fr)); gap: 14px }
+.server { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; display: flex; flex-direction: column; gap: 8px }
+.server h3 { font-size: 16px; display: flex; align-items: center; gap: 8px }
+.server .meta { color: var(--muted); font-size: 13px; overflow-wrap: anywhere }
+.tool { border-top: 1px solid var(--line); padding-top: 8px; display: flex; flex-direction: column; gap: 4px }
+.tool .name { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-family: var(--mono); font-size: 15px }
+.tool .teams { display: flex; flex-wrap: wrap; gap: 4px }
+.chip { font-size: 12px; padding: 1px 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--ink-2) }
+.state { font-family: var(--sans); font-size: 12px; font-weight: 600; padding: 1px 8px; border-radius: 999px }
+.state.pinned { color: var(--pass); border: 1px solid var(--pass) }
+.state.changed, .state.unlisted { color: var(--card); background: var(--fail) }
+.state.unchecked { color: var(--muted); border: 1px solid var(--line) }
+.tool .pin { font-family: var(--mono); font-size: 13px; color: var(--faint) }
+
+/* A staff member's request to add a server, and the reviewer's look at its tools before saying yes. */
+.request { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; display: flex; flex-direction: column; gap: 10px }
+.request .from { color: var(--ink-2) }
+.request blockquote { margin: 0; padding-left: 12px; border-left: 3px solid var(--accent-deep); color: var(--ink-2) }
+.inspect { display: flex; flex-direction: column; gap: 10px }
+.inspect .candidate { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px }
+.inspect .candidate p { margin: 0; color: var(--ink-2) }
+.inspect .grant { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 14px }
+.inspect textarea { width: 100%; min-height: 64px; border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px }
+.outcome { font-weight: 600 }
+.outcome.approve { color: var(--pass) }
+.outcome.reject { color: var(--fail) }
+.problem { color: var(--fail); font-size: 14px; margin: 0 }
+
+/* The gateway's access log, live: every tool call with who, which server, which tool, and why if refused. */
+.log { background: var(--fill-dark); color: var(--paper); min-height: calc(100vh - 160px); padding: 20px 18px 32px; position: sticky; top: 0; display: flex; flex-direction: column; gap: 14px }
+.log h2 { font-size: 17px }
+.log .hint { color: var(--line); font-size: 13px; margin: 2px 0 0 }
+.probe { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px }
+.probe select { width: 100%; border-radius: 6px; border: 1px solid var(--faint); background: var(--fill-dark); color: var(--paper); padding: 6px 8px }
+.probe button { grid-column: 1 / -1; border: 0; background: var(--accent); color: var(--ink); border-radius: 6px; padding: 7px; font-weight: 700 }
+.probe .said { grid-column: 1 / -1; font-size: 13px; color: var(--line); margin: 0; min-height: 1.2em }
+.calls { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column }
+.call { border-top: 1px solid var(--ink-2); padding: 9px 2px; display: flex; flex-direction: column; gap: 2px; font-size: 14px }
+.call .what { font-family: var(--mono); font-size: 15px; display: flex; justify-content: space-between; gap: 8px }
+.call .who { color: var(--line); font-size: 13px }
+.call .verdict-tag { font-family: var(--sans); font-size: 12px; font-weight: 700; color: var(--accent) }
+.call.refused .verdict-tag { color: var(--card); background: var(--fail); padding: 0 6px; border-radius: 4px }
+.call .reason { color: var(--accent); font-size: 13px }
+/* The one motion: a new call slides into the log, so the room sees the gateway decide in real time. */
+.call.fresh { animation: arrive .9s ease-out }
+@keyframes arrive { from { transform: translateX(14px); background: var(--ink-2) } to { transform: none; background: transparent } }
+@media (prefers-reduced-motion: reduce) { .call.fresh { animation: none } }
+.empty { color: var(--muted); font-size: 14px }
+.log .empty { color: var(--line) }
+
+@media (max-width: 900px) {
+  .desk { grid-template-columns: minmax(0, 1fr) }
+  .log { position: static; min-height: 0 }
+  .bar, .verdict, .work { padding-left: 16px; padding-right: 16px }
+  .verdict .count { font-size: 52px }
+  .bar .who { margin-left: 0 }
+}
+</style>
+</head>
+<body data-surface="MCP server approval console">
+<header class="bar">
+  <span class="brand">Basalt Pay</span>
+  <span class="crumbs">Platform / <b>MCP servers</b></span>
+  <span class="gate"><span class="dot"></span>agentgateway 1.5.0 on :8250, fail closed</span>
+  <span class="who" id="reviewer"></span>
+</header>
+
+<section class="verdict" id="verdict" aria-live="polite"></section>
+
+<div class="desk">
+  <main class="work">
+    <section id="alerts-section">
+      <div class="section-head">
+        <h2>Tool changes waiting on a reviewer</h2>
+        <p>A changed tool stays hidden and blocked until you decide.</p>
+        <button class="plain" id="check-pins" type="button">Check pins now</button>
+      </div>
+      <div id="alerts"></div>
+    </section>
+
+    <section>
+      <div class="section-head">
+        <h2>Approved servers</h2>
+        <p>Generated into the gateway's routes. A server missing here has no route at all.</p>
+      </div>
+      <div class="servers" id="servers"></div>
+    </section>
+
+    <section>
+      <div class="section-head">
+        <h2>Requests to add a server</h2>
+        <p>Read every tool's description before you approve: the model will follow it.</p>
+      </div>
+      <div id="requests"></div>
+    </section>
+  </main>
+
+  <aside class="log" aria-label="Live call log">
+    <div>
+      <h2>Live call log</h2>
+      <p class="hint">From the gateway's access log. Try a call as anyone; no model is needed.</p>
+    </div>
+    <form class="probe" id="probe">
+      <select id="probe-person" aria-label="Staff member"></select>
+      <select id="probe-tool" aria-label="Tool"></select>
+      <button type="submit">Send through the gateway</button>
+      <p class="said" id="probe-said" aria-live="polite"></p>
+    </form>
+    <ul class="calls" id="calls"></ul>
+  </aside>
+</div>
+
+<script>
+const $ = (selector) => document.querySelector(selector);
+const seenCalls = new Set();
+let firstLoad = true;
+let latest = null;
+const inspections = {};
+
+function make(tag, className, text) {
+  const node = document.createElement(tag);
+  if (className) node.className = className;
+  if (text !== undefined && text !== null) node.textContent = text;
+  return node;
+}
+
+async function post(path, body) {
+  const response = await fetch(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body), signal: AbortSignal.timeout(90000) });
+  const answer = await response.json().catch(() => ({}));
+  return { ok: response.ok, ...answer };
+}
+
+function showVerdict(state) {
+  const box = $("#verdict");
+  box.replaceChildren();
+  if (!state.review) {
+    box.append(make("p", "label", "No review yet. Run `gateway review` to score ten staff requests both ways."));
+    return;
+  }
+  const gate = state.review.gateway, direct = state.review.direct;
+  const big = make("div", "big");
+  big.append(make("span", "count" + (gate.got_through === 0 ? " zero" : ""), String(gate.got_through)));
+  const label = make("p", "label");
+  label.append(make("b", "", "calls to unapproved servers or changed tools got through the gateway"),
+    ` in ${gate.requests} staff requests on ${state.model}.`);
+  big.append(label);
+  const versus = make("div", "versus");
+  const figure = (value, text, bad) => {
+    const cell = make("div", bad ? "bad" : "");
+    cell.append(make("b", "", String(value)), text);
+    return cell;
+  };
+  versus.append(
+    figure(direct.got_through, "got through with server URLs in the agent config", direct.got_through > 0),
+    figure(`${direct.tokens_seen_upstream} / ${gate.tokens_seen_upstream}`, "requests that handed a staff token to a server, direct / gateway", direct.tokens_seen_upstream > 0),
+    figure(gate.unlogged ?? "-", "gateway calls missing from the log", gate.unlogged > 0));
+  box.append(big, versus);
+}
+
+function showAlerts(state) {
+  const box = $("#alerts");
+  box.replaceChildren();
+  if (!state.alerts.length) {
+    box.append(make("p", "empty", "Every approved tool matches the definition a reviewer pinned."));
+    return;
+  }
+  for (const alert of [...state.alerts].reverse()) {
+    const card = make("article", "alert" + (alert.decision ? " decided" : ""));
+    card.append(make("span", "kicker", alert.decision ? "Decided" : "Pinned hash mismatch"),
+      make("h3", "", `${alert.server}.${alert.tool} changed since it was approved`),
+      make("p", "why", "Same tool name, new description. The model reads a description as instructions, so the gateway hides this tool and refuses calls to it. This is the text the model would now read:"),
+      make("pre", "", alert.description));
+    const hashes = make("div", "hashes");
+    const pinned = make("span", "", "approved ");
+    pinned.append(make("code", "", alert.pinned.slice(0, 16)));
+    const current = make("span", "", "live ");
+    current.append(make("code", "", alert.current.slice(0, 16)));
+    hashes.append(pinned, current, make("span", "", `first seen ${alert.seen}`));
+    card.append(hashes);
+    const choice = make("div", "choice");
+    if (alert.decision) {
+      const kept = alert.decision.choice === "keep-blocked";
+      choice.append(make("span", "outcome " + (kept ? "approve" : "reject"),
+        `${kept ? "Kept blocked" : "Re-approved: the new text is pinned"} by ${alert.decision.by} on ${alert.decision.on}`));
+    } else {
+      const keep = make("button", "dark", "Keep blocked and tell the owner");
+      const allow = make("button", "danger", "Re-approve this text");
+      keep.type = allow.type = "button";
+      keep.onclick = () => decideDrift(alert, "keep-blocked");
+      allow.onclick = () => decideDrift(alert, "re-approve");
+      choice.append(keep, allow, make("span", "", "You decide: keep refusing, or pin this text as the new approved version."));
+    }
+    card.append(choice);
+    box.append(card);
+  }
+}
+
+async function decideDrift(alert, decision) {
+  await post("/api/drift", { server: alert.server, tool: alert.tool, current: alert.current, decision });
+  refresh();
+}
+
+function showServers(state) {
+  const box = $("#servers");
+  box.replaceChildren();
+  for (const server of state.servers) {
+    const card = make("article", "server");
+    card.append(make("h3", "", server.name),
+      make("div", "meta", `Owner ${server.owner}`),
+      make("div", "meta", `Approved by ${server.approved_by} on ${server.approved_on}`));
+    for (const tool of server.tools) {
+      const row = make("div", "tool");
+      const name = make("div", "name", tool.name);
+      name.append(make("span", "state " + tool.state, tool.state));
+      const teams = make("div", "teams");
+      for (const team of tool.teams) teams.append(make("span", "chip", team));
+      row.append(name, teams, make("div", "pin", `pin ${tool.pin.slice(0, 12)}`));
+      card.append(row);
+    }
+    for (const unlisted of server.unlisted) {
+      const row = make("div", "tool");
+      const name = make("div", "name", unlisted);
+      name.append(make("span", "state unlisted", "not on the list"));
+      row.append(name, make("div", "pin", "offered by the server, never approved, so refused"));
+      card.append(row);
+    }
+    box.append(card);
+  }
+}
+
+function showRequests(state) {
+  const box = $("#requests");
+  const open = box.querySelector("textarea");
+  // A reviewer half way through a note keeps it: the queue is only redrawn when nothing is being typed.
+  if (open && document.activeElement && box.contains(document.activeElement)) return;
+  box.replaceChildren();
+  for (const wanted of state.requests) {
+    const card = make("article", "request");
+    const person = state.people[wanted.requested_by];
+    card.append(make("h3", "", `${wanted.id}: add ${wanted.name}`),
+      make("div", "from", `${person ? person.name : wanted.requested_by} (${wanted.team}) on ${wanted.requested_on}. ${wanted.vendor}.`),
+      make("blockquote", "", wanted.why));
+    if (wanted.decision) {
+      card.append(make("p", "outcome " + wanted.decision.choice,
+        `${wanted.decision.choice === "approve" ? "Approved" : "Rejected"} by ${wanted.decision.by} on ${wanted.decision.on}` +
+        (wanted.decision.note ? `: ${wanted.decision.note}` : "")));
+    } else {
+      card.append(inspector(wanted, state.teams));
+    }
+    box.append(card);
+  }
+}
+
+function inspector(wanted, teams) {
+  const area = make("div", "inspect");
+  const tools = inspections[wanted.id];
+  if (!tools) {
+    const look = make("button", "plain", "Inspect its tools");
+    look.type = "button";
+    look.onclick = async () => {
+      look.disabled = true;
+      const answer = await post("/api/requests/inspect", { id: wanted.id });
+      inspections[wanted.id] = answer.tools || [];
+      refresh();
+    };
+    area.append(look);
+    return area;
+  }
+  for (const tool of tools) {
+    const candidate = make("div", "candidate");
+    candidate.append(make("div", "mono", tool.name), make("p", "", tool.description), make("div", "pin mono", `would pin ${tool.hash.slice(0, 12)}`));
+    const grant = make("div", "grant");
+    for (const team of teams) {
+      const label = make("label");
+      const box = make("input");
+      box.type = "checkbox";
+      box.dataset.tool = tool.name;
+      box.dataset.team = team;
+      label.append(box, ` ${team}`);
+      grant.append(label);
+    }
+    candidate.append(grant);
+    area.append(candidate);
+  }
+  const note = make("textarea");
+  note.placeholder = "Why you approve or reject. The requester sees this.";
+  note.setAttribute("aria-label", "Reviewer note");
+  const problem = make("p", "problem");
+  const approve = make("button", "dark", "Approve ticked tools");
+  const reject = make("button", "danger", "Reject");
+  approve.type = reject.type = "button";
+  const choice = make("div", "choice");
+  choice.style.display = "flex";
+  choice.style.gap = "10px";
+  choice.append(approve, reject);
+  async function decide(decision) {
+    const granted = {};
+    for (const box of area.querySelectorAll("input[type=checkbox]:checked")) {
+      (granted[box.dataset.tool] ||= []).push(box.dataset.team);
+    }
+    const answer = await post("/api/requests/decide", { id: wanted.id, decision, teams: granted, note: note.value });
+    if (answer.error) { problem.textContent = answer.error; return; }
+    note.blur();
+    refresh();
+  }
+  approve.onclick = () => decide("approve");
+  reject.onclick = () => decide("reject");
+  area.append(note, choice, problem);
+  return area;
+}
+
+function showLog(state) {
+  const list = $("#calls");
+  list.replaceChildren();
+  const rows = [...state.log].reverse();
+  if (!rows.length) list.append(make("li", "empty", "No calls yet. Send one above, or run `gateway review`."));
+  for (const row of rows) {
+    const key = `${row.time}|${row.person}|${row.tool}`;
+    const item = make("li", "call" + (row.allowed ? "" : " refused") + (!firstLoad && !seenCalls.has(key) ? " fresh" : ""));
+    seenCalls.add(key);
+    const what = make("div", "what", row.server ? `${row.server}.${row.tool}` : row.tool);
+    what.append(make("span", "verdict-tag", row.allowed ? "ran" : "refused"));
+    item.append(what, make("div", "who", `${row.person}${row.team ? " (" + row.team + ")" : ""}, ${row.time.slice(11, 19)}`));
+    if (!row.allowed) item.append(make("div", "reason", row.reason));
+    list.append(item);
+  }
+  firstLoad = false;
+}
+
+function fillProbe(state) {
+  const people = $("#probe-person"), tools = $("#probe-tool");
+  if (people.options.length) return;
+  for (const [email, person] of Object.entries(state.people)) {
+    const option = make("option", "", `${person.name} (${person.team})`);
+    option.value = email;
+    people.append(option);
+  }
+  for (const tool of state.samples) {
+    const option = make("option", "", tool);
+    option.value = tool;
+    tools.append(option);
+  }
+}
+
+$("#probe").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const said = $("#probe-said");
+  said.textContent = "Sending...";
+  const answer = await post("/api/test-call", { person: $("#probe-person").value, tool: $("#probe-tool").value });
+  said.textContent = answer.ran ? "The gateway let it through and the server ran it." : `Refused: ${answer.reason}`;
+  refresh();
+});
+
+$("#check-pins").addEventListener("click", async () => {
+  $("#check-pins").disabled = true;
+  await post("/api/pins/check", {});
+  $("#check-pins").disabled = false;
+  refresh();
+});
+
+async function refresh() {
+  const response = await fetch("/api/state", { signal: AbortSignal.timeout(10000) });
+  latest = await response.json();
+  $("#reviewer").textContent = `Reviewing as ${latest.reviewer}`;
+  showVerdict(latest);
+  showAlerts(latest);
+  showServers(latest);
+  showRequests(latest);
+  showLog(latest);
+  fillProbe(latest);
+}
+
+refresh();
+setInterval(refresh, 3000);
+</script>
+</body>
+</html>

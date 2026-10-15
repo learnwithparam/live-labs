@@ -43,7 +43,7 @@ print what the README promises.
 | 22 | [Authorize AI Agent Actions with RBAC and ABAC](labs/22-agent-actions-authz) | Block's Goose: read-only and destructive tools | ready |
 | 23 | [Block Prompt Injection with Guardrails](labs/23-guardrails) | Zillow Fair Housing Classifier | ready |
 | 24 | [Redact PII and PHI before the LLM](labs/24-pii-phi) | Clinical scribe products under HIPAA | ready |
-| 25 | Control AI Agent Tool Access with an MCP Gateway | Block's curated list of approved MCP servers | planned |
+| 25 | [Control AI Agent Tool Access with an MCP Gateway](labs/25-mcp-gateway) | Block's curated list of approved MCP servers | ready |
 | 26 | Route LLM Calls with an LLM Gateway | RouteLLM and Instacart's AI gateway | planned |
 | 27 | Manage Prompts Outside Your Code | Langfuse and PromptLayer prompt registries | planned |
 | 28 | Trace AI Agents with OpenTelemetry | OpenTelemetry GenAI conventions | planned |

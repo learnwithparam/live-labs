@@ -1,0 +1,27 @@
+# Basalt Pay staff who run agents, and the team each one signs in as. The gateway reads the team from
+# the sign-in token, never from the agent, so a person cannot claim a team they are not in.
+
+[[person]]
+email = "maya.lindqvist@basaltpay.com"
+name = "Maya Lindqvist"
+team = "support"
+
+[[person]]
+email = "joon.park@basaltpay.com"
+name = "Joon Park"
+team = "support"
+
+[[person]]
+email = "sam.okafor@partners.basaltpay.com"
+name = "Sam Okafor"
+team = "support-contractors"
+
+[[person]]
+email = "ola.mensah@basaltpay.com"
+name = "Ola Mensah"
+team = "risk"
+
+[[person]]
+email = "dev.raghunathan@basaltpay.com"
+name = "Dev Raghunathan"
+team = "engineering"

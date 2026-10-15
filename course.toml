@@ -306,7 +306,7 @@ owns = "the MCP gateway"
 job = "Let staff agents use only approved MCP servers, as Block does with its curated list"
 truth = "the approved server list"
 metric = "calls to unapproved servers that got through (zero)"
-status = "planned"
+status = "ready"
 
 [[lab]]
 n = 26

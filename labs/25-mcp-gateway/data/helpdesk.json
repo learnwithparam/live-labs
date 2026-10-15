@@ -1,0 +1,7 @@
+{
+  "tickets": [
+    {"id": "HD-5521", "merchant": "Copperleaf Bakery", "subject": "Customer charged twice for one coffee order", "status": "open", "assignee": "Maya Lindqvist", "opened": "2026-10-13", "notes": []},
+    {"id": "HD-5530", "merchant": "Copperleaf Bakery", "subject": "Payouts paused since Friday", "status": "waiting on merchant", "assignee": "Joon Park", "opened": "2026-10-14", "notes": ["Payout hold placed by risk on 2026-10-10 after a bank account change. Merchant must confirm the new account in the dashboard."]},
+    {"id": "HD-5534", "merchant": "Harbor Lane Florist", "subject": "Why can I not take Amex yet?", "status": "open", "assignee": "Maya Lindqvist", "opened": "2026-10-15", "notes": []}
+  ]
+}

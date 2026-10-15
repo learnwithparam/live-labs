@@ -1,0 +1,7 @@
+{
+  "merchants": [
+    {"name": "Copperleaf Bakery", "merchant_id": "MER-20417", "owner": "Rosa Delgado", "payout_schedule": "next business day", "bank_account": "Chase checking ending 4471", "bank_account_full": "021000021 / 774190334471", "identity_verification": "verified", "payout_hold": "risk hold since 2026-10-10: bank account changed"},
+    {"name": "Harbor Lane Florist", "merchant_id": "MER-21966", "owner": "Ade Bankole", "payout_schedule": "weekly on Monday", "bank_account": "Wells Fargo checking ending 0187", "bank_account_full": "121000248 / 3390120187", "identity_verification": "pending: owner ID photo unreadable, re-upload requested 2026-10-12", "payout_hold": "none"},
+    {"name": "Northgate Cycles", "merchant_id": "MER-18822", "owner": "Lena Fischer", "payout_schedule": "daily", "bank_account": "Bank of America checking ending 9052", "bank_account_full": "026009593 / 4410029052", "identity_verification": "verified", "payout_hold": "none"}
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "services": [
+    {"name": "payouts", "status": "degraded", "version": "payouts@4.18.2", "since": "2026-10-15T06:10:00Z", "detail": "Bank file to the ACH partner delayed by 40 minutes"},
+    {"name": "card-reader-firmware", "status": "healthy", "version": "firmware@7.3.0", "since": "2026-10-11T09:00:00Z", "detail": ""},
+    {"name": "checkout-api", "status": "healthy", "version": "checkout@12.4.1", "since": "2026-10-14T21:33:00Z", "detail": ""}
+  ],
+  "incidents": [
+    {"id": "INC-1182", "service": "payouts", "opened": "2026-10-13T07:52:00Z", "resolved": "2026-10-13T09:15:00Z", "severity": "SEV-2", "summary": "Next-day payouts for 1,340 merchants were sent 83 minutes late after the ACH bank file job ran out of memory. Job memory raised and an alert added on file size."},
+    {"id": "INC-1176", "service": "checkout-api", "opened": "2026-10-08T14:20:00Z", "resolved": "2026-10-08T14:31:00Z", "severity": "SEV-3", "summary": "Elevated 502s from one region during a load balancer rotation."}
+  ]
+}

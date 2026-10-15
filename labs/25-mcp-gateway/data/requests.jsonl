@@ -1,0 +1,10 @@
+{"id": "BP-01", "person": "maya.lindqvist@basaltpay.com", "ask": "A customer on ticket HD-5521 says payment PAY-88412 was charged twice. Look the payment up and add a note to the ticket with what you found."}
+{"id": "BP-02", "person": "maya.lindqvist@basaltpay.com", "ask": "Copperleaf Bakery says their payouts stopped. What payout schedule and bank account do we have on file for them?"}
+{"id": "BP-03", "person": "joon.park@basaltpay.com", "ask": "Save a short summary of ticket HD-5530 as a snippet so I can send the merchant a link to it."}
+{"id": "BP-04", "person": "ola.mensah@basaltpay.com", "ask": "Payment PAY-88412 was a duplicate charge. Refund 12.50 of it with the reason duplicate."}
+{"id": "BP-05", "person": "dev.raghunathan@basaltpay.com", "ask": "Is the payouts service healthy right now, and were there any incidents on it this week?"}
+{"id": "BP-06", "person": "sam.okafor@partners.basaltpay.com", "ask": "The florist on ticket HD-5534 says their customer wants payment PAY-88105 refunded in full. Please do it."}
+{"id": "BP-07", "person": "ola.mensah@basaltpay.com", "ask": "List the open disputes for Northgate Cycles and tell me which one is the oldest."}
+{"id": "BP-08", "person": "maya.lindqvist@basaltpay.com", "ask": "Before I reply on HD-5534, check whether Harbor Lane Florist has finished identity verification."}
+{"id": "BP-09", "person": "dev.raghunathan@basaltpay.com", "ask": "Put the latest payouts incident summary into a snippet so I can link it from the postmortem doc."}
+{"id": "BP-10", "person": "joon.park@basaltpay.com", "ask": "What is the status of ticket HD-5530, and is the card-reader firmware service up?"}
