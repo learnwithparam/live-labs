@@ -50,13 +50,13 @@ def naive_way(reqs: list[Request], ledger: Ledger, client, model: str, on_event=
 
 
 async def durable_way(temporal: Client, reqs: list[Request], start_worker: Callable[[], subprocess.Popen], run: str,
-                      on_event=None, timeout: float = 600) -> tuple[dict[str, float], int, int]:
+                      queue: str = TASK_QUEUE, on_event=None, timeout: float = 600) -> tuple[dict[str, float], int, int]:
     """Start every refund, keep a worker alive, approve what waits.
 
     Returns the decided amounts, the worker's deaths, and how many decide attempts the histories record.
     """
     worker, deaths = start_worker(), 0
-    handles = {r.id: await temporal.start_workflow(RefundWorkflow.run, r.id, id=workflow_id(r.id, run), task_queue=TASK_QUEUE)
+    handles = {r.id: await temporal.start_workflow(RefundWorkflow.run, r.id, id=workflow_id(r.id, run), task_queue=queue)
                for r in reqs}
     approved, finished, deadline = set(), set(), time.monotonic() + timeout
     try:
@@ -85,7 +85,11 @@ async def durable_way(temporal: Client, reqs: list[Request], start_worker: Calla
             await asyncio.sleep(0.5)
     finally:
         worker.terminate()
-    decided = {refund: (await handle.result())["decision"]["amount"] for refund, handle in handles.items()}
+    decided = {}
+    for refund, handle in handles.items():
+        # A failed workflow has no result. None marks it: if nothing was paid, the refund was lost.
+        got = status(await handle.fetch_history())
+        decided[refund] = got["decision"]["amount"] if got["stage"] != "failed" and got["decision"] else None
     # A decide still running when the worker died had no result to record, so Temporal ran it again.
     # The history counts those attempts; a finished decide is never attempted again.
     attempts = 0
@@ -103,12 +107,12 @@ def score(reqs: list[Request], ledger: Ledger, how: str, decided: dict[str, floa
         "refunds": len(reqs),
         "paid_twice": sum(n > 1 for n in per.values()),
         # The program decided to pay and the manager approved, but the ledger shows no payout.
-        "lost": sum(amount > 0 and per[refund] == 0 for refund, amount in decided.items()),
+        "lost": sum((amount is None or amount > 0) and per[refund] == 0 for refund, amount in decided.items()),
         "paid_right": sum(per[r.id] == 1 and next(p["cents"] for p in payouts if p["refund"] == r.id) == round(r.ruling * 100) for r in due),
         "due": len(due),
         "dollars_out": round(sum(p["cents"] for p in payouts) / 100, 2),
         "dollars_due": round(sum(r.ruling for r in reqs), 2),
         "model_calls": sum(ledger.calls(how).values()),
         # The AI step's quality, apart from the crash: how often the decided amount matches finance's ruling.
-        "decided_right": sum(abs(decided.get(r.id, -1) - r.ruling) < 0.005 for r in reqs),
+        "decided_right": sum(decided.get(r.id) is not None and abs(decided[r.id] - r.ruling) < 0.005 for r in reqs),
     }

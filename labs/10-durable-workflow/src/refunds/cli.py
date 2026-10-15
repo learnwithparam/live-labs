@@ -10,6 +10,7 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 from refunds.ledger import DEFAULT, Ledger
+from refunds.workflow import TASK_QUEUE
 
 REVIEW_LEDGER = Path("out/review-ledger.db")
 TEMPORAL_DB = Path("out/temporal.db")
@@ -54,12 +55,13 @@ async def temporal(keep: Path | None = None):
         yield env.client, address
 
 
-def start_worker(address: str, ledger: Path, crash_after_pay: bool) -> subprocess.Popen:
-    args = [sys.executable, "-c", "from refunds.cli import main; main()", "worker", "--address", address, "--ledger", str(ledger)]
+def start_worker(address: str, ledger: Path, crash_after_pay: bool, queue: str = TASK_QUEUE) -> subprocess.Popen:
+    args = [sys.executable, "-c", "from refunds.cli import main; main()", "worker", "--address", address, "--ledger", str(ledger),
+            "--queue", queue]
     return subprocess.Popen(args + (["--crash-after-pay"] if crash_after_pay else []))
 
 
-def worker(address: str, ledger: Path, crash_after_pay: bool) -> int:
+def worker(address: str, ledger: Path, crash_after_pay: bool, queue: str = TASK_QUEUE) -> int:
     from temporalio.worker import Worker
 
     from refunds.workflow import Steps, worker_parts
@@ -69,7 +71,7 @@ def worker(address: str, ledger: Path, crash_after_pay: bool) -> int:
 
     async def go():
         # Activities here are plain functions, so the worker runs them on threads.
-        async with Worker(await connect(address), activity_executor=ThreadPoolExecutor(4), **worker_parts(steps)):
+        async with Worker(await connect(address), activity_executor=ThreadPoolExecutor(4), **worker_parts(steps, queue)):
             await asyncio.Event().wait()
 
     with contextlib.suppress(KeyboardInterrupt):
@@ -92,7 +94,7 @@ def naive_run(refund: str, crash_after_pay: bool) -> int:
 def durable_run(refund: str, crash_after_pay: bool) -> int:
     """Start one refund's workflow and keep a worker alive until it finishes, printing each stage."""
     from refunds.history import status
-    from refunds.workflow import RefundWorkflow, TASK_QUEUE, workflow_id
+    from refunds.workflow import RefundWorkflow, workflow_id
     from temporalio.client import WorkflowExecutionStatus
 
     async def go():
@@ -164,8 +166,11 @@ def review() -> int:
         async with temporal() as (temporal_client, address):
             import uuid
 
-            return await durable_way(temporal_client, reqs, lambda: start_worker(address, REVIEW_LEDGER, True),
-                                     uuid.uuid4().hex[:6], on_event=show)
+            run = uuid.uuid4().hex[:6]
+            # Its own queue: a desk or `refund run` worker on the same server must not take these refunds.
+            queue = f"refunds-review-{run}"
+            return await durable_way(temporal_client, reqs, lambda: start_worker(address, REVIEW_LEDGER, True, queue),
+                                     run, queue, on_event=show)
 
     decided["durable"], deaths, attempts = asyncio.run(go())
     result = {how: score(reqs, ledger, how, decided[how]) for how in WAYS} | {"worker_deaths": deaths, "decide_attempts": attempts}
@@ -175,7 +180,8 @@ def review() -> int:
         print(f"{how:<10}{s['paid_twice']:<12}{s['lost']:<7}{str(s['paid_right']) + ' of ' + str(s['due']):<13}"
               f"{s['model_calls']:<13}${s['dollars_out']:,.2f} (${s['dollars_due']:,.2f})")
     retried = attempts - len(reqs)
-    print(f"\nThe durable worker died {deaths} times and lost nothing. {retried} model calls were a decide that was")
+    lost = result["durable"]["lost"]
+    print(f"\nThe durable worker died {deaths} times and lost {lost or 'nothing'}. {retried} model calls were a decide that was")
     print("still running when the worker died; a finished decide was never asked again. Every payout: out/review-ledger.db")
     result["payouts"] = ledger.payouts()
     Path("out/review.json").write_text(json.dumps(result, indent=1))
@@ -231,6 +237,7 @@ def main() -> None:
     work.add_argument("--address", default=None)
     work.add_argument("--ledger", type=Path, default=DEFAULT)
     work.add_argument("--crash-after-pay", action="store_true")
+    work.add_argument("--queue", default=TASK_QUEUE)
     sub.add_parser("serve").add_argument("--port", type=int, default=8000)
     args = parser.parse_args()
     if args.command == "naive":
@@ -246,5 +253,5 @@ def main() -> None:
     if args.command == "server":
         sys.exit(server())
     if args.command == "worker":
-        sys.exit(worker(args.address or temporal_address(), args.ledger, args.crash_after_pay))
+        sys.exit(worker(args.address or temporal_address(), args.ledger, args.crash_after_pay, args.queue))
     sys.exit(serve_page(args.port))

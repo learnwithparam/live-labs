@@ -22,6 +22,8 @@ with workflow.unsafe.imports_passed_through():
 TASK_QUEUE = "refunds"
 # A manager has three days to answer; after that the refund is escalated and keeps waiting.
 APPROVAL_DEADLINE = timedelta(days=3)
+# After this long without a decision the refund fails and goes to a person, however many tries it took.
+DECIDE_GIVE_UP = timedelta(minutes=15)
 
 
 @dataclass
@@ -71,8 +73,11 @@ class RefundWorkflow:
     @workflow.run
     async def run(self, refund: str) -> dict:
         # A model call can time out or fail; Temporal retries it. Once it returns, the answer is history.
+        # Cap the time, not the attempts: a worker that dies mid-call also uses an attempt, and three
+        # deaths in a row once failed a refund the model could have decided.
         self.decision = await workflow.execute_activity(
-            "decide", refund, start_to_close_timeout=timedelta(seconds=90), retry_policy=RetryPolicy(maximum_attempts=3))
+            "decide", refund, start_to_close_timeout=timedelta(seconds=90), schedule_to_close_timeout=DECIDE_GIVE_UP,
+            retry_policy=RetryPolicy(maximum_attempts=0))
         if self.decision["needs_approval"]:
             self.stage, self.waiting_since = "waiting", workflow.now().isoformat()
             try:
@@ -108,9 +113,13 @@ class RefundWorkflow:
                 "verdict": self.verdict, "manager": self.manager, "waiting_since": self.waiting_since}
 
 
-def worker_parts(steps: Steps) -> dict:
-    """What a worker registers. The CLI and the tests build their workers from this one list."""
-    return {"task_queue": TASK_QUEUE, "workflows": [RefundWorkflow], "activities": [steps.decide, steps.pay]}
+def worker_parts(steps: Steps, queue: str = TASK_QUEUE) -> dict:
+    """What a worker registers. The CLI and the tests build their workers from this one list.
+
+    A worker takes any task on its queue. Two programs with different ledgers on one server need two
+    queues, or one program's worker pays the other's refunds into the wrong ledger.
+    """
+    return {"task_queue": queue, "workflows": [RefundWorkflow], "activities": [steps.decide, steps.pay]}
 
 
 def workflow_id(refund: str, run: str = "") -> str:

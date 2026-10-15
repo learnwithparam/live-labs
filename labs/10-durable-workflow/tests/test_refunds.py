@@ -139,6 +139,22 @@ async def test_a_crash_after_paying_retries_the_payment_and_the_key_stops_a_seco
     assert llm.calls == 1
 
 
+async def test_a_decide_that_dies_more_than_three_times_still_finishes(env, tmp_path):
+    ledger, llm = Ledger(tmp_path / "l.db"), FakeLLM()
+    real = llm.create
+
+    def flaky(**kwargs):
+        # As a worker dying mid-call looks to Temporal: the attempt fails with no result.
+        if llm.calls < 4:
+            llm.calls += 1
+            raise RuntimeError("worker died mid-call")
+        return real(**kwargs)
+
+    llm.chat.completions.create = flaky
+    got = await run_refund(env, ledger, llm, "RF-302")
+    assert got["stage"] == "paid" and llm.calls == 5
+
+
 async def test_a_zero_refund_is_declined_without_paying(env, tmp_path):
     ledger = Ledger(tmp_path / "l.db")
     got = await run_refund(env, ledger, FakeLLM(), "RF-303")
@@ -148,11 +164,13 @@ async def test_a_zero_refund_is_declined_without_paying(env, tmp_path):
 async def test_the_desk_reads_a_refund_from_its_history_and_refuses_a_foreign_origin(env, tmp_path):
     import asyncio
 
-    from refunds.serve import Room, serve, status
+    from refunds.serve import DESK_QUEUE, Room, serve, status
 
-    ledger = Ledger(tmp_path / "l.db")
+    ledger, stray = Ledger(tmp_path / "l.db"), Ledger(tmp_path / "stray.db")
     steps = Steps(ledger, FakeLLM(), "m")
-    async with Worker(env.client, activity_executor=ThreadPoolExecutor(2), **worker_parts(steps)):
+    # A `refund run` worker left running on the same server, with its own ledger, must not pay desk refunds.
+    async with Worker(env.client, activity_executor=ThreadPoolExecutor(2), **worker_parts(Steps(stray, FakeLLM(), "m"))), \
+            Worker(env.client, activity_executor=ThreadPoolExecutor(2), **worker_parts(steps, DESK_QUEUE)):
         room = Room(env.client, "unused", asyncio.get_running_loop(), ledger=ledger.path, review_file=tmp_path / "r.json")
         server = serve(room, 0)
         threading.Thread(target=server.serve_forever, daemon=True).start()
@@ -177,6 +195,7 @@ async def test_the_desk_reads_a_refund_from_its_history_and_refuses_a_foreign_or
         await handle.result()
         got = status(await handle.fetch_history())
         assert got["stage"] == "paid" and got["verdict"] == "approved" and got["done"]
+        assert len(ledger.payouts()) == 1 and stray.payouts() == []
         with pytest.raises(urllib.error.HTTPError) as refused:
             await asyncio.to_thread(call, "/api/desk", None, {"Origin": "http://evil.example"})
         assert refused.value.code == 403

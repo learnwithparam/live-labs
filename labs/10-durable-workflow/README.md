@@ -133,10 +133,10 @@ In our run on 8 refunds, $3,901 due in total:
 | Way | Paid twice | Lost | Paid the right amount | Model calls | Dollars out |
 | --- | --- | --- | --- | --- | --- |
 | Plain script | 6 | 0 | 0 of 6 | 14 | $8,846 |
-| Temporal workflow | 0 | 0 | 5 of 6 | 13 | $4,423 |
+| Temporal workflow | 0 | 0 | 5 of 6 | 12 | $4,423 |
 
 The plain script paid every refund it reached twice. The workflow paid each once, though the worker
-died 6 times. Its 5 extra model calls were decide steps still running in the worker when it died.
+died 6 times. Its 4 extra model calls were decide steps still running in the worker when it died.
 They had no result to record, so Temporal ran them again. A finished decision was never asked again.
 
 Paying the right amount is a separate question: one decided amount did not match finance's ruling.
@@ -188,7 +188,9 @@ workflow code itself free of clocks, randomness and network calls, so a replay t
 ## At an enterprise
 
 Run workers as a deployment that can be killed at any time, and alert on workflows waiting past their
-deadline. Version workflow code before changing a running workflow's steps. Reconcile the provider's
+deadline. Give each program its own task queue: a worker takes any task on its queue. Our first review
+recording lost 6 refunds to a desk worker on the same queue, which paid them into the desk's ledger.
+Version workflow code before changing a running workflow's steps. Reconcile the provider's
 ledger against the workflows every day: a payout with no workflow, or a workflow with two payouts, is
 an incident.
 

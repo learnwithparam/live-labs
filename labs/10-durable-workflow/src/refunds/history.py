@@ -42,6 +42,11 @@ def decoded(payloads) -> object:
     return default().payload_converter.from_payloads(payloads.payloads)[0] if payloads.payloads else None
 
 
+# A workflow that failed, timed out or was terminated is over too: a person has to look at it.
+ENDED_BADLY = {"workflow_execution_failed_event_attributes", "workflow_execution_timed_out_event_attributes",
+               "workflow_execution_terminated_event_attributes"}
+
+
 def status(history) -> dict:
     """Where a refund stands: its stage, decision, payout and the manager's verdict, from the history alone."""
     stage, decision, payout, verdict, waiting_since, steps = "deciding", None, None, None, None, {}
@@ -65,5 +70,8 @@ def status(history) -> dict:
             verdict = "approved" if e.workflow_execution_signaled_event_attributes.signal_name == "approve" else "rejected"
         elif kind == "workflow_execution_completed_event_attributes":
             stage = decoded(e.workflow_execution_completed_event_attributes.result)["stage"]
+        elif kind in ENDED_BADLY:
+            stage = "failed"
+    last = history.events[-1].WhichOneof("attributes")
     return {"stage": stage, "decision": decision, "payout": payout, "verdict": verdict, "waiting_since": waiting_since,
-            "done": history.events[-1].WhichOneof("attributes") == "workflow_execution_completed_event_attributes"}
+            "done": last == "workflow_execution_completed_event_attributes" or last in ENDED_BADLY}

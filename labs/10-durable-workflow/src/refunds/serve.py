@@ -22,6 +22,8 @@ from refunds.workflow import APPROVAL_DEADLINE, RefundWorkflow, TASK_QUEUE, work
 
 PAGE = Path(__file__).with_name("page.html")
 REVIEW = Path("out/review.json")
+# The desk's own queue, so a `refund run` or review worker on the same server never pays its refunds.
+DESK_QUEUE = f"{TASK_QUEUE}-desk"
 
 
 class Room:
@@ -52,7 +54,8 @@ class Room:
             if self.worker and self.worker.poll() is None:
                 return
             self.crash_after_pay = crash_after_pay
-            args = [sys.executable, "-c", "from refunds.cli import main; main()", "worker", "--address", self.address, "--ledger", str(self.ledger.path)]
+            args = [sys.executable, "-c", "from refunds.cli import main; main()", "worker", "--address", self.address, "--ledger", str(self.ledger.path),
+                    "--queue", DESK_QUEUE]
             self.worker = subprocess.Popen(args + (["--crash-after-pay"] if crash_after_pay else []), start_new_session=True)
 
     def kill_worker(self) -> None:
@@ -72,7 +75,7 @@ class Room:
 
     def start(self, refund: str) -> None:
         wid = workflow_id(refund, self.run)
-        self.call(self.client.start_workflow(RefundWorkflow.run, refund, id=wid, task_queue=TASK_QUEUE))
+        self.call(self.client.start_workflow(RefundWorkflow.run, refund, id=wid, task_queue=DESK_QUEUE))
         self.started[refund] = wid
 
     def verdict(self, refund: str, reject: bool, manager: str) -> None:
