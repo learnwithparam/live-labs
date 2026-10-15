@@ -61,8 +61,8 @@ only "up to", and one with no salary at all. They are synthetic.
 ## Set up
 
 You need [uv](https://docs.astral.sh/uv/) and a key for any OpenAI-compatible endpoint. The lab was
-measured on `google/gemini-2.5-flash-lite` through [OpenRouter](https://openrouter.ai): scoring one
-prompt against all 14 postings costs about a tenth of a cent.
+measured on `openai/gpt-6-luna` through [OpenRouter](https://openrouter.ai): scoring one prompt
+against all 14 postings costs about a seventh of a cent.
 
 ```bash
 cp env.example .env
@@ -103,9 +103,9 @@ uv run postings eval prompts/shipped.txt
 
 Expect: /shipped: \d+/98 fields right/
 
-This is the baseline every change is measured against. In our runs the shipped prompt got 97 of 98
-fields right: it read "2+ years" on the Harbor posting as junior, where the person approved mid.
-The run is saved to `runs/shipped.json`.
+This is the baseline every change is measured against. In our runs on luna the shipped prompt got all
+98 fields right. On `google/gemini-2.5-flash-lite` it got 97: it read "2+ years" on the Harbor
+posting as junior, where the person approved mid. The run is saved to `runs/shipped.json`.
 
 ## 3. Score the change
 
@@ -128,16 +128,16 @@ uv run postings gate runs/shipped.json runs/shorter.json
 
 Expect: blocked: shorter makes
 
-In our runs four fields got worse. Lumen's "28 - 35 LPA" became 28 to 35 with currency "LPA", the
-Meridian graduate role became an internship, and the senior contract-to-hire analyst became mid. Eleven
-postings held and need no one. Three need a person, who reads each and decides: the change is wrong and
-goes back, or the approved label was wrong and is corrected in `data/golden.jsonl`. Either way the set
-gets better.
+In our runs two fields got worse. Evergreen's lead ML role, approved as staff, became senior, and the
+Meridian graduate role lost its top salary. Twelve postings held and need no one. Two need a person,
+who reads each and decides: the change is wrong and goes back, or the approved label was wrong and is
+corrected in `data/golden.jsonl`. Either way the set gets better.
 
 ## 5. Ship a change that only fixes
 
-The shipped prompt's one miss was Harbor's seniority. `prompts/years-rule.txt` adds one sentence:
-years of experience alone never make a role junior. Score it and gate it:
+On flash-lite the shipped prompt's one miss was Harbor's seniority. `prompts/years-rule.txt` adds one
+sentence: years of experience alone never make a role junior. Luna already reads Harbor right, so here
+the rule guards a case a cheaper model gets wrong. Score it and gate it:
 
 ```bash
 uv run postings eval prompts/years-rule.txt && uv run postings gate runs/shipped.json runs/years-rule.json
@@ -145,7 +145,8 @@ uv run postings eval prompts/years-rule.txt && uv run postings gate runs/shipped
 
 Expect: passed: no field is worse with years-rule
 
-The gate lists Harbor under "fixed" and nothing under "broke". This is how the last stretch from
+The gate lists nothing under "broke", and all 14 postings hold. On flash-lite it also listed Harbor
+under "fixed". This is how the last stretch from
 80% to 95% gets done: one rule at a time, each proven not to cost another field.
 
 ## 6. See it
@@ -160,8 +161,8 @@ uv run postings serve
 **Proposed change** shows "Shorten the posting prompt to 15 words" with its diff. Press **Run the
 golden set check**. The box under the diff says the change is blocked and names the filters that got
 worse, and the header counts the postings that held and the ones that need a person. Click the **Acme
-Ledger GmbH** row: every approved filter is still right, so nobody reads it. Click the **Lumen Labs**
-row: the broken salary is in red, and the box says what the person decides. Then pick "Add one sentence
+Ledger GmbH** row: every approved filter is still right, so nobody reads it. Click the **Evergreen Insurance**
+row: the broken seniority is in red, and the box says what the person decides. Then pick "Add one sentence
 about years of experience" and run the check again: it passes and no posting needs a person. Stop the
 page with Ctrl-C.
 
