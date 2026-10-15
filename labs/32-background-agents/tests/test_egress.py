@@ -114,3 +114,18 @@ def test_only_the_fields_the_agent_needs_reach_the_model_api(proxy):
         "plugins": [{"id": "web"}], "n": 50, "provider": {"order": ["somewhere"]}})
     assert status == 200
     assert sorted(sent[0]) == ["messages", "model", "tool_choice", "tools", "usage"]
+
+
+@pytest.mark.parametrize("smuggled", [
+    {"messages": [{"role": "user", "content": [{"type": "image_url", "image_url": {"url": "https://attacker.example/x"}}]}]},
+    {"messages": [], "tools": [{"type": "openrouter:web_search"}]},
+    {"messages": [{"role": "user", "content": "hi", "annotations": [{"url": "https://attacker.example"}]}]},
+    {"messages": [], "tool_choice": {"type": "web_search"}},
+])
+def test_a_request_shaped_unlike_the_agents_never_leaves(proxy, smuggled):
+    # Inside the allowed fields a provider still fetches image URLs and runs its own server tools.
+    url, _, sent = proxy
+    call(url, "/admin/sessions", {"token": "tok-7", "session": "FH-107", "budget": 0.05}, admin=ADMIN)
+    status, _ = call(url, "/v1/chat/completions", token="tok-7", body=smuggled)
+    assert status == 403
+    assert sent == []

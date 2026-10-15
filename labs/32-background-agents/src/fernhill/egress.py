@@ -21,6 +21,31 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 # The request fields the agent sends. Anything else, such as OpenRouter's `models`, `plugins` or `n`, could
 # switch the model, reach the web or multiply the bill, so it is dropped rather than forwarded.
 FORWARDED_FIELDS = ("messages", "tools", "tool_choice")
+MESSAGE_KEYS = {"role", "content", "tool_calls", "tool_call_id", "name"}
+
+
+def shape_problem(request: dict) -> str | None:
+    """Why a request is not the plain text and function tools the agent sends, or None.
+
+    Inside the forwarded fields a message can still carry an image URL the provider fetches, and a tool can
+    be a provider server tool such as web search. Both reach past the allow list, so both are refused.
+    """
+    messages, tools = request.get("messages"), request.get("tools", [])
+    if not isinstance(messages, list) or not isinstance(tools, list):
+        return "messages and tools must be lists"
+    for message in messages:
+        if not isinstance(message, dict) or not set(message) <= MESSAGE_KEYS:
+            return "a message has a field the agent never sends"
+        if message.get("role") not in {"system", "user", "assistant", "tool"}:
+            return "a message has an unknown role"
+        if not isinstance(message.get("content"), (str, type(None))):
+            return "a message is not plain text"
+    if any(not isinstance(tool, dict) or tool.get("type") != "function" for tool in tools):
+        return "only function tools are allowed"
+    choice = request.get("tool_choice", "auto")
+    if choice not in ("auto", "none", "required") and not (isinstance(choice, dict) and choice.get("type") == "function"):
+        return "tool_choice must name a function tool"
+    return None
 
 
 class Ledger:
@@ -107,11 +132,14 @@ def handler(ledger: Ledger, upstream: str, upstream_key: str, model: str, admin_
                 return self.reply(403, {"error": {"message": "egress denied: only chat completions to the model API"}})
             if entry is None:
                 return self.reply(401, {"error": {"message": "unknown session token"}})
+            request = json.loads(body)
+            if problem := shape_problem(request):
+                ledger.refuse(token, f"request refused: {problem}")
+                return self.reply(403, {"error": {"message": f"egress denied: {problem}"}})
             with ledger.turns[token]:
                 if entry["spent"] >= entry["budget"]:
                     ledger.refuse(token, f"cost budget ${entry['budget']:g} spent")
                     return self.reply(402, {"error": {"message": f"session cost budget ${entry['budget']:g} is spent"}})
-                request = json.loads(body)
                 # The proxy, not the agent, decides the model and asks for the bill on every call.
                 forwarded = {key: request[key] for key in FORWARDED_FIELDS if key in request}
                 forwarded.update(model=model, usage={"include": True})

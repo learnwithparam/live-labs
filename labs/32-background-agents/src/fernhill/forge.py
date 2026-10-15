@@ -18,15 +18,22 @@ from pathlib import Path
 from fernhill.config import REPO_SOURCE
 
 AUTHOR = ["-c", "user.name=Fernhill background agent", "-c", "user.email=agents@fernhill.example",
-          "-c", "core.hooksPath=/dev/null", "-c", "init.defaultBranch=main"]
+          "-c", "core.hooksPath=/dev/null", "-c", "core.fsmonitor=false", "-c", "init.defaultBranch=main"]
 # Generated files a session may leave behind. The repo's .gitignore names them too.
 GENERATED = {"__pycache__", ".pytest_cache", ".ruff_cache", ".acceptance"}
 
 
 def ignored(folder: str, names: list[str]) -> set[str]:
-    """What copytree skips. ".git" in any case: on a case-insensitive disk ".GIT" is the clone's own .git
-    folder, and a config planted there runs commands on the host at the next git call."""
-    return {name for name in names if name.casefold() == ".git" or name in GENERATED}
+    """What copytree skips: generated files, and any folder git would read as its own, so it is not pushed."""
+    return {name for name in names if git_folder_name(name) or name in GENERATED}
+
+
+# The marks HFS+ drops from a file name, so git refuses ".g\u200cit" as it refuses ".git" (core.protectHFS).
+HFS_IGNORED = dict.fromkeys([*range(0x200C, 0x2010), *range(0x202A, 0x202F), *range(0x206A, 0x2070), 0xFEFF])
+
+
+def git_folder_name(name: str) -> bool:
+    return name.translate(HFS_IGNORED).casefold() == ".git"
 
 
 def git(*arguments: str, cwd: Path, check: bool = True) -> str:
@@ -85,24 +92,29 @@ class Forge:
     def push_branch(self, workspace: Path, branch: str, base: str, message: str) -> dict | None:
         """Commit what the session changed on top of `base` and push it. None when nothing changed."""
         with self.lock, tempfile.TemporaryDirectory() as scratch:
-            clone = Path(scratch) / "clone"
-            git("clone", "--quiet", str(self.bare), str(clone), cwd=self.root)
-            git("checkout", "--quiet", "-b", branch, base, cwd=clone)
-            for item in clone.iterdir():
-                if item.name != ".git":
-                    shutil.rmtree(item) if item.is_dir() and not item.is_symlink() else item.unlink()
+            # git's own folder sits beside the session's files, never among them. Whatever the session names
+            # a folder (.GIT, a Unicode look-alike), it is a plain file to git, never its config or hooks.
+            meta, tree = Path(scratch) / "meta.git", Path(scratch) / "tree"
+            git("clone", "--quiet", "--bare", str(self.bare), str(meta), cwd=self.root)
+
+            def in_tree(*arguments: str) -> str:
+                return git("--git-dir", str(meta), "--work-tree", str(tree), *arguments, cwd=Path(scratch))
+
             # symlinks=True copies a link as a link: a session cannot smuggle a host file in by pointing at it.
-            shutil.copytree(workspace, clone, ignore=ignored, symlinks=True, dirs_exist_ok=True)
-            git("add", "-A", cwd=clone)
-            if not git("status", "--porcelain", cwd=clone).strip():
+            shutil.copytree(workspace, tree, ignore=ignored, symlinks=True)
+            in_tree("branch", "--force", branch, base)
+            in_tree("symbolic-ref", "HEAD", f"refs/heads/{branch}")
+            in_tree("read-tree", branch)
+            in_tree("add", "-A")
+            if not in_tree("status", "--porcelain").strip():
                 return None
-            git("commit", "--quiet", "-m", message, cwd=clone)
-            git("push", "--quiet", "--force", "origin", f"{branch}:{branch}", cwd=clone)
-            numstat = git("diff", "--numstat", base, "HEAD", cwd=clone)
+            in_tree("commit", "--quiet", "-m", message)
+            in_tree("push", "--quiet", "--force", str(self.bare), f"{branch}:{branch}")
+            numstat = in_tree("diff", "--numstat", base, "HEAD")
             files = [{"path": parts[2], "added": int(parts[0]), "removed": int(parts[1])}
                      for parts in (line.split("\t") for line in numstat.splitlines()) if parts[0] != "-"]
-            return {"head": self.head(branch), "diff": git("diff", base, "HEAD", cwd=clone), "files": files,
-                    "deleted": git("diff", "--name-only", "--diff-filter=D", base, "HEAD", cwd=clone).split()}
+            return {"head": self.head(branch), "diff": in_tree("diff", base, "HEAD"), "files": files,
+                    "deleted": in_tree("diff", "--name-only", "--diff-filter=D", base, "HEAD").split()}
 
     def open_pull(self, record: dict) -> dict:
         with self.lock:
