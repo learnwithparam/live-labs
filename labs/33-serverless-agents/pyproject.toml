@@ -1,0 +1,36 @@
+[project]
+name = "lab-33-serverless-agents"
+version = "0.1.0"
+description = "Run AI Agents on Serverless with Durable Functions: a nightly invoice reconciliation agent as Lambda durable functions, crashed mid-run and resumed from its checkpoints"
+requires-python = ">=3.11,<3.14"
+dependencies = [
+    "aws-durable-execution-sdk-python==2.0.1",
+    "aws-durable-execution-sdk-python-testing",
+    "openai==2.54.0",
+]
+
+[project.scripts]
+nightly = "meterline.cli:main"
+
+[dependency-groups]
+dev = ["pytest>=8.4"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/meterline"]
+
+[tool.uv]
+# Every dependency resolves to a release at least two weeks old, so a fresh one never lands untested.
+exclude-newer = "2026-10-01T00:00:00Z"
+
+[tool.uv.sources]
+# The local runner's fix for a crashed invocation (it reloads the checkpoints instead of saving a stale
+# copy over them) is on AWS's main branch but not yet on PyPI, so the runner is pinned to that commit.
+aws-durable-execution-sdk-python-testing = { git = "https://github.com/aws/aws-durable-execution-sdk-python", rev = "d3230f34a0dbba856b39787b6b568de03de89123", subdirectory = "packages/aws-durable-execution-sdk-python-testing" }
+
+[tool.pytest.ini_options]
+markers = ["proof: calls a real model; needs LLM_API_KEY"]
+addopts = "-m 'not proof'"

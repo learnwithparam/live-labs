@@ -1,0 +1,461 @@
+{
+ "period": "2026-09",
+ "drafts": {
+  "MC-101": {
+   "invoice": "INV-2026-09-0101",
+   "lines": [
+    {
+     "item": "Platform fee",
+     "amount": 9500
+    },
+    {
+     "item": "API calls over plan: 2,504,283 at $1.20 per 1,000",
+     "amount": 3005.14
+    }
+   ],
+   "total": 12505.14
+  },
+  "MC-102": {
+   "invoice": "INV-2026-09-0102",
+   "lines": [
+    {
+     "item": "Platform fee",
+     "amount": 9500
+    },
+    {
+     "item": "API calls over plan: 2,985,328 at $1.20 per 1,000",
+     "amount": 3582.39
+    },
+    {
+     "item": "Overage discount 20%",
+     "amount": -716.48
+    }
+   ],
+   "total": 12365.91
+  },
+  "MC-103": {
+   "invoice": "INV-2026-09-0103",
+   "lines": [
+    {
+     "item": "Platform fee",
+     "amount": 9500
+    },
+    {
+     "item": "API calls over plan: 14,927,650 at $0.80 per 1,000",
+     "amount": 11942.12
+    },
+    {
+     "item": "Overage discount 10%",
+     "amount": -1194.21
+    }
+   ],
+   "total": 20247.91
+  },
+  "MC-104": {
+   "invoice": "INV-2026-09-0104",
+   "lines": [
+    {
+     "item": "Platform fee",
+     "amount": 6000
+    },
+    {
+     "item": "API calls over plan: 7,039,760 at $0.95 per 1,000",
+     "amount": 6687.77
+    }
+   ],
+   "total": 12687.77
+  },
+  "MC-105": {
+   "invoice": "INV-2026-09-0105",
+   "lines": [
+    {
+     "item": "Platform fee",
+     "amount": 12000
+    },
+    {
+     "item": "API calls over plan: 7,556,697 at $0.60 per 1,000",
+     "amount": 4534.02
+    },
+    {
+     "item": "Overage discount 10%",
+     "amount": -453.4
+    }
+   ],
+   "total": 16080.62
+  },
+  "MC-106": {
+   "invoice": "INV-2026-09-0106",
+   "lines": [
+    {
+     "item": "Platform fee",
+     "amount": 1500
+    },
+    {
+     "item": "API calls over plan: 7,909,067 at $0.60 per 1,000",
+     "amount": 4745.44
+    }
+   ],
+   "total": 6245.44
+  },
+  "MC-107": {
+   "invoice": "INV-2026-09-0107",
+   "lines": [
+    {
+     "item": "Platform fee",
+     "amount": 1500
+    },
+    {
+     "item": "API calls over plan: 1,090,006 at $0.55 per 1,000",
+     "amount": 599.5
+    },
+    {
+     "item": "Overage discount 20%",
+     "amount": -119.9
+    }
+   ],
+   "total": 1979.6
+  },
+  "MC-108": {
+   "invoice": "INV-2026-09-0108",
+   "lines": [
+    {
+     "item": "Platform fee",
+     "amount": 6000
+    },
+    {
+     "item": "API calls over plan: 7,870,412 at $0.80 per 1,000",
+     "amount": 6296.33
+    }
+   ],
+   "total": 12296.33
+  },
+  "MC-109": {
+   "invoice": "INV-2026-09-0109",
+   "lines": [
+    {
+     "item": "Platform fee",
+     "amount": 1500
+    },
+    {
+     "item": "API calls over plan: 1,318,064 at $0.60 per 1,000",
+     "amount": 790.84
+    },
+    {
+     "item": "Overage discount 20%",
+     "amount": -158.17
+    }
+   ],
+   "total": 2132.67
+  },
+  "MC-110": {
+   "invoice": "INV-2026-09-0110",
+   "lines": [
+    {
+     "item": "Platform fee",
+     "amount": 1500
+    },
+    {
+     "item": "API calls over plan: 2,394,356 at $0.40 per 1,000",
+     "amount": 957.74
+    }
+   ],
+   "total": 2457.74
+  },
+  "MC-111": {
+   "invoice": "INV-2026-09-0111",
+   "lines": [
+    {
+     "item": "Platform fee",
+     "amount": 2500
+    },
+    {
+     "item": "API calls over plan: 5,996,366 at $1.00 per 1,000",
+     "amount": 5996.37
+    },
+    {
+     "item": "Overage discount 20%",
+     "amount": -959.42
+    }
+   ],
+   "total": 7536.95
+  },
+  "MC-112": {
+   "invoice": "INV-2026-09-0112",
+   "lines": [
+    {
+     "item": "Platform fee",
+     "amount": 6000
+    }
+   ],
+   "total": 6000
+  },
+  "MC-113": {
+   "invoice": "INV-2026-09-0113",
+   "lines": [
+    {
+     "item": "Platform fee",
+     "amount": 4000
+    }
+   ],
+   "total": 4000
+  },
+  "MC-114": {
+   "invoice": "INV-2026-09-0114",
+   "lines": [
+    {
+     "item": "Platform fee",
+     "amount": 12000
+    },
+    {
+     "item": "API calls over plan: 7,143,746 at $1.20 per 1,000",
+     "amount": 8572.5
+    }
+   ],
+   "total": 20572.5
+  },
+  "MC-115": {
+   "invoice": "INV-2026-09-0115",
+   "lines": [
+    {
+     "item": "Platform fee",
+     "amount": 1500
+    },
+    {
+     "item": "API calls over plan: 0 at $0.95 per 1,000",
+     "amount": 0.0
+    },
+    {
+     "item": "Overage discount 10%",
+     "amount": -0.0
+    }
+   ],
+   "total": 1500.0
+  },
+  "MC-116": {
+   "invoice": "INV-2026-09-0116",
+   "lines": [
+    {
+     "item": "Platform fee",
+     "amount": 6000
+    },
+    {
+     "item": "API calls over plan: 7,636,493 at $0.80 per 1,000",
+     "amount": 6109.19
+    },
+    {
+     "item": "Overage discount 20%",
+     "amount": -1221.84
+    }
+   ],
+   "total": 10887.35
+  },
+  "MC-117": {
+   "invoice": "INV-2026-09-0117",
+   "lines": [
+    {
+     "item": "Platform fee",
+     "amount": 6000
+    }
+   ],
+   "total": 6000
+  },
+  "MC-118": {
+   "invoice": "INV-2026-09-0118",
+   "lines": [
+    {
+     "item": "Platform fee",
+     "amount": 4000
+    },
+    {
+     "item": "API calls over plan: 5,726,989 at $0.95 per 1,000",
+     "amount": 5440.64
+    }
+   ],
+   "total": 9440.64
+  },
+  "MC-119": {
+   "invoice": "INV-2026-09-0119",
+   "lines": [
+    {
+     "item": "Platform fee",
+     "amount": 4000
+    },
+    {
+     "item": "API calls over plan: 7,120,337 at $0.95 per 1,000",
+     "amount": 6764.32
+    }
+   ],
+   "total": 10764.32
+  },
+  "MC-120": {
+   "invoice": "INV-2026-09-0120",
+   "lines": [
+    {
+     "item": "Platform fee",
+     "amount": 12000
+    },
+    {
+     "item": "API calls over plan: 133,094 at $1.20 per 1,000",
+     "amount": 159.71
+    }
+   ],
+   "total": 12159.71
+  },
+  "MC-121": {
+   "invoice": "INV-2026-09-0121",
+   "lines": [
+    {
+     "item": "Platform fee",
+     "amount": 9500
+    },
+    {
+     "item": "API calls over plan: 77,193 at $0.95 per 1,000",
+     "amount": 73.33
+    }
+   ],
+   "total": 9573.33
+  },
+  "MC-122": {
+   "invoice": "INV-2026-09-0122",
+   "lines": [
+    {
+     "item": "Platform fee",
+     "amount": 2500
+    },
+    {
+     "item": "API calls over plan: 1,412,904 at $0.60 per 1,000",
+     "amount": 847.74
+    }
+   ],
+   "total": 3347.74
+  },
+  "MC-123": {
+   "invoice": "INV-2026-09-0123",
+   "lines": [
+    {
+     "item": "Platform fee",
+     "amount": 1500
+    },
+    {
+     "item": "API calls over plan: 2,883,833 at $0.80 per 1,000",
+     "amount": 2307.07
+    }
+   ],
+   "total": 3807.07
+  },
+  "MC-124": {
+   "invoice": "INV-2026-09-0124",
+   "lines": [
+    {
+     "item": "Platform fee",
+     "amount": 6000
+    },
+    {
+     "item": "API calls over plan: 1,183,810 at $0.40 per 1,000",
+     "amount": 473.52
+    },
+    {
+     "item": "Overage discount 20%",
+     "amount": -94.7
+    }
+   ],
+   "total": 6378.82
+  },
+  "MC-125": {
+   "invoice": "INV-2026-09-0125",
+   "lines": [
+    {
+     "item": "Platform fee",
+     "amount": 12000
+    },
+    {
+     "item": "API calls over plan: 400,000 at $0.60 per 1,000",
+     "amount": 240.0
+    },
+    {
+     "item": "Overage discount 15%",
+     "amount": -36.0
+    }
+   ],
+   "total": 12204.0
+  },
+  "MC-126": {
+   "invoice": "INV-2026-09-0126",
+   "lines": [
+    {
+     "item": "Platform fee",
+     "amount": 4000
+    },
+    {
+     "item": "API calls over plan: 1,229,509 at $1.20 per 1,000",
+     "amount": 1475.41
+    }
+   ],
+   "total": 5475.41
+  },
+  "MC-127": {
+   "invoice": "INV-2026-09-0127",
+   "lines": [
+    {
+     "item": "Platform fee",
+     "amount": 9500
+    },
+    {
+     "item": "Overage discount 20%",
+     "amount": -0.0
+    }
+   ],
+   "total": 9500.0
+  },
+  "MC-128": {
+   "invoice": "INV-2026-09-0128",
+   "lines": [
+    {
+     "item": "Platform fee",
+     "amount": 6000
+    },
+    {
+     "item": "API calls over plan: 841,084 at $0.80 per 1,000",
+     "amount": 672.87
+    },
+    {
+     "item": "Overage discount 10%",
+     "amount": -67.29
+    }
+   ],
+   "total": 6605.58
+  },
+  "MC-129": {
+   "invoice": "INV-2026-09-0129",
+   "lines": [
+    {
+     "item": "Platform fee",
+     "amount": 2500
+    },
+    {
+     "item": "API calls over plan: 2,437,133 at $0.40 per 1,000",
+     "amount": 974.85
+    }
+   ],
+   "total": 3474.85
+  },
+  "MC-130": {
+   "invoice": "INV-2026-09-0130",
+   "lines": [
+    {
+     "item": "Platform fee",
+     "amount": 6000
+    },
+    {
+     "item": "API calls over plan: 9,144,240 at $0.80 per 1,000",
+     "amount": 7315.39
+    },
+    {
+     "item": "Overage discount 10%",
+     "amount": -731.54
+    }
+   ],
+   "total": 12583.85
+  }
+ }
+}

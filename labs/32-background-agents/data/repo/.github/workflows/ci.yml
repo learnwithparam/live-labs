@@ -1,0 +1,15 @@
+name: ci
+on: [pull_request]
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    container: python:3.12.14-slim
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install tools
+        run: pip install --no-cache-dir --disable-pip-version-check pytest==9.1.1 ruff==0.16.9
+      - name: Lint
+        run: ruff check --no-cache .
+      - name: Test
+        run: python -m pytest -q

@@ -1,0 +1,185 @@
+{
+ "company": "Meterline",
+ "customers": [
+  {
+   "id": "MC-101",
+   "name": "Halverson Freight",
+   "owner": "Dana Whitfield",
+   "contract": "Section 4.1 Fees. Customer pays a platform fee of $9,500.00 per month, which includes 2,000,000 API calls per month. Section 4.2 Overage. API calls above the included volume are billed at $1.20 per 1,000 calls. Section 4.5 Payment. Invoices are due net 30."
+  },
+  {
+   "id": "MC-102",
+   "name": "Quarry Health",
+   "owner": "Ravi Menon",
+   "contract": "Order Form, Schedule B (Pricing). Monthly subscription: $9,500.00. Included usage: 2,000,000 API calls each calendar month. Additional usage: $1.20 per 1,000 API calls. Overage discount: 20% off overage for the first year. All amounts in USD, excluding tax."
+  },
+  {
+   "id": "MC-103",
+   "name": "Brightwell Logistics",
+   "owner": "Lucia Ortega",
+   "contract": "3. Charges. (a) The monthly platform fee is $9,500.00. (b) The platform fee covers the first 10,000,000 API calls in each billing month. (c) Each further 1,000 API calls costs $0.80. (d) A discount of 10% applies to overage charges only. (d2) In no month will the total charges exceed $30,400.00. (e) Prices are fixed for the Initial Term of 24 months."
+  },
+  {
+   "id": "MC-104",
+   "name": "Ostrander Credit Union",
+   "owner": "Tom Becker",
+   "contract": "Section 4.1 Fees. Customer pays a platform fee of $6,000.00 per month, which includes 5,000,000 API calls per month. Section 4.2 Overage. API calls above the included volume are billed at $0.95 per 1,000 calls. Section 4.3 Discount. Meterline grants a 15% discount on overage charges for the Initial Term. Section 4.5 Payment. Invoices are due net 30."
+  },
+  {
+   "id": "MC-105",
+   "name": "Pinecrest Realty Group",
+   "owner": "Grace Liu",
+   "contract": "Order Form, Schedule B (Pricing). Monthly subscription: $12,000.00. Included usage: 10,000,000 API calls each calendar month. Additional usage: $0.60 per 1,000 API calls. Overage discount: 10% off overage for the first year. All amounts in USD, excluding tax."
+  },
+  {
+   "id": "MC-106",
+   "name": "Tallow and Finch",
+   "owner": "Owen Price",
+   "contract": "3. Charges. (a) The monthly platform fee is $1,500.00. (b) The platform fee covers the first 5,000,000 API calls in each billing month. (c) Each further 1,000 API calls costs $0.60. (e) Prices are fixed for the Initial Term of 24 months."
+  },
+  {
+   "id": "MC-107",
+   "name": "Northbay Pharmacy",
+   "owner": "Hana Sato",
+   "contract": "Section 4.1 Fees. Customer pays a platform fee of $1,500.00 per month, which includes 5,000,000 API calls per month. Section 4.2 Overage. API calls above the included volume are billed at $0.55 per 1,000 calls. Section 4.3 Discount. Meterline grants a 20% discount on overage charges for the Initial Term. Section 4.5 Payment. Invoices are due net 30."
+  },
+  {
+   "id": "MC-108",
+   "name": "Corvid Analytics",
+   "owner": "Marcus Hale",
+   "contract": "Order Form, Schedule B (Pricing). Monthly subscription: $6,000.00. Included usage: 2,000,000 API calls each calendar month. Additional usage: $0.80 per 1,000 API calls. Overage discount: 20% off overage for the first year. All amounts in USD, excluding tax."
+  },
+  {
+   "id": "MC-109",
+   "name": "Larkspur Insurance",
+   "owner": "Ines Duarte",
+   "contract": "3. Charges. (a) The monthly platform fee is $1,500.00. (b) The platform fee covers the first 1,000,000 API calls in each billing month. (c) Each further 1,000 API calls costs $0.60. (d) A discount of 20% applies to overage charges only. (d2) In no month will the total charges exceed $3,200.00. (e) Prices are fixed for the Initial Term of 24 months."
+  },
+  {
+   "id": "MC-110",
+   "name": "Mesa Verde Dental",
+   "owner": "Kofi Mensah",
+   "contract": "Section 4.1 Fees. Customer pays a platform fee of $1,500.00 per month, which includes 5,000,000 API calls per month. Section 4.2 Overage. API calls above the included volume are billed at $0.40 per 1,000 calls. Section 4.5 Payment. Invoices are due net 30."
+  },
+  {
+   "id": "MC-111",
+   "name": "Ironwood Staffing",
+   "owner": "Dana Whitfield",
+   "contract": "Order Form, Schedule B (Pricing). Monthly subscription: $2,500.00. Included usage: 10,000,000 API calls each calendar month. Additional usage: $0.80 per 1,000 API calls. Overage discount: 20% off overage for the first year. All amounts in USD, excluding tax."
+  },
+  {
+   "id": "MC-112",
+   "name": "Bluegate Travel",
+   "owner": "Ravi Menon",
+   "contract": "3. Charges. (a) The monthly platform fee is $6,000.00. (b) The platform fee covers the first 5,000,000 API calls in each billing month. (c) Each further 1,000 API calls costs $0.80. (e) Prices are fixed for the Initial Term of 24 months."
+  },
+  {
+   "id": "MC-113",
+   "name": "Saltmarsh Foods",
+   "owner": "Lucia Ortega",
+   "contract": "Section 4.1 Fees. Customer pays a platform fee of $4,000.00 per month, which includes 1,000,000 API calls per month. Section 4.2 Overage. API calls above the included volume are billed at $1.20 per 1,000 calls. Section 4.5 Payment. Invoices are due net 30."
+  },
+  {
+   "id": "MC-114",
+   "name": "Kettle Ridge Schools",
+   "owner": "Tom Becker",
+   "contract": "Order Form, Schedule B (Pricing). Monthly subscription: $12,000.00. Included usage: 5,000,000 API calls each calendar month. Additional usage: $1.20 per 1,000 API calls. All amounts in USD, excluding tax."
+  },
+  {
+   "id": "MC-115",
+   "name": "Driftwood Rentals",
+   "owner": "Grace Liu",
+   "contract": "3. Charges. (a) The monthly platform fee is $1,500.00. (b) The platform fee covers the first 1,000,000 API calls in each billing month. (c) Each further 1,000 API calls costs $0.95. (d) A discount of 10% applies to overage charges only. (e) Prices are fixed for the Initial Term of 24 months."
+  },
+  {
+   "id": "MC-116",
+   "name": "Amberline Energy",
+   "owner": "Owen Price",
+   "contract": "Section 4.1 Fees. Customer pays a platform fee of $6,000.00 per month, which includes 5,000,000 API calls per month. Section 4.2 Overage. API calls above the included volume are billed at $0.80 per 1,000 calls. Section 4.3 Discount. Meterline grants a 20% discount on overage charges for the Initial Term. Section 4.5 Payment. Invoices are due net 30."
+  },
+  {
+   "id": "MC-117",
+   "name": "Cobalt Field Services",
+   "owner": "Hana Sato",
+   "contract": "Order Form, Schedule B (Pricing). Monthly subscription: $6,000.00. Included usage: 5,000,000 API calls each calendar month. Additional usage: $0.60 per 1,000 API calls. All amounts in USD, excluding tax."
+  },
+  {
+   "id": "MC-118",
+   "name": "Wrenhaven Clinics",
+   "owner": "Marcus Hale",
+   "contract": "3. Charges. (a) The monthly platform fee is $4,000.00. (b) The platform fee covers the first 5,000,000 API calls in each billing month. (c) Each further 1,000 API calls costs $0.95. (e) Prices are fixed for the Initial Term of 24 months."
+  },
+  {
+   "id": "MC-119",
+   "name": "Juniper Payroll",
+   "owner": "Ines Duarte",
+   "contract": "Section 4.1 Fees. Customer pays a platform fee of $4,000.00 per month, which includes 1,000,000 API calls per month. Section 4.2 Overage. API calls above the included volume are billed at $0.95 per 1,000 calls. Section 4.4 Cap. Total monthly charges will not exceed $9,000.00. Section 4.5 Payment. Invoices are due net 30."
+  },
+  {
+   "id": "MC-120",
+   "name": "Foxglove Retail",
+   "owner": "Kofi Mensah",
+   "contract": "Order Form, Schedule B (Pricing). Monthly subscription: $12,000.00. Included usage: 1,000,000 API calls each calendar month. Additional usage: $1.20 per 1,000 API calls. All amounts in USD, excluding tax."
+  },
+  {
+   "id": "MC-121",
+   "name": "Granite Peak Bank",
+   "owner": "Dana Whitfield",
+   "contract": "3. Charges. (a) The monthly platform fee is $9,500.00. (b) The platform fee covers the first 1,000,000 API calls in each billing month. (c) Each further 1,000 API calls costs $0.95. (e) Prices are fixed for the Initial Term of 24 months."
+  },
+  {
+   "id": "MC-122",
+   "name": "Sundial Home Care",
+   "owner": "Ravi Menon",
+   "contract": "Section 4.1 Fees. Customer pays a platform fee of $2,500.00 per month, which includes 2,000,000 API calls per month. Section 4.2 Overage. API calls above the included volume are billed at the rates set out in Order Form OF-2291. Section 4.5 Payment. Invoices are due net 30."
+  },
+  {
+   "id": "MC-123",
+   "name": "Westerly Marine",
+   "owner": "Lucia Ortega",
+   "contract": "Order Form, Schedule B (Pricing). Monthly subscription: $1,500.00. Included usage: 2,000,000 API calls each calendar month. Additional usage: $0.80 per 1,000 API calls. All amounts in USD, excluding tax."
+  },
+  {
+   "id": "MC-124",
+   "name": "Orchard Lane Grocers",
+   "owner": "Tom Becker",
+   "contract": "3. Charges. (a) The monthly platform fee is $6,000.00. (b) The platform fee covers the first 1,000,000 API calls in each billing month. (c) Each further 1,000 API calls costs $0.40. (d) A discount of 20% applies to overage charges only. (e) Prices are fixed for the Initial Term of 24 months."
+  },
+  {
+   "id": "MC-125",
+   "name": "Tidewater Utilities",
+   "owner": "Grace Liu",
+   "contract": "Section 4.1 Fees. Customer pays a platform fee of $12,000.00 per month, which includes 1,000,000 API calls per month. Section 4.2 Overage. API calls above the included volume are billed at $0.60 per 1,000 calls. Section 4.3 Discount. Meterline grants a 15% discount on overage charges for the Initial Term. Section 4.5 Payment. Invoices are due net 30."
+  },
+  {
+   "id": "MC-126",
+   "name": "Lumen Ticketing",
+   "owner": "Owen Price",
+   "contract": "Order Form, Schedule B (Pricing). Monthly subscription: $4,000.00. Included usage: 1,000,000 API calls each calendar month. Additional usage: $1.20 per 1,000 API calls. All amounts in USD, excluding tax."
+  },
+  {
+   "id": "MC-127",
+   "name": "Redfern Couriers",
+   "owner": "Hana Sato",
+   "contract": "3. Charges. (a) The monthly platform fee is $9,500.00. (b) The platform fee covers the first 5,000,000 API calls in each billing month. (c) Each further 1,000 API calls costs $0.60. (d) A discount of 20% applies to overage charges only. (d2) In no month will the total charges exceed $14,200.00. (e) Prices are fixed for the Initial Term of 24 months."
+  },
+  {
+   "id": "MC-128",
+   "name": "Marigold Vet Group",
+   "owner": "Marcus Hale",
+   "contract": "Section 4.1 Fees. Customer pays a platform fee of $6,000.00 per month, which includes 10,000,000 API calls per month. Section 4.2 Overage. API calls above the included volume are billed at $0.80 per 1,000 calls. Section 4.3 Discount. Meterline grants a 10% discount on overage charges for the Initial Term. Section 4.5 Payment. Invoices are due net 30."
+  },
+  {
+   "id": "MC-129",
+   "name": "Copperline Telecom",
+   "owner": "Ines Duarte",
+   "contract": "Order Form, Schedule B (Pricing). Monthly subscription: $2,500.00. Included usage: 5,000,000 API calls each calendar month. Additional usage: $0.40 per 1,000 API calls. Monthly cap: total charges are capped at $5,200.00 per month. All amounts in USD, excluding tax."
+  },
+  {
+   "id": "MC-130",
+   "name": "Basalt Property Management",
+   "owner": "Kofi Mensah",
+   "contract": "3. Charges. (a) The monthly platform fee is $6,000.00. (b) The platform fee covers the first 10,000,000 API calls in each billing month. (c) Each further 1,000 API calls costs $0.80. (d) A discount of 10% applies to overage charges only. (d2) In no month will the total charges exceed $18,900.00. (e) Prices are fixed for the Initial Term of 24 months."
+  }
+ ]
+}

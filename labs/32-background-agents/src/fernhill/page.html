@@ -1,0 +1,411 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fernhill Pull Requests</title>
+<link rel="icon" href="data:,">
+<style>
+:root {
+  --paper: #FAFAFA; --card: #FFFFFF; --ink: #151515; --ink-2: #414141; --muted: #606060; --faint: #808080;
+  --line: #DFDFDF; --accent: #FAFF69; --accent-deep: #4F5101; --fill-dark: #1F1F1C;
+  --pass: #008138; --fail: #BF000F; --wait: #B75000;
+  --sans: Inter, Helvetica, Arial, sans-serif; --mono: Inconsolata, "Courier New", Courier, monospace;
+}
+* { box-sizing: border-box }
+[hidden] { display: none !important }
+html, body { margin: 0 }
+body { background: var(--paper); color: var(--ink); font: 15px/1.5 var(--sans); min-height: 100vh }
+button, input { font: inherit }
+button { cursor: pointer }
+button:focus-visible, input:focus-visible, summary:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px }
+h1, h2, h3 { margin: 0; letter-spacing: -0.01em }
+code, pre { font-family: var(--mono) }
+
+/* The forge's chrome: repository name on the left, the number the team watches on the right. */
+.bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 20px; padding: 12px 28px; background: var(--fill-dark); color: var(--paper) }
+.bar .repo { font-weight: 800; font-size: 18px; letter-spacing: -0.02em }
+.bar .repo span { font-weight: 400; opacity: 0.85 }
+.bar .metric { margin-left: auto; text-align: right; font-size: 14px }
+.bar .metric strong { color: var(--accent); font-size: 17px }
+
+main { max-width: 1240px; margin: 0 auto; padding: 22px 28px 48px }
+.lead { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; margin-bottom: 18px }
+.lead h1 { font-size: 24px; margin-right: auto }
+.lead .model { color: var(--muted); font-size: 14px }
+.primary { background: var(--ink); color: var(--paper); border: 0; border-radius: 4px; padding: 8px 16px; font-weight: 600 }
+.primary:disabled { background: var(--faint); cursor: default }
+.notice { background: var(--card); border: 2px solid var(--fail); border-radius: 4px; padding: 10px 14px; margin-bottom: 16px }
+
+h2 { font-size: 16px; margin: 0 0 10px }
+h2 .count { color: var(--muted); font-weight: 400 }
+section { margin-bottom: 26px }
+
+/* Sessions: one card per sandbox, so a reader sees several agents working at once. */
+.sessions { display: grid; grid-template-columns: repeat(auto-fill, minmax(15.75rem, 1fr)); gap: 10px }
+.session { background: var(--card); border: 1px solid var(--line); border-left: 4px solid var(--line); border-radius: 4px; padding: 10px 12px; min-width: 0 }
+.session[data-status="working"], .session[data-status="ci"] { border-left-color: var(--wait) }
+.session[data-status="pull request"] { border-left-color: var(--pass) }
+.session[data-status="failed"], .session[data-status="gave up"] { border-left-color: var(--fail) }
+.session .top { display: flex; justify-content: space-between; gap: 8px; font-size: 13px }
+.session .id { font-weight: 700; font-variant-numeric: tabular-nums }
+.session .title { font-weight: 600; margin: 2px 0 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.session .step { font-family: var(--mono); font-size: 14px; color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.session .reason { font-size: 13px; color: var(--fail); margin-top: 4px }
+.session .numbers { font-size: 13px; color: var(--muted); margin-top: 4px; font-variant-numeric: tabular-nums }
+.status { font-weight: 600 }
+/* The one motion: a working sandbox's dot breathes, so live sessions stand out from finished ones. */
+@keyframes breathe { 50% { opacity: 0.25 } }
+.live::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--wait); margin-right: 6px; animation: breathe 1.2s ease-in-out infinite }
+@media (prefers-reduced-motion: reduce) { .live::before { animation: none } }
+
+/* Where the agent runs: the laptop's reach next to the sandboxes', from the same three probes. */
+.reach { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 26px }
+.reach > div { flex: 1 1 18rem; background: var(--card); border: 1px solid var(--line); border-radius: 4px; padding: 10px 14px }
+.reach h3 { font-size: 14px; margin-bottom: 6px }
+.reach ul { list-style: none; margin: 0; padding: 0; font-size: 14px }
+.reach li { display: flex; justify-content: space-between; gap: 10px; padding: 2px 0 }
+.reached { color: var(--fail); font-weight: 700 }
+.blocked { color: var(--pass); font-weight: 700 }
+
+/* The needs-you box: green CI says the code works; only a person says it should ship. */
+.needs { background: var(--card); border: 2px solid var(--ink); border-radius: 4px; padding: 12px 16px; margin-bottom: 26px }
+.needs p { margin: 4px 0 8px; color: var(--ink-2) }
+.needs ul { margin: 0; padding-left: 18px }
+.needs li { margin: 3px 0 }
+.needs button { background: none; border: 0; padding: 0; text-decoration: underline; font-weight: 600 }
+
+/* The queue: number, what it does, CI, and the decision, on one row per pull request. */
+.pulls { background: var(--card); border: 1px solid var(--line); border-radius: 4px }
+.pull { border-top: 1px solid var(--line) }
+.pull:first-child { border-top: 0 }
+.row { display: grid; grid-template-columns: 4.75rem minmax(0, 1fr) 9.5rem 7rem; gap: 12px; align-items: start; width: 100%; padding: 12px 14px; border: 0; background: none; text-align: left; color: inherit }
+.row:hover { background: var(--paper) }
+.row .number { font-weight: 700; font-variant-numeric: tabular-nums; color: var(--muted) }
+.row .what strong { display: block }
+.row .meta { font-size: 13px; color: var(--muted) }
+.chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px }
+.chip { font-size: 12px; font-weight: 600; border-radius: 3px; padding: 1px 6px; background: var(--paper); border: 1px solid var(--wait); color: var(--wait) }
+.ci { font-size: 14px }
+.ci .passed { color: var(--pass); font-weight: 700 }
+.ci .failed { color: var(--fail); font-weight: 700 }
+.ci small { display: block; color: var(--muted); font-size: 12px }
+.state { font-size: 13px; font-weight: 700; text-align: right }
+.state[data-state="open"] { color: var(--ink) }
+.state[data-state="merged"] { color: var(--pass) }
+.state[data-state="closed"] { color: var(--muted) }
+.state[data-state="open"]::after { content: ""; display: block; height: 4px; margin-top: 4px; background: var(--accent); border-radius: 2px }
+
+/* The opened pull request: the code and what the agent did on the left, the evidence and the decision on the right. */
+.detail { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(17.5rem, 1fr); gap: 16px; padding: 4px 14px 16px; border-top: 1px dashed var(--line) }
+.detail h3 { font-size: 14px; margin: 12px 0 6px }
+.diff { background: var(--fill-dark); color: var(--paper); border-radius: 4px; padding: 10px 0; margin: 0; overflow-x: auto; font-size: 14px; line-height: 1.45; max-height: 30rem }
+.diff span { display: block; padding: 0 12px; white-space: pre }
+.diff .add { background: var(--accent-deep) }
+.diff .del { box-shadow: inset 4px 0 0 var(--fail); color: var(--line) }
+.diff .hunk { color: var(--accent) }
+.log { list-style: none; margin: 0; padding: 0; font-size: 14px; max-height: 18rem; overflow-y: auto; border: 1px solid var(--line); border-radius: 4px }
+.log li { padding: 4px 10px; border-top: 1px solid var(--line); font-family: var(--mono); overflow-wrap: anywhere }
+.log li:first-child { border-top: 0 }
+.log .turn { color: var(--faint); margin-right: 8px }
+.body { color: var(--ink-2); white-space: pre-wrap; margin: 0 }
+.steps { list-style: none; margin: 0; padding: 0 }
+.steps li { border: 1px solid var(--line); border-radius: 4px; margin-bottom: 6px; padding: 6px 10px; font-size: 14px }
+.steps code { font-size: 14px; color: var(--muted) }
+.steps details pre { font-size: 13px; white-space: pre-wrap; max-height: 12rem; overflow-y: auto; margin: 6px 0 0 }
+.decide { background: var(--paper); border: 1px solid var(--line); border-radius: 4px; padding: 10px 12px; margin-top: 12px }
+.decide label { display: block; font-size: 13px; font-weight: 600; margin-top: 6px }
+.decide input { width: 100%; border: 1px solid var(--faint); border-radius: 4px; padding: 6px 8px; background: var(--card) }
+.decide .buttons { display: flex; gap: 8px; margin-top: 10px }
+.decide .close { background: var(--card); color: var(--ink); border: 1px solid var(--ink); border-radius: 4px; padding: 7px 14px; font-weight: 600 }
+.refused { color: var(--fail); font-weight: 600; margin: 8px 0 0 }
+.decided { margin: 0; color: var(--ink-2) }
+.empty { padding: 16px; color: var(--muted) }
+
+@media (max-width: 760px) {
+  .bar, main { padding-left: 16px; padding-right: 16px }
+  .bar .metric { margin-left: 0; text-align: left }
+  .row { grid-template-columns: 3.25rem minmax(0, 1fr); gap: 4px 10px }
+  .row .ci, .row .state { grid-column: 2; text-align: left }
+  .detail { grid-template-columns: minmax(0, 1fr); padding: 4px 12px 14px }
+}
+</style>
+</head>
+<body data-surface="background agent pull request queue with live sandbox sessions">
+<header class="bar">
+  <div class="repo">fernhill / fernhill-invoices <span>pull requests</span></div>
+  <div class="metric" id="metric">No agent pull requests yet</div>
+</header>
+<main>
+  <div class="lead">
+    <h1>Agent pull requests</h1>
+    <span class="model" id="model"></span>
+    <button class="primary" id="run" type="button">Run the issue queue</button>
+  </div>
+  <div class="notice" id="error" hidden></div>
+
+  <div class="needs" id="needs" hidden>
+    <h2>Waiting on you</h2>
+    <p>CI says whether the code works. You decide whether it should ship. Open each one, read the diff, then merge or close with a reason.</p>
+    <ul id="needs-list"></ul>
+  </div>
+
+  <section>
+    <h2>Sandbox sessions <span class="count" id="session-count"></span></h2>
+    <div class="sessions" id="sessions"><p class="empty">No sessions yet. Run the issue queue, or run <code>fleet run</code> in a terminal.</p></div>
+  </section>
+
+  <div class="reach" id="reach" hidden>
+    <div><h3>The agent on a developer's laptop</h3><ul id="laptop"></ul></div>
+    <div><h3>The agent in a sandbox</h3><ul id="sandbox"></ul></div>
+  </div>
+
+  <section>
+    <h2>Pull requests <span class="count" id="pull-count"></span></h2>
+    <div class="pulls" id="pulls"><p class="empty">No pull requests yet.</p></div>
+  </section>
+</main>
+<script>
+const $ = (selector) => document.querySelector(selector);
+const opened = new Set();
+let reviewerName = "";
+
+/* Every string from the model or the repository goes in through textContent, never as HTML. */
+function make(tag, className, text) {
+  const node = document.createElement(tag);
+  if (className) node.className = className;
+  if (text !== undefined && text !== null) node.textContent = text;
+  return node;
+}
+
+function dollars(amount) { return "$" + Number(amount || 0).toFixed(4); }
+
+async function getJson(path, options) {
+  /* A request that never returns would freeze the poll loop, so each one has a deadline. */
+  const response = await fetch(path, { ...options, signal: AbortSignal.timeout(15000) });
+  const payload = await response.json().catch(() => ({}));
+  return { ok: response.ok, status: response.status, payload };
+}
+
+function renderMetric(board) {
+  const metric = $("#metric");
+  if (!board.pulls) { metric.textContent = "No agent pull requests yet"; return; }
+  metric.replaceChildren(
+    make("strong", null, `${board.merged} of ${board.pulls} merged`),
+    document.createTextNode(` (${Math.round(board.merged_share * 100)}%) · CI green on ${board.ci_green} · ${dollars(board.cost_per_pull)} per pull request`));
+}
+
+function renderSessions(sessions, running) {
+  const holder = $("#sessions");
+  $("#session-count").textContent = sessions.length ? `${sessions.length} issues` : "";
+  if (!sessions.length) return;
+  holder.replaceChildren(...sessions.map((session) => {
+    const card = make("article", "session");
+    card.dataset.status = session.status;
+    const working = session.status === "working" || session.status === "ci";
+    const top = make("div", "top");
+    top.append(make("span", "id", session.id), make("span", "status" + (working && running ? " live" : ""), session.status));
+    card.append(top, make("div", "title", session.title));
+    const step = session.status === "ci" ? "CI running in a fresh sandbox" : session.status === "queued" ? "waiting for a sandbox" : `last step: ${session.last || "none"}`;
+    card.append(make("div", "step", step));
+    if (session.reason) card.append(make("div", "reason", session.reason));
+    const pullText = session.pull ? ` · PR #${session.pull}` : "";
+    card.append(make("div", "numbers", `${session.seconds}s · ${dollars(session.cost)} · ${session.tools} tool calls${pullText}`));
+    return card;
+  }));
+}
+
+function renderReach(state) {
+  if (!state.laptop) { $("#reach").hidden = true; return; }
+  $("#reach").hidden = false;
+  const laptopList = Object.entries(state.laptop.probes).map(([label, didReach]) => {
+    const item = make("li");
+    item.append(make("span", null, label), make("span", didReach ? "reached" : "blocked", didReach ? "reached" : "blocked"));
+    return item;
+  });
+  const busy = make("li");
+  busy.append(make("span", null, "developer's checkout busy"), make("span", null, `${Math.round(state.laptop.blocked_seconds)}s for ${state.laptop.issues} issues`));
+  $("#laptop").replaceChildren(...laptopList, busy);
+  const seen = state.board.secret_seen;
+  const sandboxed = state.sessions.length;
+  const tokenRow = make("li");
+  tokenRow.append(make("span", null, "planted token, in any session"), make("span", seen ? "reached" : "blocked", seen ? `seen in ${seen}` : `blocked in ${sandboxed}`));
+  const parallelRow = make("li");
+  parallelRow.append(make("span", null, "developer's checkout busy"), make("span", null, "0s"));
+  $("#sandbox").replaceChildren(tokenRow, parallelRow);
+}
+
+function renderNeeds(pulls) {
+  const waiting = pulls.filter((pull) => pull.state === "open");
+  $("#needs").hidden = !waiting.length;
+  $("#needs-list").replaceChildren(...waiting.map((pull) => {
+    const item = make("li");
+    const link = make("button", null, `#${pull.number} ${pull.title}`);
+    link.type = "button";
+    link.addEventListener("click", () => toggle(pull.number, true));
+    const why = pull.ci !== "passed" ? `CI ${pull.ci}: close it or run the issue again` :
+      pull.attention.length ? pull.attention.join("; ") : "CI green: read the diff and decide";
+    item.append(link, document.createTextNode(` from ${pull.reporter}. ${why}.`));
+    return item;
+  }));
+}
+
+function ciCell(pull) {
+  const cell = make("div", "ci");
+  cell.append(make("span", pull.ci, pull.ci === "passed" ? "CI passed" : "CI failed"));
+  if (pull.failed_step) cell.append(make("small", null, `at ${pull.failed_step}`));
+  if (pull.held_out !== null && pull.held_out !== undefined) {
+    cell.append(make("small", null, pull.held_out ? "held-out test passes" : "held-out test fails"));
+  }
+  return cell;
+}
+
+function renderPulls(pulls) {
+  $("#pull-count").textContent = pulls.length ? `${pulls.filter((pull) => pull.state === "open").length} open` : "";
+  if (!pulls.length) return;
+  $("#pulls").replaceChildren(...pulls.map((pull) => {
+    const item = make("div", "pull");
+    item.id = `pull-${pull.number}`;
+    const row = make("button", "row");
+    row.type = "button";
+    row.setAttribute("aria-expanded", opened.has(pull.number) ? "true" : "false");
+    const what = make("div", "what");
+    what.append(make("strong", null, pull.title),
+      make("span", "meta", `${pull.reporter} · ${pull.files} files, +${pull.added} −${pull.removed} · ${pull.seconds}s · ${dollars(pull.cost)}`));
+    if (pull.attention.length) {
+      const chips = make("div", "chips");
+      chips.append(...pull.attention.map((reason) => make("span", "chip", reason)));
+      what.append(chips);
+    }
+    const state = make("div", "state", pull.state === "open" ? "open" : `${pull.state} by ${pull.reviewer}`);
+    state.dataset.state = pull.state;
+    row.append(make("span", "number", `#${pull.number}`), what, ciCell(pull), state);
+    row.addEventListener("click", () => toggle(pull.number));
+    item.append(row);
+    if (opened.has(pull.number)) loadDetail(pull.number, item);
+    return item;
+  }));
+}
+
+function diffBlock(diff) {
+  const block = make("pre", "diff");
+  block.append(...diff.split("\n").map((line) => {
+    const kind = line.startsWith("+") && !line.startsWith("+++") ? "add" :
+      line.startsWith("-") && !line.startsWith("---") ? "del" : line.startsWith("@@") ? "hunk" : null;
+    return make("span", kind, line || " ");
+  }));
+  return block;
+}
+
+function decideBox(detail, item) {
+  const box = make("div", "decide");
+  if (detail.state !== "open") {
+    const outcome = detail.state === "merged" ? `Merged by ${detail.reviewer}.` : `Closed by ${detail.reviewer}: ${detail.close_reason}.`;
+    box.append(make("p", "decided", outcome));
+    return box;
+  }
+  const nameLabel = make("label", null, "Your name, as the approving reviewer");
+  const nameInput = make("input");
+  nameInput.value = reviewerName;
+  nameInput.addEventListener("input", () => { reviewerName = nameInput.value; });
+  nameLabel.append(nameInput);
+  const reasonLabel = make("label", null, "Reason, if you close it");
+  const reasonInput = make("input");
+  reasonLabel.append(reasonInput);
+  const merge = make("button", "primary", "Merge");
+  const close = make("button", "close", "Close");
+  merge.type = close.type = "button";
+  const refused = make("p", "refused");
+  refused.hidden = true;
+  const send = async (action) => {
+    const { ok, payload } = await getJson(`/api/pulls/${detail.number}/${action}`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ reviewer: nameInput.value, reason: reasonInput.value }) });
+    if (!ok) { refused.textContent = payload.refused || "The forge refused."; refused.hidden = false; return; }
+    refresh();
+  };
+  merge.addEventListener("click", () => send("merge"));
+  close.addEventListener("click", () => send("close"));
+  const buttons = make("div", "buttons");
+  buttons.append(merge, close);
+  box.append(nameLabel, reasonLabel, buttons, refused);
+  return box;
+}
+
+async function loadDetail(number, item) {
+  const { ok, payload: detail } = await getJson(`/api/pulls/${number}`);
+  if (!ok || !item.isConnected) return;
+  const panel = make("div", "detail");
+  const left = make("div");
+  left.append(make("h3", null, `Diff against main@${detail.base}`), diffBlock(detail.diff),
+    make("h3", null, `What the agent did (${detail.log.length} tool calls, ${detail.model})`));
+  const log = make("ol", "log");
+  log.append(...detail.log.map((entry) => {
+    const line = make("li");
+    line.append(make("span", "turn", `turn ${entry.turn}`), document.createTextNode(entry.line));
+    return line;
+  }));
+  left.append(log);
+  const right = make("div");
+  right.append(make("h3", null, `${detail.id} as reported`), make("p", "body", detail.body));
+  if (detail.description) right.append(make("h3", null, "The agent's description"), make("p", "body", detail.description));
+  right.append(make("h3", null, `CI on ${detail.head}, workflow from main@${detail.workflow_from}`));
+  const steps = make("ul", "steps");
+  steps.append(...detail.steps.map((step) => {
+    const entry = make("li");
+    const more = make("details");
+    const summary = make("summary");
+    summary.append(make("span", step.passed ? "blocked" : "reached", step.passed ? "passed " : "failed "), document.createTextNode(`${step.name} · ${step.seconds}s`));
+    more.append(summary, make("code", null, step.run), make("pre", null, step.output || "(no output)"));
+    entry.append(more);
+    return entry;
+  }));
+  if (detail.acceptance) {
+    const heldOut = make("li");
+    heldOut.append(make("span", detail.acceptance.passed ? "blocked" : "reached", detail.acceptance.passed ? "passes " : "fails "),
+      document.createTextNode("the issue's held-out test, which the agent never saw"));
+    steps.append(heldOut);
+  }
+  right.append(steps, decideBox(detail, item));
+  panel.append(left, right);
+  item.querySelector(".detail")?.remove();
+  item.append(panel);
+}
+
+function toggle(number, onlyOpen) {
+  if (opened.has(number) && !onlyOpen) opened.delete(number); else opened.add(number);
+  refresh().then(() => document.getElementById(`pull-${number}`)?.scrollIntoView({ block: "start" }));
+}
+
+let lastPulls = "";
+async function refresh() {
+  const { ok, payload: state } = await getJson("/api/state");
+  if (!ok) return;
+  $("#model").textContent = state.model ? `Model ${state.model}` : "";
+  $("#run").disabled = state.running;
+  $("#run").textContent = state.running ? "Running the queue..." : "Run the issue queue";
+  $("#error").hidden = !state.error;
+  $("#error").textContent = state.error ? `The run stopped: ${state.error}` : "";
+  renderMetric(state.board);
+  renderSessions(state.sessions, state.running);
+  renderReach(state);
+  renderNeeds(state.pulls);
+  /* Redraw the queue only when it changed, so an open form keeps what the reviewer typed. */
+  const pullsNow = JSON.stringify([state.pulls, [...opened]]);
+  if (pullsNow !== lastPulls) { lastPulls = pullsNow; renderPulls(state.pulls); }
+  return state;
+}
+
+$("#run").addEventListener("click", async () => {
+  await getJson("/api/run", { method: "POST" });
+  refresh();
+});
+
+async function poll() {
+  const state = await refresh().catch(() => null);
+  setTimeout(poll, state && state.running ? 1500 : 6000);
+}
+poll();
+</script>
+</body>
+</html>

@@ -1,0 +1,426 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Meterline Nightly Runs</title>
+<link rel="icon" href="data:,">
+<style>
+:root {
+  --paper: #FAFAFA; --card: #FFFFFF; --ink: #151515; --ink-2: #414141; --muted: #606060; --faint: #808080;
+  --line: #DFDFDF; --accent: #FAFF69; --accent-deep: #4F5101; --fill-dark: #1F1F1C;
+  --pass: #008138; --fail: #BF000F; --wait: #B75000;
+  --sans: Inter, Helvetica, Arial, sans-serif; --mono: Inconsolata, "Courier New", Courier, monospace;
+}
+* { box-sizing: border-box }
+[hidden] { display: none !important }
+html, body { margin: 0 }
+body { background: var(--paper); color: var(--ink); font: 14px/1.5 var(--sans); min-height: 100vh }
+button, input { font: inherit }
+button { cursor: pointer }
+button:focus-visible, input:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px }
+h1, h2, h3 { margin: 0; letter-spacing: -0.01em }
+.num { font-variant-numeric: tabular-nums }
+
+/* The scheduler's chrome: which function, which night, which schedule. Finance ops lives in this bar. */
+.bar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 22px; padding: 12px 28px; background: var(--fill-dark); color: var(--paper) }
+.bar .brand { font-weight: 800; font-size: 17px; letter-spacing: -0.02em }
+.bar .brand span { color: var(--accent) }
+.bar .meta { font-family: var(--mono); font-size: 14px; opacity: 0.9 }
+.bar .schedule { margin-left: auto; font-size: 13px }
+
+/* The night's verdict, read from the ledger and the runner, never from the job's own claims. */
+.verdict { display: grid; grid-template-columns: minmax(0, 1.35fr) repeat(3, minmax(0, 1fr)); background: var(--card); border-bottom: 1px solid var(--line) }
+.verdict > div { padding: 14px 28px 16px; border-left: 1px solid var(--line); min-width: 0 }
+.verdict > div:first-child { border-left: 0 }
+.verdict .label { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em }
+.verdict .big { font-size: 30px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.2 }
+.verdict .big.good { color: var(--pass) }
+.verdict .note { color: var(--ink-2); font-size: 13px }
+
+main { padding: 20px 28px 40px }
+.section-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 16px; margin: 0 0 10px }
+.section-head h2 { font-size: 17px }
+.section-head p { margin: 0; color: var(--muted); font-size: 13px }
+
+/* The timeline: one lane per durable execution, time running left to right, the crash cutting through all. */
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 0 0 10px; padding: 0; list-style: none; font-size: 12px; color: var(--ink-2) }
+.legend i { display: inline-block; width: 18px; height: 9px; margin-right: 6px; vertical-align: -1px; border-radius: 1px }
+.board { background: var(--card); border: 1px solid var(--line); border-radius: 4px; overflow: hidden }
+.lane { display: grid; grid-template-columns: 13.25rem minmax(0, 1fr) 6.5rem; align-items: center; border-top: 1px solid var(--line); min-height: 30px }
+.lane:first-child { border-top: 0 }
+.lane.axis { min-height: 26px; font-size: 11px; color: var(--muted); background: var(--paper) }
+.who { padding: 3px 10px 3px 12px; min-width: 0; display: flex; align-items: baseline; gap: 8px; white-space: nowrap; overflow: hidden }
+.who .id { font-family: var(--mono); font-size: 14px; font-weight: 700 }
+.who .name { color: var(--ink-2); font-size: 12px; overflow: hidden; text-overflow: ellipsis }
+.who .again { font-size: 11px; font-weight: 700; color: var(--fail) }
+.track { position: relative; height: 30px; min-width: 0 }
+.axis .track { height: 26px }
+.tick { position: absolute; top: 6px; transform: translateX(-50%); font-family: var(--mono); font-size: 12px }
+.billed { position: absolute; bottom: 3px; height: 2px; background: var(--faint) }
+.seg { position: absolute; top: 8px; height: 12px; min-width: 3px; border-radius: 1px; transform-origin: left center; animation: grow 700ms ease-out both }
+.seg.fetch_billing { background: var(--ink-2) }
+.seg.read_terms { background: var(--accent); box-shadow: inset 0 0 0 1px var(--accent-deep) }
+.seg.write_ledger { background: var(--pass) }
+.seg.failed { background: var(--fail) }
+.seg.interrupted { min-width: 7px; background: repeating-linear-gradient(135deg, var(--fail) 0 3px, var(--card) 3px 6px); box-shadow: inset 0 0 0 1px var(--fail) }
+.seg.waiting { background: repeating-linear-gradient(90deg, var(--wait) 0 6px, var(--card) 6px 10px); height: 4px; top: 12px }
+.dot { position: absolute; top: 11px; width: 6px; height: 6px; margin-left: -3px; border-radius: 50%; background: var(--ink); border: 1px solid var(--card) }
+.crash-line { position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: var(--fail); z-index: 2 }
+.down { position: absolute; top: 0; bottom: 0; background: repeating-linear-gradient(45deg, var(--paper) 0 4px, var(--line) 4px 5px); z-index: 0 }
+.result { padding: 3px 12px 3px 6px; text-align: right; font-size: 12px; font-weight: 700; white-space: nowrap }
+.result.matched, .result.corrected, .result.approved { color: var(--pass) }
+.result.held { color: var(--wait) }
+.result.stopped, .result.rejected { color: var(--fail) }
+.crash-flag { position: absolute; top: 4px; z-index: 3; margin-left: 6px; background: var(--fail); color: var(--card); font-size: 11px; font-weight: 700; padding: 1px 6px; border-radius: 2px; white-space: nowrap }
+@keyframes grow { from { transform: scaleX(0) } to { transform: scaleX(1) } }
+@media (prefers-reduced-motion: reduce) { .seg { animation: none } }
+
+/* Below the timeline: what a person still has to decide, then the two truths, the ledger and the bill. */
+.after { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.95fr); gap: 20px; margin-top: 22px; align-items: start }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 4px; padding: 16px 18px; margin-bottom: 20px }
+.held-job { border-top: 1px solid var(--line); padding: 14px 0 4px }
+.held-job:first-of-type { border-top: 0; padding-top: 4px }
+.held-job h3 { font-size: 15px; display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline }
+.held-job h3 .tag { font-size: 12px; font-weight: 700; color: var(--wait) }
+.held-job .reason { margin: 6px 0; padding: 8px 10px; background: var(--paper); border-left: 3px solid var(--wait); color: var(--ink) }
+.figures { display: flex; flex-wrap: wrap; gap: 4px 22px; font-size: 13px; color: var(--ink-2) }
+.figures strong { color: var(--ink) }
+.decide { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 10px 0 8px }
+.decide input { border: 1px solid var(--faint); border-radius: 3px; padding: 6px 9px; min-width: 0; flex: 1 1 11rem; background: var(--card); color: var(--ink) }
+.approve { background: var(--ink); color: var(--paper); border: 1px solid var(--ink); border-radius: 3px; padding: 6px 14px; font-weight: 700 }
+.reject { background: var(--card); color: var(--fail); border: 1px solid var(--fail); border-radius: 3px; padding: 6px 14px; font-weight: 700 }
+.answered { font-size: 13px; color: var(--ink-2) }
+.status-line { font-size: 13px; color: var(--muted); min-height: 1.5em }
+.empty { color: var(--muted); margin: 4px 0 }
+table { width: 100%; border-collapse: collapse; font-size: 13px }
+th { text-align: left; font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; padding: 4px 6px; border-bottom: 1px solid var(--line) }
+td { padding: 5px 6px; border-bottom: 1px solid var(--line); vertical-align: top }
+td.amount { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap }
+td.key { font-family: var(--mono); font-size: 13px }
+.kept-once { display: inline-block; margin-left: 4px; font-size: 11px; font-weight: 700; color: var(--accent-deep); background: var(--accent); padding: 0 5px; border-radius: 2px }
+.ledger-wrap { max-height: 26rem; overflow-y: auto }
+.bill-row { display: grid; grid-template-columns: minmax(0, 1fr) 6.75rem; gap: 6px; padding: 6px 0; border-bottom: 1px solid var(--line); font-size: 13px }
+.bill-row:last-child { border-bottom: 0 }
+.bill-row .amount { text-align: right; font-variant-numeric: tabular-nums }
+.bill-row.total { font-weight: 800; font-size: 15px }
+.bill-row .sub { display: block; color: var(--muted); font-size: 12px }
+.bill h3 { font-size: 13px; margin: 12px 0 2px; color: var(--ink-2) }
+.bill h3:first-child { margin-top: 0 }
+.source { font-size: 12px; color: var(--muted); margin: 10px 0 0 }
+.source a { color: var(--ink-2) }
+
+@media (max-width: 980px) {
+  .verdict { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) }
+  .verdict > div:nth-child(3) { border-left: 0 }
+  .verdict > div { border-top: 1px solid var(--line) }
+  .after { grid-template-columns: minmax(0, 1fr) }
+}
+@media (max-width: 640px) {
+  .bar, main { padding-left: 16px; padding-right: 16px }
+  .bar .schedule { margin-left: 0 }
+  .verdict { grid-template-columns: minmax(0, 1fr) }
+  .verdict > div { border-left: 0; padding: 12px 16px }
+  .lane { grid-template-columns: 4.6rem minmax(0, 1fr) 4.4rem }
+  .who { padding-left: 8px }
+  .who .name, .who .again { display: none }
+  .result { padding-right: 8px; font-size: 11px }
+  .crash-flag { font-size: 10px }
+  /* On a phone the ledger keeps the key, the total and the change; the name is in the timeline above. */
+  .ledger-wrap { overflow-x: auto }
+  th:nth-child(2), td:nth-child(2), th:nth-child(5), td:nth-child(5) { display: none }
+  td.key { white-space: nowrap; font-size: 12px }
+  .card { padding: 14px 12px }
+  th, td { padding-left: 4px; padding-right: 4px }
+  .kept-once { display: block; margin: 2px 0 0; width: max-content }
+}
+</style>
+</head>
+<body data-surface="nightly job scheduler run timeline">
+<header class="bar">
+  <div class="brand">Meterline <span>Billing ops</span></div>
+  <div class="meta" id="run-meta">nightly-invoice-check</div>
+  <div class="schedule">Schedule: every night 02:00 UTC, one durable execution per enterprise customer</div>
+</header>
+
+<section class="verdict" aria-label="Tonight's verdict">
+  <div><div class="label">Jobs finished after the crash</div><div class="big num" id="finished">...</div><div class="note" id="finished-note"></div></div>
+  <div><div class="label">Duplicate ledger writes</div><div class="big num" id="duplicates">...</div><div class="note" id="duplicates-note"></div></div>
+  <div><div class="label">Completed model steps called again</div><div class="big num" id="recalled">...</div><div class="note" id="recalled-note"></div></div>
+  <div><div class="label">Cost per run</div><div class="big num" id="cost">...</div><div class="note" id="cost-note"></div></div>
+</section>
+
+<main>
+  <div class="section-head">
+    <h2>Run timeline</h2>
+    <p id="timeline-note">Each lane is one customer's durable execution. Dots are checkpoints.</p>
+  </div>
+  <ul class="legend">
+    <li><i style="background: var(--ink-2)"></i>fetch billing</li>
+    <li><i style="background: var(--accent); box-shadow: inset 0 0 0 1px var(--accent-deep)"></i>model reads contract</li>
+    <li><i style="background: var(--pass)"></i>ledger write</li>
+    <li><i style="background: repeating-linear-gradient(135deg, var(--fail) 0 3px, var(--card) 3px 6px)"></i>cut off by the crash, redone</li>
+    <li><i style="background: var(--fail)"></i>failed attempt</li>
+    <li><i style="background: repeating-linear-gradient(90deg, var(--wait) 0 6px, var(--card) 6px 10px); height: 4px"></i>suspended, waiting for finance, not billed</li>
+    <li><i style="background: var(--faint); height: 2px"></i>function running, billed</li>
+  </ul>
+  <div class="board" id="board"><p class="empty" style="padding: 14px">Loading the last run...</p></div>
+
+  <div class="after">
+    <div>
+      <section class="card" aria-labelledby="review-title">
+        <div class="section-head"><h2 id="review-title">Held for finance</h2><p id="review-note"></p></div>
+        <div id="held"></div>
+        <div class="status-line" id="review-status" role="status"></div>
+      </section>
+      <section class="card" aria-labelledby="ledger-title">
+        <div class="section-head"><h2 id="ledger-title">Invoice ledger, September 2026</h2><p id="ledger-note"></p></div>
+        <div class="ledger-wrap">
+          <table>
+            <thead><tr><th>Idempotency key</th><th>Customer</th><th>Total</th><th>Change</th><th>Written by</th></tr></thead>
+            <tbody id="ledger"></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+    <section class="card bill" aria-labelledby="bill-title">
+      <div class="section-head"><h2 id="bill-title">The bill for this run</h2></div>
+      <div id="bill"></div>
+      <p class="source">Prices from the AWS price list API for us-east-1, checked 15 October 2026:
+        <a href="https://aws.amazon.com/lambda/pricing/" target="_blank" rel="noopener">Lambda</a> (arm64 compute, requests, durable operations) and
+        <a href="https://aws.amazon.com/ec2/pricing/on-demand/" target="_blank" rel="noopener">EC2 on demand</a>.
+        Model cost is what OpenRouter billed. Calls the crash cut off are not in it.</p>
+    </section>
+  </div>
+</main>
+
+<script>
+const $ = (selector) => document.querySelector(selector);
+const money = (amount, places = 2) => "$" + Number(amount).toLocaleString("en-US", { minimumFractionDigits: places, maximumFractionDigits: places });
+const STEP_NAMES = { fetch_billing: "fetch billing", read_terms: "model reads contract", write_ledger: "ledger write", finance_review: "waiting for finance" };
+
+// Every piece of text, including anything the model wrote, goes in through textContent, never as HTML.
+function make(tag, className, text) {
+  const element = document.createElement(tag);
+  if (className) element.className = className;
+  if (text !== undefined) element.textContent = text;
+  return element;
+}
+
+function showVerdict(report, naive) {
+  const metrics = report.metrics, crash = report.crash;
+  $("#run-meta").textContent = `${report.run.run_name}  period ${report.run.period}  ${report.run.model || ""}`;
+  $("#finished").textContent = `${metrics.reached_outcome} of ${metrics.jobs}`;
+  $("#finished").classList.toggle("good", metrics.reached_outcome === metrics.jobs);
+  const outcomes = metrics.outcomes;
+  $("#finished-note").textContent = `${outcomes.matched} matched, ${outcomes.corrected} corrected, ${outcomes.approved} approved, `
+    + `${outcomes.held} waiting for finance, ${outcomes.rejected} rejected, ${outcomes.stopped} stopped with a reason.`;
+  $("#duplicates").textContent = String(metrics.duplicate_writes);
+  $("#duplicates").classList.toggle("good", metrics.duplicate_writes === 0);
+  $("#duplicates-note").textContent = `${metrics.ledger_rows} rows. ${metrics.repeat_writes_absorbed} repeat write absorbed by the key.`
+    + (naive ? ` The plain loop wrote ${naive.duplicate_writes} twice.` : "");
+  $("#recalled").textContent = String(metrics.completed_model_steps_recalled);
+  $("#recalled").classList.toggle("good", metrics.completed_model_steps_recalled === 0);
+  $("#recalled-note").textContent = `${metrics.model_calls} calls. ${metrics.model_calls_cut_off_and_redone} were in flight at the crash and redone.`
+    + (naive ? ` The plain loop re-asked ${naive.completed_model_steps_recalled} finished jobs.` : "");
+  $("#cost").textContent = money(report.bill.per_run, 4);
+  $("#cost-note").textContent = naive ? `Plain loop on an always-on VM: ${money(naive.bill.per_run, 4)} a night.` : "Model plus Lambda.";
+  $("#timeline-note").textContent = crash
+    ? `Each lane is one customer's durable execution. Dots are checkpoints. Host process ${crash.process_id} was killed at ${crash.at.toFixed(1)}s; process ${crash.new_process_id} replayed from the checkpoints.`
+    : "Each lane is one customer's durable execution. Dots are checkpoints. This run had no crash.";
+}
+
+function showTimeline(report) {
+  const board = $("#board");
+  board.replaceChildren();
+  const crash = report.crash;
+  const ends = report.lanes.flatMap((lane) => lane.segments.map((segment) => segment.end ?? segment.start));
+  const span = Math.max(report.duration, ...ends, 1) * 1.02;
+  const at = (seconds) => `${(Math.max(0, seconds) / span) * 100}%`;
+  const axis = make("div", "lane axis");
+  axis.append(make("div", "who", "Customer"));
+  const ticks = make("div", "track");
+  const step = span > 60 ? 15 : span > 30 ? 10 : 5;
+  for (let second = 0; second < span; second += step) {
+    const tick = make("span", "tick", `${second}s`);
+    tick.style.left = at(second);
+    ticks.append(tick);
+  }
+  axis.append(ticks, make("div", "result", "Outcome"));
+  board.append(axis);
+  report.lanes.forEach((lane, position) => {
+    const row = make("div", "lane");
+    const who = make("div", "who");
+    who.append(make("span", "id", lane.customer_id), make("span", "name", lane.name));
+    if (lane.resumed) who.append(make("span", "again", "resumed"));
+    const track = make("div", "track");
+    if (crash) {
+      const down = make("div", "down");
+      down.style.left = at(crash.at);
+      down.style.width = `${((crash.restarted_at - crash.at) / span) * 100}%`;
+      const line = make("div", "crash-line");
+      line.style.left = at(crash.at);
+      track.append(down, line);
+      if (position === 0) {
+        const flag = make("span", "crash-flag", `SIGKILL pid ${crash.process_id}`);
+        flag.style.left = at(crash.at);
+        track.append(flag);
+      }
+    }
+    lane.invocations.forEach((invocation) => {
+      const billed = make("div", "billed");
+      billed.style.left = at(invocation.start);
+      billed.style.width = `${(Math.max(0.05, invocation.end - invocation.start) / span) * 100}%`;
+      track.append(billed);
+    });
+    lane.segments.forEach((segment, order) => {
+      const end = segment.end ?? span;
+      const bar = make("div", `seg ${segment.state === "done" ? segment.step : segment.state}`);
+      bar.style.left = at(segment.start);
+      bar.style.width = `${((end - segment.start) / span) * 100}%`;
+      bar.style.animationDelay = `${position * 18 + order * 40}ms`;
+      bar.title = `${STEP_NAMES[segment.step] || segment.step}: ${segment.state}, ${segment.start.toFixed(1)}s to ${segment.end === null ? "now" : segment.end.toFixed(1) + "s"}`;
+      track.append(bar);
+      if (segment.state === "done" && segment.step !== "finance_review") {
+        const checkpoint = make("span", "dot");
+        checkpoint.style.left = at(segment.end);
+        checkpoint.title = `checkpoint: ${STEP_NAMES[segment.step]}`;
+        track.append(checkpoint);
+      }
+    });
+    const result = make("div", `result ${lane.outcome}`, lane.outcome === "held" ? "for finance" : lane.outcome);
+    result.title = lane.reason || "";
+    row.append(who, track, result);
+    board.append(row);
+  });
+}
+
+function showHeld(report) {
+  const box = $("#held");
+  box.replaceChildren();
+  const reviewed = report.lanes.filter((lane) => lane.review);
+  const waiting = reviewed.filter((lane) => lane.outcome === "held");
+  $("#review-note").textContent = `${waiting.length} waiting. Each job is suspended at no cost until someone answers.`;
+  if (!reviewed.length) box.append(make("p", "empty", "Nothing was held tonight."));
+  reviewed.forEach((lane) => {
+    const review = lane.review;
+    const card = make("article", "held-job");
+    const title = make("h3");
+    title.append(make("span", "", `${lane.customer_id} ${lane.name}`), make("span", "tag", lane.invoice));
+    card.append(title);
+    review.reasons.split("\n").forEach((reason) => card.append(make("p", "reason", reason)));
+    const figures = make("div", "figures");
+    const draft = make("span", "", "Draft invoice ");
+    draft.append(make("strong", "num", money(review.draft_total)));
+    const proposed = make("span", "", "Would write ");
+    proposed.append(make("strong", "num", money(review.proposed_total)));
+    figures.append(draft, proposed);
+    card.append(figures);
+    if (lane.outcome === "held") {
+      const decide = make("div", "decide");
+      const reviewer = make("input");
+      reviewer.placeholder = "Your name";
+      reviewer.setAttribute("aria-label", `Reviewer for ${lane.customer_id}`);
+      const approve = make("button", "approve", `Approve ${money(review.proposed_total)}`);
+      const reject = make("button", "reject", "Reject, send to billing");
+      approve.addEventListener("click", () => answer(lane.customer_id, "approve", reviewer.value, [approve, reject]));
+      reject.addEventListener("click", () => answer(lane.customer_id, "reject", reviewer.value, [approve, reject]));
+      decide.append(reviewer, approve, reject);
+      card.append(decide);
+    } else {
+      card.append(make("p", "answered", `${lane.outcome === "approved" ? "Approved" : "Rejected"} by ${review.decided_by}. `
+        + (lane.ledger.length ? `Written to the ledger as ${money(lane.ledger[0].total)}.` : "Nothing was written.")));
+    }
+    box.append(card);
+  });
+}
+
+function showLedger(report) {
+  const body = $("#ledger");
+  body.replaceChildren();
+  const rows = report.lanes.flatMap((lane) => lane.ledger.map((row) => ({ ...row, lane })));
+  rows.sort((first, second) => first.customer_id.localeCompare(second.customer_id));
+  $("#ledger-note").textContent = `${rows.length} rows. One per customer per month, enforced by the key.`;
+  rows.forEach((row) => {
+    const line = make("tr");
+    const key = make("td", "key", row.idempotency_key);
+    if (row.lane.segments.some((segment) => segment.step === "write_ledger" && segment.state === "interrupted")) {
+      const badge = make("span", "kept-once", "written twice, kept once");
+      key.append(badge);
+    }
+    const change = row.adjustment ? `${row.adjustment > 0 ? "+" : "-"}${money(Math.abs(row.adjustment))}` : "none";
+    line.append(key, make("td", "", row.lane.name), make("td", "amount", money(row.total)), make("td", "amount", change), make("td", "", row.approved_by));
+    body.append(line);
+  });
+}
+
+function billRow(label, sub, amount, total) {
+  const row = make("div", total ? "bill-row total" : "bill-row");
+  const name = make("span", "", label);
+  if (sub) name.append(make("span", "sub", sub));
+  row.append(name, make("span", "amount", amount));
+  return row;
+}
+
+function showBill(report, naive) {
+  const box = $("#bill");
+  box.replaceChildren();
+  const cloud = report.bill.lambda;
+  box.append(make("h3", "", "Durable functions on Lambda"));
+  box.append(billRow("Model", `${report.metrics.model_calls_completed} calls billed by OpenRouter`, money(report.bill.model, 4)));
+  box.append(billRow("Lambda compute", `${cloud.gb_seconds} GB-seconds at 512 MB arm64, the crashed invokes included`, money(cloud.compute, 4)));
+  box.append(billRow("Requests", `${cloud.invokes} invokes`, money(cloud.requests, 6)));
+  box.append(billRow("Durable operations", `${cloud.operations} starts, step attempts and callbacks`, money(cloud.durable, 4)));
+  box.append(billRow("Per run", "", money(report.bill.per_run, 4), true));
+  box.append(make("h3", "", "Plain loop on an always-on VM"));
+  if (naive) {
+    box.append(billRow("Model", `${naive.model_calls} calls, ${naive.model_calls_repeated} of them repeats after the restart`, money(naive.bill.model, 4)));
+    box.append(billRow(naive.bill.vm.name, `${naive.bill.vm.hours} hours, busy or idle`, money(naive.bill.vm.total, 4)));
+    box.append(billRow("Per run", "", money(naive.bill.per_run, 4), true));
+  } else {
+    box.append(make("p", "empty", "Run `uv run nightly naive` to fill this in."));
+  }
+}
+
+async function answer(customerId, decision, reviewer, buttons) {
+  const status = $("#review-status");
+  if (!reviewer.trim()) { status.textContent = "Type your name first: the ledger records who approved each change."; return; }
+  buttons.forEach((button) => { button.disabled = true; });
+  status.textContent = `Sending ${decision} for ${customerId}. The execution resumes from its checkpoint...`;
+  try {
+    const response = await fetch("/api/review", { method: "POST", signal: AbortSignal.timeout(90000), headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ customer_id: customerId, decision, reviewer }) });
+    const lane = await response.json();
+    if (!response.ok) throw new Error(lane.error || response.statusText);
+    status.textContent = `${customerId} ${lane.outcome}. ${lane.ledger.length ? "One ledger row written." : "Nothing written."}`;
+  } catch (error) {
+    status.textContent = `Could not send: ${error.message}`;
+    buttons.forEach((button) => { button.disabled = false; });
+  }
+  load();
+}
+
+async function load() {
+  let state;
+  try {
+    const response = await fetch("/api/run", { signal: AbortSignal.timeout(20000) });
+    state = await response.json();
+  } catch (error) {
+    $("#board").replaceChildren(make("p", "empty", `Could not load the run: ${error.message}`));
+    return;
+  }
+  if (!state.report) {
+    $("#board").replaceChildren(make("p", "empty", "No run yet. Run `uv run nightly run` and reload."));
+    return;
+  }
+  showVerdict(state.report, state.naive);
+  showTimeline(state.report);
+  showHeld(state.report);
+  showLedger(state.report);
+  showBill(state.report, state.naive);
+}
+
+load();
+</script>
+</body>
+</html>

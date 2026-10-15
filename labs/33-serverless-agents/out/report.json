@@ -1,0 +1,1711 @@
+{
+ "run": {
+  "run_name": "night-1792075233",
+  "period": "2026-09",
+  "model": "openai/gpt-6-luna",
+  "crash_after_writes": 12
+ },
+ "duration": 31.0,
+ "crash": {
+  "process_id": 1109,
+  "new_process_id": 1233,
+  "exit_code": -9,
+  "at": 9.699,
+  "restarted_at": 10.379
+ },
+ "lanes": [
+  {
+   "customer_id": "MC-101",
+   "name": "Halverson Freight",
+   "outcome": "matched",
+   "reason": "",
+   "segments": [
+    {
+     "step": "fetch_billing",
+     "start": 1.063,
+     "end": 1.063,
+     "state": "done"
+    },
+    {
+     "step": "read_terms",
+     "start": 1.21,
+     "end": 8.044,
+     "state": "done"
+    },
+    {
+     "step": "write_ledger",
+     "start": 8.055,
+     "end": 8.055,
+     "state": "done"
+    }
+   ],
+   "invocations": [
+    {
+     "start": 0.02,
+     "end": 8.169,
+     "killed": false
+    }
+   ],
+   "resumed": false,
+   "review": null,
+   "ledger": [
+    {
+     "row_id": 10,
+     "idempotency_key": "MC-101:2026-09",
+     "customer_id": "MC-101",
+     "invoice": "INV-2026-09-0101",
+     "period": "2026-09",
+     "total": 12505.14,
+     "adjustment": 0.0,
+     "approved_by": "agent",
+     "written_at": 1792075241.6385632
+    }
+   ],
+   "draft_total": 12505.14,
+   "invoice": "INV-2026-09-0101"
+  },
+  {
+   "customer_id": "MC-102",
+   "name": "Quarry Health",
+   "outcome": "matched",
+   "reason": "",
+   "segments": [
+    {
+     "step": "fetch_billing",
+     "start": 1.283,
+     "end": 1.283,
+     "state": "done"
+    },
+    {
+     "step": "read_terms",
+     "start": 1.445,
+     "end": 6.75,
+     "state": "done"
+    },
+    {
+     "step": "write_ledger",
+     "start": 6.758,
+     "end": 6.758,
+     "state": "done"
+    }
+   ],
+   "invocations": [
+    {
+     "start": 0.026,
+     "end": 6.867,
+     "killed": false
+    }
+   ],
+   "resumed": false,
+   "review": null,
+   "ledger": [
+    {
+     "row_id": 1,
+     "idempotency_key": "MC-102:2026-09",
+     "customer_id": "MC-102",
+     "invoice": "INV-2026-09-0102",
+     "period": "2026-09",
+     "total": 12365.91,
+     "adjustment": 0.0,
+     "approved_by": "agent",
+     "written_at": 1792075240.3438258
+    }
+   ],
+   "draft_total": 12365.91,
+   "invoice": "INV-2026-09-0102"
+  },
+  {
+   "customer_id": "MC-103",
+   "name": "Brightwell Logistics",
+   "outcome": "matched",
+   "reason": "",
+   "segments": [
+    {
+     "step": "fetch_billing",
+     "start": 1.062,
+     "end": 1.062,
+     "state": "done"
+    },
+    {
+     "step": "read_terms",
+     "start": 1.195,
+     "end": 7.178,
+     "state": "done"
+    },
+    {
+     "step": "write_ledger",
+     "start": 7.188,
+     "end": 7.188,
+     "state": "done"
+    }
+   ],
+   "invocations": [
+    {
+     "start": 0.027,
+     "end": 7.299,
+     "killed": false
+    }
+   ],
+   "resumed": false,
+   "review": null,
+   "ledger": [
+    {
+     "row_id": 4,
+     "idempotency_key": "MC-103:2026-09",
+     "customer_id": "MC-103",
+     "invoice": "INV-2026-09-0103",
+     "period": "2026-09",
+     "total": 20247.91,
+     "adjustment": 0.0,
+     "approved_by": "agent",
+     "written_at": 1792075240.772844
+    }
+   ],
+   "draft_total": 20247.91,
+   "invoice": "INV-2026-09-0103"
+  },
+  {
+   "customer_id": "MC-104",
+   "name": "Ostrander Credit Union",
+   "outcome": "corrected",
+   "reason": "",
+   "segments": [
+    {
+     "step": "fetch_billing",
+     "start": 1.062,
+     "end": 1.062,
+     "state": "done"
+    },
+    {
+     "step": "read_terms",
+     "start": 1.195,
+     "end": 7.286,
+     "state": "done"
+    },
+    {
+     "step": "write_ledger",
+     "start": 7.298,
+     "end": 7.298,
+     "state": "done"
+    }
+   ],
+   "invocations": [
+    {
+     "start": 0.03,
+     "end": 7.413,
+     "killed": false
+    }
+   ],
+   "resumed": false,
+   "review": null,
+   "ledger": [
+    {
+     "row_id": 5,
+     "idempotency_key": "MC-104:2026-09",
+     "customer_id": "MC-104",
+     "invoice": "INV-2026-09-0104",
+     "period": "2026-09",
+     "total": 11684.61,
+     "adjustment": -1003.16,
+     "approved_by": "agent",
+     "written_at": 1792075240.881811
+    }
+   ],
+   "draft_total": 12687.77,
+   "invoice": "INV-2026-09-0104"
+  },
+  {
+   "customer_id": "MC-105",
+   "name": "Pinecrest Realty Group",
+   "outcome": "matched",
+   "reason": "",
+   "segments": [
+    {
+     "step": "fetch_billing",
+     "start": 1.13,
+     "end": 1.13,
+     "state": "done"
+    },
+    {
+     "step": "read_terms",
+     "start": 1.261,
+     "end": 7.576,
+     "state": "done"
+    },
+    {
+     "step": "write_ledger",
+     "start": 7.585,
+     "end": 7.585,
+     "state": "done"
+    }
+   ],
+   "invocations": [
+    {
+     "start": 0.031,
+     "end": 7.693,
+     "killed": false
+    }
+   ],
+   "resumed": false,
+   "review": null,
+   "ledger": [
+    {
+     "row_id": 7,
+     "idempotency_key": "MC-105:2026-09",
+     "customer_id": "MC-105",
+     "invoice": "INV-2026-09-0105",
+     "period": "2026-09",
+     "total": 16080.62,
+     "adjustment": 0.0,
+     "approved_by": "agent",
+     "written_at": 1792075241.1705248
+    }
+   ],
+   "draft_total": 16080.62,
+   "invoice": "INV-2026-09-0105"
+  },
+  {
+   "customer_id": "MC-106",
+   "name": "Tallow and Finch",
+   "outcome": "matched",
+   "reason": "",
+   "segments": [
+    {
+     "step": "fetch_billing",
+     "start": 1.068,
+     "end": 1.068,
+     "state": "done"
+    },
+    {
+     "step": "read_terms",
+     "start": 1.211,
+     "end": 9.692,
+     "state": "done"
+    },
+    {
+     "step": "write_ledger",
+     "start": 9.699,
+     "end": 9.699,
+     "state": "interrupted"
+    },
+    {
+     "step": "write_ledger",
+     "start": 21.812,
+     "end": 21.812,
+     "state": "done"
+    }
+   ],
+   "invocations": [
+    {
+     "start": 0.119,
+     "end": 9.699,
+     "killed": true
+    },
+    {
+     "start": 21.801,
+     "end": 21.925,
+     "killed": false
+    }
+   ],
+   "resumed": true,
+   "review": null,
+   "ledger": [
+    {
+     "row_id": 12,
+     "idempotency_key": "MC-106:2026-09",
+     "customer_id": "MC-106",
+     "invoice": "INV-2026-09-0106",
+     "period": "2026-09",
+     "total": 6245.44,
+     "adjustment": 0.0,
+     "approved_by": "agent",
+     "written_at": 1792075243.287724
+    }
+   ],
+   "draft_total": 6245.44,
+   "invoice": "INV-2026-09-0106"
+  },
+  {
+   "customer_id": "MC-107",
+   "name": "Northbay Pharmacy",
+   "outcome": "matched",
+   "reason": "",
+   "segments": [
+    {
+     "step": "fetch_billing",
+     "start": 1.17,
+     "end": 1.17,
+     "state": "done"
+    },
+    {
+     "step": "read_terms",
+     "start": 1.327,
+     "end": 6.976,
+     "state": "done"
+    },
+    {
+     "step": "write_ledger",
+     "start": 6.988,
+     "end": 6.988,
+     "state": "done"
+    }
+   ],
+   "invocations": [
+    {
+     "start": 0.12,
+     "end": 7.102,
+     "killed": false
+    }
+   ],
+   "resumed": false,
+   "review": null,
+   "ledger": [
+    {
+     "row_id": 3,
+     "idempotency_key": "MC-107:2026-09",
+     "customer_id": "MC-107",
+     "invoice": "INV-2026-09-0107",
+     "period": "2026-09",
+     "total": 1979.6,
+     "adjustment": 0.0,
+     "approved_by": "agent",
+     "written_at": 1792075240.573505
+    }
+   ],
+   "draft_total": 1979.6,
+   "invoice": "INV-2026-09-0107"
+  },
+  {
+   "customer_id": "MC-108",
+   "name": "Corvid Analytics",
+   "outcome": "corrected",
+   "reason": "",
+   "segments": [
+    {
+     "step": "fetch_billing",
+     "start": 1.16,
+     "end": 1.16,
+     "state": "done"
+    },
+    {
+     "step": "read_terms",
+     "start": 1.312,
+     "end": 7.6,
+     "state": "done"
+    },
+    {
+     "step": "write_ledger",
+     "start": 7.61,
+     "end": 7.61,
+     "state": "done"
+    }
+   ],
+   "invocations": [
+    {
+     "start": 0.119,
+     "end": 7.719,
+     "killed": false
+    }
+   ],
+   "resumed": false,
+   "review": null,
+   "ledger": [
+    {
+     "row_id": 8,
+     "idempotency_key": "MC-108:2026-09",
+     "customer_id": "MC-108",
+     "invoice": "INV-2026-09-0108",
+     "period": "2026-09",
+     "total": 11037.06,
+     "adjustment": -1259.27,
+     "approved_by": "agent",
+     "written_at": 1792075241.195034
+    }
+   ],
+   "draft_total": 12296.33,
+   "invoice": "INV-2026-09-0108"
+  },
+  {
+   "customer_id": "MC-109",
+   "name": "Larkspur Insurance",
+   "outcome": "matched",
+   "reason": "",
+   "segments": [
+    {
+     "step": "fetch_billing",
+     "start": 1.329,
+     "end": 1.329,
+     "state": "done"
+    },
+    {
+     "step": "read_terms",
+     "start": 1.446,
+     "end": 6.863,
+     "state": "done"
+    },
+    {
+     "step": "write_ledger",
+     "start": 6.875,
+     "end": 6.875,
+     "state": "done"
+    }
+   ],
+   "invocations": [
+    {
+     "start": 0.12,
+     "end": 6.981,
+     "killed": false
+    }
+   ],
+   "resumed": false,
+   "review": null,
+   "ledger": [
+    {
+     "row_id": 2,
+     "idempotency_key": "MC-109:2026-09",
+     "customer_id": "MC-109",
+     "invoice": "INV-2026-09-0109",
+     "period": "2026-09",
+     "total": 2132.67,
+     "adjustment": 0.0,
+     "approved_by": "agent",
+     "written_at": 1792075240.460722
+    }
+   ],
+   "draft_total": 2132.67,
+   "invoice": "INV-2026-09-0109"
+  },
+  {
+   "customer_id": "MC-110",
+   "name": "Mesa Verde Dental",
+   "outcome": "matched",
+   "reason": "",
+   "segments": [
+    {
+     "step": "fetch_billing",
+     "start": 1.165,
+     "end": 1.165,
+     "state": "done"
+    },
+    {
+     "step": "read_terms",
+     "start": 1.318,
+     "end": 8.043,
+     "state": "done"
+    },
+    {
+     "step": "write_ledger",
+     "start": 8.053,
+     "end": 8.053,
+     "state": "done"
+    }
+   ],
+   "invocations": [
+    {
+     "start": 0.125,
+     "end": 8.16,
+     "killed": false
+    }
+   ],
+   "resumed": false,
+   "review": null,
+   "ledger": [
+    {
+     "row_id": 9,
+     "idempotency_key": "MC-110:2026-09",
+     "customer_id": "MC-110",
+     "invoice": "INV-2026-09-0110",
+     "period": "2026-09",
+     "total": 2457.74,
+     "adjustment": 0.0,
+     "approved_by": "agent",
+     "written_at": 1792075241.638483
+    }
+   ],
+   "draft_total": 2457.74,
+   "invoice": "INV-2026-09-0110"
+  },
+  {
+   "customer_id": "MC-111",
+   "name": "Ironwood Staffing",
+   "outcome": "corrected",
+   "reason": "",
+   "segments": [
+    {
+     "step": "fetch_billing",
+     "start": 1.102,
+     "end": 1.102,
+     "state": "done"
+    },
+    {
+     "step": "read_terms",
+     "start": 1.217,
+     "end": 7.285,
+     "state": "done"
+    },
+    {
+     "step": "write_ledger",
+     "start": 7.304,
+     "end": 7.304,
+     "state": "done"
+    }
+   ],
+   "invocations": [
+    {
+     "start": 0.123,
+     "end": 7.413,
+     "killed": false
+    }
+   ],
+   "resumed": false,
+   "review": null,
+   "ledger": [
+    {
+     "row_id": 6,
+     "idempotency_key": "MC-111:2026-09",
+     "customer_id": "MC-111",
+     "invoice": "INV-2026-09-0111",
+     "period": "2026-09",
+     "total": 6337.67,
+     "adjustment": -1199.28,
+     "approved_by": "agent",
+     "written_at": 1792075240.885567
+    }
+   ],
+   "draft_total": 7536.95,
+   "invoice": "INV-2026-09-0111"
+  },
+  {
+   "customer_id": "MC-112",
+   "name": "Bluegate Travel",
+   "outcome": "matched",
+   "reason": "",
+   "segments": [
+    {
+     "step": "fetch_billing",
+     "start": 1.225,
+     "end": 1.225,
+     "state": "done"
+    },
+    {
+     "step": "read_terms",
+     "start": 1.351,
+     "end": 9.079,
+     "state": "done"
+    },
+    {
+     "step": "write_ledger",
+     "start": 9.089,
+     "end": 9.089,
+     "state": "done"
+    }
+   ],
+   "invocations": [
+    {
+     "start": 0.124,
+     "end": 9.199,
+     "killed": false
+    }
+   ],
+   "resumed": false,
+   "review": null,
+   "ledger": [
+    {
+     "row_id": 11,
+     "idempotency_key": "MC-112:2026-09",
+     "customer_id": "MC-112",
+     "invoice": "INV-2026-09-0112",
+     "period": "2026-09",
+     "total": 6000.0,
+     "adjustment": 0.0,
+     "approved_by": "agent",
+     "written_at": 1792075242.674171
+    }
+   ],
+   "draft_total": 6000,
+   "invoice": "INV-2026-09-0112"
+  },
+  {
+   "customer_id": "MC-113",
+   "name": "Saltmarsh Foods",
+   "outcome": "matched",
+   "reason": "",
+   "segments": [
+    {
+     "step": "fetch_billing",
+     "start": 6.875,
+     "end": 6.875,
+     "state": "done"
+    },
+    {
+     "step": "read_terms",
+     "start": 6.884,
+     "end": 9.699,
+     "state": "interrupted"
+    },
+    {
+     "step": "read_terms",
+     "start": 15.74,
+     "end": 23.504,
+     "state": "done"
+    },
+    {
+     "step": "write_ledger",
+     "start": 23.517,
+     "end": 23.517,
+     "state": "done"
+    }
+   ],
+   "invocations": [
+    {
+     "start": 6.87,
+     "end": 9.699,
+     "killed": true
+    },
+    {
+     "start": 14.752,
+     "end": 23.629,
+     "killed": false
+    }
+   ],
+   "resumed": true,
+   "review": null,
+   "ledger": [
+    {
+     "row_id": 22,
+     "idempotency_key": "MC-113:2026-09",
+     "customer_id": "MC-113",
+     "invoice": "INV-2026-09-0113",
+     "period": "2026-09",
+     "total": 4000.0,
+     "adjustment": 0.0,
+     "approved_by": "agent",
+     "written_at": 1792075257.1006432
+    }
+   ],
+   "draft_total": 4000,
+   "invoice": "INV-2026-09-0113"
+  },
+  {
+   "customer_id": "MC-114",
+   "name": "Kettle Ridge Schools",
+   "outcome": "matched",
+   "reason": "",
+   "segments": [
+    {
+     "step": "fetch_billing",
+     "start": 7.542,
+     "end": 7.542,
+     "state": "done"
+    },
+    {
+     "step": "read_terms",
+     "start": 7.547,
+     "end": 9.699,
+     "state": "interrupted"
+    },
+    {
+     "step": "read_terms",
+     "start": 15.738,
+     "end": 22.129,
+     "state": "done"
+    },
+    {
+     "step": "write_ledger",
+     "start": 22.144,
+     "end": 22.144,
+     "state": "done"
+    }
+   ],
+   "invocations": [
+    {
+     "start": 7.536,
+     "end": 9.699,
+     "killed": true
+    },
+    {
+     "start": 14.753,
+     "end": 22.267,
+     "killed": false
+    }
+   ],
+   "resumed": true,
+   "review": null,
+   "ledger": [
+    {
+     "row_id": 19,
+     "idempotency_key": "MC-114:2026-09",
+     "customer_id": "MC-114",
+     "invoice": "INV-2026-09-0114",
+     "period": "2026-09",
+     "total": 20572.5,
+     "adjustment": 0.0,
+     "approved_by": "agent",
+     "written_at": 1792075255.727459
+    }
+   ],
+   "draft_total": 20572.5,
+   "invoice": "INV-2026-09-0114"
+  },
+  {
+   "customer_id": "MC-115",
+   "name": "Driftwood Rentals",
+   "outcome": "corrected",
+   "reason": "",
+   "segments": [
+    {
+     "step": "fetch_billing",
+     "start": 6.99,
+     "end": 6.99,
+     "state": "done"
+    },
+    {
+     "step": "read_terms",
+     "start": 6.994,
+     "end": 9.699,
+     "state": "interrupted"
+    },
+    {
+     "step": "read_terms",
+     "start": 15.742,
+     "end": 22.034,
+     "state": "done"
+    },
+    {
+     "step": "write_ledger",
+     "start": 22.048,
+     "end": 22.048,
+     "state": "done"
+    }
+   ],
+   "invocations": [
+    {
+     "start": 6.987,
+     "end": 9.699,
+     "killed": true
+    },
+    {
+     "start": 14.75,
+     "end": 22.159,
+     "killed": false
+    }
+   ],
+   "resumed": true,
+   "review": null,
+   "ledger": [
+    {
+     "row_id": 18,
+     "idempotency_key": "MC-115:2026-09",
+     "customer_id": "MC-115",
+     "invoice": "INV-2026-09-0115",
+     "period": "2026-09",
+     "total": 1995.41,
+     "adjustment": 495.41,
+     "approved_by": "agent",
+     "written_at": 1792075255.631038
+    }
+   ],
+   "draft_total": 1500.0,
+   "invoice": "INV-2026-09-0115"
+  },
+  {
+   "customer_id": "MC-116",
+   "name": "Amberline Energy",
+   "outcome": "matched",
+   "reason": "",
+   "segments": [
+    {
+     "step": "fetch_billing",
+     "start": 7.112,
+     "end": 7.112,
+     "state": "done"
+    },
+    {
+     "step": "read_terms",
+     "start": 7.119,
+     "end": 9.699,
+     "state": "interrupted"
+    },
+    {
+     "step": "read_terms",
+     "start": 21.542,
+     "end": 27.212,
+     "state": "done"
+    },
+    {
+     "step": "write_ledger",
+     "start": 27.265,
+     "end": 27.265,
+     "state": "done"
+    }
+   ],
+   "invocations": [
+    {
+     "start": 7.106,
+     "end": 9.699,
+     "killed": true
+    },
+    {
+     "start": 21.539,
+     "end": 27.376,
+     "killed": false
+    }
+   ],
+   "resumed": true,
+   "review": null,
+   "ledger": [
+    {
+     "row_id": 23,
+     "idempotency_key": "MC-116:2026-09",
+     "customer_id": "MC-116",
+     "invoice": "INV-2026-09-0116",
+     "period": "2026-09",
+     "total": 10887.35,
+     "adjustment": 0.0,
+     "approved_by": "agent",
+     "written_at": 1792075260.8362172
+    }
+   ],
+   "draft_total": 10887.35,
+   "invoice": "INV-2026-09-0116"
+  },
+  {
+   "customer_id": "MC-117",
+   "name": "Cobalt Field Services",
+   "outcome": "stopped",
+   "reason": "Stopped after 3 attempts: No September usage export for MC-117; the metering store has no row for it.",
+   "segments": [
+    {
+     "step": "fetch_billing",
+     "start": 7.426,
+     "end": 7.426,
+     "state": "failed"
+    },
+    {
+     "step": "fetch_billing",
+     "start": 21.686,
+     "end": 21.686,
+     "state": "failed"
+    },
+    {
+     "step": "fetch_billing",
+     "start": 22.711,
+     "end": 22.711,
+     "state": "failed"
+    }
+   ],
+   "invocations": [
+    {
+     "start": 7.419,
+     "end": 7.533,
+     "killed": false
+    },
+    {
+     "start": 21.677,
+     "end": 21.796,
+     "killed": false
+    },
+    {
+     "start": 22.703,
+     "end": 22.818,
+     "killed": false
+    }
+   ],
+   "resumed": false,
+   "review": null,
+   "ledger": [],
+   "draft_total": 6000,
+   "invoice": "INV-2026-09-0117"
+  },
+  {
+   "customer_id": "MC-118",
+   "name": "Wrenhaven Clinics",
+   "outcome": "matched",
+   "reason": "",
+   "segments": [
+    {
+     "step": "fetch_billing",
+     "start": 7.31,
+     "end": 7.31,
+     "state": "done"
+    },
+    {
+     "step": "read_terms",
+     "start": 7.314,
+     "end": 9.699,
+     "state": "interrupted"
+    },
+    {
+     "step": "read_terms",
+     "start": 21.93,
+     "end": 28.379,
+     "state": "done"
+    },
+    {
+     "step": "write_ledger",
+     "start": 28.389,
+     "end": 28.389,
+     "state": "done"
+    }
+   ],
+   "invocations": [
+    {
+     "start": 7.305,
+     "end": 9.699,
+     "killed": true
+    },
+    {
+     "start": 21.927,
+     "end": 28.5,
+     "killed": false
+    }
+   ],
+   "resumed": true,
+   "review": null,
+   "ledger": [
+    {
+     "row_id": 26,
+     "idempotency_key": "MC-118:2026-09",
+     "customer_id": "MC-118",
+     "invoice": "INV-2026-09-0118",
+     "period": "2026-09",
+     "total": 9440.64,
+     "adjustment": 0.0,
+     "approved_by": "agent",
+     "written_at": 1792075261.973706
+    }
+   ],
+   "draft_total": 9440.64,
+   "invoice": "INV-2026-09-0118"
+  },
+  {
+   "customer_id": "MC-119",
+   "name": "Juniper Payroll",
+   "outcome": "approved",
+   "reason": "Approved by Priya Nair, finance",
+   "segments": [
+    {
+     "step": "fetch_billing",
+     "start": 7.422,
+     "end": 7.422,
+     "state": "done"
+    },
+    {
+     "step": "read_terms",
+     "start": 7.425,
+     "end": 9.699,
+     "state": "interrupted"
+    },
+    {
+     "step": "read_terms",
+     "start": 15.732,
+     "end": 22.461,
+     "state": "done"
+    },
+    {
+     "step": "finance_review",
+     "start": 22.469,
+     "end": 495.995,
+     "state": "done"
+    },
+    {
+     "step": "write_ledger",
+     "start": 496.266,
+     "end": 496.266,
+     "state": "done"
+    }
+   ],
+   "invocations": [
+    {
+     "start": 7.416,
+     "end": 9.699,
+     "killed": true
+    },
+    {
+     "start": 14.958,
+     "end": 22.588,
+     "killed": false
+    },
+    {
+     "start": 496.031,
+     "end": 496.375,
+     "killed": false
+    }
+   ],
+   "resumed": true,
+   "review": {
+    "customer_id": "MC-119",
+    "callback_id": "eyJhcm4iOiI3NTJhNDI5NC00YmEwLTRlZjItOGZmZi04YzVmMWQ0MDUxZWUvNmRjZTFlNWQtYTg2NC00ZDc1LWEwZjItNjI4ZDNjMzgxOWE2Iiwib3AiOiI0ZmNjZTY1ZWMwMDMwOWM2M2U3OTczY2M3YmE5OGQwODJmNmRiMjNmZjQ5MWY4YWUwZDM1OGQ5NGE0NDk1NzNmIn0=",
+    "reasons": "The contract implies 9,000.00, a change of -1,764.32 to the draft. Changes over 1,500 wait for finance.",
+    "proposed_total": 9000.0,
+    "draft_total": 10764.32,
+    "adjustment": -1764.32,
+    "status": "approved",
+    "decided_by": "Priya Nair, finance",
+    "queued_at": 1792075256.066348
+   },
+   "ledger": [
+    {
+     "row_id": 28,
+     "idempotency_key": "MC-119:2026-09",
+     "customer_id": "MC-119",
+     "invoice": "INV-2026-09-0119",
+     "period": "2026-09",
+     "total": 9000.0,
+     "adjustment": -1764.32,
+     "approved_by": "Priya Nair, finance",
+     "written_at": 1792075729.849521
+    }
+   ],
+   "draft_total": 10764.32,
+   "invoice": "INV-2026-09-0119"
+  },
+  {
+   "customer_id": "MC-120",
+   "name": "Foxglove Retail",
+   "outcome": "matched",
+   "reason": "",
+   "segments": [
+    {
+     "step": "fetch_billing",
+     "start": 7.727,
+     "end": 7.727,
+     "state": "done"
+    },
+    {
+     "step": "read_terms",
+     "start": 7.732,
+     "end": 9.699,
+     "state": "interrupted"
+    },
+    {
+     "step": "read_terms",
+     "start": 21.195,
+     "end": 28.324,
+     "state": "done"
+    },
+    {
+     "step": "write_ledger",
+     "start": 28.334,
+     "end": 28.334,
+     "state": "done"
+    }
+   ],
+   "invocations": [
+    {
+     "start": 7.721,
+     "end": 9.699,
+     "killed": true
+    },
+    {
+     "start": 21.192,
+     "end": 28.441,
+     "killed": false
+    }
+   ],
+   "resumed": true,
+   "review": null,
+   "ledger": [
+    {
+     "row_id": 25,
+     "idempotency_key": "MC-120:2026-09",
+     "customer_id": "MC-120",
+     "invoice": "INV-2026-09-0120",
+     "period": "2026-09",
+     "total": 12159.71,
+     "adjustment": 0.0,
+     "approved_by": "agent",
+     "written_at": 1792075261.9189389
+    }
+   ],
+   "draft_total": 12159.71,
+   "invoice": "INV-2026-09-0120"
+  },
+  {
+   "customer_id": "MC-121",
+   "name": "Granite Peak Bank",
+   "outcome": "matched",
+   "reason": "",
+   "segments": [
+    {
+     "step": "fetch_billing",
+     "start": 7.703,
+     "end": 7.703,
+     "state": "done"
+    },
+    {
+     "step": "read_terms",
+     "start": 7.708,
+     "end": 9.699,
+     "state": "interrupted"
+    },
+    {
+     "step": "read_terms",
+     "start": 22.112,
+     "end": 30.234,
+     "state": "done"
+    },
+    {
+     "step": "write_ledger",
+     "start": 30.248,
+     "end": 30.248,
+     "state": "done"
+    }
+   ],
+   "invocations": [
+    {
+     "start": 7.696,
+     "end": 9.699,
+     "killed": true
+    },
+    {
+     "start": 22.107,
+     "end": 30.358,
+     "killed": false
+    }
+   ],
+   "resumed": true,
+   "review": null,
+   "ledger": [
+    {
+     "row_id": 27,
+     "idempotency_key": "MC-121:2026-09",
+     "customer_id": "MC-121",
+     "invoice": "INV-2026-09-0121",
+     "period": "2026-09",
+     "total": 9573.33,
+     "adjustment": 0.0,
+     "approved_by": "agent",
+     "written_at": 1792075263.831164
+    }
+   ],
+   "draft_total": 9573.33,
+   "invoice": "INV-2026-09-0121"
+  },
+  {
+   "customer_id": "MC-122",
+   "name": "Sundial Home Care",
+   "outcome": "rejected",
+   "reason": "The customer used more than the included calls, and the contract text states no overage price.",
+   "segments": [
+    {
+     "step": "fetch_billing",
+     "start": 8.185,
+     "end": 8.185,
+     "state": "done"
+    },
+    {
+     "step": "read_terms",
+     "start": 8.24,
+     "end": 9.699,
+     "state": "interrupted"
+    },
+    {
+     "step": "read_terms",
+     "start": 15.733,
+     "end": 21.528,
+     "state": "done"
+    },
+    {
+     "step": "finance_review",
+     "start": 21.545,
+     "end": 484.256,
+     "state": "done"
+    }
+   ],
+   "invocations": [
+    {
+     "start": 8.163,
+     "end": 9.699,
+     "killed": true
+    },
+    {
+     "start": 14.739,
+     "end": 21.673,
+     "killed": false
+    },
+    {
+     "start": 484.433,
+     "end": 484.916,
+     "killed": false
+    }
+   ],
+   "resumed": true,
+   "review": {
+    "customer_id": "MC-122",
+    "callback_id": "eyJhcm4iOiJjNTVlYjU5ZC1jOTI5LTRiYWMtYTEwOS1hNzI5Y2M2ZmFmOTYvNDJjNjAxNGYtNTc5ZC00ZDc5LWJkMzYtMTQxYWQ0MjMyMDg1Iiwib3AiOiI0ZmNjZTY1ZWMwMDMwOWM2M2U3OTczY2M3YmE5OGQwODJmNmRiMjNmZjQ5MWY4YWUwZDM1OGQ5NGE0NDk1NzNmIn0=",
+    "reasons": "The customer used more than the included calls, and the contract text states no overage price.",
+    "proposed_total": 3347.74,
+    "draft_total": 3347.74,
+    "adjustment": 0.0,
+    "status": "rejected",
+    "decided_by": "Priya Nair, finance",
+    "queued_at": 1792075255.141941
+   },
+   "ledger": [],
+   "draft_total": 3347.74,
+   "invoice": "INV-2026-09-0122"
+  },
+  {
+   "customer_id": "MC-123",
+   "name": "Westerly Marine",
+   "outcome": "matched",
+   "reason": "",
+   "segments": [
+    {
+     "step": "fetch_billing",
+     "start": 8.239,
+     "end": 8.239,
+     "state": "done"
+    },
+    {
+     "step": "read_terms",
+     "start": 8.267,
+     "end": 9.699,
+     "state": "interrupted"
+    },
+    {
+     "step": "read_terms",
+     "start": 15.742,
+     "end": 23.013,
+     "state": "done"
+    },
+    {
+     "step": "write_ledger",
+     "start": 23.024,
+     "end": 23.024,
+     "state": "done"
+    }
+   ],
+   "invocations": [
+    {
+     "start": 8.207,
+     "end": 9.699,
+     "killed": true
+    },
+    {
+     "start": 14.751,
+     "end": 23.134,
+     "killed": false
+    }
+   ],
+   "resumed": true,
+   "review": null,
+   "ledger": [
+    {
+     "row_id": 21,
+     "idempotency_key": "MC-123:2026-09",
+     "customer_id": "MC-123",
+     "invoice": "INV-2026-09-0123",
+     "period": "2026-09",
+     "total": 3807.07,
+     "adjustment": 0.0,
+     "approved_by": "agent",
+     "written_at": 1792075256.6084962
+    }
+   ],
+   "draft_total": 3807.07,
+   "invoice": "INV-2026-09-0123"
+  },
+  {
+   "customer_id": "MC-124",
+   "name": "Orchard Lane Grocers",
+   "outcome": "matched",
+   "reason": "",
+   "segments": [
+    {
+     "step": "fetch_billing",
+     "start": 15.656,
+     "end": 15.656,
+     "state": "done"
+    },
+    {
+     "step": "read_terms",
+     "start": 15.773,
+     "end": 21.967,
+     "state": "done"
+    },
+    {
+     "step": "write_ledger",
+     "start": 21.987,
+     "end": 21.987,
+     "state": "done"
+    }
+   ],
+   "invocations": [
+    {
+     "start": 14.739,
+     "end": 22.099,
+     "killed": false
+    }
+   ],
+   "resumed": false,
+   "review": null,
+   "ledger": [
+    {
+     "row_id": 16,
+     "idempotency_key": "MC-124:2026-09",
+     "customer_id": "MC-124",
+     "invoice": "INV-2026-09-0124",
+     "period": "2026-09",
+     "total": 6378.82,
+     "adjustment": 0.0,
+     "approved_by": "agent",
+     "written_at": 1792075255.5687559
+    }
+   ],
+   "draft_total": 6378.82,
+   "invoice": "INV-2026-09-0124"
+  },
+  {
+   "customer_id": "MC-125",
+   "name": "Tidewater Utilities",
+   "outcome": "matched",
+   "reason": "",
+   "segments": [
+    {
+     "step": "fetch_billing",
+     "start": 9.207,
+     "end": 9.207,
+     "state": "done"
+    },
+    {
+     "step": "read_terms",
+     "start": 9.21,
+     "end": 9.699,
+     "state": "interrupted"
+    },
+    {
+     "step": "read_terms",
+     "start": 15.742,
+     "end": 21.07,
+     "state": "done"
+    },
+    {
+     "step": "write_ledger",
+     "start": 21.08,
+     "end": 21.08,
+     "state": "done"
+    }
+   ],
+   "invocations": [
+    {
+     "start": 9.202,
+     "end": 9.699,
+     "killed": true
+    },
+    {
+     "start": 14.753,
+     "end": 21.189,
+     "killed": false
+    }
+   ],
+   "resumed": true,
+   "review": null,
+   "ledger": [
+    {
+     "row_id": 14,
+     "idempotency_key": "MC-125:2026-09",
+     "customer_id": "MC-125",
+     "invoice": "INV-2026-09-0125",
+     "period": "2026-09",
+     "total": 12204.0,
+     "adjustment": 0.0,
+     "approved_by": "agent",
+     "written_at": 1792075254.6648939
+    }
+   ],
+   "draft_total": 12204.0,
+   "invoice": "INV-2026-09-0125"
+  },
+  {
+   "customer_id": "MC-126",
+   "name": "Lumen Ticketing",
+   "outcome": "matched",
+   "reason": "",
+   "segments": [
+    {
+     "step": "fetch_billing",
+     "start": 15.594,
+     "end": 15.594,
+     "state": "done"
+    },
+    {
+     "step": "read_terms",
+     "start": 15.741,
+     "end": 21.984,
+     "state": "done"
+    },
+    {
+     "step": "write_ledger",
+     "start": 22.001,
+     "end": 22.001,
+     "state": "done"
+    }
+   ],
+   "invocations": [
+    {
+     "start": 14.753,
+     "end": 22.122,
+     "killed": false
+    }
+   ],
+   "resumed": false,
+   "review": null,
+   "ledger": [
+    {
+     "row_id": 17,
+     "idempotency_key": "MC-126:2026-09",
+     "customer_id": "MC-126",
+     "invoice": "INV-2026-09-0126",
+     "period": "2026-09",
+     "total": 5475.41,
+     "adjustment": 0.0,
+     "approved_by": "agent",
+     "written_at": 1792075255.58352
+    }
+   ],
+   "draft_total": 5475.41,
+   "invoice": "INV-2026-09-0126"
+  },
+  {
+   "customer_id": "MC-127",
+   "name": "Redfern Couriers",
+   "outcome": "matched",
+   "reason": "",
+   "segments": [
+    {
+     "step": "fetch_billing",
+     "start": 15.631,
+     "end": 15.631,
+     "state": "done"
+    },
+    {
+     "step": "read_terms",
+     "start": 15.743,
+     "end": 21.408,
+     "state": "done"
+    },
+    {
+     "step": "write_ledger",
+     "start": 21.423,
+     "end": 21.423,
+     "state": "done"
+    }
+   ],
+   "invocations": [
+    {
+     "start": 14.751,
+     "end": 21.532,
+     "killed": false
+    }
+   ],
+   "resumed": false,
+   "review": null,
+   "ledger": [
+    {
+     "row_id": 15,
+     "idempotency_key": "MC-127:2026-09",
+     "customer_id": "MC-127",
+     "invoice": "INV-2026-09-0127",
+     "period": "2026-09",
+     "total": 9500.0,
+     "adjustment": 0.0,
+     "approved_by": "agent",
+     "written_at": 1792075255.006455
+    }
+   ],
+   "draft_total": 9500.0,
+   "invoice": "INV-2026-09-0127"
+  },
+  {
+   "customer_id": "MC-128",
+   "name": "Marigold Vet Group",
+   "outcome": "matched",
+   "reason": "",
+   "segments": [
+    {
+     "step": "fetch_billing",
+     "start": 15.74,
+     "end": 15.74,
+     "state": "done"
+    },
+    {
+     "step": "read_terms",
+     "start": 15.856,
+     "end": 21.025,
+     "state": "done"
+    },
+    {
+     "step": "write_ledger",
+     "start": 21.035,
+     "end": 21.035,
+     "state": "done"
+    }
+   ],
+   "invocations": [
+    {
+     "start": 14.75,
+     "end": 21.143,
+     "killed": false
+    }
+   ],
+   "resumed": false,
+   "review": null,
+   "ledger": [
+    {
+     "row_id": 13,
+     "idempotency_key": "MC-128:2026-09",
+     "customer_id": "MC-128",
+     "invoice": "INV-2026-09-0128",
+     "period": "2026-09",
+     "total": 6605.58,
+     "adjustment": 0.0,
+     "approved_by": "agent",
+     "written_at": 1792075254.6200929
+    }
+   ],
+   "draft_total": 6605.58,
+   "invoice": "INV-2026-09-0128"
+  },
+  {
+   "customer_id": "MC-129",
+   "name": "Copperline Telecom",
+   "outcome": "matched",
+   "reason": "",
+   "segments": [
+    {
+     "step": "fetch_billing",
+     "start": 15.65,
+     "end": 15.65,
+     "state": "done"
+    },
+    {
+     "step": "read_terms",
+     "start": 15.76,
+     "end": 22.584,
+     "state": "done"
+    },
+    {
+     "step": "write_ledger",
+     "start": 22.596,
+     "end": 22.596,
+     "state": "done"
+    }
+   ],
+   "invocations": [
+    {
+     "start": 14.751,
+     "end": 22.705,
+     "killed": false
+    }
+   ],
+   "resumed": false,
+   "review": null,
+   "ledger": [
+    {
+     "row_id": 20,
+     "idempotency_key": "MC-129:2026-09",
+     "customer_id": "MC-129",
+     "invoice": "INV-2026-09-0129",
+     "period": "2026-09",
+     "total": 3474.85,
+     "adjustment": 0.0,
+     "approved_by": "agent",
+     "written_at": 1792075256.180632
+    }
+   ],
+   "draft_total": 3474.85,
+   "invoice": "INV-2026-09-0129"
+  },
+  {
+   "customer_id": "MC-130",
+   "name": "Basalt Property Management",
+   "outcome": "matched",
+   "reason": "",
+   "segments": [
+    {
+     "step": "fetch_billing",
+     "start": 21.15,
+     "end": 21.15,
+     "state": "done"
+    },
+    {
+     "step": "read_terms",
+     "start": 21.26,
+     "end": 27.717,
+     "state": "done"
+    },
+    {
+     "step": "write_ledger",
+     "start": 27.726,
+     "end": 27.726,
+     "state": "done"
+    }
+   ],
+   "invocations": [
+    {
+     "start": 21.146,
+     "end": 27.832,
+     "killed": false
+    }
+   ],
+   "resumed": false,
+   "review": null,
+   "ledger": [
+    {
+     "row_id": 24,
+     "idempotency_key": "MC-130:2026-09",
+     "customer_id": "MC-130",
+     "invoice": "INV-2026-09-0130",
+     "period": "2026-09",
+     "total": 12583.85,
+     "adjustment": 0.0,
+     "approved_by": "agent",
+     "written_at": 1792075261.311378
+    }
+   ],
+   "draft_total": 12583.85,
+   "invoice": "INV-2026-09-0130"
+  }
+ ],
+ "metrics": {
+  "jobs": 30,
+  "reached_outcome": 30,
+  "outcomes": {
+   "matched": 23,
+   "corrected": 4,
+   "approved": 1,
+   "held": 0,
+   "rejected": 1,
+   "stopped": 1,
+   "running": 0
+  },
+  "ledger_rows": 28,
+  "duplicate_writes": 0,
+  "repeat_writes_absorbed": 1,
+  "model_calls": 40,
+  "model_calls_completed": 29,
+  "model_calls_cut_off_and_redone": 11,
+  "completed_model_steps_recalled": 0,
+  "held_written": []
+ },
+ "bill": {
+  "model": 0.004173500000000001,
+  "lambda": {
+   "invokes": 46,
+   "gb_seconds": 120.1,
+   "operations": 125,
+   "compute": 0.0016009284783369065,
+   "requests": 9.2e-06,
+   "durable": 0.0010109895,
+   "total": 0.0026211179783369063
+  },
+  "per_run": 0.006794617978336907,
+  "vm": {
+   "name": "EC2 t4g.small, on demand, Linux",
+   "hours": 24.0,
+   "total": 0.4032
+  }
+ }
+}

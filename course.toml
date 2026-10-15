@@ -149,7 +149,7 @@ anchor = "Shopify Sidekick tool design"
 owns = "tool design"
 job = "Let a merchant run store admin tasks by asking, as Shopify Sidekick does"
 truth = "the store's admin API state after each task"
-metric = "task success rate and wrong-tool calls"
+metric = "task success rate, wrong-tool calls and tool calls per task"
 status = "ready"
 
 [[lab]]
@@ -385,12 +385,12 @@ n = 32
 slug = "32-background-agents"
 title = "Run Background Coding Agents with Cloud Sandboxes"
 part = "Deploy"
-anchor = "Ramp Inspect, run on Boat sandboxes"
+anchor = "Ramp Inspect, run on Modal sandboxes"
 owns = "background agents and sandboxes"
 job = "Turn an issue into a tested pull request with no engineer at a keyboard, as Ramp Inspect does"
 truth = "the repo's CI on each pull request"
 metric = "share of agent pull requests merged"
-status = "planned"
+status = "ready"
 
 [[lab]]
 n = 33
@@ -402,7 +402,7 @@ owns = "serverless and managed agent runtimes"
 job = "Run nightly agent jobs that survive a crash with no server to run"
 truth = "the job ledger and the cloud bill"
 metric = "jobs finished after a crash, and cost per run"
-status = "planned"
+status = "ready"
 
 [[lab]]
 n = 34
