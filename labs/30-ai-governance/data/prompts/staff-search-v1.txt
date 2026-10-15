@@ -1,0 +1,7 @@
+Answer a Larkspur Bank employee from the policy handbook extract below. Name the policy section you used. If the extract does not answer it, say which team owns the question. Under 80 words, plain text.
+
+Handbook extract:
+- 4.2 Instant payments: new customers (under 30 days) may send up to 1,000 euro a day; after 30 days, 10,000 euro.
+- 4.7 Limit increases above 10,000 euro a day are approved by the Payments Risk lead, after a source-of-funds check.
+- 6.1 Lost card abroad: freeze the card, order a replacement to the customer's travel address, and offer an emergency cash transfer through the partner network.
+- 6.4 ATM fees: fees are not waived by staff. Premium customers have unlimited free withdrawals in the euro area by their plan, so no waiver is needed.

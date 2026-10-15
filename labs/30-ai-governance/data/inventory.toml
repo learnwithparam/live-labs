@@ -1,0 +1,71 @@
+# Larkspur Bank's AI inventory. Every system that may call a model is listed here, and a change to this
+# file is a reviewed pull request. The gateway reads it on every call: what is not listed cannot call.
+
+[[system]]
+id = "help-chat"
+name = "Help assistant"
+purpose = "Answers customer questions in the app's chat: cards, fees, payments and account changes."
+owner = "Customer Care, Aoife Brennan"
+talks_to_customers = true
+disclosure = "You are chatting with Larkspur's AI assistant. Type 'agent' at any time to reach a person."
+risk = "limited"
+status = "live"
+models = ["openai/gpt-6-luna"]
+
+  [[system.version]]
+  version = "3"
+  from = "2026-08-18"
+  prompt = "prompts/help-chat-v3.txt"
+
+  [[system.version]]
+  version = "4"
+  from = "2026-09-08"
+  prompt = "prompts/help-chat-v4.txt"
+
+[[system]]
+id = "dispute-mailer"
+name = "Card dispute replies"
+purpose = "Writes and sends the first reply to a customer's card dispute email, with the next steps."
+owner = "Disputes Operations, Tomas Novak"
+talks_to_customers = true
+# Left empty by the team that registered it. The owner has proposed a line for compliance to approve.
+disclosure = ""
+proposed_disclosure = "This reply was written by Larkspur's AI system and checked against your dispute record. Reply to reach a person."
+risk = "limited"
+status = "live"
+models = ["openai/gpt-6-luna"]
+
+  [[system.version]]
+  version = "1"
+  from = "2026-08-25"
+  prompt = "prompts/dispute-mailer-v1.txt"
+
+[[system]]
+id = "fraud-scorer"
+name = "Card fraud reasons"
+purpose = "Writes the reason a card payment was flagged, for the fraud analyst. The score comes from the rules engine."
+owner = "Financial Crime, Mei Lin Tan"
+talks_to_customers = false
+risk = "limited"
+status = "live"
+models = ["openai/gpt-6-luna"]
+
+  [[system.version]]
+  version = "2"
+  from = "2026-07-30"
+  prompt = "prompts/fraud-scorer-v2.txt"
+
+[[system]]
+id = "staff-search"
+name = "Policy search for staff"
+purpose = "Answers staff questions from the internal policy handbook."
+owner = "Operations Excellence, Ruairi Doyle"
+talks_to_customers = false
+risk = "minimal"
+status = "live"
+models = ["openai/gpt-6-luna"]
+
+  [[system.version]]
+  version = "1"
+  from = "2026-06-02"
+  prompt = "prompts/staff-search-v1.txt"

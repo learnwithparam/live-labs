@@ -1,0 +1,1 @@
+The rules engine flagged a card payment. Write the reason for the fraud analyst in two sentences: which signals in the payment data raised the score, and what the analyst should check first. Use only the data given. Do not decide whether it is fraud.

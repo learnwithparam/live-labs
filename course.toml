@@ -366,7 +366,7 @@ owns = "inventory, audit log and disclosure"
 job = "Answer an auditor: which AI systems talk to customers, and what one said on a given day"
 truth = "the AI inventory and the audit log"
 metric = "time to answer an audit request"
-status = "planned"
+status = "ready"
 
 [[lab]]
 n = 31

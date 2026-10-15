@@ -1,0 +1,27 @@
+{"id": "R-001", "at": "2026-09-01T08:12:40Z", "system": "help-chat", "subject": "LB-33108", "text": "How do I freeze my card? I think I left it in a taxi last night."}
+{"id": "R-002", "at": "2026-09-02T09:31:05Z", "system": "help-chat", "subject": "LB-51893", "text": "Why was I charged 2 euro on my ATM withdrawal in Lisbon yesterday?"}
+{"id": "R-003", "at": "2026-09-02T14:02:51Z", "system": "fraud-scorer", "subject": "LB-71240", "text": "Payment TX-88213: 1,480.00 EUR at ELECTRO-OUTLET-RO, card not present, new device, shipping country RO, customer's home country IE, 3 failed CVC attempts in 4 minutes, rules score 0.91."}
+{"id": "R-004", "at": "2026-09-03T10:14:22Z", "system": "help-chat", "subject": "LB-40217", "text": "I was charged twice for my Bershka order, 39.95 each. Can you reverse one of them?"}
+{"id": "R-005", "at": "2026-09-03T10:19:47Z", "system": "help-chat", "subject": "LB-40217", "text": "It has been 5 days and it still shows as two payments. What happens now?"}
+{"id": "R-006", "at": "2026-09-03T16:40:10Z", "system": "dispute-mailer", "subject": "LB-62055", "text": "Dispute email, ticket D-5512: I did not make the payment of 249.00 EUR to ELECTROWORLD on 1 September. My card was in my wallet the whole time."}
+{"id": "R-007", "at": "2026-09-04T07:55:33Z", "system": "staff-search", "subject": "E-104", "text": "what is the daily limit for instant payments for a new customer"}
+{"id": "R-008", "at": "2026-09-04T11:21:18Z", "system": "promo-writer", "subject": "M-07", "text": "Write a push notification announcing our new 3.1% savings rate."}
+{"id": "R-009", "at": "2026-09-05T13:05:00Z", "system": "help-chat", "subject": "LB-28816", "text": "Can I open a joint account with my partner?"}
+{"id": "R-010", "at": "2026-09-05T15:44:29Z", "system": "fraud-scorer", "subject": "LB-51893", "text": "Payment TX-88702: 62.40 EUR at a fuel station in Porto, card present, chip and PIN, customer travelling in PT since 1 September per app location, rules score 0.64."}
+{"id": "R-011", "at": "2026-09-06T09:12:14Z", "system": "dispute-mailer", "subject": "LB-19930", "text": "Dispute email, ticket D-5530: A subscription to STREAMPLUS charged me 13.99 EUR after I cancelled in August. I attach the cancellation email."}
+{"id": "R-012", "at": "2026-09-06T18:30:02Z", "system": "help-chat", "subject": "LB-77412", "text": "My salary has not arrived yet, can you check?"}
+{"id": "R-013", "at": "2026-09-07T10:03:45Z", "system": "fraud-scorer", "subject": "LB-84021", "text": "Payment TX-89117: 3,200.00 EUR transfer to a new payee at an EMI in LT, first login from a new device 6 minutes earlier, rules score 0.88.", "model": "openai/gpt-6-sol"}
+{"id": "R-014", "at": "2026-09-07T12:47:51Z", "system": "help-chat", "subject": "LB-60391", "text": "How do I change the phone number on my account?"}
+{"id": "R-015", "at": "2026-09-08T08:20:11Z", "system": "staff-search", "subject": "E-118", "text": "process for a customer who reports a lost card abroad"}
+{"id": "R-016", "at": "2026-09-08T14:10:37Z", "system": "dispute-mailer", "subject": "LB-55204", "text": "Dispute email, ticket D-5547: Hotel ALFAMA charged 310.00 EUR for a booking I cancelled within the free period."}
+{"id": "R-017", "at": "2026-09-09T09:41:56Z", "system": "help-chat", "subject": "LB-40217", "text": "The double charge from Bershka is still there. I want to speak to someone."}
+{"id": "R-018", "at": "2026-09-09T11:15:03Z", "system": "staff-search", "subject": "E-118", "text": "can we waive the ATM fee for premium customers"}
+{"id": "R-019", "at": "2026-09-09T16:52:29Z", "system": "fraud-scorer", "subject": "LB-33108", "text": "Payment TX-89480: 18.00 EUR at TAXI-DUBLIN, card present, contactless, card reported possibly lost on 1 September but not frozen, rules score 0.71."}
+{"id": "R-020", "at": "2026-09-10T10:22:47Z", "system": "help-chat", "subject": "LB-51893", "text": "Is the fee refunded if the ATM was out of service and gave me no cash?"}
+{"id": "R-021", "at": "2026-09-10T13:37:12Z", "system": "promo-writer", "subject": "M-07", "text": "Write three email subject lines for the 3.1% savings rate."}
+{"id": "R-022", "at": "2026-09-11T08:08:08Z", "system": "fraud-scorer", "subject": "LB-90175", "text": "Payment TX-89955: 95.00 EUR pre-authorisation at a fuel pump in Cork, card present, declined for daily limit, rules score 0.42."}
+{"id": "R-023", "at": "2026-09-11T12:30:40Z", "system": "staff-search", "subject": "E-131", "text": "who approves a limit increase above 10000"}
+{"id": "R-024", "at": "2026-09-11T17:45:15Z", "system": "dispute-mailer", "subject": "LB-28816", "text": "Dispute email, ticket D-5561: Two payments of 54.20 EUR to FERRYLINK for one ticket on 9 September."}
+{"id": "R-025", "at": "2026-09-12T09:59:20Z", "system": "help-chat", "subject": "LB-90175", "text": "Why was my card payment at a petrol station declined yesterday?"}
+{"id": "R-026", "at": "2026-09-12T10:31:44Z", "system": "fraud-scorer", "subject": "LB-60391", "text": "Payment TX-90021: 799.00 EUR at a phone retailer online, card not present, 3-D Secure passed, delivery to the customer's home address, rules score 0.38."}
+{"id": "R-027", "at": "2026-09-12T15:12:09Z", "system": "help-chat", "subject": "LB-33108", "text": "My new card arrived. How do I activate it?"}

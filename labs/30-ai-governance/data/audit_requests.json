@@ -1,0 +1,208 @@
+[
+ {
+  "id": "A-01",
+  "asked": "Which of your AI systems interact directly with customers?",
+  "kind": "customer_facing",
+  "params": {},
+  "expected": {
+   "systems": [
+    "dispute-mailer",
+    "help-chat"
+   ]
+  }
+ },
+ {
+  "id": "A-02",
+  "asked": "For each of those, show that customers are told they are dealing with an AI system.",
+  "kind": "disclosure_status",
+  "params": {},
+  "expected": {
+   "discloses": [
+    "help-chat"
+   ],
+   "missing": [
+    "dispute-mailer"
+   ]
+  }
+ },
+ {
+  "id": "A-03",
+  "asked": "What did the help assistant tell customer LB-40217 on 3 September 2026?",
+  "kind": "conversation",
+  "params": {
+   "system": "help-chat",
+   "subject": "LB-40217",
+   "day": "2026-09-03"
+  },
+  "expected": {
+   "requests": [
+    "R-004",
+    "R-005"
+   ]
+  }
+ },
+ {
+  "id": "A-04",
+  "asked": "Which model and which prompt version wrote those replies?",
+  "kind": "provenance",
+  "params": {
+   "system": "help-chat",
+   "subject": "LB-40217",
+   "day": "2026-09-03"
+  },
+  "expected": {
+   "models": [
+    "openai/gpt-6-luna"
+   ],
+   "versions": [
+    "help-chat@3"
+   ]
+  }
+ },
+ {
+  "id": "A-05",
+  "asked": "And which prompt version answered the same customer on 9 September?",
+  "kind": "provenance",
+  "params": {
+   "system": "help-chat",
+   "subject": "LB-40217",
+   "day": "2026-09-09"
+  },
+  "expected": {
+   "models": [
+    "openai/gpt-6-luna"
+   ],
+   "versions": [
+    "help-chat@4"
+   ]
+  }
+ },
+ {
+  "id": "A-06",
+  "asked": "List every AI interaction involving customer LB-51893 in September.",
+  "kind": "subject_history",
+  "params": {
+   "subject": "LB-51893",
+   "start": "2026-09-01",
+   "end": "2026-09-30"
+  },
+  "expected": {
+   "requests": [
+    "R-002",
+    "R-010",
+    "R-020"
+   ]
+  }
+ },
+ {
+  "id": "A-07",
+  "asked": "Who owns the card fraud system, what is it for, and which models may it use?",
+  "kind": "system_card",
+  "params": {
+   "system": "fraud-scorer"
+  },
+  "expected": {
+   "owner": "Financial Crime, Mei Lin Tan",
+   "models": [
+    "openai/gpt-6-luna"
+   ],
+   "talks_to_customers": false
+  }
+ },
+ {
+  "id": "A-08",
+  "asked": "Was any AI system used that is not in your inventory?",
+  "kind": "unregistered",
+  "params": {},
+  "expected": {
+   "systems": [
+    "promo-writer"
+   ],
+   "refused": [
+    "R-008",
+    "R-021"
+   ],
+   "answered": []
+  }
+ },
+ {
+  "id": "A-09",
+  "asked": "Was any model used that your inventory does not allow for that system?",
+  "kind": "unlisted_models",
+  "params": {},
+  "expected": {
+   "models": [
+    "openai/gpt-6-sol"
+   ],
+   "refused": [
+    "R-013"
+   ],
+   "answered": []
+  }
+ },
+ {
+  "id": "A-10",
+  "asked": "How many customer conversations did the help assistant answer from 1 to 7 September?",
+  "kind": "count",
+  "params": {
+   "system": "help-chat",
+   "start": "2026-09-01",
+   "end": "2026-09-07"
+  },
+  "expected": {
+   "count": 7
+  }
+ },
+ {
+  "id": "A-11",
+  "asked": "Did any customer receive AI-written text without being told it came from an AI?",
+  "kind": "undisclosed",
+  "params": {},
+  "expected": {
+   "requests": []
+  }
+ },
+ {
+  "id": "A-12",
+  "asked": "What did the policy search tell employee E-118 on 9 September?",
+  "kind": "conversation",
+  "params": {
+   "system": "staff-search",
+   "subject": "E-118",
+   "day": "2026-09-09"
+  },
+  "expected": {
+   "requests": [
+    "R-018"
+   ]
+  }
+ },
+ {
+  "id": "A-13",
+  "asked": "Show every dispute reply the mailer sent in September.",
+  "kind": "system_activity",
+  "params": {
+   "system": "dispute-mailer",
+   "start": "2026-09-01",
+   "end": "2026-09-30"
+  },
+  "expected": {
+   "answered": [],
+   "refused": [
+    "R-006",
+    "R-011",
+    "R-016",
+    "R-024"
+   ]
+  }
+ },
+ {
+  "id": "A-14",
+  "asked": "How do we know the log you showed us has not been edited since?",
+  "kind": "integrity",
+  "params": {},
+  "expected": {
+   "verified": true
+  }
+ }
+]

@@ -1,0 +1,429 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Larkspur Bank: audit request desk</title>
+<link rel="icon" href="data:,">
+<style>
+:root {
+  --paper: #FAFAFA; --card: #FFFFFF; --ink: #151515; --ink-2: #414141; --muted: #606060; --faint: #808080;
+  --line: #DFDFDF; --accent: #FAFF69; --accent-deep: #4F5101; --fill-dark: #1F1F1C;
+  --pass: #008138; --fail: #BF000F; --wait: #B75000;
+  --sans: Inter, Helvetica, Arial, sans-serif; --mono: Inconsolata, "Courier New", Courier, monospace;
+}
+* { box-sizing: border-box }
+html, body { margin: 0 }
+body { background: var(--paper); color: var(--ink); font: 15px/1.5 var(--sans); min-height: 100vh }
+button { font: inherit; cursor: pointer }
+button:focus-visible, a:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px }
+h1, h2, h3, p { margin: 0 }
+code, .mono { font-family: var(--mono) }
+
+/* The bank's compliance tool bar: this is staff software, behind the bank's sign-in. */
+.bar { display: flex; align-items: center; gap: 22px; padding: 12px 28px; background: var(--fill-dark); color: var(--paper) }
+.bar .brand { font-weight: 800; letter-spacing: -0.02em; font-size: 17px }
+.bar .brand span { font-weight: 500; opacity: 0.8 }
+.bar nav { display: flex; gap: 18px; font-size: 14px }
+.bar nav b { border-bottom: 2px solid var(--accent); padding-bottom: 2px }
+.bar .who { margin-left: auto; font-size: 13px }
+
+/* The docket: every request in the auditor's letter, with how each path fared. */
+.docket { border-bottom: 1px solid var(--line); background: var(--card); padding: 14px 28px 0 }
+.docket header { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap }
+.docket h1 { font-size: 22px; letter-spacing: -0.02em }
+.docket .case { color: var(--muted); font-size: 14px }
+.tabs { display: flex; gap: 6px; overflow-x: auto; padding: 12px 0 0; scrollbar-width: thin }
+.tabs button { flex: 0 0 auto; border: 1px solid var(--line); border-bottom: none; background: var(--paper); border-radius: 4px 4px 0 0;
+  padding: 7px 11px 8px; text-align: left; color: var(--ink-2); min-width: 74px }
+.tabs button[aria-current="true"] { background: var(--paper); color: var(--ink); border-color: var(--ink); box-shadow: inset 0 3px 0 var(--ink) }
+.tabs .num { font-family: var(--mono); font-weight: 700; display: block; font-size: 15px }
+.tabs .marks { font-size: 11px; display: flex; gap: 6px }
+.ok { color: var(--pass) } .no { color: var(--fail) } .hold { color: var(--wait) }
+
+.room { display: grid; grid-template-columns: minmax(0, 1fr) 19.25rem; gap: 0; align-items: start }
+
+/* The request sheet: the auditor's words, the answer, then the evidence it rests on. */
+.sheet { padding: 26px 32px 48px; display: flex; flex-direction: column; gap: 26px; min-width: 0 }
+.asked { border-left: 4px solid var(--ink); padding: 4px 0 4px 18px }
+.asked .label { font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted) }
+.asked q { display: block; font-size: 24px; line-height: 1.3; letter-spacing: -0.015em; font-weight: 600; margin-top: 4px; quotes: "\201C" "\201D" }
+.answer { background: var(--card); border: 1px solid var(--line); border-radius: 4px; padding: 16px 18px; display: grid; gap: 8px }
+.answer .verdict { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; font-size: 13px; color: var(--muted) }
+.answer .verdict strong { font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em }
+.answer .words { font-size: 17px; line-height: 1.45 }
+.section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 10px }
+.section-head h2 { font-size: 15px; text-transform: uppercase; letter-spacing: 0.07em }
+.section-head p { color: var(--muted); font-size: 13px }
+
+/* Inventory entries as index cards: the inventory is the bank's own statement of what it runs. */
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(17.5rem, 1fr)); gap: 12px }
+.index { background: var(--card); border: 1px solid var(--line); border-top: 3px solid var(--ink); border-radius: 0 0 4px 4px; padding: 12px 14px; display: grid; gap: 6px; font-size: 13.5px }
+.index h3 { font-size: 15px; display: flex; justify-content: space-between; gap: 8px }
+.index h3 code { font-weight: 400; color: var(--muted); font-size: 13px }
+.index dl { display: grid; grid-template-columns: 6.5rem minmax(0, 1fr); gap: 3px 10px; margin: 0 }
+.index dt { color: var(--muted) } .index dd { margin: 0; overflow-wrap: anywhere }
+.index .blocked { color: var(--fail); font-weight: 600 }
+.quiet { color: var(--muted); font-size: 14px }
+
+/* The chain: records hang from one rail, each link showing the hash it points back to. */
+.chain { position: relative; display: grid; gap: 12px }
+.record { display: grid; grid-template-columns: 4.25rem minmax(0, 1fr); gap: 0 14px; position: relative }
+.record .seq { font-family: var(--mono); text-align: right; padding: 12px 24px 0 0; font-weight: 700; position: relative }
+.record .seq::after { content: ""; position: absolute; right: 2px; top: 16px; width: 9px; height: 9px; border-radius: 50%;
+  background: var(--card); border: 2px solid var(--faint); transition: background-color 0.3s, border-color 0.3s }
+.record.linked .seq::after { background: var(--pass); border-color: var(--pass) }
+.record.broken .seq::after { background: var(--fail); border-color: var(--fail) }
+.chain::before { content: ""; position: absolute; left: calc(4.25rem - 10.5px); top: 12px; bottom: 12px; width: 2px; background: var(--line) }
+.body { background: var(--card); border: 1px solid var(--line); border-radius: 4px; padding: 12px 14px; display: grid; gap: 8px; min-width: 0 }
+.record.broken .body { border-color: var(--fail) }
+.meta { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 13px; color: var(--ink-2) }
+.meta .tag { font-weight: 700; text-transform: uppercase; font-size: 11.5px; letter-spacing: 0.06em }
+.said { font-size: 14px; white-space: pre-wrap; overflow-wrap: anywhere }
+.said .who { display: block; font-size: 11.5px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 2px }
+.said mark { background: var(--accent); color: var(--ink); padding: 0 2px }
+.hashes { font-family: var(--mono); font-size: 12.5px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 2px 14px }
+
+/* The old path, for contrast: the greps a person would run, on a dark terminal block. */
+.old { background: var(--fill-dark); color: var(--paper); border-radius: 4px; padding: 14px 16px; display: grid; gap: 8px }
+.old h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.07em }
+.old ol { margin: 0; padding-left: 22px; font-family: var(--mono); font-size: 13px; overflow-wrap: anywhere }
+.old p { font-size: 14px }
+
+/* The pack rail: the metric, the seal on the chain, the finding and the signature. */
+.pack { position: sticky; top: 0; border-left: 1px solid var(--line); background: var(--card); padding: 22px 20px 32px; display: grid; gap: 22px; min-height: calc(100vh - 150px) }
+.pack h2 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 6px }
+.tally { font-size: 40px; font-weight: 800; letter-spacing: -0.03em; line-height: 1 }
+.tally small { font-size: 16px; font-weight: 600; color: var(--ink-2); letter-spacing: 0 }
+.compare { font-size: 13.5px; color: var(--ink-2); margin-top: 6px }
+.seal { border: 2px solid var(--pass); border-radius: 4px; padding: 10px 12px; display: grid; gap: 4px }
+.seal.broken { border-color: var(--fail) }
+.seal strong { font-size: 15px }
+.seal .mono { font-size: 12.5px; color: var(--muted); overflow-wrap: anywhere }
+.switch { display: flex; gap: 0; margin-top: 8px }
+.switch button { flex: 1; border: 1px solid var(--ink); background: var(--card); color: var(--ink); padding: 5px 8px; font-size: 13px }
+.switch button + button { border-left: none }
+.switch button[aria-pressed="true"] { background: var(--ink); color: var(--paper) }
+.finding { border: 1px solid var(--wait); border-left-width: 4px; border-radius: 4px; padding: 12px; display: grid; gap: 8px; font-size: 13.5px }
+.finding .reason { color: var(--ink) }
+.finding blockquote { margin: 0; padding: 8px 10px; background: var(--paper); border-left: 3px solid var(--line); font-size: 13.5px }
+.finding .decided { color: var(--pass); font-weight: 600 }
+.actions { display: grid; gap: 6px }
+.actions button, .sign { border: 1px solid var(--ink); background: var(--card); color: var(--ink); border-radius: 4px; padding: 8px 10px; text-align: left }
+.actions button.primary, .sign { background: var(--ink); color: var(--paper) }
+.sign:disabled { background: var(--line); color: var(--muted); border-color: var(--line); cursor: not-allowed }
+.blockers { margin: 8px 0 0; padding-left: 18px; font-size: 13px; color: var(--ink-2) }
+.signed { color: var(--pass); font-weight: 600; font-size: 14px }
+.error { color: var(--fail); font-size: 13.5px }
+
+@media (prefers-reduced-motion: reduce) { .record .seq::after { transition: none } }
+@media (max-width: 900px) {
+  .room { grid-template-columns: minmax(0, 1fr) }
+  .pack { position: static; border-left: none; border-top: 1px solid var(--line); min-height: 0; order: -1 }
+}
+@media (max-width: 600px) {
+  .bar { padding: 10px 16px; gap: 12px; flex-wrap: wrap }
+  .bar nav { display: none }
+  .docket { padding: 12px 16px 0 }
+  .sheet { padding: 20px 16px 40px }
+  .pack { padding: 18px 16px 22px }
+  .asked q { font-size: 20px }
+  .record { grid-template-columns: 3.1rem minmax(0, 1fr); gap: 0 10px }
+  .chain::before { left: calc(3.1rem - 10.5px) }
+}
+</style>
+</head>
+<body data-surface="audit request desk with evidence chain">
+<div class="bar">
+  <div class="brand">Larkspur Bank <span>Compliance</span></div>
+  <nav aria-label="Compliance"><b>Audit requests</b><span>AI inventory</span><span>Policies</span></nav>
+  <div class="who" id="officer"></div>
+</div>
+<section class="docket" aria-label="Requests in the auditor's letter">
+  <header>
+    <h1>Audit request desk</h1>
+    <p class="case">AI transparency review, EU AI Act Article 50. Period: 1 to 12 September 2026.</p>
+  </header>
+  <div class="tabs" id="tabs" role="list"></div>
+</section>
+<div class="room">
+  <main class="sheet" id="sheet" aria-live="polite">
+    <p class="quiet">Loading the inventory and the audit log...</p>
+  </main>
+  <aside class="pack" aria-label="Answer pack">
+    <section>
+      <h2>Answered from the inventory and log</h2>
+      <p class="tally" id="tally"></p>
+      <p class="compare" id="compare"></p>
+    </section>
+    <section>
+      <h2>Audit log</h2>
+      <div class="seal" id="seal"></div>
+      <div class="switch" id="switch" hidden></div>
+    </section>
+    <section id="findings"></section>
+    <section>
+      <h2>Sign-off</h2>
+      <div id="signoff"></div>
+    </section>
+  </aside>
+</div>
+<script>
+const $ = (selector) => document.querySelector(selector);
+const params = new URLSearchParams(location.search);
+let current = params.get("request") || "A-03";
+let copy = params.get("log") || "live";
+let state = null;
+
+// Every string from the log or the model goes in as text, never as markup.
+function make(tag, text, attributes = {}) {
+  const node = document.createElement(tag);
+  if (text !== undefined && text !== null) node.textContent = text;
+  for (const [name, value] of Object.entries(attributes)) node.setAttribute(name, value);
+  return node;
+}
+const list = (items) => (items && items.length ? items.join(", ") : "none");
+const short = (hash) => (hash ? hash.slice(0, 12) : "");
+
+async function call(path, body) {
+  const response = await fetch(path + (path.includes("?") ? "&" : "?") + "log=" + copy,
+    body ? { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) } : {});
+  const payload = await response.json();
+  if (!response.ok) throw new Error(payload.error || response.statusText);
+  return payload;
+}
+
+// The answer in a sentence, per kind of request, so the officer reads words before the evidence.
+function inWords(kind, result) {
+  const sayings = {
+    customer_facing: () => `${result.systems.length} systems talk to customers: ${list(result.systems)}.`,
+    disclosure_status: () => `Tells customers it is an AI: ${list(result.discloses)}. No disclosure, so the gateway blocks it: ${list(result.missing)}.`,
+    conversation: () => result.requests.length ? `${result.requests.length === 1 ? "One conversation" : result.requests.length + " conversations"}: ${list(result.requests)}. Each record below holds the exact text that was shown.` : "No conversation on that day.",
+    provenance: () => `Model ${list(result.models)}, prompt version ${list(result.versions)}.`,
+    subject_history: () => `${result.requests.length} interactions: ${list(result.requests)}.`,
+    system_card: () => `Owner: ${result.owner}. Allowed models: ${list(result.models)}. Talks to customers: ${result.talks_to_customers ? "yes" : "no"}.`,
+    unregistered: () => `Not in the inventory: ${list(result.systems)}. Refused: ${list(result.refused)}. Answered: ${list(result.answered)}.`,
+    unlisted_models: () => `Requested and not listed: ${list(result.models)}. Refused: ${list(result.refused)}. Answered: ${list(result.answered)}.`,
+    count: () => `${result.count} conversations answered.`,
+    undisclosed: () => result.requests.length ? `Replies with no disclosure: ${list(result.requests)}.` : "None. Every customer-facing reply in the log carries the disclosure.",
+    system_activity: () => `Sent: ${list(result.answered)}. Refused before any model call: ${list(result.refused)}.`,
+    integrity: () => result.verified ? `The chain verifies over ${result.records} records. Head: record ${result.head.seq}, ${short(result.head.hash)}.` : `The chain is broken: ${result.problem}`,
+  };
+  return (sayings[kind] || (() => JSON.stringify(result)))();
+}
+
+function renderTabs() {
+  const tabs = $("#tabs");
+  tabs.replaceChildren(...state.requests.map((request) => {
+    const button = make("button", null, { type: "button", role: "listitem", title: request.asked, "aria-current": String(request.id === current) });
+    const marks = make("span", null, { class: "marks" });
+    marks.append(make("span", request.ok ? "log ✓" : "log ✗", { class: request.ok ? "ok" : "no" }),
+      make("span", request.naive_ok ? "grep ✓" : "grep ✗", { class: request.naive_ok ? "ok" : "no" }));
+    button.append(make("span", request.id, { class: "num" }), marks);
+    button.addEventListener("click", () => open(request.id));
+    return button;
+  }));
+}
+
+function renderPack() {
+  const metric = state.metric;
+  $("#officer").textContent = state.officer;
+  const tally = $("#tally");
+  tally.replaceChildren(document.createTextNode(`${metric.answered} of ${metric.total} `), make("small", "requests"));
+  $("#compare").textContent = `Median ${metric.median_ms} ms each. Grepping the app logs answered ${metric.naive_answered} of ${metric.total}, after ${metric.naive_steps} steps and ${metric.naive_lines} lines read by eye.`;
+  const seal = $("#seal");
+  const chain = state.chain;
+  seal.className = "seal" + (chain.ok ? "" : " broken");
+  seal.replaceChildren(
+    make("strong", chain.ok ? `Chain verified: ${chain.records} records` : `Chain broken at record ${chain.broken_at}`, { class: chain.ok ? "ok" : "no" }),
+    make("span", chain.ok ? `Head ${chain.head.seq}: ${short(chain.head.hash)}` : chain.problem, { class: chain.ok ? "mono" : "" }));
+  const toggle = $("#switch");
+  toggle.hidden = state.copies.length < 2;
+  toggle.replaceChildren(...state.copies.map((name) => {
+    const button = make("button", name === "live" ? "Live log" : "Tampered copy", { type: "button", "aria-pressed": String(name === copy) });
+    button.addEventListener("click", () => { copy = name; refresh(); });
+    return button;
+  }));
+  renderFindings();
+  renderSignoff();
+}
+
+function renderFindings() {
+  const holder = $("#findings");
+  holder.replaceChildren(make("h2", `Needs you: ${state.findings.length} finding${state.findings.length === 1 ? "" : "s"}`));
+  for (const finding of state.findings) {
+    const card = make("div", null, { class: "finding" });
+    card.append(make("strong", finding.name + " is blocked", { class: "hold" }), make("p", finding.reason, { class: "reason" }),
+      make("p", `Owner ${finding.owner} proposes:`), make("blockquote", finding.proposed_disclosure || "No text proposed yet."));
+    if (finding.decision) {
+      card.append(make("p", `Decided by ${finding.decision.by}: ${finding.decision.meaning}`, { class: "decided" }));
+    } else {
+      card.append(make("p", "You decide: approve the text, or keep the system blocked. The gateway refuses its calls until the inventory carries a disclosure."));
+      const actions = make("div", null, { class: "actions" });
+      for (const [decision, label, kind] of [["approve-disclosure", "Approve this disclosure", "primary"], ["keep-blocked", "Keep blocked", ""]]) {
+        const button = make("button", label, { type: "button", class: kind });
+        button.addEventListener("click", () => act("/api/decide", { system: finding.system, decision }));
+        actions.append(button);
+      }
+      card.append(actions);
+    }
+    holder.append(card);
+  }
+}
+
+function renderSignoff() {
+  const holder = $("#signoff");
+  if (state.pack && copy === "live") {
+    holder.replaceChildren(make("p", `Signed by ${state.pack.signed_by} at ${state.pack.signed_at}.`, { class: "signed" }),
+      make("p", `Anchored at record ${state.pack.anchor.seq}, ${short(state.pack.anchor.hash)}. Cutting records after it would now fail verification.`, { class: "quiet" }));
+    return;
+  }
+  const button = make("button", "Sign the answer pack", { type: "button", class: "sign" });
+  button.disabled = state.blockers.length > 0 || copy !== "live";
+  button.addEventListener("click", () => act("/api/signoff", {}));
+  holder.replaceChildren(button);
+  if (state.blockers.length) {
+    const reasons = make("ul", null, { class: "blockers" });
+    state.blockers.forEach((blocker) => reasons.append(make("li", blocker)));
+    holder.append(reasons);
+  }
+}
+
+function inventoryCard(system) {
+  const card = make("article", null, { class: "index" });
+  const title = make("h3", system.name);
+  title.append(make("code", system.id));
+  const facts = make("dl");
+  const rows = [["Owner", system.owner], ["Purpose", system.purpose], ["Customers", system.talks_to_customers ? "talks to customers" : "internal only"],
+    ["Models", list(system.models)], ["Versions", system.versions.map((version) => `${version.version} from ${version.from}`).join(", ")]];
+  if (system.talks_to_customers) rows.push(["Disclosure", system.disclosure || "none: blocked"]);
+  for (const [term, value] of rows) {
+    facts.append(make("dt", term), make("dd", value, term === "Disclosure" && !system.disclosure ? { class: "blocked" } : {}));
+  }
+  card.append(title, facts);
+  return card;
+}
+
+function recordRow(record, chain) {
+  const broken = !chain.ok && record.seq >= chain.broken_at;
+  const row = make("article", null, { class: "record" + (broken ? " broken" : ""), "data-seq": record.seq });
+  const body = make("div", null, { class: "body" });
+  const meta = make("div", null, { class: "meta" });
+  const outcomeClass = { answered: "ok", refused: "no", failed: "hold" }[record.outcome];
+  meta.append(make("span", record.outcome, { class: "tag " + outcomeClass }), make("span", record.request, { class: "mono" }),
+    make("span", record.time.replace("T", " ").replace("Z", " UTC")), make("span", record.system));
+  if (record.prompt) meta.append(make("span", `${record.prompt} on ${record.model}`));
+  meta.append(make("span", `subject ${record.subject}`, { class: "mono" }));
+  const asked = make("p", null, { class: "said" });
+  asked.append(make("span", "Sent", { class: "who" }), document.createTextNode(record.input));
+  body.append(meta, asked);
+  if (record.delivered) {
+    const shown = make("p", null, { class: "said" });
+    shown.append(make("span", record.disclosure_shown ? "Shown to the customer" : "Returned to staff", { class: "who" }));
+    // The gateway joins disclosure and reply with a blank line. A rewritten record may have lost that shape.
+    const disclosed = record.disclosure_shown && record.delivered.includes("\n\n") ? record.delivered.split("\n\n")[0] : "";
+    if (disclosed) shown.append(make("mark", disclosed), document.createTextNode("\n\n" + record.delivered.slice(disclosed.length + 2)));
+    else shown.append(document.createTextNode(record.delivered));
+    body.append(shown);
+  } else if (record.reason) {
+    body.append(make("p", "Refused before any model call: " + record.reason, { class: "said no" }));
+  }
+  const hashes = make("div", null, { class: "hashes" });
+  hashes.append(make("span", "prev " + short(record.prev_hash)), make("span", "hash " + short(record.record_hash)));
+  if (record.prompt_sha256) hashes.append(make("span", "prompt " + short(record.prompt_sha256)));
+  body.append(hashes);
+  row.append(make("div", String(record.seq), { class: "seq" }), body);
+  return row;
+}
+
+// One meaningful motion: the links light up in order, the way verification walks the chain.
+function walkChain(chain) {
+  const rows = [...document.querySelectorAll(".record")];
+  const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  rows.forEach((row, position) => {
+    const mark = () => { if (!row.classList.contains("broken")) row.classList.add("linked"); };
+    if (still || !chain.ok) mark(); else setTimeout(mark, 120 * position);
+  });
+}
+
+function renderRequest(found) {
+  const answer = found.governed;
+  const naive = found.naive;
+  const sheet = $("#sheet");
+  const asked = make("section", null, { class: "asked" });
+  asked.append(make("p", `Request ${answer.id} from the auditor`, { class: "label" }), make("q", answer.asked));
+  const box = make("section", null, { class: "answer" });
+  const verdict = make("p", null, { class: "verdict" });
+  const good = answer.grade.correct && answer.grade.complete;
+  verdict.append(make("strong", good ? "Answered" : "Not answered", { class: good ? "ok" : "no" }),
+    make("span", `in ${(answer.seconds * 1000).toFixed(1)} ms from ${answer.systems.length} inventory entr${answer.systems.length === 1 ? "y" : "ies"} and ${answer.records.length} log record${answer.records.length === 1 ? "" : "s"}`));
+  box.append(verdict, make("p", inWords(answer.kind, answer.result), { class: "words" }));
+  if (!good) box.append(make("p", found.chain.ok ? `Wrong fields: ${list(answer.grade.wrong_fields)}. Records with no text: ${list(answer.grade.missing_text)}.`
+    : "The audit log does not verify, so no answer drawn from it can be given to the auditor.", { class: "error" }));
+  const parts = [asked, box];
+  if (answer.systems.length) {
+    const head = make("div", null, { class: "section-head" });
+    head.append(make("h2", "Inventory entries"), make("p", "From data/inventory.toml, a reviewed file the gateway reads on every call."));
+    const cards = make("div", null, { class: "cards" });
+    answer.systems.forEach((system) => cards.append(inventoryCard(system)));
+    const section = make("section");
+    section.append(head, cards);
+    parts.push(section);
+  }
+  const head = make("div", null, { class: "section-head" });
+  head.append(make("h2", "Evidence from the audit log"), make("p", found.chain.ok ? "Each record carries the hash of the one before it." : "The chain breaks here. Records from the break on cannot be relied on."));
+  const evidence = make("section");
+  const chain = make("div", null, { class: "chain" });
+  answer.records.forEach((record) => chain.append(recordRow(record, found.chain)));
+  evidence.append(head, answer.records.length ? chain : make("p", answer.kind === "integrity" ? "The answer is the whole chain: see the seal in the pack." : "This request is answered from the inventory alone.", { class: "quiet" }));
+  parts.push(evidence);
+  const old = make("section", null, { class: "old" });
+  old.append(make("h2", `By grepping app logs: ${naive.complete ? "answered" : "not answered"}, ${naive.steps.length} step${naive.steps.length === 1 ? "" : "s"}`));
+  const steps = make("ol");
+  naive.steps.forEach((step) => steps.append(make("li", step)));
+  old.append(steps);
+  if (naive.why) old.append(make("p", naive.why));
+  parts.push(old);
+  sheet.replaceChildren(...parts);
+  walkChain(found.chain);
+}
+
+async function open(requestId) {
+  current = requestId;
+  const url = new URL(location.href);
+  url.searchParams.set("request", requestId);
+  history.replaceState(null, "", url);
+  renderTabs();
+  try {
+    renderRequest(await call(`/api/request/${requestId}`));
+  } catch (error) {
+    $("#sheet").replaceChildren(make("p", error.message, { class: "error" }));
+  }
+}
+
+async function act(path, body) {
+  try {
+    state = await call(path, body);
+    renderPack();
+    renderTabs();
+  } catch (error) {
+    $("#signoff").append(make("p", error.message, { class: "error" }));
+  }
+}
+
+async function refresh() {
+  try {
+    state = await call("/api/state");
+  } catch (error) {
+    $("#sheet").replaceChildren(make("p", error.message, { class: "error" }));
+    return;
+  }
+  copy = state.copy;
+  renderPack();
+  await open(current);
+}
+
+refresh();
+</script>
+</body>
+</html>
