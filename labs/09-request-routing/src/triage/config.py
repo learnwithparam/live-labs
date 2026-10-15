@@ -4,7 +4,7 @@ import os
 from pathlib import Path
 
 DEFAULT_BASE_URL = "https://openrouter.ai/api/v1"
-DEFAULT_MODEL = "google/gemini-2.5-flash-lite"
+DEFAULT_MODEL = "openai/gpt-6-luna"
 DEFAULT_DECISION_URL = "http://127.0.0.1:8099"
 DEFAULT_DECISION_MODEL = "StrandsAgents/strands-decider-2B-hobson-v19"
 

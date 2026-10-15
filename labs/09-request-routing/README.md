@@ -32,8 +32,7 @@ lab you can:
 
 T-4169 says "We're hiring someone who'll live in New Jersey and come into our New York office twice
 a week." Nothing in it says tax, but it was solved by the tax team: two states means two withholding
-setups. An LLM picks a queue and writes a confidence of 0.8 or 0.9 for almost every ticket, right or
-wrong. In our runs it never sent one ticket to a person, so every wrong pick landed in a queue.
+setups. An LLM picks a queue and writes a confidence above 0.9 for almost every ticket, right or wrong. In our runs it never sent one ticket to a person, so every wrong pick landed in a queue.
 
 ## What you will build
 
@@ -108,15 +107,17 @@ In our run on 72 tickets:
 
 | Router | Reassigned | To a person | Right first time | Slowest 1 in 20 | Cost per 1,000 |
 | --- | --- | --- | --- | --- | --- |
-| Embedding | 9 | 25 | 38 | 0.03 s | none |
-| LLM | 4 | 0 | 68 | 1.0 s | $0.05 |
-| Decision model | 5 | 10 | 57 | 1.9 s | none |
-| LLM + decision | 3 | 12 | 57 | 1.9 s | $0.05 |
+| Embedding | 9 | 25 | 38 | 0.11 s | none |
+| LLM | 2 | 0 | 70 | 4.1 s | $0.07 |
+| Decision model | 5 | 10 | 57 | 4.6 s | none |
+| LLM + decision | 2 | 13 | 57 | 4.9 s | $0.07 |
 
 The LLM picks the right queue most often, but its confidence never fell under 0.6, so it sent nobody
 to a person. The decision model's probability did fall, and 5 of its 10 hand-offs were wrong picks it
-caught. Together, the LLM picks and the decision model must agree. That reassigned the fewest tickets.
-The cost is 12 tickets for the triage rota.
+caught. Together, the LLM picks and the decision model must agree. On `openai/gpt-6-luna` that
+reassigned 2 tickets, the same as the LLM alone, and cost 13 tickets for the triage rota. On the
+weaker `google/gemini-2.5-flash` the LLM alone reassigned 4 and the pair 3. The pair is insurance for
+the day the model or the tickets change, and a person sees why each one was held.
 
 `out/review.json` holds every ticket, every pick and every probability.
 
