@@ -1,0 +1,421 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="icon" href="data:,">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kitebird Research</title>
+<style>
+:root {
+  --paper: #FAFAFA; --card: #FFFFFF; --ink: #151515; --ink-2: #414141; --muted: #606060; --faint: #808080;
+  --line: #DFDFDF; --accent: #FAFF69; --accent-deep: #4F5101; --fill-dark: #1F1F1C;
+  --pass: #008138; --fail: #BF000F; --wait: #B75000;
+  --sans: Inter, Helvetica, Arial, sans-serif; --mono: Inconsolata, "Courier New", Courier, monospace;
+}
+* { box-sizing: border-box }
+html, body { margin: 0 }
+body { background: var(--paper); color: var(--ink); font: 15px/1.5 var(--sans); min-height: 100vh }
+button { font: inherit; cursor: pointer }
+button:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px }
+h1, h2, h3 { margin: 0; letter-spacing: -0.01em }
+
+/* The team's research tool: a dark bar, the brief's owner, and which version wrote the brief. */
+.bar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 22px; padding: 12px 28px; background: var(--fill-dark); color: var(--paper) }
+.bar .brand { font-weight: 800; letter-spacing: -0.02em; font-size: 17px }
+.bar .brand small { font-weight: 500; color: var(--line); margin-left: 8px; font-size: 14px }
+.switch { display: flex; gap: 4px; background: var(--ink); border-radius: 8px; padding: 3px; margin-left: auto }
+.switch button { border: 0; background: transparent; color: var(--line); border-radius: 6px; padding: 6px 12px }
+.switch button[aria-pressed="true"] { background: var(--accent); color: var(--ink); font-weight: 600 }
+.bar .go { border: 1px solid var(--line); background: transparent; color: var(--paper); border-radius: 8px; padding: 6px 14px }
+.bar .go:disabled { opacity: 0.6; cursor: wait }
+
+/* The reading column beside a working rail: the brief is read, the rail is where it is checked. */
+.desk { display: grid; grid-template-columns: minmax(0, 44rem) minmax(20rem, 1fr); gap: 0 }
+.report { padding: 30px 40px 60px; background: var(--card); border-right: 1px solid var(--line); min-height: calc(100vh - 54px) }
+.kicker { color: var(--muted); font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; margin: 0 }
+.report h1 { font-size: 30px; line-height: 1.2; margin-top: 8px }
+.question { color: var(--ink-2); font-size: 16px; margin: 10px 0 0 }
+
+.score { display: grid; grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr)); gap: 10px; margin: 22px 0 6px }
+.tile { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; background: var(--paper) }
+.tile b { display: block; font-size: 22px; font-variant-numeric: tabular-nums; letter-spacing: -0.02em }
+.tile span { color: var(--muted); font-size: 13px }
+.tile.editor b { color: var(--wait) }
+.aspects { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 0; padding: 0; list-style: none }
+.aspects li { font-size: 13px; border: 1px solid var(--line); border-radius: 999px; padding: 2px 10px; color: var(--muted) }
+.aspects li.covered { border-color: var(--pass); color: var(--pass) }
+
+.answer { margin: 26px 0 0; padding: 14px 16px; border-left: 4px solid var(--accent-deep); background: var(--paper) }
+.answer h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent-deep) }
+.answer p { margin: 6px 0 0; font-size: 16px }
+.answer small { display: block; color: var(--muted); margin-top: 6px }
+.body section { margin-top: 28px }
+.body h2 { font-size: 19px; margin-bottom: 8px }
+.body p { font-size: 17px; line-height: 1.7; margin: 0 }
+.claim { border-radius: 3px; padding: 1px 0 }
+.claim.flag { text-decoration: underline wavy var(--wait); text-underline-offset: 4px }
+.claim.cut { text-decoration: line-through; color: var(--faint) }
+.claim.active { background: var(--accent); color: var(--ink) }
+.note { border: 0; background: none; color: var(--accent-deep); font-weight: 700; font-size: 12px; vertical-align: super; padding: 0 2px; line-height: 1 }
+.claim.flag .note { color: var(--wait) }
+.notes { margin: 34px 0 0; padding: 16px 0 0 20px; border-top: 1px solid var(--line); color: var(--ink-2); font-size: 14px }
+.notes li { margin: 4px 0 }
+.notes .when { color: var(--muted) }
+.empty { color: var(--muted); padding: 30px 0 }
+
+/* The rail: who searched what, then the source behind a footnote, then the editor's queue. */
+.rail { padding: 22px 24px 40px; display: flex; flex-direction: column; gap: 22px; position: sticky; top: 0; max-height: 100vh; overflow-y: auto }
+.rail h2 { font-size: 15px; margin-bottom: 10px }
+.rail .hint { color: var(--muted); font-size: 13px; margin: -4px 0 10px }
+
+.tree { list-style: none; margin: 0; padding: 0 }
+.node { border: 1px solid var(--line); background: var(--card); border-radius: 8px; padding: 8px 10px }
+.node .who { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 14px }
+.node .stat { margin-left: auto; font-weight: 500; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums }
+.node .goal { color: var(--ink-2); font-size: 13px; margin-top: 2px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden }
+.node .query { font-family: var(--mono); font-size: 13px; color: var(--ink); margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.kids { list-style: none; margin: 0 0 0 14px; padding: 0 0 0 16px; border-left: 2px solid var(--line) }
+.kids > li { position: relative; margin-top: 10px }
+.kids > li::before { content: ""; position: absolute; left: -16px; top: 18px; width: 14px; border-top: 2px solid var(--line) }
+.dot { width: 9px; height: 9px; border-radius: 50%; background: var(--line); flex: none }
+.dot.done { background: var(--pass) }
+.dot.busy { background: var(--wait) }
+/* The one motion: a searcher still working pulses, so a glance shows which ones the lead waits on. */
+.dot.busy { animation: pulse 1.1s ease-in-out infinite }
+@keyframes pulse { 50% { box-shadow: 0 0 0 5px var(--accent) } }
+@media (prefers-reduced-motion: reduce) { .dot.busy { animation: none } }
+
+.passage { border: 1px solid var(--line); border-radius: 10px; background: var(--card); padding: 14px 16px }
+.passage .meta { color: var(--muted); font-size: 13px }
+.passage h3 { font-size: 16px; margin: 4px 0 8px }
+.passage .text { font-size: 15px; line-height: 1.65; color: var(--ink-2) }
+.passage mark { background: var(--accent); color: var(--ink); padding: 1px 0 }
+.verdict { margin: 0 0 10px; font-size: 14px; padding: 8px 10px; border-radius: 6px; background: var(--paper); border-left: 4px solid var(--line) }
+.verdict.supported { border-color: var(--pass) }
+.verdict.flag { border-color: var(--wait) }
+.verdict b { display: block }
+.verdict.supported b { color: var(--pass) }
+.verdict.flag b { color: var(--wait) }
+.verdict .nearest { display: block; margin-top: 6px; font-family: var(--mono); font-size: 13px; color: var(--ink) }
+
+.queue { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px }
+.ticket { border: 1px solid var(--wait); border-radius: 10px; background: var(--card); padding: 10px 12px }
+.ticket.decided { border-color: var(--line) }
+.ticket .kind { font-size: 12px; font-weight: 700; color: var(--wait); text-transform: uppercase; letter-spacing: 0.05em }
+.ticket.decided .kind { color: var(--muted) }
+.ticket p { margin: 4px 0; font-size: 14px }
+.ticket .why { color: var(--ink-2) }
+.choices { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap }
+.choices button { border: 1px solid var(--ink); background: var(--card); color: var(--ink); border-radius: 6px; padding: 4px 12px; font-size: 14px }
+.choices button[aria-pressed="true"] { background: var(--ink); color: var(--paper) }
+.choices .open { border-color: var(--line); color: var(--ink-2) }
+
+.both { width: 100%; border-collapse: collapse; font-size: 13px; background: var(--card); border: 1px solid var(--line); border-radius: 10px; overflow: hidden }
+.both th, .both td { text-align: left; padding: 7px 9px; border-bottom: 1px solid var(--line) }
+.both th { color: var(--muted); font-weight: 500 }
+.both td { font-variant-numeric: tabular-nums }
+.both tr.on td:first-child { font-weight: 700 }
+.error { color: var(--fail); font-size: 14px }
+
+@media (max-width: 900px) {
+  .desk { grid-template-columns: minmax(0, 1fr) }
+  .report { padding: 22px 16px 40px; border-right: 0; min-height: 0 }
+  .rail { position: static; max-height: none; padding: 20px 16px 40px; border-top: 1px solid var(--line) }
+  .bar { padding: 10px 16px }
+  .switch { margin-left: 0 }
+  .report h1 { font-size: 24px }
+}
+</style>
+</head>
+<body data-surface="research report reader">
+<header class="bar">
+  <div class="brand">Kitebird Research<small>Germany launch brief</small></div>
+  <div class="switch" role="group" aria-label="Which version wrote the brief">
+    <button type="button" data-version="lead">Lead + subagents</button>
+    <button type="button" data-version="single">Single agent</button>
+  </div>
+  <button type="button" class="go" id="go">Run this version live</button>
+</header>
+<main class="desk">
+  <article class="report" id="report"><p class="empty">Loading the brief.</p></article>
+  <aside class="rail">
+    <section>
+      <h2>Research run</h2>
+      <p class="hint" id="run-hint">Each searcher has its own context window and budget.</p>
+      <ul class="tree" id="tree"></ul>
+    </section>
+    <section id="source-box">
+      <h2>Source</h2>
+      <div class="passage" id="passage"><p class="hint">Click a footnote number to open the passage the claim cites.</p></div>
+    </section>
+    <section>
+      <h2>For the editor</h2>
+      <p class="hint">A claim goes here when its quote is not in the cited source, or the judge model says the source does not support it. The editor reads the source, then keeps the claim or cuts it from the brief.</p>
+      <ul class="queue" id="queue"></ul>
+    </section>
+    <section>
+      <h2>Both versions</h2>
+      <table class="both" id="both"></table>
+    </section>
+  </aside>
+</main>
+<script>
+const $ = (selector) => document.querySelector(selector);
+const NAMES = { lead: "Lead + subagents", single: "Single agent" };
+const KINDS = { "quote missing": "Quote not in source", "not supported": "Source does not support it" };
+let state = null;
+let version = "lead";
+let activeClaim = null;
+let liveRun = null;
+
+function make(tag, className, text) {
+  const node = document.createElement(tag);
+  if (className) node.className = className;
+  if (text !== undefined) node.textContent = text;
+  return node;
+}
+
+function money(amount) { return "$" + (amount || 0).toFixed(4); }
+function claimsOf(report) { return report.sections.flatMap((section) => section.claims); }
+function decisionOf(report, claim) { return ((state.edits || {})[report.id] || {})[claim.id]; }
+function flagged(claim) { return claim.verdict !== "supported"; }
+
+async function load() {
+  state = await (await fetch("/api/state")).json();
+  if (!state.reports[version] && state.reports.single) version = "single";
+  render();
+}
+
+function render() {
+  document.querySelectorAll(".switch button").forEach((button) => button.setAttribute("aria-pressed", String(button.dataset.version === version)));
+  const report = state.reports[version];
+  renderReport(report);
+  if (!liveRun) renderTree(report ? report.agents : []);
+  renderQueue(report);
+  renderBoth();
+}
+
+function footnoteNumbers(report) {
+  const numbers = new Map();
+  claimsOf(report).forEach((claim) => { if (claim.source && !numbers.has(claim.source)) numbers.set(claim.source, numbers.size + 1); });
+  return numbers;
+}
+
+function renderReport(report) {
+  const box = $("#report");
+  box.replaceChildren();
+  if (!report) {
+    box.append(make("p", "empty", "No brief from this version yet. Run `research run " + version + "`, or press Run this version live."));
+    return;
+  }
+  box.append(make("p", "kicker", "Research brief for " + report.asked_by));
+  box.append(make("h1", "", report.title));
+  box.append(make("p", "question", report.question));
+
+  const score = report.score;
+  const tiles = make("div", "score");
+  const tile = (value, label, extra) => { const node = make("div", "tile " + (extra || "")); node.append(make("b", "", value), make("span", "", label)); tiles.append(node); };
+  tile(score.supported + " of " + score.claims, "claims supported by their cited source");
+  tile(String(score.editor), "go to the editor", "editor");
+  tile(score.covered.length + " of " + score.aspects, "questions covered by a supported claim");
+  tile(money(report.usage.research.cost), (report.usage.research.tokens || 0).toLocaleString() + " tokens for this report");
+  box.append(tiles);
+  const aspects = make("ul", "aspects");
+  state.brief.aspects.forEach((aspect) => {
+    const covered = score.covered.includes(aspect.id);
+    aspects.append(make("li", covered ? "covered" : "", (covered ? "Covered: " : "Not covered: ") + aspect.label));
+  });
+  box.append(aspects);
+
+  const answer = make("section", "answer");
+  answer.append(make("h2", "", "Bottom line"), make("p", "", report.answer), make("small", "", "The writer's summary of the claims below; it cites nothing itself."));
+  box.append(answer);
+
+  const numbers = footnoteNumbers(report);
+  const body = make("div", "body");
+  report.sections.forEach((section) => {
+    const block = make("section");
+    block.append(make("h2", "", section.heading));
+    const paragraph = make("p");
+    section.claims.forEach((claim) => {
+      const decision = decisionOf(report, claim);
+      let className = "claim";
+      if (flagged(claim) && decision !== "keep") className += decision === "cut" ? " cut" : " flag";
+      if (activeClaim === claim.id) className += " active";
+      const sentence = make("span", className, claim.text);
+      sentence.id = "claim-" + claim.id;
+      const note = make("button", "note", "[" + (numbers.get(claim.source) || "?") + "]");
+      note.type = "button";
+      note.setAttribute("aria-label", "Open the source for this claim");
+      note.addEventListener("click", () => openClaim(report, claim));
+      sentence.append(note);
+      paragraph.append(sentence, document.createTextNode(" "));
+    });
+    block.append(paragraph);
+    body.append(block);
+  });
+  box.append(body);
+
+  const notes = make("ol", "notes");
+  numbers.forEach((number, sourceId) => {
+    const source = state.sources[sourceId] || { title: sourceId, publisher: "", date: "" };
+    const item = make("li");
+    item.append(make("span", "", source.publisher + ", “" + source.title + "” "), make("span", "when", source.date + " (" + sourceId + ")"));
+    notes.append(item);
+  });
+  box.append(notes);
+}
+
+async function openClaim(report, claim) {
+  activeClaim = claim.id;
+  renderReport(report);
+  const box = $("#passage");
+  box.replaceChildren(make("p", "hint", "Opening " + (claim.source || "the source") + "."));
+  const source = claim.source ? await (await fetch("/api/source/" + encodeURIComponent(claim.source.trim().toUpperCase()))).json().catch(() => null) : null;
+  box.replaceChildren();
+  const verdict = make("div", "verdict " + (flagged(claim) ? "flag" : "supported"));
+  verdict.append(make("b", "", flagged(claim) ? KINDS[claim.verdict] : "Supported by the cited source"));
+  verdict.append(make("span", "", claim.reason || ""));
+  if (claim.missing) verdict.append(make("span", "nearest", "Quoted: “" + claim.missing + "”"));
+  if (claim.closest) verdict.append(make("span", "nearest", "Nearest in source: “" + claim.closest + "”"));
+  box.append(verdict);
+  if (!source) { box.append(make("p", "error", "The library holds no source " + (claim.source || "") + ".")); return; }
+  box.append(make("div", "meta", source.id + " · " + source.publisher + " · " + source.date), make("h3", "", source.title));
+  const text = make("div", "text");
+  let cursor = 0;
+  (claim.spans || []).forEach(([start, end]) => {
+    if (start < cursor) return;
+    text.append(document.createTextNode(source.text.slice(cursor, start)), make("mark", "", source.text.slice(start, end)));
+    cursor = end;
+  });
+  text.append(document.createTextNode(source.text.slice(cursor)));
+  box.append(text);
+  if (flagged(claim)) box.append(choices(report, claim));
+  // On a wide screen the rail scrolls on its own, so this brings the passage up beside the claim.
+  $("#source-box").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function choices(report, claim) {
+  const row = make("div", "choices");
+  const decision = decisionOf(report, claim);
+  ["keep", "cut"].forEach((choice) => {
+    const button = make("button", "", choice === "keep" ? "Keep the claim" : "Cut it");
+    button.type = "button";
+    button.setAttribute("aria-pressed", String(decision === choice));
+    button.addEventListener("click", () => decide(report, claim, choice));
+    row.append(button);
+  });
+  return row;
+}
+
+async function decide(report, claim, decision) {
+  const response = await fetch("/api/edit", { method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ report: report.id, claim: claim.id, decision }) });
+  state.edits = await response.json();
+  render();
+  if (activeClaim === claim.id) openClaim(report, claim);
+}
+
+function renderQueue(report) {
+  const queue = $("#queue");
+  queue.replaceChildren();
+  const waiting = report ? claimsOf(report).filter(flagged) : [];
+  if (!waiting.length) { queue.append(make("li", "hint", report ? "Every claim in this brief is supported by its source." : "No brief yet.")); return; }
+  waiting.forEach((claim) => {
+    const decision = decisionOf(report, claim);
+    const ticket = make("li", "ticket" + (decision ? " decided" : ""));
+    ticket.append(make("div", "kind", (decision ? (decision === "keep" ? "Kept by the editor: " : "Cut by the editor: ") : "") + KINDS[claim.verdict] + " · " + (claim.source || "no source")));
+    ticket.append(make("p", "", claim.text), make("p", "why", claim.reason || ""));
+    const row = choices(report, claim);
+    const open = make("button", "open", "Read the source");
+    open.type = "button";
+    open.addEventListener("click", () => openClaim(report, claim));
+    row.append(open);
+    ticket.append(row);
+    queue.append(ticket);
+  });
+}
+
+function agentNode(agent) {
+  const node = make("div", "node");
+  const who = make("div", "who");
+  const busy = !["done"].includes(agent.status);
+  who.append(make("span", "dot " + (busy ? "busy" : "done")), make("span", "", agent.agent));
+  const usage = agent.usage || {};
+  who.append(make("span", "stat", agent.status + " · " + agent.tool_calls + " calls · " + (usage.tokens || 0).toLocaleString() + " tokens"));
+  node.append(who, make("div", "goal", agent.objective));
+  const lastQuery = agent.queries[agent.queries.length - 1];
+  if (lastQuery) node.append(make("div", "query", "› " + lastQuery));
+  if (agent.reads.length) node.append(make("div", "goal", "Read " + agent.reads.join(", ") + (agent.findings.length ? " · " + agent.findings.length + " findings" : "")));
+  return node;
+}
+
+function renderTree(agents) {
+  const tree = $("#tree");
+  tree.replaceChildren();
+  if (!agents.length) { tree.append(make("li", "hint", "No run yet.")); return; }
+  const [first, ...rest] = agents;
+  const root = make("li");
+  root.append(agentNode(first));
+  if (rest.length) {
+    const kids = make("ul", "kids");
+    rest.forEach((agent) => { const item = make("li"); item.append(agentNode(agent)); kids.append(item); });
+    root.append(kids);
+  }
+  tree.append(root);
+}
+
+function renderBoth() {
+  const table = $("#both");
+  table.replaceChildren();
+  const head = make("tr");
+  ["", "supported", "covered", "tokens", "cost", "time"].forEach((label) => head.append(make("th", "", label)));
+  table.append(head);
+  Object.keys(NAMES).forEach((name) => {
+    const report = state.reports[name];
+    const row = make("tr", name === version ? "on" : "");
+    row.append(make("td", "", NAMES[name]));
+    if (!report) { const cell = make("td", "", "not run"); cell.colSpan = 5; row.append(cell); }
+    else {
+      [report.score.supported + "/" + report.score.claims, report.score.covered.length + "/" + report.score.aspects,
+       (report.usage.research.tokens || 0).toLocaleString(), money(report.usage.research.cost), Math.round(report.seconds) + " s"]
+        .forEach((value) => row.append(make("td", "", value)));
+    }
+    table.append(row);
+  });
+}
+
+async function runLive() {
+  const button = $("#go");
+  button.disabled = true;
+  button.textContent = "Running…";
+  const response = await fetch("/api/run", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ version }) });
+  if (!response.ok) { $("#run-hint").textContent = await response.text(); button.disabled = false; button.textContent = "Run this version live"; return; }
+  const { id } = await response.json();
+  liveRun = id;
+  $("#run-hint").textContent = NAMES[version] + " is researching now. Each node shows its latest search.";
+  const poll = async () => {
+    const run = await (await fetch("/api/run/" + id)).json();
+    renderTree(run.agents);
+    if (!run.done) return setTimeout(poll, 700);
+    liveRun = null;
+    button.disabled = false;
+    button.textContent = "Run this version live";
+    $("#run-hint").textContent = run.error ? "" : "Run finished. The brief and its checks are below.";
+    if (run.error) $("#run-hint").append(make("span", "error", run.error));
+    await load();
+  };
+  poll();
+}
+
+document.querySelectorAll(".switch button").forEach((button) => button.addEventListener("click", () => {
+  version = button.dataset.version;
+  activeClaim = null;
+  $("#passage").replaceChildren(make("p", "hint", "Click a footnote number to open the passage the claim cites."));
+  render();
+}));
+$("#go").addEventListener("click", runLive);
+load();
+</script>
+</body>
+</html>

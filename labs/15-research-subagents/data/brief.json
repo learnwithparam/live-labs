@@ -1,0 +1,15 @@
+{
+  "company": "Kitebird Cargo",
+  "asked_by": "Anouk de Vries, head of growth",
+  "question": "Should Kitebird Cargo start selling the Kitebird Two, its 4,890 euro two-wheel electric cargo bike, in Germany in spring 2027, and what would it take?",
+  "aspects": [
+    {"id": "market", "label": "German market size and growth", "sources": ["S01", "S02", "S19"]},
+    {"id": "buyers", "label": "Who buys and how they buy", "sources": ["S03", "S16", "S17", "S18"]},
+    {"id": "competitors", "label": "Competitors and their prices", "sources": ["S04", "S05", "S15"]},
+    {"id": "dealers", "label": "What dealers expect from a brand", "sources": ["S06", "S07", "S15"]},
+    {"id": "rules", "label": "Safety standard and road rules", "sources": ["S08", "S17"]},
+    {"id": "grants", "label": "Purchase grants", "sources": ["S09", "S10"]},
+    {"id": "shipping", "label": "Shipping bikes and batteries", "sources": ["S11"]},
+    {"id": "theft", "label": "Theft and insurance", "sources": ["S12"]}
+  ]
+}

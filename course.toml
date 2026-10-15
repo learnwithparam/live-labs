@@ -186,7 +186,7 @@ owns = "multi-agent orchestration"
 job = "Write a cited research report from many sources, as Anthropic's research system does"
 truth = "the sources each claim cites"
 metric = "share of claims their cited source supports, and cost per report"
-status = "planned"
+status = "ready"
 
 [[lab]]
 n = 16

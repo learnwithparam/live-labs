@@ -33,7 +33,7 @@ print what the README promises.
 | 12 | [Design Tools for AI Agents with MCP](labs/12-mcp-tools) | Shopify Sidekick tool design | ready |
 | 13 | [Cut Agent Token Costs with Context Engineering](labs/13-context-engineering) | Manus KV-cache hit rate | ready |
 | 14 | Give AI Agents Long-Term Memory with Mem0 | ChatGPT memory and its controls | planned |
-| 15 | Build a Deep Research Agent with Subagents | Anthropic's multi-agent research system | planned |
+| 15 | [Build a Deep Research Agent with Subagents](labs/15-research-subagents) | Anthropic's multi-agent research system | ready |
 | 16 | Build a Voice AI Agent with Pipecat | SoundHound takes restaurant phone orders | planned |
 | 17 | Put a Voice AI Agent on a Phone Line | LiveKit behind ChatGPT voice | planned |
 | 18 | Assess Car Damage Photos with Vision LLMs | Tractable damage appraisal | planned |
