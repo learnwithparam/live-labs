@@ -19,6 +19,7 @@ import asyncio
 import hashlib
 import json
 import platform
+import re
 import subprocess
 import urllib.request
 from contextlib import asynccontextmanager
@@ -63,8 +64,17 @@ def install() -> Path:
     return BINARY
 
 
+PLAIN_NAME = re.compile(r"[A-Za-z0-9_.-]+")
+
+
 def team_rule(server: str, tool: str, teams: list[str]) -> str:
-    """One CEL rule per tool. A tool no rule matches is hidden and refused: the default is deny."""
+    """One CEL rule per tool. A tool no rule matches is hidden and refused: the default is deny.
+
+    The names are pasted into CEL, so a quote in one would end the string and add a condition of its
+    own. Only plain names make it into a rule."""
+    for name in (server, tool, *teams):
+        if not PLAIN_NAME.fullmatch(name):
+            raise SystemExit(f"{name!r} is not a plain server, tool or team name, so no rule is written for it.")
     return f'mcp.tool.target == "{server}" && mcp.tool.name == "{tool}" && jwt.team in {json.dumps(teams)}'
 
 

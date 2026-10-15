@@ -6,6 +6,7 @@ come from the repo's settings and the workspace, never from the model, so a prom
 """
 
 import csv
+import posixpath
 import uuid
 from dataclasses import asdict, dataclass
 from pathlib import Path
@@ -41,7 +42,8 @@ def call_attributes(tool: str, args: dict, lines_changed: int = 0) -> dict:
         "destructive": destructive(tool),
         "branch_protected": is_protected(args.get("branch", "")) if args.get("branch") else False,
         "environment": args.get("environment", ""),
-        "under_migrations": Path(args.get("path", "")).parts[:1] == ("migrations",),
+        # Normalised first, so "payroll/../migrations/x.sql" is under migrations/ as the tool will see it.
+        "under_migrations": Path(posixpath.normpath(args.get("path", "") or ".")).parts[:1] == ("migrations",),
         "lines_changed": lines_changed,
     }
 

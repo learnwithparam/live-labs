@@ -62,3 +62,8 @@ def test_prompt_only_allows_everything_but_keeps_the_real_verdict(policy):
     decision = PromptOnly(policy).decide(ANA, "run_sql", {"statement": "DROP TABLE legacy_rates", "environment": "prod"})
     assert decision.verdict == "allow"
     assert decision.policy_verdict == "deny"
+
+
+def test_a_path_that_walks_back_into_migrations_is_under_migrations():
+    assert call_attributes("write_file", {"path": "payroll/../migrations/0009_x.sql"})["under_migrations"]
+    assert not call_attributes("write_file", {"path": "payroll/tax.py"})["under_migrations"]

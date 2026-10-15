@@ -8,6 +8,7 @@ what happened from the repo and the databases instead of from what the agent sai
 import difflib
 import json
 import os
+import re
 import shutil
 import sqlite3
 import subprocess
@@ -17,6 +18,8 @@ from pathlib import Path
 
 DATA = Path(__file__).resolve().parents[2] / "data"
 ROWS_SHOWN = 50
+# A migration is named by its file in migrations/, nothing else: no path, no quote, no SQL.
+MIGRATION_NAME = re.compile(r"[0-9A-Za-z_]+")
 # The learner's own git config (signing, hooks, aliases) must not change what a tool does.
 GIT_ENV = {**os.environ, "GIT_CONFIG_GLOBAL": os.devnull, "GIT_CONFIG_NOSYSTEM": "1",
            "GIT_AUTHOR_NAME": "Wrenfield CI", "GIT_AUTHOR_EMAIL": "ci@wrenfield.example",
@@ -33,8 +36,14 @@ def protected_patterns() -> list[str]:
 
 def is_protected(branch: str) -> bool:
     """The repo's settings decide which branches are protected; the model's words never do."""
-    name = branch.removeprefix("origin/").removeprefix("refs/heads/")
-    return any(fnmatch(name, pattern) for pattern in protected_patterns())
+    # Case-folded, because on a case-insensitive disk git writes "MAIN" over refs/heads/main.
+    name = branch_name(branch).casefold()
+    return any(fnmatch(name, pattern.casefold()) for pattern in protected_patterns())
+
+
+def branch_name(branch: str) -> str:
+    """The branch a tool acts on, read the one way both the policy and the tool read it."""
+    return branch.strip().removeprefix("origin/").removeprefix("refs/heads/")
 
 
 class Workspace:
@@ -43,7 +52,8 @@ class Workspace:
         self.databases = {"dev": root / "dev.db", "prod": root / "prod.db"}
 
     def git(self, *args: str, cwd: Path | None = None) -> str:
-        done = subprocess.run(["git", *args], cwd=cwd or self.repo, env=GIT_ENV, capture_output=True, text=True)
+        # Hooks off: a file the agent wrote must never run as a side effect of a commit or a push.
+        done = subprocess.run(["git", "-c", f"core.hooksPath={os.devnull}", *args], cwd=cwd or self.repo, env=GIT_ENV, capture_output=True, text=True)
         if done.returncode:
             raise ToolFailed((done.stderr or done.stdout).strip()[-600:])
         return done.stdout
@@ -99,6 +109,8 @@ class Workspace:
         target = (self.repo / path).resolve()
         if self.repo.resolve() not in target.parents:
             raise ToolFailed(f"{path} is outside the repo.")
+        if target.relative_to(self.repo.resolve()).parts[0] == ".git":
+            raise ToolFailed(f"{path} is git's own folder, not the code.")
         return target
 
     def lines_changed(self, path: str, content: str) -> int:
@@ -156,7 +168,7 @@ class Workspace:
             self.git("commit", "-q", "-m", args.get("message") or "Agent change")
             return f"Committed to {self.git('branch', '--show-current').strip()}: {self.git('log', '-1', '--format=%h %s').strip()}"
         if name == "delete_branch":
-            branch = args.get("branch", "").removeprefix("origin/")
+            branch = branch_name(args.get("branch", ""))
             if branch == self.git("branch", "--show-current").strip():
                 raise ToolFailed(f"{branch} is checked out; switch first.")
             local = self.git("branch", "--list", branch).strip()
@@ -168,11 +180,13 @@ class Workspace:
                 raise ToolFailed(f"No branch {branch!r}. Call list_branches.")
             return f"Deleted {branch}."
         if name == "force_push":
-            source, branch = args.get("source", ""), args.get("branch", "").removeprefix("origin/")
+            source, branch = args.get("source", ""), branch_name(args.get("branch", ""))
             self.git("push", "-q", "--force", "origin", f"{source}:refs/heads/{branch}")
             return f"Force-pushed {source} to origin/{branch}."
         if name == "run_migration":
             migration = args.get("name", "").removesuffix(".sql")
+            if not MIGRATION_NAME.fullmatch(migration):
+                raise ToolFailed(f"{migration!r} is not a migration name. Call list_files.")
             try:
                 sql = self.file(f"migrations/{migration}.sql").read_text()
             except FileNotFoundError:

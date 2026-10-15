@@ -2,6 +2,8 @@
 
 import json
 
+import pytest
+
 from basalt import catalogue, gateway
 
 
@@ -55,3 +57,10 @@ def test_the_access_log_becomes_one_row_per_call_with_a_plain_reason(tmp_path):
     assert rows[1]["reason"] == "pinned hash mismatch: merchants.lookup_merchant changed"
     assert rows[2]["reason"] == "not on this team's tool list"
     assert gateway.plain_reason("mcpGuardrails checkRequest failed: Connection refused").endswith("(fail closed)")
+
+
+def test_a_name_with_a_quote_never_reaches_a_cel_rule():
+    with pytest.raises(SystemExit, match="not a plain"):
+        gateway.team_rule("payments", 'refund_payment" || true || "', ["risk"])
+    with pytest.raises(SystemExit, match="not a plain"):
+        gateway.team_rule("payments", "refund_payment", ['risk"] || true || ["'])

@@ -53,3 +53,25 @@ def test_edits_are_counted_like_a_review_and_paths_stay_in_the_repo(workspace):
 def test_protected_branches_come_from_the_settings():
     assert is_protected("main") and is_protected("release/2.4") and is_protected("origin/release/2.4")
     assert not is_protected("spike/old-export")
+
+
+@pytest.mark.parametrize("name", ["../payroll/tax", "0008_drop_legacy_rates'); DROP TABLE payslips; --"])
+def test_a_migration_name_cannot_point_outside_migrations_or_carry_sql(workspace, name):
+    with pytest.raises(ToolFailed, match="not a migration name"):
+        workspace.run("run_migration", {"name": name, "environment": "dev"})
+    assert "payslips" in workspace.tables("dev")
+
+
+def test_the_agent_cannot_write_into_git_or_run_a_hook(workspace):
+    with pytest.raises(ToolFailed, match="git's own folder"):
+        workspace.run("write_file", {"path": ".git/hooks/pre-commit", "content": "#!/bin/sh\ntouch pwned\n"})
+    hook = workspace.repo / ".git" / "hooks" / "pre-commit"
+    hook.write_text("#!/bin/sh\ntouch ../pwned\n")
+    hook.chmod(0o755)
+    workspace.run("write_file", {"path": "notes.md", "content": "hi\n"})
+    workspace.run("commit", {"message": "Add notes"})
+    assert not (workspace.root / "pwned").exists()
+
+
+def test_a_branch_in_other_case_is_still_protected():
+    assert is_protected("MAIN") and is_protected("Release/2.4") and is_protected(" refs/heads/main")
