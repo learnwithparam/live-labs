@@ -44,7 +44,8 @@ class Console:
                 client, model_name = self.model()
                 result = audit(with_breaks(POLICIES[policy], breaks), client, model_name, run["steps"].append)
                 run.update(model=model_name, score=score(result), disputes=disputes(result), summary=result["summary"])
-            except Exception as error:  # shown on the page, so a bad key reads as a message, not a hang
+            # A missing key raises SystemExit, which `Exception` misses; the run would hang on the page.
+            except (Exception, SystemExit) as error:
                 run.update(error=str(error))
             run["done"] = True
 

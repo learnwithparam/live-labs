@@ -144,3 +144,20 @@ def test_the_run_console_answers_only_this_machine(tmp_path):
         assert state["score"]["complete"] and len(state["steps"]) == 34
     finally:
         server.shutdown()
+
+
+def test_a_run_with_no_key_ends_with_the_reason_instead_of_hanging(tmp_path):
+    import time
+
+    from halyard.serve import Console
+
+    def no_key():
+        raise SystemExit("LLM_API_KEY is not set. Copy env.example to .env and add your key.")
+
+    console = Console(no_key, tmp_path / "review.json")
+    run = console.runs[console.start("engineered", [])]
+    for _ in range(50):
+        if run["done"]:
+            break
+        time.sleep(0.05)
+    assert run["done"] and "LLM_API_KEY" in run["error"]

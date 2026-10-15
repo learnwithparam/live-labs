@@ -53,7 +53,8 @@ class Desk:
                            orders=shop.orders_of(seeded.customer), budget=budget.state(),
                            outcome=outcome(seeded, shop, got) if run["scored"] else None,
                            expect=seeded.expect, matches=matches(seeded, shop))
-            except Exception as error:  # shown on the page, so a bad key reads as a message, not a hang
+            # A missing key raises SystemExit, which `Exception` misses; the run would hang on the page.
+            except (Exception, SystemExit) as error:
                 run.update(error=str(error))
             run["done"] = True
 

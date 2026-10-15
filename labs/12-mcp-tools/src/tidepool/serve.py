@@ -68,7 +68,8 @@ class Admin:
                 if task and not earlier and message == task["ask"]:
                     ok, why = judge(task, store.changes(), result["reply"])
                     run.update(verdict={"ok": ok, "why": why, "task": task["id"]})
-            except Exception as error:  # shown on the page, so a bad key reads as a message, not a hang
+            # A missing key raises SystemExit, which `Exception` misses; the run would hang on the page.
+            except (Exception, SystemExit) as error:
                 run.update(error=str(error))
             run["done"] = True
 
