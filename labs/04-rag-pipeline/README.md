@@ -57,8 +57,8 @@ The docs are synthetic: `uv run --with reportlab==4.4.4 python data/make_docs.py
 ## Set up
 
 You need [uv](https://docs.astral.sh/uv/) and a key for any OpenAI-compatible endpoint. The lab was
-measured on `google/gemini-2.5-flash-lite` through [OpenRouter](https://openrouter.ai): answering all
-19 questions both ways costs well under a cent.
+measured on `openai/gpt-6-luna` through [OpenRouter](https://openrouter.ai): answering all 19
+questions both ways costs about a third of a cent.
 
 ```bash
 cp env.example .env
@@ -137,10 +137,11 @@ uv run oncall eval --by size
 
 Expect: /size passages on .*: \d+ of \d+ answers supported/
 
-In our runs 15 of 17 answers were supported. The chunk that held the skip command ended at
-`kcat-skip --group settlement-co`, and the approval channel was cut the same way. In one run the
-answer copied the cut: `--group settlement-co --partition`, a command that names no consumer group.
-No passage a person could open holds the whole command. Now from section passages:
+In our run on luna 15 of 16 answers were supported, and 4 of 19 questions went to a person. The
+chunk that held the skip command ended at `kcat-skip --group settlement-co`, so no cited passage
+holds the whole command, and that answer goes to a person. The approval channel was cut the same way,
+and the search never found it. On `google/gemini-2.5-flash-lite` one answer copied the cut:
+`--group settlement-co --partition`, a command that names no consumer group. Now from section passages:
 
 ```bash
 uv run oncall eval
