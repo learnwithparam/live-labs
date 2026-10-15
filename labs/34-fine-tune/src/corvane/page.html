@@ -1,0 +1,409 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="icon" href="data:,">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Corvane model release</title>
+<style>
+:root {
+  --paper: #FAFAFA; --card: #FFFFFF; --ink: #151515; --ink-2: #414141; --muted: #606060; --faint: #808080;
+  --line: #DFDFDF; --accent: #FAFF69; --accent-deep: #4F5101; --fill-dark: #1F1F1C;
+  --pass: #008138; --fail: #BF000F; --wait: #B75000;
+  --sans: Inter, Helvetica, Arial, sans-serif; --mono: Inconsolata, "Courier New", Courier, monospace;
+}
+* { box-sizing: border-box }
+html, body { margin: 0 }
+body { background: var(--paper); color: var(--ink); font: 15px/1.5 var(--sans); min-height: 100vh }
+button, select { font: inherit }
+button { cursor: pointer }
+button:focus-visible, select:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px }
+h1, h2, h3 { margin: 0; letter-spacing: -0.01em }
+.mono { font-family: var(--mono) }
+
+/* The labelling team's own tool: Corvane's back office, not a notebook. */
+.top { display: flex; align-items: center; gap: 24px; padding: 14px 32px; background: var(--fill-dark); color: var(--paper) }
+.top .brand { font-weight: 800; font-size: 18px; letter-spacing: -0.02em }
+.top nav { display: flex; gap: 20px; color: var(--line) }
+.top nav .on { color: var(--paper); font-weight: 600; border-bottom: 2px solid var(--accent) }
+.top .host { margin-left: auto; color: var(--line); font-size: 13px }
+
+/* The release decision sits first, because it is the one thing this page exists to answer. */
+.release { display: flex; gap: 22px; align-items: flex-start; padding: 22px 32px; background: var(--card); border-bottom: 1px solid var(--line) }
+.stamp { flex: none; min-width: 7.5rem; padding: 10px 14px; border: 3px solid currentColor; border-radius: 4px; text-align: center; font-weight: 800; font-size: 26px; letter-spacing: 0.06em }
+.stamp.ship { color: var(--pass) }
+.stamp.hold { color: var(--fail) }
+.stamp small { display: block; font-size: 11px; letter-spacing: 0.04em; font-weight: 600 }
+.release h1 { font-size: 22px }
+.release .sub { color: var(--muted); margin: 2px 0 10px }
+.checks { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px }
+.checks li { display: flex; gap: 10px }
+.checks .mark { flex: none; width: 3rem; font-weight: 700 }
+.checks .passed .mark { color: var(--pass) }
+.checks .failed .mark { color: var(--fail) }
+.plain { margin: 10px 0 0; padding-top: 8px; border-top: 1px solid var(--line); color: var(--ink-2); font-size: 13px }
+.plain b { color: var(--fail) }
+
+.console { display: grid; grid-template-columns: minmax(0, 1.18fr) minmax(18rem, 0.82fr); gap: 24px; padding: 24px 32px 40px }
+.panel { background: var(--card); border: 1px solid var(--line); border-radius: 4px; padding: 18px 20px; min-width: 0 }
+.panel + .panel { margin-top: 20px }
+.panel h2 { font-size: 17px }
+.panel .note { color: var(--muted); font-size: 13px; margin: 2px 0 14px }
+
+/* One row per model: what it scored on the held-out test and what 1,000 items cost. */
+.board { display: flex; flex-direction: column; gap: 10px }
+.model { display: grid; grid-template-columns: 9.75rem minmax(0, 1fr) 4.4rem 6.6rem; gap: 12px; align-items: center }
+.model .name { font-weight: 600; font-size: 14px }
+.model .track { height: 14px; background: var(--paper); border: 1px solid var(--line); border-radius: 2px; overflow: hidden }
+.model .bar { height: 100%; width: 0; background: var(--fill-dark); transition: width 700ms ease-out }
+.model.tuned .bar { background: var(--accent); box-shadow: inset 0 0 0 1px var(--accent-deep) }
+.model.cascade .bar { background: var(--pass) }
+.split { margin: 12px 0 0; font-size: 14px }
+.split b { font-size: 16px }
+.model .accuracy { font-weight: 700; text-align: right }
+.model .cost { color: var(--ink-2); text-align: right; font-size: 14px }
+.board .legend { color: var(--muted); font-size: 12px; text-align: right }
+.trainline { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); color: var(--ink-2); font-size: 13px }
+.trainline b { color: var(--ink) }
+
+/* The confusion table scrolls inside its own box, so a phone never scrolls the page sideways. */
+.matrix-wrap { overflow-x: auto }
+table.matrix { border-collapse: collapse; font-size: 13px; min-width: 40rem }
+.matrix th, .matrix td { border: 1px solid var(--line); padding: 0; text-align: center; min-width: 2.6rem; height: 2.2rem }
+.matrix thead th { font-weight: 600; color: var(--muted); font-size: 11px; padding: 4px 2px; vertical-align: bottom }
+.matrix tbody th { text-align: left; padding: 0 8px; font-weight: 600; white-space: nowrap }
+.matrix td button { width: 100%; height: 100%; border: 0; background: transparent; color: var(--ink) }
+.matrix td.right { background: var(--paper); font-weight: 700 }
+.matrix td.wrong button { background: var(--accent); font-weight: 700 }
+.matrix td.wrong button[aria-pressed="true"] { background: var(--fill-dark); color: var(--paper) }
+.matrix td.recall { font-weight: 700; padding: 0 6px }
+.matrix td.recall.low { color: var(--fail) }
+.misses { list-style: none; margin: 14px 0 0; padding: 0; display: flex; flex-direction: column; gap: 6px }
+.misses li { display: grid; grid-template-columns: 5.4rem minmax(0, 1fr) 7.5rem; gap: 10px; font-size: 13px; padding: 6px 0; border-top: 1px solid var(--line) }
+.misses .said { color: var(--ink-2) }
+
+/* What the small model sent up: one line each, opened to read its confidence and why. */
+.sent { list-style: none; margin: 10px 0 0; padding: 0; max-height: 24rem; overflow-y: auto; border-top: 1px solid var(--line) }
+.sent > li { border-bottom: 1px solid var(--line) }
+.sent button.row { display: grid; grid-template-columns: 3.4rem minmax(0, 1fr) 6.2rem; gap: 10px; width: 100%; padding: 7px 4px;
+  border: 0; background: transparent; color: var(--ink); text-align: left; font-size: 13px }
+.sent button.row[aria-expanded="true"] { background: var(--paper); font-weight: 600 }
+.sent .sure { font-weight: 700; color: var(--wait) }
+.sent .verdict { text-align: right; color: var(--ink-2) }
+.sent .detail { padding: 2px 4px 10px 4px; font-size: 13px; color: var(--ink-2) }
+.sent .detail p { margin: 4px 0 }
+.sent .detail .wrong { color: var(--fail); font-weight: 600 }
+
+/* This week's items the small model sent up. Nothing waited; a reviewer checks them after. */
+.queue-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px }
+.count { font-size: 13px; color: var(--ink-2) }
+.count b { color: var(--ink) }
+/* The week can hold dozens of items, so the list scrolls in its own box and the page stays one screen tall. */
+.items { list-style: none; margin: 14px 0 0; padding: 0 4px 0 0; display: flex; flex-direction: column; gap: 12px; max-height: 38rem; overflow-y: auto }
+.item { border: 1px solid var(--line); border-radius: 4px; padding: 12px 14px; background: var(--card) }
+.item.done { background: var(--paper) }
+.item .line1 { display: flex; justify-content: space-between; gap: 10px; font-weight: 600 }
+.item .meta { color: var(--muted); font-size: 12px }
+.item .why { color: var(--wait); font-size: 13px; margin: 6px 0 }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--ink-2) }
+.chip.tuned { background: var(--accent); color: var(--ink); border-color: var(--accent-deep) }
+.decide { display: flex; gap: 8px }
+.decide select { flex: 1; min-width: 0; padding: 5px 6px; border: 1px solid var(--line); border-radius: 2px; background: var(--card); color: var(--ink) }
+.decide button { padding: 5px 12px; border: 1px solid var(--ink); background: var(--ink); color: var(--paper); border-radius: 2px }
+.item .saved { color: var(--pass); font-size: 13px; font-weight: 600 }
+.empty { color: var(--muted); font-size: 14px }
+
+@media (max-width: 860px) {
+  .top { padding: 12px 16px; flex-wrap: wrap; gap: 8px 16px }
+  .top .host { margin-left: 0; width: 100% }
+  .release { padding: 18px 16px; flex-direction: column; gap: 12px }
+  .console { grid-template-columns: minmax(0, 1fr); padding: 16px 16px 32px }
+  .model { grid-template-columns: minmax(0, 1fr) 4.4rem; gap: 4px 10px }
+  .model .track { grid-column: 1 / -1; grid-row: 2 }
+  .model .cost { grid-column: 1 / -1; text-align: left; font-size: 13px }
+  .board .legend { text-align: left }
+  .misses li { grid-template-columns: minmax(0, 1fr); gap: 0 }
+}
+@media (prefers-reduced-motion: reduce) {
+  .model .bar { transition: none }
+}
+</style>
+</head>
+<body data-surface="model release console for the labelling team">
+<header class="top">
+  <span class="brand">Corvane</span>
+  <nav aria-label="Back office"><span>Transactions</span><span class="on">Model release</span><span>Reviews</span></nav>
+  <span class="host" id="host"></span>
+</header>
+
+<section class="release" aria-labelledby="release-title">
+  <div class="stamp" id="stamp">...</div>
+  <div>
+    <h1 id="release-title">Categoriser release: tuned Qwen3 0.6B in front of the large model</h1>
+    <p class="sub" id="release-sub">Held-out test against what the reviewers decided.</p>
+    <ul class="checks" id="checks"></ul>
+    <p class="plain" id="plain"></p>
+  </div>
+</section>
+
+<main class="console">
+  <div>
+    <section class="panel" aria-labelledby="board-title">
+      <h2 id="board-title">The models and the cascade on the same held-out items</h2>
+      <p class="note" id="board-note"></p>
+      <div class="board" id="board"></div>
+      <p class="split" id="split"></p>
+      <div class="trainline" id="trainline"></div>
+    </section>
+    <section class="panel" aria-labelledby="matrix-title">
+      <h2 id="matrix-title">Tuned model: reviewer's label against its answer</h2>
+      <p class="note">Rows are what the reviewer decided. A yellow cell is a mistake; open it to see the items.</p>
+      <div class="matrix-wrap"><table class="matrix" id="matrix"></table></div>
+      <ul class="misses" id="misses"></ul>
+    </section>
+  </div>
+  <div>
+    <section class="panel" aria-labelledby="sent-title">
+      <h2 id="sent-title">Sent to the large model</h2>
+      <p class="note" id="sent-note">Held-out items the small model was not sure of. Open one to see why it went up.</p>
+      <ul class="sent" id="sent"></ul>
+    </section>
+    <section class="panel" aria-labelledby="queue-title">
+      <div class="queue-head">
+        <h2 id="queue-title">This week</h2>
+        <span class="count" id="count"></span>
+      </div>
+      <p class="note">Nothing waited for a person. Check what went up; your label trains the next adapter.</p>
+      <ul class="items" id="items"></ul>
+    </section>
+  </div>
+</main>
+
+<script>
+const $ = (selector) => document.querySelector(selector);
+let state = null;
+let openCell = null;
+let openSent = null;
+let grown = false;
+
+function make(tag, className, text) {
+  const node = document.createElement(tag);
+  if (className) node.className = className;
+  if (text !== undefined && text !== null) node.textContent = text;
+  return node;
+}
+
+const percent = (value) => (value * 100).toFixed(1) + "%";
+const dollars = (value) => "$" + value.toFixed(4);
+const short = (category) => (category || "unparsed").replace("_", " ");
+
+function renderRelease(release, plain) {
+  const stamp = $("#stamp");
+  stamp.className = "stamp " + release.decision;
+  stamp.textContent = release.decision.toUpperCase();
+  stamp.append(make("small", "", release.decision === "ship" ? "every check passed" : "fails closed"));
+  const checks = $("#checks");
+  checks.replaceChildren();
+  if (!release.checks.length) {
+    release.reasons.forEach((reason) => checks.append(make("li", "failed", reason)));
+  }
+  release.checks.forEach((check) => {
+    const row = make("li", check.passed ? "passed" : "failed");
+    row.append(make("span", "mark", check.passed ? "pass" : "fail"), make("span", "", check.name + ": " + check.detail));
+    checks.append(row);
+  });
+  $("#release-sub").textContent = release.threshold === undefined ? "Held-out test against what the reviewers decided."
+    : "Held-out test against what the reviewers decided. The small model keeps an item at " +
+      Math.round(release.threshold * 100) + "% confidence or more, a threshold read from the validation split.";
+  const plainLine = $("#plain");
+  plainLine.replaceChildren("The tuned model alone: ", make("b", "", plain.decision.toUpperCase()),
+    plain.reasons.length ? ". " + plain.reasons.join("; ") + "." : ".");
+}
+
+function renderBoard(models, train, release) {
+  const names = { large: "Large model, few-shot", untuned: "Qwen3 0.6B untuned", tuned: "Qwen3 0.6B tuned",
+    cascade: "Tuned, then large" };
+  // The cascade is scored like a model: one answer per item, at what both models cost together.
+  const rows = Object.assign({}, models, release.score ? { cascade: release.score } : {});
+  const board = $("#board");
+  board.replaceChildren();
+  const bars = [];
+  ["large", "untuned", "tuned", "cascade"].forEach((key) => {
+    const result = rows[key];
+    if (!result) return;
+    const row = make("div", "model " + key);
+    const track = make("div", "track");
+    const bar = make("div", "bar");
+    track.append(bar);
+    bars.push([bar, result.accuracy]);
+    row.append(make("span", "name", names[key]), track, make("span", "accuracy", percent(result.accuracy)),
+      make("span", "cost", dollars(result.cost_per_thousand) + " / 1k"));
+    board.append(row);
+  });
+  board.append(make("div", "legend", "accuracy on held-out items, then cost per 1,000 items"));
+  // Bars grow from zero on the first load only, so the gap between the models is what the eye catches first.
+  const grow = () => bars.forEach(([bar, accuracy]) => { bar.style.width = (accuracy * 100) + "%"; });
+  if (grown) grow(); else requestAnimationFrame(grow);
+  grown = true;
+  const sample = models.tuned || models.large;
+  $("#board-note").textContent = sample ? sample.total + " items the models never trained or prompted on." : "Run the baseline to fill this in.";
+  const split = $("#split");
+  split.replaceChildren();
+  if (release.kept !== undefined) {
+    split.append(make("b", "", String(release.kept)), " of " + release.total + " labelled by the small model, ",
+      make("b", "", String(release.routed)), " sent to the large model.");
+  }
+  const line = $("#trainline");
+  line.replaceChildren();
+  if (train) {
+    const facts = [["trained on", train.gpu], ["steps", train.steps + " at batch " + train.recipe.batch_size],
+      ["GPU minutes", String(train.gpu_minutes)], ["peak memory", train.peak_memory_gb + " GB"],
+      ["dataset", train.dataset_version], ["kernel", train.kernel]];
+    facts.forEach(([label, value]) => {
+      const fact = make("span", "", label + " ");
+      fact.append(make("b", "", value));
+      line.append(fact);
+    });
+  }
+}
+
+function renderMatrix(categories, tuned) {
+  const table = $("#matrix");
+  table.replaceChildren();
+  if (!tuned) {
+    table.append(make("caption", "empty", "No tuned model scored yet. Run train, then evaluate."));
+    return;
+  }
+  const head = make("thead");
+  const headRow = make("tr");
+  headRow.append(make("th", "", "reviewer \\ tuned"));
+  categories.concat(["unparsed"]).forEach((category) => headRow.append(make("th", "", short(category))));
+  headRow.append(make("th", "", "recall"));
+  head.append(headRow);
+  const body = make("tbody");
+  categories.forEach((truth) => {
+    const row = make("tr");
+    row.append(make("th", "", short(truth)));
+    categories.concat(["unparsed"]).forEach((answer) => {
+      const count = (tuned.confusion[truth] || {})[answer] || 0;
+      const cell = make("td", truth === answer ? "right" : count ? "wrong" : "");
+      if (truth !== answer && count) {
+        const button = make("button", "", String(count));
+        const key = truth + ">" + answer;
+        button.setAttribute("aria-pressed", String(openCell === key));
+        button.setAttribute("aria-label", count + " " + short(truth) + " items answered " + short(answer));
+        button.addEventListener("click", () => { openCell = openCell === key ? null : key; render(); });
+        cell.append(button);
+      } else {
+        cell.textContent = count ? String(count) : "";
+      }
+      row.append(cell);
+    });
+    const recall = tuned.per_class[truth].recall;
+    const low = recall !== null && recall < state.rules.class_floor;
+    row.append(make("td", "recall" + (low ? " low" : ""), recall === null ? "n/a" : Math.round(recall * 100) + "%"));
+    body.append(row);
+  });
+  table.append(head, body);
+  const misses = $("#misses");
+  misses.replaceChildren();
+  // Only the open cell's items show, so a reviewer reads one kind of mistake at a time.
+  state.misses.filter((miss) => openCell === miss.truth + ">" + (miss.tuned || "unparsed")).forEach((miss) => {
+    const row = make("li");
+    row.append(make("span", "mono", miss.id), make("span", "", miss.descriptor + "  $" + miss.amount.toFixed(2)),
+      make("span", "said", "large: " + short(miss.large)));
+    misses.append(row);
+  });
+}
+
+function renderSent(items) {
+  const list = $("#sent");
+  list.replaceChildren();
+  if (!items.length) list.append(make("li", "empty", "No cascade yet. Run `uv run tune cascade`."));
+  items.forEach((item) => {
+    const entry = make("li");
+    const row = make("button", "row");
+    const open = openSent === item.id;
+    const sure = item.confidence === null ? "n/a" : Math.round(item.confidence * 100) + "%";
+    row.setAttribute("aria-expanded", String(open));
+    row.append(make("span", "sure", sure), make("span", "", item.descriptor),
+      make("span", "verdict", item.large === item.truth ? "large right" : "large wrong"));
+    row.addEventListener("click", () => { openSent = open ? null : item.id; render(); });
+    entry.append(row);
+    // Only the open item shows its detail, so the list stays a list of reasons to scan.
+    if (open) {
+      const detail = make("div", "detail");
+      detail.append(make("p", "", item.reason),
+        make("p", "", "Small model said " + short(item.small) + ". Large model said " + short(item.large) + "."),
+        make("p", item.large === item.truth ? "" : "wrong", "The reviewer's label: " + short(item.truth) + ".  " +
+          item.id + ", $" + item.amount.toFixed(2)));
+      entry.append(detail);
+    }
+    list.append(entry);
+  });
+}
+
+function renderQueue(queue) {
+  const checked = queue.sent_up.filter((item) => item.decided).length;
+  const count = $("#count");
+  count.replaceChildren();
+  count.append(make("b", "", String(queue.small)), " of " + queue.total + " by the small model, ",
+    make("b", "", String(queue.sent_up.length)), " sent up, " + checked + " checked");
+  const items = $("#items");
+  items.replaceChildren();
+  if (!queue.total) items.append(make("li", "empty", "No shadow run yet. Run `uv run tune shadow`."));
+  queue.sent_up.forEach((item) => {
+    const card = make("li", "item" + (item.decided ? " done" : ""));
+    const first = make("div", "line1");
+    first.append(make("span", "", item.descriptor), make("span", "", "$" + item.amount.toFixed(2)));
+    const chips = make("div", "chips");
+    const sure = item.tuned.confidence === null ? "" : " " + Math.round(item.tuned.confidence * 100) + "%";
+    chips.append(make("span", "chip tuned", "small: " + short(item.tuned.label) + sure),
+      make("span", "chip", "large: " + short(item.large && item.large.label)));
+    card.append(first, make("div", "meta", item.id + "  posted " + item.posted), make("p", "why", item.reason), chips);
+    if (item.decided) {
+      card.append(make("div", "saved", "You labelled it " + short(item.decided) + ". It trains the next adapter."));
+    } else {
+      const form = make("div", "decide");
+      const choice = make("select");
+      choice.setAttribute("aria-label", "Category for " + item.descriptor);
+      state.categories.forEach((category) => {
+        const option = make("option", "", short(category));
+        option.value = category;
+        choice.append(option);
+      });
+      choice.value = (item.large && item.large.label) || item.tuned.label || state.categories[0];
+      const save = make("button", "", "Label");
+      save.addEventListener("click", () => decide(item.id, choice.value));
+      form.append(choice, save);
+      card.append(form);
+    }
+    items.append(card);
+  });
+}
+
+function render() {
+  renderRelease(state.cascade, state.plain);
+  renderBoard(state.models, state.train, state.cascade);
+  renderMatrix(state.categories, state.models.tuned);
+  renderSent(state.cascade.routed_items || []);
+  renderQueue(state.queue);
+  $("#host").textContent = "Small model priced at " + state.host;
+}
+
+async function decide(itemId, label) {
+  const response = await fetch("/api/review", { method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ id: itemId, label }), signal: AbortSignal.timeout(10000) });
+  if (response.ok) { state = await response.json(); render(); }
+}
+
+async function load() {
+  const response = await fetch("/api/state", { signal: AbortSignal.timeout(10000) });
+  state = await response.json();
+  render();
+}
+load();
+</script>
+</body>
+</html>

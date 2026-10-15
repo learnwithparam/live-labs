@@ -409,11 +409,11 @@ n = 34
 slug = "34-fine-tune"
 title = "Fine-Tune a Small LLM with Reviewed Data"
 part = "Deploy"
-anchor = "Checkr and Ramp replaced a large model with a tuned small one"
+anchor = "Checkr replaced a large model with a tuned small one; Ramp fine-tunes on Modal"
 owns = "fine-tuning"
-job = "Replace a large model with a small tuned one at the same accuracy, as Checkr did"
+job = "Label most items with a small tuned model and send the rest to the large one, at its accuracy"
 truth = "labels from the human review queue"
-metric = "accuracy and cost per item against the large model"
+metric = "cascade accuracy, share the small model labels alone, and cost per item against the large model"
 status = "planned"
 
 [[lab]]

@@ -1,0 +1,30 @@
+[project]
+name = "lab-34-fine-tune"
+version = "0.1.0"
+description = "Fine-tune a small LLM with reviewed data: a corporate card company tunes Qwen3 0.6B with LoRA on a Kaggle GPU on its review queue's merchant labels and ships it only when it matches the large model"
+requires-python = ">=3.11,<3.14"
+dependencies = [
+    "mlx-lm==0.31.3",
+    "openai==2.54.0",
+]
+
+[project.scripts]
+tune = "corvane.cli:main"
+
+[dependency-groups]
+dev = ["pytest>=8.4"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/corvane"]
+
+[tool.uv]
+# Every dependency resolves to a release at least two weeks old, so a fresh one never lands untested.
+exclude-newer = "2026-10-01T00:00:00Z"
+
+[tool.pytest.ini_options]
+markers = ["proof: scores the adapter trained on Kaggle against a real large model; needs LLM_API_KEY"]
+addopts = "-m 'not proof'"

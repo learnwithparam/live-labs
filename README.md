@@ -52,7 +52,7 @@ print what the README promises.
 | 31 | [Ship a Streaming AI Agent API with an API Gateway](labs/31-agent-api) | The chat endpoint behind every in-app assistant | ready |
 | 32 | [Run Background Coding Agents with Cloud Sandboxes](labs/32-background-agents) | Ramp Inspect, run on Modal sandboxes | ready |
 | 33 | [Run AI Agents on Serverless with Durable Functions](labs/33-serverless-agents) | AWS Lambda durable functions and Bedrock AgentCore | ready |
-| 34 | Fine-Tune a Small LLM with Reviewed Data | Checkr and Ramp replaced a large model with a tuned small one | planned |
+| 34 | Fine-Tune a Small LLM with Reviewed Data | Checkr replaced a large model with a tuned small one; Ramp fine-tunes on Modal | planned |
 | 35 | Serve an Open LLM on Serverless GPUs | Ramp on Modal | planned |
 
 <!-- end course map -->
