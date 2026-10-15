@@ -150,7 +150,7 @@ owns = "tool design"
 job = "Let a merchant run store admin tasks by asking, as Shopify Sidekick does"
 truth = "the store's admin API state after each task"
 metric = "task success rate and wrong-tool calls"
-status = "planned"
+status = "ready"
 
 [[lab]]
 n = 13

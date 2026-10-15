@@ -1,0 +1,334 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tidepool Coffee admin</title>
+<style>
+:root {
+  --paper: #FAFAFA; --card: #FFFFFF; --ink: #151515; --ink-2: #414141; --muted: #606060; --faint: #808080;
+  --line: #DFDFDF; --accent: #FAFF69; --accent-deep: #4F5101; --fill-dark: #1F1F1C;
+  --pass: #008138; --fail: #BF000F; --wait: #B75000;
+  --sans: Inter, Helvetica, Arial, sans-serif; --mono: Inconsolata, "Courier New", Courier, monospace;
+}
+* { box-sizing: border-box }
+[hidden] { display: none !important }
+html, body { margin: 0 }
+body { background: var(--paper); color: var(--ink); font: 14px/1.5 var(--sans); min-height: 100vh }
+button, select, input { font: inherit; color: inherit }
+button { cursor: pointer }
+:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px }
+
+/* The admin shell: a dark icon rail, as every commerce back office has, and the work area beside it. */
+.admin { display: grid; grid-template-columns: 64px minmax(0, 1fr); min-height: 100vh }
+.rail { background: var(--fill-dark); color: var(--paper); display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 14px 0 }
+.rail .mark { width: 36px; height: 36px; border-radius: 10px; background: var(--accent); color: var(--ink); font-weight: 800; display: grid; place-items: center; margin-bottom: 14px }
+.rail a { width: 44px; height: 44px; border-radius: 10px; display: grid; place-items: center; color: var(--line); text-decoration: none }
+.rail a.on { background: #FFFFFF22; color: var(--paper) }
+.rail svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 1.8 }
+
+.top { display: flex; align-items: center; gap: 18px; padding: 12px 28px; background: var(--card); border-bottom: 1px solid var(--line) }
+.top h1 { font-size: 17px; margin: 0 }
+.top .find { flex: 1; max-width: 420px; padding: 7px 12px; border: 1px solid var(--line); border-radius: 8px; color: var(--muted); background: var(--paper) }
+.top .open { margin-left: auto; display: flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 999px; border: 0; background: var(--ink); color: var(--paper); font-weight: 600 }
+.top .open .spark { width: 10px; height: 10px; border-radius: 50%; background: var(--accent) }
+
+.work { padding: 22px 28px 60px; max-width: 1180px }
+/* The toolset switch is the experiment: same assistant, same model, two MCP servers. */
+.servers { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 22px }
+.server { flex: 1 1 300px; text-align: left; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px }
+.server[aria-pressed="true"] { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink) }
+.server .name { font-weight: 700; display: flex; justify-content: space-between }
+.server .name small { font-weight: 500; color: var(--muted) }
+.server .stats { display: flex; gap: 22px; margin-top: 8px }
+.server .stats b { font-size: 22px; display: block; line-height: 1.2 }
+.server .stats span { font-size: 12.5px; color: var(--muted) }
+
+h2 { font-size: 15px; margin: 0 0 10px; display: flex; align-items: baseline; gap: 10px }
+h2 small { color: var(--muted); font-weight: 400 }
+.panel { background: var(--card); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; margin-bottom: 22px }
+.vrow { display: grid; grid-template-columns: minmax(0, 1.7fr) 96px 110px 112px 104px; gap: 12px; padding: 9px 16px; border-top: 1px solid var(--line); align-items: center }
+.vrow.head { border-top: 0; color: var(--muted); font-size: 12.5px; background: var(--paper) }
+.vrow .sku { font-family: var(--mono); color: var(--muted); font-size: 13px }
+.vrow .title { font-weight: 600 }
+.vrow .title small { display: block; font-weight: 400; color: var(--muted) }
+.pill { display: inline-block; padding: 1px 9px; border-radius: 999px; font-size: 12.5px; border: 1px solid var(--line) }
+.pill.active { color: var(--pass); border-color: var(--pass) }
+.pill.draft { color: var(--muted) }
+.pill.archived { color: var(--fail); border-color: var(--fail) }
+.num { font-variant-numeric: tabular-nums }
+/* A cell the last request changed: the store's own record, not the assistant's word for it. */
+.changed { background: var(--accent); border-radius: 6px; padding: 2px 6px; margin: -2px -6px; animation: land 1.2s ease-out }
+.was { display: block; color: var(--muted); font-size: 12px }
+@keyframes land { from { box-shadow: 0 0 0 6px var(--accent) } to { box-shadow: 0 0 0 0 var(--accent) } }
+@media (prefers-reduced-motion: reduce) { .changed { animation: none } .drawer { transition: none } }
+
+.pair { display: flex; flex-wrap: wrap; gap: 22px }
+.pair > section { flex: 1 1 380px }
+.line { display: flex; justify-content: space-between; gap: 12px; padding: 9px 16px; border-top: 1px solid var(--line) }
+.line:first-child { border-top: 0 }
+.line small { color: var(--muted) }
+
+/* The assistant drawer slides over the admin, as Sidekick does, so the table it changes stays in view. */
+.drawer { position: fixed; top: 0; right: 0; bottom: 0; width: min(460px, 100vw); background: var(--card); border-left: 1px solid var(--line); display: flex; flex-direction: column; transform: translateX(100%); transition: transform .25s ease; box-shadow: -12px 0 30px #00000014 }
+.drawer.on { transform: none }
+/* With the drawer open the table makes room, so the changed row is never under the panel. */
+body.assisting .work { padding-right: 490px; max-width: none }
+.drawer header { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--line) }
+.drawer header b { flex: 1 }
+.tabs { display: flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden }
+.tabs button { border: 0; background: none; padding: 5px 11px; font-size: 13px }
+.tabs button[aria-pressed="true"] { background: var(--ink); color: var(--paper) }
+.close { border: 0; background: none; font-size: 20px; line-height: 1; padding: 2px 6px }
+.picker { padding: 10px 16px; border-bottom: 1px solid var(--line); background: var(--paper) }
+.picker select { width: 100%; padding: 7px 9px; border: 1px solid var(--line); border-radius: 8px; background: var(--card) }
+.thread { flex: 1; overflow-y: auto; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px }
+.me { align-self: flex-end; max-width: 85%; background: var(--fill-dark); color: var(--paper); padding: 8px 12px; border-radius: 14px 14px 4px 14px }
+.bot { max-width: 92%; background: var(--paper); border: 1px solid var(--line); padding: 8px 12px; border-radius: 14px 14px 14px 4px; white-space: pre-wrap }
+.call { font-family: var(--mono); font-size: 13px; border-left: 3px solid var(--pass); padding: 4px 10px; background: var(--paper); border-radius: 0 6px 6px 0 }
+.call.error { border-left-color: var(--fail) }
+.call .said { display: block; color: var(--muted); font-family: var(--sans); font-size: 12.5px; margin-top: 2px; overflow-wrap: anywhere }
+.call.error .said { color: var(--fail) }
+.verdict { font-weight: 600; font-size: 13px; padding: 6px 10px; border-radius: 8px; border: 1px solid currentColor }
+.verdict.ok { color: var(--pass) }
+.verdict.no { color: var(--fail) }
+/* The human in the loop: the tool refused to guess, so the merchant picks and the run goes on. */
+.needs { border: 1px solid var(--wait); border-radius: 10px; padding: 10px 12px }
+.needs b { color: var(--wait) }
+.needs .choices { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px }
+.needs .choices button { border: 1px solid var(--ink); background: var(--card); border-radius: 999px; padding: 3px 11px; font-size: 13px }
+.thinking { color: var(--muted); font-size: 13px }
+.ask { display: flex; gap: 8px; padding: 12px 16px; border-top: 1px solid var(--line) }
+.ask input { flex: 1; padding: 9px 12px; border: 1px solid var(--line); border-radius: 10px }
+.ask button { border: 0; background: var(--ink); color: var(--paper); border-radius: 10px; padding: 0 16px; font-weight: 600 }
+.ask button[disabled] { opacity: .45; cursor: not-allowed }
+.tool { padding: 10px 0; border-top: 1px solid var(--line) }
+.tool:first-child { border-top: 0 }
+.tool code { font-family: var(--mono); font-weight: 700; font-size: 14px }
+.tool p { margin: 2px 0 0; color: var(--ink-2); font-size: 13px }
+.tool .tag { font-size: 12px; color: var(--muted); margin-left: 6px }
+.tool .tag.destructive { color: var(--fail) }
+.toolsum { color: var(--muted); font-size: 13px; margin: 0 0 6px }
+@media (max-width: 760px) { body.assisting .work { padding-right: 16px } .admin { grid-template-columns: 1fr } .rail { display: none } .top, .work { padding-left: 16px; padding-right: 16px } .vrow { grid-template-columns: minmax(0, 1fr) 90px 90px } .vrow .sku, .vrow .st { display: none } }
+</style>
+</head>
+<body data-surface="store-admin">
+<div class="admin">
+  <nav class="rail" aria-label="Admin">
+    <div class="mark" aria-hidden="true">T</div>
+    <a href="#" title="Home"><svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7v9H4z"/></svg></a>
+    <a href="#orders" title="Orders"><svg viewBox="0 0 24 24"><path d="M5 4h14l-1 16H6zM9 8h6"/></svg></a>
+    <a href="#products" class="on" title="Products"><svg viewBox="0 0 24 24"><path d="M4 8l8-4 8 4-8 4zM4 8v8l8 4 8-4V8"/></svg></a>
+    <a href="#discounts" title="Discounts"><svg viewBox="0 0 24 24"><path d="M4 12l8-8h8v8l-8 8zM15 9h.01"/></svg></a>
+  </nav>
+  <div>
+    <div class="top">
+      <h1>Tidepool Coffee</h1>
+      <div class="find" aria-hidden="true">Search products, orders and discounts</div>
+      <button class="open" id="open" aria-controls="drawer"><span class="spark"></span>Ask the assistant</button>
+    </div>
+    <main class="work">
+      <div class="servers" id="servers" role="group" aria-label="Which MCP server the assistant uses"></div>
+      <section id="products">
+        <h2>Products <small id="changedNote"></small></h2>
+        <div class="panel" id="productTable"></div>
+      </section>
+      <div class="pair">
+        <section id="orders"><h2>Orders</h2><div class="panel" id="orderList"></div></section>
+        <section id="discounts"><h2>Discounts</h2><div class="panel" id="discountList"></div></section>
+      </div>
+    </main>
+  </div>
+</div>
+
+<aside class="drawer" id="drawer" aria-label="Store assistant">
+  <header>
+    <b>Assistant</b>
+    <div class="tabs" role="group" aria-label="Assistant view">
+      <button id="tabChat" aria-pressed="true">Chat</button>
+      <button id="tabTools" aria-pressed="false">Tools it sees</button>
+    </div>
+    <button class="close" id="close" aria-label="Close the assistant">&times;</button>
+  </header>
+  <div class="picker"><label for="task" class="toolsum">A merchant request from the review set</label><select id="task"></select></div>
+  <div class="thread" id="thread" aria-live="polite"></div>
+  <div class="thread" id="toolView" hidden></div>
+  <form class="ask" id="askForm">
+    <input id="message" autocomplete="off" aria-label="Ask the assistant" placeholder="Ask for a change, like: set the Kenya 1kg to $70">
+    <button id="send">Send</button>
+  </form>
+</aside>
+
+<script>
+const state = { data: null, server: "designed", run: null, lastRunId: null, changes: {}, store: null, task: null };
+const $ = (id) => document.getElementById(id);
+const money = (value) => "$" + Number(value).toFixed(2);
+const escape = (text) => String(text).replace(/[&<>"]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[char]));
+
+async function load() {
+  state.data = await (await fetch("/api/state")).json();
+  state.store = state.data.store;
+  $("task").innerHTML = '<option value="">Type my own request</option>' +
+    state.data.tasks.map((task) => `<option value="${task.id}">${task.id}: ${escape(task.ask)}</option>`).join("");
+  drawServers();
+  drawStore();
+  drawTools();
+}
+
+function drawServers() {
+  $("servers").innerHTML = Object.entries(state.data.names).map(([server, name]) => {
+    const score = state.data.review && state.data.review[server];
+    const tools = state.data.tools[server];
+    const stats = score
+      ? `<div><b>${score.succeeded} of ${score.tasks}</b><span>requests done right</span></div>
+         <div><b>${score.wrong_calls}</b><span>wrong tool calls</span></div>
+         <div><b>${score.calls}</b><span>tool calls in all</span></div>`
+      : `<div><span>Run <code>uv run store review</code> to score this server.</span></div>`;
+    return `<button class="server" data-server="${server}" aria-pressed="${server === state.server}">
+      <div class="name">${name}<small>${tools.length} tools</small></div><div class="stats">${stats}</div></button>`;
+  }).join("");
+  document.querySelectorAll(".server").forEach((button) => button.onclick = () => {
+    state.server = button.dataset.server;
+    state.lastRunId = null;
+    drawServers();
+    drawTools();
+  });
+}
+
+function cell(path, shown, before) {
+  // The page reads the changed paths from the store, so a claim in the reply never paints a cell.
+  if (!(path in state.changes)) return shown;
+  return `<span class="changed">${shown}</span>${before !== undefined ? `<span class="was">was ${before}</span>` : ""}`;
+}
+
+function drawStore() {
+  const original = state.data.store;
+  const rows = state.store.products.flatMap((product) => product.variants.map((variant, index) => {
+    const oldProduct = original.products.find((each) => each.handle === product.handle);
+    const oldVariant = oldProduct.variants.find((each) => each.sku === variant.sku);
+    const head = index === 0
+      ? `${cell(`product:${product.handle}.title`, escape(product.title))}<small>${escape(product.collections.join(", ") || "No collection")}</small>`
+      : "";
+    return `<div class="vrow"><div class="title">${head}</div>
+      <div class="sku">${variant.sku}<br>${variant.option}</div>
+      <div class="num">${cell(`variant:${variant.sku}.price`, money(variant.price), money(oldVariant.price))}</div>
+      <div class="num">${cell(`variant:${variant.sku}.stock`, variant.stock + " in stock", oldVariant.stock)}</div>
+      <div class="st">${index === 0 ? cell(`product:${product.handle}.status`, `<span class="pill ${product.status}">${product.status}</span>`) : ""}</div></div>`;
+  }));
+  $("productTable").innerHTML = `<div class="vrow head"><div>Product</div><div>SKU</div><div>Price</div><div>Stock</div><div>Status</div></div>` + rows.join("");
+  const count = Object.keys(state.changes).length;
+  $("changedNote").textContent = count ? `${count} field${count > 1 ? "s" : ""} changed by the last request` : "";
+  $("orderList").innerHTML = state.store.orders.map((order) => {
+    const total = order.lines.reduce((sum, line) => sum + line.price * line.quantity, 0);
+    return `<div class="line"><div><b>${order.name}</b> ${escape(order.customer)}<br><small>${order.lines.map((line) => `${line.quantity} x ${line.sku}`).join(", ")}</small></div>
+      <div class="num" style="text-align:right">${money(total)}<br><small>${cell(`order:${order.name}.fulfillment`, order.fulfillment)}${order.refunded ? ", " + cell(`order:${order.name}.refunded`, money(order.refunded) + " refunded") : ""}</small></div></div>`;
+  }).join("");
+  $("discountList").innerHTML = state.store.discounts.map((discount) => {
+    const body = `<b>${discount.code}</b> ${discount.percent}% off ${discount.applies_to === "all" ? "everything" : escape(discount.applies_to)}`;
+    return `<div class="line"><div>${cell(`discount:${discount.code}`, body)}<br><small>${discount.ends ? "Ends " + discount.ends : "No end date"}</small></div>
+      <div><span class="pill ${discount.active ? "active" : "draft"}">${discount.active ? "active" : "off"}</span></div></div>`;
+  }).join("");
+}
+
+function drawTools() {
+  const tools = state.data.tools[state.server];
+  const tokens = Math.round(tools.reduce((sum, tool) => sum + tool.size, 0) / 4);
+  $("toolView").innerHTML = `<p class="toolsum">${state.data.names[state.server]}: ${tools.length} tools, about ${tokens} tokens sent with every model call. This list is all the model knows about the store.</p>` +
+    tools.map((tool) => `<div class="tool"><code>${tool.name}</code>${tool.read_only ? '<span class="tag">read-only</span>' : ""}${tool.destructive ? '<span class="tag destructive">moves money</span>' : ""}<p>${escape(tool.description.split("\n")[0])}</p></div>`).join("");
+}
+
+function say(html) {
+  $("thread").insertAdjacentHTML("beforeend", html);
+  $("thread").scrollTop = $("thread").scrollHeight;
+}
+
+function drawStep(step) {
+  if (step.kind !== "call") return;
+  const args = Object.entries(step.args).map(([name, value]) => `${name}=${escape(JSON.stringify(value))}`).join(", ");
+  say(`<div class="call ${step.error ? "error" : ""}">${step.tool}(${args})<span class="said">${escape(step.result.slice(0, 220))}</span></div>`);
+}
+
+function choicesFrom(steps) {
+  // The designed tools name every match in their refusal; those become one-tap answers for the merchant.
+  const refusal = [...steps].reverse().find((step) => step.error && /Ask the merchant which one/.test(step.result));
+  if (refusal) {
+    return [...refusal.result.matchAll(/([A-Z]{2,5}-[A-Z0-9]+) \(([^,]+),/g)].map((match) => ({ sku: match[1], label: match[2] }));
+  }
+  // When the model asked straight after a lookup, the lookup's own variants are the choices.
+  const lookup = [...steps].reverse().find((step) => step.tool === "find_products" && !step.error);
+  if (!lookup) return [];
+  try {
+    return JSON.parse(lookup.result).products.flatMap((product) => product.variants.map((variant) =>
+      ({ sku: variant.sku, label: `${product.title} ${variant.size}` })));
+  } catch { return []; }
+}
+
+async function send(message, taskId) {
+  $("send").disabled = true;
+  say(`<div class="me">${escape(message)}</div><div class="thinking" id="thinking">Working on ${state.data.names[state.server]}...</div>`);
+  const response = await fetch("/api/run", { method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ server: state.server, message, task: taskId, follows: state.lastRunId }) });
+  if (!response.ok) { $("thinking").textContent = await response.text(); $("send").disabled = false; return; }
+  const { id } = await response.json();
+  let shown = 0;
+  while (true) {
+    const run = await (await fetch(`/api/run/${id}`)).json();
+    run.steps.slice(shown).forEach(drawStep);
+    shown = run.steps.length;
+    if (run.done) { finish(id, run); break; }
+    await new Promise((resolve) => setTimeout(resolve, 600));
+  }
+}
+
+function finish(id, run) {
+  $("thinking").remove();
+  $("send").disabled = false;
+  if (run.error) { say(`<div class="verdict no">${escape(run.error)}</div>`); return; }
+  state.store = run.data;
+  state.changes = run.changes;
+  state.lastRunId = id;
+  drawStore();
+  say(`<div class="bot">${escape(run.reply || "The assistant stopped without a reply.")}</div>`);
+  const choices = choicesFrom(run.steps);
+  if (!Object.keys(run.changes).length && run.reply.includes("?")) {
+    say(`<div class="needs"><b>Needs you.</b> Nothing changed: the request matches more than one item, so the merchant picks.
+      ${choices.length ? `<div class="choices">${choices.map((choice) => `<button data-answer="The ${escape(choice.label)} (${choice.sku})">${escape(choice.label)}</button>`).join("")}</div>` : ""}</div>`);
+    document.querySelectorAll("[data-answer]").forEach((button) => button.onclick = () => send(button.dataset.answer));
+  }
+  if (run.verdict) {
+    say(`<div class="verdict ${run.verdict.ok ? "ok" : "no"}">${run.verdict.task}: ${run.verdict.ok ? "done right" : "failed"}, ${escape(run.verdict.why)}. ${run.steps.filter((step) => step.error).length} wrong calls, $${run.cost.toFixed(4)}.</div>`);
+  }
+}
+
+function showDrawer(open) {
+  $("drawer").classList.toggle("on", open);
+  document.body.classList.toggle("assisting", open);
+}
+$("open").onclick = () => { showDrawer(true); $("message").focus(); };
+$("close").onclick = () => showDrawer(false);
+$("task").onchange = () => {
+  const task = state.data.tasks.find((each) => each.id === $("task").value);
+  $("message").value = task ? task.ask : "";
+  state.task = task ? task.id : null;
+  // A new request from the list starts on a fresh copy of the store, as the review does.
+  state.lastRunId = null;
+};
+$("askForm").onsubmit = (event) => {
+  event.preventDefault();
+  const message = $("message").value.trim();
+  if (!message) return;
+  $("message").value = "";
+  send(message, state.lastRunId ? null : state.task);
+};
+for (const [tab, view, other] of [["tabChat", "thread", "toolView"], ["tabTools", "toolView", "thread"]]) {
+  $(tab).onclick = () => {
+    $(view).hidden = false; $(other).hidden = true;
+    $("tabChat").setAttribute("aria-pressed", tab === "tabChat");
+    $("tabTools").setAttribute("aria-pressed", tab === "tabTools");
+  };
+}
+if (new URLSearchParams(location.search).has("assistant")) showDrawer(true);
+load();
+</script>
+</body>
+</html>

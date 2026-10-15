@@ -1,0 +1,27 @@
+[project]
+name = "lab-12-mcp-tools"
+version = "0.1.0"
+description = "Design Tools for AI Agents with MCP: a store admin assistant scored on two MCP servers, the API wrapped as is and tools designed for the job"
+requires-python = ">=3.11"
+dependencies = ["mcp==2.2.0", "openai==2.54.0"]
+
+[project.scripts]
+store = "tidepool.cli:main"
+
+[dependency-groups]
+dev = ["pytest>=8.4"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/tidepool"]
+
+[tool.uv]
+# Every dependency resolves to a release at least two weeks old, so a fresh one never lands untested.
+exclude-newer = "2026-10-01T00:00:00Z"
+
+[tool.pytest.ini_options]
+markers = ["proof: calls a real model; needs LLM_API_KEY"]
+addopts = "-m 'not proof'"

@@ -1,0 +1,20 @@
+{"id": "TP-01", "ask": "Change the Ceramic Pour-Over Dripper to $38.", "expect": {"variant:DRP-CER.price": 38}}
+{"id": "TP-02", "ask": "We just got 24 more bags of the Colombia 1kg in. Add them to stock.", "expect": {"variant:COL-1K.stock": 27}}
+{"id": "TP-03", "ask": "Hide the Cold Brew Kit from the store until it is back in stock.", "expect": {"product:cold-brew-kit.status": "draft"}}
+{"id": "TP-04", "ask": "The new Tidepool Mug is ready, put it live on the store.", "expect": {"product:tidepool-mug.status": "active"}}
+{"id": "TP-05", "ask": "Make a code WELCOME10 for 10% off everything.", "expect": {"discount:WELCOME10": {"percent": 10, "applies_to": "all", "active": true}}}
+{"id": "TP-06", "ask": "Put the Holiday Blend on 20% off with code HOLIDAY20, ending 31 December.", "expect": {"discount:HOLIDAY20": {"percent": 20, "applies_to": "holiday-blend", "ends": "2026-12-31", "active": true}}}
+{"id": "TP-07", "ask": "Raise the price of both grinders by 10%.", "expect": {"variant:GRD-HAND.price": 141.9, "variant:GRD-ELEC.price": 273.9}}
+{"id": "TP-08", "ask": "Move the Decaf Swiss Water out of Single origin and into the Decaf collection.", "expect": {"product:decaf-swiss-water.collections": ["Decaf"]}}
+{"id": "TP-09", "ask": "Order #1043 arrived with one torn bag of Kenya 250g. Refund that one bag.", "expect": {"order:#1043.refunded": 21}}
+{"id": "TP-10", "ask": "Mark the Kenya 1kg as sold out.", "expect": {"variant:KEN-1K.stock": 0}}
+{"id": "TP-11", "ask": "Change the Kenya price to $19.", "expect": {}, "should_ask": true}
+{"id": "TP-12", "ask": "How many bags of Ethiopia Guji do we have left, in each size?", "expect": {}, "answer_has": ["40", "12"]}
+{"id": "TP-13", "ask": "Set the 1kg House Espresso to $44.", "expect": {"variant:ESP-1K.price": 44}}
+{"id": "TP-14", "ask": "Take the Glass Server off the store and set its stock to zero.", "expect": {"product:glass-server.status": "draft", "variant:SRV-600.stock": 0}}
+{"id": "TP-15", "ask": "Turn off the SPRING15 code, spring is over.", "expect": {"discount:SPRING15": {"active": false}}}
+{"id": "TP-16", "ask": "Luis's order #1046 is packed. Mark it as fulfilled.", "expect": {"order:#1046.fulfillment": "fulfilled"}}
+{"id": "TP-17", "ask": "Rename the Tidepool Mug to Tidepool Stoneware Mug.", "expect": {"product:tidepool-mug.title": "Tidepool Stoneware Mug"}}
+{"id": "TP-18", "ask": "Put the grinder on sale at $99.", "expect": {}, "should_ask": true}
+{"id": "TP-19", "ask": "We counted the shelf: there are 9 Electric Burr Grinders, not 5. Fix the stock.", "expect": {"variant:GRD-ELEC.stock": 9}}
+{"id": "TP-20", "ask": "Who placed order #1044 and what did they buy?", "expect": {}, "answer_has": ["Jonas", "Espresso"]}
