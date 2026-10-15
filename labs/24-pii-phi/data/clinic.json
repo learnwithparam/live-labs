@@ -1,0 +1,16 @@
+{
+  "clinic": "Northgate Family Practice",
+  "rule": "HIPAA Safe Harbor, 45 CFR 164.514(b)(2): identifiers of the patient and of the patient's relatives, employers and household members. Clinicians are not the patient, so their names stay.",
+  "clinicians": [
+    {"name": "Lucia Alvarez", "title": "Dr.", "role": "Family medicine"},
+    {"name": "Rohan Mehta", "title": "Dr.", "role": "Family medicine"},
+    {"name": "Keisha Monroe", "title": "NP", "role": "Nurse practitioner"},
+    {"name": "Samuel Brandt", "title": "Dr.", "role": "Cardiology, referral"}
+  ],
+  "formulary": [
+    "Allegra", "Lyrica", "Jardiance", "Flonase", "Tylenol", "Paxlovid", "Zyrtec", "Eliquis", "Xarelto",
+    "Ozempic", "Lasix", "Norvasc", "Synthroid", "Zoloft", "Lipitor", "Ventolin", "Keflex", "Bactrim",
+    "albuterol", "amlodipine", "atorvastatin", "ibuprofen", "levothyroxine", "lisinopril", "metformin",
+    "nitrofurantoin", "prednisone", "sertraline", "aspirin"
+  ]
+}

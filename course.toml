@@ -294,7 +294,7 @@ owns = "PII and PHI redaction"
 job = "Strip patient identifiers from a visit transcript before an LLM writes the note"
 truth = "PHI spans a person annotated"
 metric = "PHI missed (recall) on the annotated set"
-status = "planned"
+status = "ready"
 
 [[lab]]
 n = 25

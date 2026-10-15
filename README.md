@@ -42,7 +42,7 @@ print what the README promises.
 | 21 | [Enforce Document Permissions in RAG with OpenFGA](labs/21-rag-permissions) | Glean permission-aware search | ready |
 | 22 | Authorize AI Agent Actions with RBAC and ABAC | Block's Goose: read-only and destructive tools | planned |
 | 23 | Block Prompt Injection with Guardrails | Zillow Fair Housing Classifier | planned |
-| 24 | Redact PII and PHI before the LLM | Clinical scribe products under HIPAA | planned |
+| 24 | [Redact PII and PHI before the LLM](labs/24-pii-phi) | Clinical scribe products under HIPAA | ready |
 | 25 | Control AI Agent Tool Access with an MCP Gateway | Block's curated list of approved MCP servers | planned |
 | 26 | Route LLM Calls with an LLM Gateway | RouteLLM and Instacart's AI gateway | planned |
 | 27 | Manage Prompts Outside Your Code | Langfuse and PromptLayer prompt registries | planned |
