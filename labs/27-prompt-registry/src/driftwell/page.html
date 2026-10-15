@@ -1,0 +1,498 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="icon" href="data:,">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Driftwell prompt releases</title>
+<style>
+:root {
+  --paper: #FAFAFA; --card: #FFFFFF; --ink: #151515; --ink-2: #414141; --muted: #606060; --faint: #808080;
+  --line: #DFDFDF; --accent: #FAFF69; --accent-deep: #4F5101; --fill-dark: #1F1F1C;
+  --pass: #008138; --fail: #BF000F; --wait: #B75000;
+  --sans: Inter, Helvetica, Arial, sans-serif; --mono: Inconsolata, "Courier New", Courier, monospace;
+}
+* { box-sizing: border-box }
+html, body { margin: 0 }
+body { background: var(--paper); color: var(--ink); font: 15px/1.5 var(--sans); min-height: 100vh }
+button, input, textarea { font: inherit; color: inherit }
+button { cursor: pointer }
+:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px }
+h1, h2, h3, p { margin: 0 }
+h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 700 }
+.mono { font-family: var(--mono) }
+
+/* The release tool's own bar, dark like a deploy console: this is where prompts ship, not where they are written. */
+.bar { background: var(--fill-dark); color: var(--paper); display: flex; flex-wrap: wrap; align-items: center; gap: 10px 22px; padding: 12px 32px }
+.bar .brand { font-weight: 800; letter-spacing: -0.02em; font-size: 17px }
+.bar .prompt { font-family: var(--mono); font-size: 16px }
+.bar .ttl { color: var(--paper); font-size: 13px }
+.bar a { color: var(--paper); margin-left: auto; font-size: 13px }
+.bar label { display: flex; align-items: center; gap: 8px; font-size: 13px }
+.bar input { background: var(--card); color: var(--ink); border: 0; border-radius: 4px; padding: 4px 8px; width: 10.5rem }
+
+main { max-width: 1400px; margin: 0 auto; padding: 24px 32px 48px; display: flex; flex-direction: column; gap: 28px }
+
+/* The two numbers this page exists for: what production scores, and how long the last rollback took. */
+.now { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr); gap: 18px }
+.live { background: var(--card); border: 1px solid var(--line); border-radius: 4px; padding: 20px 22px; display: flex; flex-direction: column; gap: 14px }
+.live .version { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap }
+.live .big { font-size: 46px; font-weight: 800; letter-spacing: -0.03em; line-height: 1; background: var(--accent); padding: 4px 10px; border-radius: 4px }
+.live .what { color: var(--ink-2) }
+.clock { display: flex; align-items: baseline; gap: 10px; border-top: 1px solid var(--line); padding-top: 14px; flex-wrap: wrap }
+.clock .seconds { font-size: 30px; font-weight: 800; letter-spacing: -0.02em }
+.clock .seconds.ok { color: var(--pass) }
+.clock .seconds.slow { color: var(--fail) }
+.clock .seconds.running { color: var(--wait) }
+.clock p { color: var(--muted); flex-basis: 100% }
+
+.decide { border: 2px solid var(--wait); background: var(--card); border-radius: 4px; padding: 20px 22px; display: flex; flex-direction: column; gap: 12px }
+.decide.calm { border: 1px solid var(--line) }
+.decide h3 { font-size: 19px }
+.decide .why { color: var(--wait); font-weight: 600 }
+.decide .ask { color: var(--ink-2) }
+.decide textarea { width: 100%; min-height: 64px; border: 1px solid var(--line); border-radius: 4px; padding: 8px 10px; resize: vertical; background: var(--paper) }
+.buttons { display: flex; flex-wrap: wrap; gap: 10px; align-items: center }
+.primary { background: var(--ink); color: var(--paper); border: 0; border-radius: 4px; padding: 9px 16px; font-weight: 600 }
+.secondary { background: var(--card); border: 1px solid var(--ink); border-radius: 4px; padding: 8px 14px; font-weight: 600 }
+.danger { background: var(--fail); color: var(--card); border: 0; border-radius: 4px; padding: 9px 16px; font-weight: 600 }
+button:disabled { opacity: 0.45; cursor: not-allowed }
+.notice { min-height: 1.5em; font-weight: 600 }
+.notice.refused { color: var(--fail) }
+.notice.done { color: var(--pass) }
+
+/* The release track: versions left to right, the labels sit on the version they point at. */
+.track { display: grid; grid-template-columns: repeat(auto-fit, minmax(13.25rem, 1fr)); gap: 0; border: 1px solid var(--line); border-radius: 4px; background: var(--card) }
+.stop { all: unset; box-sizing: border-box; cursor: pointer; padding: 16px 18px 18px; border-right: 1px solid var(--line); display: flex; flex-direction: column; gap: 8px; position: relative }
+.stop:last-child { border-right: 0 }
+.stop[aria-pressed="true"] { box-shadow: inset 0 -4px 0 var(--ink) }
+.stop:focus-visible { outline: 3px solid var(--ink); outline-offset: -3px }
+.stop .head { display: flex; align-items: center; gap: 8px; min-height: 28px; flex-wrap: wrap }
+.stop .number { font-family: var(--mono); font-size: 22px; font-weight: 700 }
+.stop .message { color: var(--ink-2); font-size: 14px }
+.stop .author { color: var(--muted); font-size: 13px }
+.pill { font-size: 12px; font-weight: 700; border-radius: 999px; padding: 2px 10px; letter-spacing: 0.02em }
+.pill.production { background: var(--accent); color: var(--ink); border: 1px solid var(--ink) }
+.pill.staging { border: 1px solid var(--wait); color: var(--wait) }
+.score { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; font-size: 14px }
+.score strong.pass { color: var(--pass) }
+.score strong.fail { color: var(--fail) }
+.score .unscored { color: var(--muted) }
+/* One cell per golden conversation: a person reads a broken version from across the room. */
+.cells { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 3px; height: 14px }
+.cells span { border-radius: 2px; background: var(--pass) }
+.cells span.failed { background: var(--fail) }
+
+/* The desk: the selected version against production, and the bot that is answering right now. */
+.desk { display: grid; grid-template-columns: minmax(0, 1.42fr) minmax(18.75rem, 0.9fr); gap: 18px; align-items: start }
+.panel { background: var(--card); border: 1px solid var(--line); border-radius: 4px; padding: 18px 20px; display: flex; flex-direction: column; gap: 14px; min-width: 0 }
+.panel h3 { font-size: 17px }
+.panel .lead { color: var(--muted); font-size: 14px }
+.diff { border: 1px solid var(--line); border-radius: 4px; font-family: var(--mono); font-size: 14px; line-height: 1.45; max-height: 22rem; overflow: auto }
+.diff .row { display: grid; grid-template-columns: 1.75rem minmax(0, 1fr); padding: 1px 0 }
+.diff .row .sign { text-align: center; color: var(--muted) }
+.diff .row .text { white-space: pre-wrap; overflow-wrap: anywhere; padding-right: 8px }
+.diff .row.added { background: var(--accent) }
+.diff .row.added .sign { color: var(--ink) }
+.diff .row.removed .text { text-decoration: line-through; color: var(--fail) }
+.diff .row.removed .sign { color: var(--fail) }
+.diff .row.same .text { color: var(--muted) }
+.diff .same-note { padding: 10px 12px; color: var(--muted); font-family: var(--sans) }
+.failures { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px }
+.failures li { border-left: 3px solid var(--fail); padding: 2px 0 2px 12px }
+.failures .topic { font-weight: 600 }
+.failures .broke { color: var(--fail); font-size: 14px }
+.failures .quote { color: var(--ink-2); font-size: 14px; margin-top: 2px }
+.more summary { cursor: pointer; font-weight: 600; margin-bottom: 10px }
+.all-pass { color: var(--pass); font-weight: 600 }
+
+.bot { position: sticky; top: 16px }
+.bot .controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center }
+.bot .controls label { display: flex; gap: 6px; align-items: center; font-size: 14px; color: var(--ink-2) }
+.replies { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; max-height: 34rem; overflow: auto }
+.replies li { border-bottom: 1px solid var(--line); padding-bottom: 12px; display: flex; flex-direction: column; gap: 4px }
+.replies .who { font-size: 13px; color: var(--muted) }
+.replies .asked { font-size: 14px; color: var(--ink-2) }
+.replies .said { font-size: 14px }
+.answered-by { display: inline-flex; gap: 6px; align-items: center; font-size: 12px; font-weight: 700 }
+.answered-by .tag { font-family: var(--mono); border: 1px solid var(--ink); border-radius: 4px; padding: 0 6px }
+.answered-by .tag.production { background: var(--accent) }
+.answered-by .from { color: var(--muted); font-weight: 500 }
+.answered-by .from.degraded { color: var(--wait); font-weight: 700 }
+.answered-by .closed { color: var(--pass) }
+.empty { color: var(--muted); font-size: 14px }
+
+/* The label history: Langfuse keeps where a label is, this keeps who moved it and why. */
+.history { list-style: none; margin: 0; padding: 0; background: var(--card); border: 1px solid var(--line); border-radius: 4px }
+.history li { display: grid; grid-template-columns: 5.75rem 7.25rem minmax(0, 1fr); gap: 12px; padding: 10px 16px; border-bottom: 1px solid var(--line); align-items: baseline }
+.history li:last-child { border-bottom: 0 }
+.history .time { font-family: var(--mono); color: var(--muted) }
+.history .kind { font-weight: 700; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em }
+.history .kind.override { color: var(--wait) }
+.history .kind.rollback { color: var(--fail) }
+.history .kind.promote, .history .kind.import { color: var(--pass) }
+.history .kind.propose { color: var(--muted) }
+.history .reason { color: var(--muted); font-size: 14px }
+.section { display: flex; flex-direction: column; gap: 10px }
+
+@media (max-width: 900px) {
+  .bar, main { padding-left: 16px; padding-right: 16px }
+  .bar a { margin-left: 0 }
+  .now, .desk { grid-template-columns: minmax(0, 1fr) }
+  .stop { border-right: 0; border-bottom: 1px solid var(--line) }
+  .stop:last-child { border-bottom: 0 }
+  .bot { position: static }
+  .history li { grid-template-columns: 4.5rem minmax(0, 1fr) }
+  .history .reason-line { grid-column: 1 / -1 }
+  .live .big { font-size: 38px }
+}
+</style>
+</head>
+<body data-surface="prompt release and rollback console">
+<header class="bar">
+  <span class="brand">Driftwell releases</span>
+  <span class="prompt">support-bot</span>
+  <span class="ttl" id="ttl"></span>
+  <label>Signed in as <input id="who" value="Maya Ortiz" aria-label="Your name, recorded on every label move"></label>
+  <a id="langfuse" target="_blank" rel="noopener">Open in Langfuse</a>
+</header>
+<main>
+  <section class="now" aria-label="Production right now">
+    <div class="live">
+      <h2>Production</h2>
+      <div class="version"><span class="big mono" id="production">-</span><span class="what" id="production-score"></span></div>
+      <div class="clock">
+        <span class="seconds" id="rollback-seconds">-</span>
+        <span id="rollback-target"></span>
+        <p id="rollback-note">Time to roll back: from the label move to the first customer reply on the restored version.</p>
+      </div>
+      <div class="buttons"><button class="danger" id="rollback">Roll back</button><span class="empty" id="rollback-help"></span></div>
+      <p class="notice" id="rollback-notice"></p>
+    </div>
+    <div class="decide" id="decide" aria-live="polite"></div>
+  </section>
+
+  <section class="section" aria-label="Every version">
+    <h2>Release track</h2>
+    <div class="track" id="track"></div>
+  </section>
+
+  <section class="desk">
+    <div class="panel" id="review"></div>
+    <aside class="panel bot" aria-label="The running support bot">
+      <h3>The running bot</h3>
+      <p class="lead" id="bot-lead">One process, never restarted. Each reply says which prompt version wrote it.</p>
+      <div class="controls">
+        <button class="secondary" id="ask">Send a customer message</button>
+        <label><input type="checkbox" id="flow"> Keep traffic flowing</label>
+      </div>
+      <ol class="replies" id="replies"></ol>
+    </aside>
+  </section>
+
+  <section class="section" aria-label="Who moved which label">
+    <h2>Label history</h2>
+    <ol class="history" id="history"></ol>
+  </section>
+</main>
+<script>
+const $ = (selector) => document.querySelector(selector);
+const calm = matchMedia("(prefers-reduced-motion: reduce)");
+let state = null, selected = null, flowTimer = null, asking = false, reviewShown = "";
+
+// Every model reply and every name goes in with textContent: a prompt can make the model write markup.
+function make(tag, className, text) {
+  const node = document.createElement(tag);
+  if (className) node.className = className;
+  if (text !== undefined && text !== null) node.textContent = text;
+  return node;
+}
+const clock = (seconds) => new Date(seconds * 1000).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+const versionOf = (number) => state.versions.find((version) => version.number === number);
+const who = () => $("#who").value.trim();
+
+async function call(path, body) {
+  const response = await fetch(path, body === undefined ? {} : {
+    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  const payload = response.headers.get("Content-Type").startsWith("application/json") ? await response.json() : await response.text();
+  if (!response.ok) throw new Error(payload.error || payload);
+  return payload;
+}
+
+async function refresh() {
+  state = await call("/api/state");
+  if (selected === null || !versionOf(selected)) selected = state.staging ?? state.production ?? state.versions.at(-1)?.number ?? null;
+  render();
+}
+
+function render() {
+  $("#ttl").textContent = `bot cache ${state.ttl} s · bar ${state.needed} of ${state.golden}`;
+  $("#langfuse").href = state.langfuse;
+  renderNow();
+  renderDecision();
+  renderRollback();
+  renderTrack();
+  // The review only redraws when what it shows changed, so an open list stays open between polls.
+  const shown = JSON.stringify([selected, state.production, state.versions.map((version) => [version.labels, version.score?.passed])]);
+  if (shown !== reviewShown) { reviewShown = shown; renderReview(); }
+  renderReplies();
+  renderHistory();
+}
+
+function renderNow() {
+  const production = state.production ? versionOf(state.production) : null;
+  $("#production").textContent = production ? `v${production.number}` : "none";
+  $("#production-score").textContent = production?.score
+    ? `${production.score.passed} of ${production.score.total} golden conversations pass. ${production.message}`
+    : production ? "Not scored on the golden set yet." : "Nothing holds the production label.";
+  const last = state.metric.last_rollback, open = state.events.findLast((event) => event.kind === "rollback");
+  const seconds = $("#rollback-seconds");
+  if (open && open.served_after === null) {
+    seconds.textContent = "waiting";
+    seconds.className = "seconds running";
+    $("#rollback-target").textContent = `for the bot's first reply on v${open.to}`;
+  } else if (last) {
+    seconds.textContent = `${last.served_after} s`;
+    seconds.className = "seconds " + (last.served_after < 60 ? "ok" : "slow");
+    $("#rollback-target").textContent = `last rollback, v${last.came_from} to v${last.to}, by ${last.by}`;
+  } else {
+    seconds.textContent = "-";
+    seconds.className = "seconds";
+    $("#rollback-target").textContent = "no rollback yet";
+  }
+}
+
+// The human in the loop: a version below the bar waits here, with its score, for a named person's call.
+function renderDecision() {
+  const box = $("#decide");
+  box.replaceChildren();
+  const waiting = state.metric.waiting[0];
+  if (waiting) {
+    box.className = "decide";
+    box.append(make("h2", "", "Waiting on a person"),
+      make("h3", "", `v${waiting.number} by ${waiting.author || "unknown"}: ${waiting.message}`),
+      make("p", "why", `Blocked: ${waiting.reason}.`),
+      make("p", "ask", "You decide: leave it on staging, or ship it anyway with a written reason. Your name and reason go in the label history."));
+    const reason = make("textarea");
+    reason.id = "override-reason";
+    reason.placeholder = "Why ship it below the bar?";
+    reason.setAttribute("aria-label", "Override reason");
+    const ship = make("button", "danger", `Override and ship v${waiting.number}`);
+    const notice = make("p", "notice");
+    ship.onclick = () => promote(waiting.number, reason.value, notice);
+    box.append(reason, make("div", "buttons"), notice);
+    box.querySelector(".buttons").append(ship, make("span", "empty", "or do nothing: it stays on staging"));
+    return;
+  }
+  box.className = "decide calm";
+  const decided = state.events.findLast((event) => ["promote", "override", "rollback"].includes(event.kind));
+  box.append(make("h2", "", "Waiting on a person"), make("h3", "", "Nothing is waiting"),
+    make("p", "ask", "A version below the bar lands here with its score, for a person to ship with a reason or leave on staging."));
+  if (decided) box.append(make("p", "empty", `Last decision: ${decided.by}, ${decided.kind}, v${decided.to}.`));
+}
+
+function renderRollback() {
+  const target = state.previous, back = $("#rollback");
+  back.textContent = target ? `Roll back to v${target}` : "Roll back";
+  back.disabled = !target;
+  $("#rollback-help").textContent = target
+    ? `One label move, no deploy. The bot picks it up within its ${state.ttl} s cache window.`
+    : "No earlier production version in the label history.";
+}
+
+$("#rollback").onclick = async () => {
+  const back = $("#rollback"), notice = $("#rollback-notice");
+  back.disabled = true;
+  try {
+    const event = await call("/api/rollback", { by: who() });
+    notice.className = "notice done";
+    notice.textContent = `Production is on v${event.to}. Timing the bot's first reply on it.`;
+    startFlow();
+    await refresh();
+  } catch (error) {
+    notice.className = "notice refused";
+    notice.textContent = error.message;
+    back.disabled = false;
+  }
+};
+
+function renderTrack() {
+  // Remember where the production pill was, so a move can be shown travelling to its new version.
+  const before = $(".track .pill.production")?.getBoundingClientRect();
+  const track = $("#track");
+  track.replaceChildren();
+  for (const version of state.versions) {
+    const stop = make("button", "stop");
+    stop.setAttribute("aria-pressed", String(version.number === selected));
+    const head = make("div", "head");
+    head.append(make("span", "number", `v${version.number}`));
+    for (const label of version.labels) head.append(make("span", `pill ${label}`, label));
+    const score = make("div", "score");
+    if (version.score) {
+      score.append(make("strong", version.blocked ? "fail" : "pass", `${version.score.passed} of ${version.score.total}`),
+        make("span", "", version.blocked ? "below the bar" : "may ship"));
+    } else score.append(make("span", "unscored", "not scored: run driftwell eval"));
+    stop.append(head, make("span", "message", version.message), make("span", "author", `by ${version.author || "unknown"}`), score);
+    if (version.score) {
+      const cells = make("div", "cells");
+      cells.setAttribute("aria-hidden", "true");
+      for (const row of version.score.rows) {
+        const cell = make("span", row.passed ? "" : "failed");
+        cell.title = `${row.id} ${row.topic}`;
+        cells.append(cell);
+      }
+      stop.append(cells);
+    }
+    stop.onclick = () => { selected = version.number; renderTrack(); renderReview(); };
+    track.append(stop);
+  }
+  const after = $(".track .pill.production");
+  if (before && after && !calm.matches) {
+    const deltaX = before.left - after.getBoundingClientRect().left, deltaY = before.top - after.getBoundingClientRect().top;
+    if (Math.abs(deltaX) + Math.abs(deltaY) > 2) {
+      after.animate([{ transform: `translate(${deltaX}px, ${deltaY}px)` }, { transform: "none" }],
+        { duration: 650, easing: "cubic-bezier(0.2, 0.7, 0.2, 1)" });
+    }
+  }
+}
+
+async function renderReview() {
+  const panel = $("#review");
+  panel.replaceChildren();
+  const version = selected === null ? null : versionOf(selected);
+  if (!version) {
+    panel.append(make("h3", "", "No versions yet"), make("p", "lead", "Run driftwell import to move the prompt out of the code."));
+    return;
+  }
+  const against = state.production && state.production !== version.number ? state.production : (state.previous ?? null);
+  panel.append(make("h3", "", against ? `v${version.number} against v${against}` : `v${version.number}`),
+    make("p", "lead", against === state.production ? "Lines this version adds or drops compared with production."
+      : "Lines this version changed from the one it replaced."));
+  const diff = make("div", "diff");
+  panel.append(diff);
+  if (against) {
+    const lines = await call(`/api/diff?older=${against}&newer=${version.number}`);
+    for (const line of lines) {
+      const row = make("div", `row ${line.kind}`);
+      row.append(make("span", "sign", { added: "+", removed: "-", same: "" }[line.kind]), make("span", "text", line.text));
+      diff.append(row);
+    }
+  } else diff.append(make("p", "same-note", "The first version: nothing to compare it with."));
+
+  if (!version.score) {
+    panel.append(make("p", "empty", "Not scored yet. It cannot take production until it is."));
+  } else {
+    const failed = version.score.rows.filter((row) => !row.passed);
+    if (!failed.length) panel.append(make("p", "all-pass", `Passes all ${version.score.total} golden conversations.`));
+    else {
+      panel.append(make("h2", "", `${failed.length} golden conversations fail`));
+      const failure = (row) => {
+        const item = make("li");
+        item.append(make("div", "topic", `${row.id} ${row.topic}`), make("div", "broke", row.failed.join("; ")),
+          make("div", "quote", `"${row.reply.slice(0, 220)}"`));
+        return item;
+      };
+      const list = make("ul", "failures");
+      list.append(...failed.slice(0, 4).map(failure));
+      panel.append(list);
+      if (failed.length > 4) {
+        const more = make("details", "more");
+        const rest = make("ul", "failures");
+        rest.append(...failed.slice(4).map(failure));
+        more.append(make("summary", "", `Show the other ${failed.length - 4}`), rest);
+        panel.append(more);
+      }
+    }
+  }
+  if (!version.labels.includes("production")) {
+    const notice = make("p", "notice");
+    const ship = make("button", "primary", `Promote v${version.number} to production`);
+    ship.disabled = Boolean(version.blocked);
+    ship.onclick = () => promote(version.number, "", notice);
+    const buttons = make("div", "buttons");
+    buttons.append(ship);
+    if (version.blocked) buttons.append(make("span", "empty", `Blocked: ${version.blocked}.`));
+    panel.append(buttons, notice);
+  }
+}
+
+async function promote(number, override, notice) {
+  try {
+    const event = await call("/api/promote", { version: number, by: who(), override });
+    notice.className = "notice done";
+    notice.textContent = `${event.by} moved production to v${event.to}.`;
+    await refresh();
+  } catch (error) {
+    notice.className = "notice refused";
+    notice.textContent = error.message;
+  }
+}
+
+function renderReplies() {
+  const list = $("#replies");
+  list.replaceChildren();
+  if (!state.replies.length) list.append(make("li", "empty", "No replies yet. Send a message to see which version answers."));
+  for (const reply of state.replies) {
+    const item = make("li");
+    const tag = make("span", "answered-by");
+    tag.append(make("span", "tag" + (reply.version === state.production ? " production" : ""), reply.version ? `v${reply.version}` : "pinned"),
+      make("span", "from" + (reply.source === "registry" ? "" : " degraded"), `${reply.source} · ${clock(reply.at)}`));
+    if (reply.closed_rollback) tag.append(make("span", "closed", `rollback served after ${reply.closed_rollback.served_after} s`));
+    item.append(tag, make("span", "who", reply.customer), make("span", "asked", reply.message), make("span", "said", reply.reply));
+    list.append(item);
+  }
+}
+
+function renderHistory() {
+  const list = $("#history");
+  list.replaceChildren();
+  for (const event of [...state.events].reverse()) {
+    const item = make("li");
+    const sentence = {
+      import: `${event.by} imported the prompt from the code as v${event.to}, on production`,
+      propose: `${event.by} saved v${event.to} on staging`,
+      promote: `${event.by} moved production from v${event.came_from} to v${event.to}`,
+      override: `${event.by} shipped v${event.to} below the bar`,
+      rollback: `${event.by} moved production back from v${event.came_from} to v${event.to}`,
+    }[event.kind];
+    const line = make("div", "reason-line");
+    line.append(make("div", "", sentence));
+    const extra = [event.reason, event.served_after !== null ? `First reply on v${event.to} after ${event.served_after} s` : null]
+      .filter(Boolean).join(". ");
+    if (extra) line.append(make("div", "reason", extra));
+    item.append(make("span", "time", clock(event.at)), make("span", `kind ${event.kind}`, event.kind), line);
+    list.append(item);
+  }
+}
+
+async function ask() {
+  if (asking) return;
+  asking = true;
+  $("#ask").disabled = true;
+  try {
+    await call("/api/ask", {});
+    await refresh();
+  } catch (error) {
+    $("#bot-lead").textContent = error.message;
+  } finally {
+    asking = false;
+    $("#ask").disabled = false;
+  }
+}
+
+function startFlow() {
+  $("#flow").checked = true;
+  if (!flowTimer) flowTimer = setInterval(ask, 2000);
+}
+
+$("#ask").onclick = ask;
+$("#flow").onchange = () => {
+  if ($("#flow").checked) startFlow();
+  else { clearInterval(flowTimer); flowTimer = null; }
+};
+// The page reads the registry again every few seconds, so a label moved in Langfuse's own screen shows here too.
+setInterval(() => { if (!asking) refresh(); }, 5000);
+refresh();
+</script>
+</body>
+</html>

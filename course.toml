@@ -330,7 +330,7 @@ owns = "prompt versions"
 job = "Let a product team change a support bot's prompt without a deploy and roll it back in a minute"
 truth = "the golden set score of each prompt version"
 metric = "time to roll back a bad prompt"
-status = "planned"
+status = "ready"
 
 [[lab]]
 n = 28
