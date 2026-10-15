@@ -318,7 +318,7 @@ owns = "the LLM gateway and model routing"
 job = "Send each LLM call to the cheapest model that answers it well, as Instacart's gateway does"
 truth = "provider invoices and a labelled quality set"
 metric = "cost per request at the same quality"
-status = "planned"
+status = "ready"
 
 [[lab]]
 n = 27

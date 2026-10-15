@@ -44,7 +44,7 @@ print what the README promises.
 | 23 | [Block Prompt Injection with Guardrails](labs/23-guardrails) | Zillow Fair Housing Classifier | ready |
 | 24 | [Redact PII and PHI before the LLM](labs/24-pii-phi) | Clinical scribe products under HIPAA | ready |
 | 25 | [Control AI Agent Tool Access with an MCP Gateway](labs/25-mcp-gateway) | Block's curated list of approved MCP servers | ready |
-| 26 | Route LLM Calls with an LLM Gateway | RouteLLM and Instacart's AI gateway | planned |
+| 26 | [Route LLM Calls with an LLM Gateway](labs/26-llm-gateway) | RouteLLM and Instacart's AI gateway | ready |
 | 27 | Manage Prompts Outside Your Code | Langfuse and PromptLayer prompt registries | planned |
 | 28 | Trace AI Agents with OpenTelemetry | OpenTelemetry GenAI conventions | planned |
 | 29 | Gate AI Releases with Evals in CI | Shopify Sidekick evals before release | planned |

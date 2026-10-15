@@ -1,0 +1,357 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fernway LLM Gateway</title>
+<link rel="icon" href="data:,">
+<style>
+:root {
+  --paper: #FAFAFA; --card: #FFFFFF; --ink: #151515; --ink-2: #414141; --muted: #606060; --faint: #808080;
+  --line: #DFDFDF; --accent: #FAFF69; --accent-deep: #4F5101; --fill-dark: #1F1F1C;
+  --pass: #008138; --fail: #BF000F; --wait: #B75000;
+  --sans: Inter, Helvetica, Arial, sans-serif; --mono: Inconsolata, "Courier New", Courier, monospace;
+}
+* { box-sizing: border-box }
+[hidden] { display: none !important }
+html, body { margin: 0 }
+body { background: var(--paper); color: var(--ink); font: 15px/1.5 var(--sans); min-height: 100vh }
+button, input { font: inherit }
+button { cursor: pointer }
+button:focus-visible, input:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px }
+h1, h2, h3, p { margin: 0 }
+h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); font-weight: 700 }
+.mono { font-family: var(--mono) }
+
+/* The chrome of an internal platform tool: one address every team's app calls, and its tiers. */
+.top { background: var(--fill-dark); color: var(--paper); padding: 14px 28px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 24px }
+.top h1 { font-size: 18px; letter-spacing: -0.02em }
+.top .endpoint { font-family: var(--mono); font-size: 14px; opacity: 0.85 }
+.tiers { display: flex; flex-wrap: wrap; gap: 6px; margin-left: auto; font-size: 13px; align-items: center }
+.tier-chip { border: 1px solid var(--faint); border-radius: 999px; padding: 2px 10px; font-family: var(--mono) }
+.tier-chip.cheap { background: var(--accent); color: var(--ink); border-color: var(--accent) }
+
+/* Spend and routing on the left, the decisions a person owes on the right. */
+.console { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(19rem, 22.5rem); gap: 24px; padding: 24px 28px 40px; align-items: start; max-width: 1440px; margin: 0 auto }
+.panel { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px }
+.stack { display: grid; gap: 20px }
+
+/* The metric: two bars of cost per thousand requests, with quality under each. */
+.metric .headline { font-size: 26px; font-weight: 800; letter-spacing: -0.02em; margin: 6px 0 14px }
+.metric .headline mark { background: var(--accent); color: var(--ink); padding: 0 4px }
+.cost-row { display: grid; grid-template-columns: 8.75rem minmax(0, 1fr); gap: 4px 14px; align-items: center; margin-bottom: 10px }
+.cost-row .label { font-weight: 700 }
+.cost-row .label small { display: block; font-weight: 400; color: var(--muted); font-size: 13px }
+.cost-bar { height: 30px; background: var(--paper); border-radius: 6px; overflow: hidden }
+.cost-bar span { display: flex; align-items: center; height: 100%; padding: 0 10px; font-family: var(--mono); font-size: 14px; white-space: nowrap;
+  background: var(--fill-dark); color: var(--paper); width: 0; transition: width 900ms cubic-bezier(0.2, 0.7, 0.2, 1) }
+.cost-bar.routed span { background: var(--accent); color: var(--ink) }
+.metric .verdict { margin-top: 12px; color: var(--ink-2) }
+.ok { color: var(--pass); font-weight: 700 }
+.bad { color: var(--fail); font-weight: 700 }
+
+/* Budgets as meters: the bar is the month, the mark is where finance set the line. */
+.meters { display: grid; gap: 14px; margin-top: 12px }
+.meter-head { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap }
+.meter-head strong { font-size: 15px }
+.meter-head .numbers { font-family: var(--mono); font-size: 14px; color: var(--ink-2) }
+.meter-note { font-size: 13px; color: var(--muted) }
+.meter { height: 10px; background: var(--paper); border: 1px solid var(--line); border-radius: 999px; overflow: hidden; margin: 5px 0 3px }
+.meter span { display: block; height: 100%; width: 0; background: var(--ink-2); transition: width 900ms cubic-bezier(0.2, 0.7, 0.2, 1) }
+.meter.over span { background: var(--fail) }
+.meter.raised span { background: var(--wait) }
+
+/* The quality set, item by item: what the naive gateway paid, and where the router sent it. */
+.calls { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px }
+.calls th { text-align: left; font-size: 12px; color: var(--muted); font-weight: 600; padding: 6px 8px; border-bottom: 1px solid var(--line) }
+.calls td { padding: 7px 8px; border-bottom: 1px solid var(--line); vertical-align: top }
+.calls td.money { font-family: var(--mono); text-align: right; white-space: nowrap }
+.calls .why { color: var(--muted); font-size: 13px }
+.pill { display: inline-block; border-radius: 4px; padding: 0 6px; font-family: var(--mono); font-size: 13px; border: 1px solid var(--line) }
+.pill.cheap { background: var(--accent); border-color: var(--accent); color: var(--ink) }
+.pill.strong { background: var(--fill-dark); border-color: var(--fill-dark); color: var(--paper) }
+.pill.flag { border-color: var(--wait); color: var(--wait) }
+.grade-pass { color: var(--pass); font-weight: 700 }
+.grade-fail { color: var(--fail); font-weight: 700 }
+
+/* The human in the loop: each card says what happened, why, and what the admin decides. */
+.queue { position: sticky; top: 16px }
+.decision { border-left: 4px solid var(--wait); padding: 14px 16px; background: var(--card); border-radius: 0 10px 10px 0; border-top: 1px solid var(--line); border-right: 1px solid var(--line); border-bottom: 1px solid var(--line) }
+.decision.breach { border-left-color: var(--fail) }
+.decision.settled { border-left-color: var(--pass) }
+.decision h3 { font-size: 16px; margin-bottom: 6px }
+.decision .kind { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--wait) }
+.decision.breach .kind { color: var(--fail) }
+.decision.settled .kind { color: var(--pass) }
+.decision p { color: var(--ink-2); font-size: 14px; margin-bottom: 8px }
+.decision blockquote { margin: 0 0 8px; padding: 8px 10px; background: var(--paper); border-radius: 6px; font-size: 14px }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 10px }
+.actions button { border: 1px solid var(--ink); background: var(--card); color: var(--ink); border-radius: 6px; padding: 6px 12px }
+.actions button.primary { background: var(--ink); color: var(--paper) }
+.actions label { font-size: 14px; display: flex; gap: 6px; align-items: center }
+.actions input { width: 6.5rem; padding: 5px 8px; border: 1px solid var(--line); border-radius: 6px; font-family: var(--mono) }
+.empty { color: var(--muted); font-size: 14px }
+.traffic { list-style: none; padding: 0; margin: 10px 0 0; display: grid; gap: 8px; font-size: 13px }
+.traffic li { display: grid; gap: 2px; padding-bottom: 8px; border-bottom: 1px solid var(--line) }
+.traffic .line-one { display: flex; gap: 8px; flex-wrap: wrap; align-items: baseline }
+.traffic .status-refused, .traffic .status-provider_error { color: var(--fail); font-weight: 700 }
+.traffic .status-ok { color: var(--pass); font-weight: 700 }
+.traffic .detail { color: var(--muted) }
+#error { color: var(--fail); padding: 0 28px }
+
+@media (max-width: 900px) {
+  .top { padding: 12px 16px }
+  .tiers { margin-left: 0 }
+  .console { grid-template-columns: minmax(0, 1fr); padding: 16px }
+  /* On a phone the decisions follow the metric, ahead of the budgets and the long table. */
+  .console > .stack, .queue { display: contents }
+  .metric { order: 1 }
+  .queue > section:first-child { order: 2 }
+  .budgets { order: 3 }
+  .quality { order: 4 }
+  .traffic-panel { order: 5 }
+  .cost-row { grid-template-columns: minmax(0, 1fr) }
+  /* At phone width each call becomes a small card instead of a table row. */
+  .calls thead { display: none }
+  .calls tr { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 2px 10px; padding: 8px 0; border-bottom: 1px solid var(--line) }
+  .calls td { border: 0; padding: 0 }
+  .calls td.why-cell { grid-column: 1 / -1 }
+  .calls td.naive { display: none }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cost-bar span, .meter span { transition: none }
+}
+</style>
+</head>
+<body data-surface="LLM gateway admin console">
+<header class="top">
+  <h1>Fernway LLM gateway</h1>
+  <span class="endpoint">http://127.0.0.1:8261/v1, model "auto"</span>
+  <div class="tiers" aria-label="Tiers and fallbacks">
+    <span class="tier-chip cheap">cheap</span><span aria-hidden="true">falls back to</span>
+    <span class="tier-chip">strong</span><span aria-hidden="true">falls back to</span>
+    <span class="tier-chip">strong-backup</span>
+  </div>
+</header>
+<p id="error" role="alert"></p>
+<main class="console">
+  <div class="stack">
+    <section class="panel metric" aria-labelledby="metric-title">
+      <h2 id="metric-title">Cost per request at the same quality</h2>
+      <p class="headline" id="headline">Run both evals to see the metric.</p>
+      <div id="cost-rows"></div>
+      <p class="verdict" id="verdict"></p>
+    </section>
+    <section class="panel budgets" aria-labelledby="budget-title">
+      <h2 id="budget-title">Team budgets this month, from the invoice plus every booked call</h2>
+      <div class="meters" id="meters"></div>
+    </section>
+    <section class="panel quality" aria-labelledby="calls-title">
+      <h2 id="calls-title">Quality set: all strong against routed</h2>
+      <table class="calls">
+        <thead><tr><th>Item</th><th>Routed to, and why</th><th class="naive">All strong</th><th>Routed</th></tr></thead>
+        <tbody id="calls"></tbody>
+      </table>
+    </section>
+  </div>
+  <aside class="stack queue" aria-labelledby="queue-title">
+    <section class="stack">
+      <h2 id="queue-title">Waiting on the platform admin</h2>
+      <div class="stack" id="decisions"></div>
+    </section>
+    <section class="panel traffic-panel" aria-labelledby="traffic-title">
+      <h2 id="traffic-title">Latest calls through the gateway</h2>
+      <ul class="traffic" id="traffic"></ul>
+    </section>
+  </aside>
+</main>
+<script>
+const $ = (selector) => document.querySelector(selector);
+// Every string from the books goes in through textContent, so a model's reply can never become markup.
+function make(tag, text, className) {
+  const node = document.createElement(tag);
+  if (className) node.className = className;
+  if (text !== undefined && text !== null) node.textContent = text;
+  return node;
+}
+const perThousand = (cost) => `$${(cost * 1000).toFixed(4)}`;
+const dollars = (amount) => `$${amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+let firstPaint = true;
+
+// Bars start at zero and grow on the first paint only, so a decision does not replay the animation.
+function grow(bar, percent) {
+  if (!firstPaint) { bar.style.width = `${percent}%`; return; }
+  requestAnimationFrame(() => requestAnimationFrame(() => { bar.style.width = `${percent}%`; }));
+}
+
+function drawMetric(state) {
+  const metric = state.metric;
+  const rows = $("#cost-rows");
+  rows.replaceChildren();
+  if (!metric) return;
+  $("#headline").replaceChildren(
+    "Routing costs ", make("mark", `${Math.round(metric.saving * 100)}% less`), ` per request, ${metric.routed_passed} of ${metric.requests} still right.`);
+  const widest = Math.max(metric.naive_cost_per_request, metric.routed_cost_per_request);
+  const bars = [
+    ["All strong", `${metric.naive_passed} of ${metric.requests} passed`, metric.naive_cost_per_request, ""],
+    ["Routed", `${metric.routed_passed} of ${metric.requests} passed`, metric.routed_cost_per_request, "routed"],
+  ];
+  for (const [name, quality, cost, kind] of bars) {
+    const row = make("div", null, "cost-row");
+    const label = make("div", name, "label");
+    label.append(make("small", quality));
+    const bar = make("div", null, `cost-bar ${kind}`);
+    const fill = make("span", `${perThousand(cost)} per 1,000 requests`);
+    bar.append(fill);
+    row.append(label, bar);
+    rows.append(row);
+    grow(fill, Math.max(28, (cost / widest) * 100));
+  }
+  const routed = state.runs.routed;
+  const verdict = $("#verdict");
+  verdict.replaceChildren(
+    make("span", metric.quality_holds ? "Quality holds" : "Quality dropped too far", metric.quality_holds ? "ok" : "bad"),
+    `. Routed sent ${routed.tiers.cheap} calls to the cheap tier and ${routed.tiers.strong} to strong. `,
+    `${routed.flagged} sent strong and flagged for the platform admin. `,
+    `Every cost is the one OpenRouter billed: ${routed.all_billed && state.runs.strong.all_billed ? "yes" : "no"}.`);
+}
+
+function drawMeters(teams) {
+  const meters = $("#meters");
+  meters.replaceChildren();
+  for (const team of teams) {
+    const block = make("div");
+    const head = make("div", null, "meter-head");
+    head.append(make("strong", team.name), make("span", `${dollars(team.spent)} of ${dollars(team.budget)}`, "numbers"));
+    const meter = make("div", null, `meter ${team.over ? "over" : team.raised ? "raised" : ""}`);
+    meter.setAttribute("role", "meter");
+    meter.setAttribute("aria-label", `${team.name} spend`);
+    meter.setAttribute("aria-valuenow", team.spent.toFixed(2));
+    meter.setAttribute("aria-valuemax", team.budget.toFixed(2));
+    const fill = make("span");
+    meter.append(fill);
+    let note = `Calls for: ${team.calls_for}.`;
+    if (team.refused) note += ` ${team.refused} refused at the budget.`;
+    if (team.raised) note += ` Raised from ${dollars(team.set_budget)} by the ${team.raised.by}.`;
+    block.append(head, meter, make("p", note, "meter-note"));
+    meters.append(block);
+    grow(fill, Math.min(100, (team.spent / team.budget) * 100));
+  }
+}
+
+function drawCalls(rows) {
+  const body = $("#calls");
+  body.replaceChildren();
+  for (const row of rows) {
+    const line = make("tr");
+    const itemCell = make("td");
+    itemCell.append(make("strong", row.id), make("div", row.team, "why"));
+    const whyCell = make("td", null, "why-cell");
+    const tier = row.routed.tier || "none";
+    whyCell.append(make("span", tier, `pill ${tier}`));
+    if (row.routed.flagged) whyCell.append(" ", make("span", "flagged", "pill flag"));
+    whyCell.append(make("div", row.routed.reason || "", "why"));
+    if (row.routed.passed === false) whyCell.append(make("div", `Wrong: ${row.routed.wrong.join("; ")}`, "why grade-fail"));
+    const naiveCell = make("td", null, "money naive");
+    naiveCell.append(make("span", row.strong.passed ? "pass " : "FAIL ", row.strong.passed ? "grade-pass" : "grade-fail"),
+      `$${row.strong.cost.toFixed(6)}`);
+    const routedCell = make("td", null, "money");
+    routedCell.append(make("span", row.routed.passed ? "pass " : "FAIL ", row.routed.passed ? "grade-pass" : "grade-fail"),
+      `$${(row.routed.cost || 0).toFixed(6)}`);
+    line.append(itemCell, whyCell, naiveCell, routedCell);
+    body.append(line);
+  }
+}
+
+async function post(path, body) {
+  const response = await fetch(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  if (!response.ok) throw new Error(await response.text());
+  draw(await response.json());
+}
+
+function act(path, body) {
+  $("#error").textContent = "";
+  post(path, body).catch((failure) => { $("#error").textContent = failure.message; });
+}
+
+function breachCard(team) {
+  const settled = Boolean(team.held);
+  const card = make("article", null, `decision ${settled ? "settled" : "breach"}`);
+  card.append(make("div", settled ? "Decided: keep refusing" : "Budget breach", "kind"),
+    make("h3", `${team.name} is at ${dollars(team.spent)} of ${dollars(team.budget)}`),
+    make("p", `The gateway refused ${team.refused} call${team.refused === 1 ? "" : "s"} instead of quietly sending ${team.refused === 1 ? "it" : "them"} to a cheaper model. ` +
+      `${team.name} ${team.calls_for}; a raise moves money from the platform budget.`));
+  if (settled) {
+    card.append(make("p", `The ${team.held.by} kept the refusal on ${new Date(team.held.at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })}. Calls stay refused until the month turns.`));
+    return card;
+  }
+  const actions = make("div", null, "actions");
+  const label = make("label", "New budget $");
+  const amount = make("input");
+  amount.type = "number"; amount.min = "1"; amount.step = "10"; amount.value = String(Math.ceil(team.budget * 1.2));
+  label.append(amount);
+  const raise = make("button", "Raise budget", "primary");
+  raise.addEventListener("click", () => act("/api/budget", { team: team.team, budget: Number(amount.value) }));
+  const hold = make("button", "Keep refusing");
+  hold.addEventListener("click", () => act("/api/hold", { team: team.team }));
+  actions.append(label, raise, hold);
+  card.append(actions);
+  return card;
+}
+
+function flaggedCard(call) {
+  const card = make("article", null, `decision ${call.decision ? "settled" : ""}`);
+  card.append(make("div", call.decision ? `Labelled: ${call.decision.tier} was the right tier` : "Unsure route", "kind"),
+    make("h3", `${call.item}, ${call.team} team, sent to ${call.tier}`),
+    make("blockquote", call.ask),
+    make("p", `${call.reason} So the gateway paid for the strong tier and asked you. ` +
+      `It ${call.passed ? "passed" : "failed"} the grader at $${call.cost.toFixed(6)}.`));
+  if (!call.decision) {
+    const actions = make("div", null, "actions");
+    const cheap = make("button", "Cheap was enough");
+    cheap.addEventListener("click", () => act("/api/route", { call_id: call.call_id, tier: "cheap" }));
+    const strong = make("button", "Strong was right", "primary");
+    strong.addEventListener("click", () => act("/api/route", { call_id: call.call_id, tier: "strong" }));
+    actions.append(cheap, strong);
+    card.append(actions, make("p", "Your label is saved as a training example for the router.", "meter-note"));
+  }
+  return card;
+}
+
+function drawDecisions(state) {
+  const box = $("#decisions");
+  box.replaceChildren();
+  const breached = state.teams.filter((team) => team.over || team.held);
+  for (const team of breached) box.append(breachCard(team));
+  for (const call of state.flagged) box.append(flaggedCard(call));
+  if (!box.children.length) box.append(make("p", "Nothing waiting. No team is over budget and no route was flagged.", "empty"));
+}
+
+function drawTraffic(rows) {
+  const list = $("#traffic");
+  list.replaceChildren();
+  for (const row of rows) {
+    const entry = make("li");
+    const first = make("div", null, "line-one");
+    first.append(make("span", row.status.replace("_", " "), `status-${row.status}`), make("span", row.team),
+      make("span", row.tier || row.asked_for || "", "mono"), make("span", `$${(row.cost || 0).toFixed(6)}`, "mono"));
+    const detail = row.fallback_from ? `Fell back from ${row.fallback_from}. ` : "";
+    entry.append(first, make("span", detail + (row.error || row.reason || ""), "detail"));
+    list.append(entry);
+  }
+}
+
+function draw(state) {
+  drawMetric(state);
+  drawMeters(state.teams);
+  drawCalls(state.items);
+  drawDecisions(state);
+  drawTraffic(state.recent);
+  firstPaint = false;
+}
+
+fetch("/api/state").then((response) => response.json()).then(draw)
+  .catch((failure) => { $("#error").textContent = failure.message; });
+</script>
+</body>
+</html>

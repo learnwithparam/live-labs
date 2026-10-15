@@ -1,0 +1,11 @@
+{
+  "company": "Fernway",
+  "month": "2026-10",
+  "teams": {
+    "search": {"name": "Search", "budget": 600.0, "calls_for": "answers shoppers' questions on a product page"},
+    "substitutions": {"name": "Substitutions", "budget": 150.0, "calls_for": "picks a replacement when an item is out of stock"},
+    "care": {"name": "Customer care", "budget": 400.0, "calls_for": "drafts refund and credit replies for care agents"},
+    "catalog": {"name": "Catalog", "budget": 120.0, "calls_for": "turns supplier listings into catalog fields"},
+    "growth": {"name": "Growth", "budget": 250.0, "calls_for": "writes promo copy and email subject lines"}
+  }
+}
