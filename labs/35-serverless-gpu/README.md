@@ -47,6 +47,8 @@ to one and back to zero, twice. Beside it are the cold start, a latency histogra
 marked, and the cost per 1,000 items against the hosted model. A break-even chart shows both costs by
 batch size, and a review queue lists every item that came back without one category.
 
+<img src="docs/gpu-endpoint-console.jpg" alt="Corvane GPU endpoint console from the Kaggle T4 run: replicas woke from zero twice and ended at zero, cold start 110.2 s, p95 4.20 s, served $0.1404 per 1,000 items against hosted $0.0949, and a break-even of 352 items per wake-up" width="720">
+
 ## Words you will use
 
 - **Replica**: one container with the model loaded on a GPU. Serverless means the platform starts and
@@ -115,8 +117,8 @@ reason, so a broken install reads as an outage.
 
 ### What happened when we ran it
 
-No Modal run happened for this lab. The GPU numbers come from Kaggle only, and two GPU runs have not
-yet produced them.
+No Modal run happened for this lab. The GPU numbers come from one Kaggle T4 run on 15 October 2026,
+the third attempt. It used about 4.6 GPU minutes, and the results are in `data/gpu-run/`.
 
 The first run failed at import. PyPI's vLLM 0.20.2 wheel is built for CUDA 13, and Kaggle's image has
 torch for CUDA 12.8. vLLM stopped with `libcudart.so.13: cannot open shared object file`. Every item was
@@ -126,12 +128,20 @@ The second run tried vLLM 0.19.1 from PyPI. Its install pulled a different torch
 time budget of 170 seconds. That run ended before it wrote a results file, and the notebook now writes
 one whatever setup does.
 
-The fix is vLLM's own CUDA 12.9 wheel from its GitHub release, which keeps the image's torch. On a
-Kaggle CPU machine it installed in 82 seconds. Its compiled module then failed only on `libcuda.so.1`,
-the GPU driver, which a GPU machine has.
+The third run used vLLM's own CUDA 12.9 wheel from its GitHub release, which keeps the image's torch.
+The endpoint refused a missing key and a wrong key with 401, and took the right key.
 
-Until a third GPU run succeeds, `data/gpu-run/` is empty. The report, the console and the proof all
-need it.
+| Wave | Items | Cold start | p50 | p95 | Failed | Billed |
+| --- | --- | --- | --- | --- | --- | --- |
+| Golden set | 227 | 110.2 s | 0.37 s | 4.20 s | 0 | 153.3 s, $0.0319 |
+| Second wake | 40 | 39.6 s | 0.35 s | 0.46 s | 0 | 71.2 s, $0.0148 |
+
+The weights were fetched once before both waves, so neither cold start includes the download. The
+first start also paid for a cold machine's first imports, and the second started warm at 39.6 s. Both
+waves started from zero replicas and ended at zero.
+
+The served model got 76 of 227 right, 33.5 percent. That is the untuned base model, so read the run for
+latency and cost, not accuracy. A tuned adapter on the same endpoint is what would move that number.
 
 ## 3. Run the hosted model
 

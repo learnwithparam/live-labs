@@ -196,9 +196,9 @@ uv run tune cascade
 
 Expect: /\d+ of 227 labelled by the small model, \d+ sent to the large model\.[\s\S]*The cascade: SHIP\./
 
-In our run threshold 80% kept 92 of 115 validation items. On the test, 187 of 227 labelled by the small
-model, 40 sent to the large model. The small model got 182 of its 187 right, as did the large model on
-those same items. The cascade scored 96.5% at $0.0588 per 1,000 items.
+In our run threshold 80% kept 92 of 115 validation items. On the test, the run printed
+187 of 227 labelled by the small model, 40 sent to the large model. The small model got 182 of its 187
+right, as did the large model on those same items. The cascade scored 96.5% at $0.0588 per 1,000 items.
 
 A small model earns its place on the items it is sure of. The adapter card in `out/adapter/card.json`
 records the data version, the recipe, the Kaggle kernel, the threshold and this decision.

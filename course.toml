@@ -414,7 +414,7 @@ owns = "fine-tuning"
 job = "Label most items with a small tuned model and send the rest to the large one, at its accuracy"
 truth = "labels from the human review queue"
 metric = "cascade accuracy, share the small model labels alone, and cost per item against the large model"
-status = "planned"
+status = "ready"
 
 [[lab]]
 n = 35
@@ -426,4 +426,4 @@ owns = "serving open models"
 job = "Serve the tuned model on your own GPUs only while there is work, as Ramp does on Modal"
 truth = "the same golden set as the hosted model"
 metric = "cost per thousand items and p95 latency"
-status = "planned"
+status = "ready"
