@@ -51,8 +51,8 @@ def size_text(unit: str, value: int, rng: random.Random) -> str:
 def main() -> None:
     rng = random.Random(7)
     products, truth = [], []
-    for n in range(240):
-        category, title, sizes, vegan, can_be_organic, ingredients = KINDS[n % len(KINDS)]
+    for index in range(240):
+        category, title, sizes, vegan, can_be_organic, ingredients = KINDS[index % len(KINDS)]
         unit, value = rng.choice(sizes)
         organic = can_be_organic and rng.random() < 0.35
         brand = rng.choice(BRANDS)
@@ -67,18 +67,18 @@ def main() -> None:
             description = f"{description} Ingredients: {ingredients}".strip()
         if organic:
             description = f"{description} USDA Organic.".strip()
-        sku = f"SKU{10000 + n}"
+        sku = f"SKU{10000 + index}"
         products.append({"sku": sku, "title": name, "description": description})
         # The retailer supplied attributes for one product in five, and leaves vegan blank when it does not know.
-        if n % 5 == 0:
+        if index % 5 == 0:
             truth.append({"sku": sku, "category": category, "size_value": value, "size_unit": unit,
                           "organic": str(organic).lower(), "vegan": "" if vegan == "unknown" else vegan})
-    with (HERE / "catalogue.csv").open("w", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=["sku", "title", "description"])
+    with (HERE / "catalogue.csv").open("w", newline="") as csv_file:
+        writer = csv.DictWriter(csv_file, fieldnames=["sku", "title", "description"])
         writer.writeheader()
         writer.writerows(products)
-    with (HERE / "retailer-attributes.csv").open("w", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=list(truth[0]))
+    with (HERE / "retailer-attributes.csv").open("w", newline="") as csv_file:
+        writer = csv.DictWriter(csv_file, fieldnames=list(truth[0]))
         writer.writeheader()
         writer.writerows(truth)
     print(f"{len(products)} products, {len(truth)} with retailer attributes")

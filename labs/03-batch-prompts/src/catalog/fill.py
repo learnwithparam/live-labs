@@ -32,8 +32,28 @@ class Product:
         return f"{self.sku} | {self.title} | {self.description}"
 
 
+def strict_schema(node):
+    """Pydantic's schema, tightened to the rules OpenAI's strict mode enforces.
+
+    Every property is listed as required and no extra keys are allowed, or OpenAI models reject the
+    request. The pydantic model still checks the values afterwards.
+    """
+    if isinstance(node, dict):
+        if "properties" in node:
+            node["required"] = list(node["properties"])
+            node["additionalProperties"] = False
+        node.pop("default", None)
+        for value in node.values():
+            strict_schema(value)
+    elif isinstance(node, list):
+        for value in node:
+            strict_schema(value)
+    return node
+
+
 def schema_format(model: type) -> dict:
-    return {"type": "json_schema", "json_schema": {"name": model.__name__.lower(), "schema": model.model_json_schema()}}
+    schema = strict_schema(model.model_json_schema())
+    return {"type": "json_schema", "json_schema": {"name": model.__name__.lower(), "schema": schema}}
 
 
 def one_body(product: Product, model: str) -> dict:

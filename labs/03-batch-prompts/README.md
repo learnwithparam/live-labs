@@ -55,8 +55,8 @@ The catalogue is synthetic and seeded: `python3 data/make_catalogue.py` writes t
 ## Set up
 
 You need [uv](https://docs.astral.sh/uv/) and a key for any OpenAI-compatible endpoint. The lab was
-measured on `google/gemini-2.5-flash-lite` through [OpenRouter](https://openrouter.ai): filling all
-240 products both ways costs about two cents.
+measured on `openai/gpt-6-luna` through [OpenRouter](https://openrouter.ai): filling all 240
+products both ways costs about three cents.
 
 ```bash
 cp env.example .env
@@ -81,8 +81,8 @@ uv run catalog one data/catalogue.csv
 
 Expect: /240 requests for 240 products/
 
-In our runs this cost $0.0576 per thousand products, and 232 or 233 of the 237 attributes the
-retailer supplied matched. The accuracy is fine. The cost is the instructions, sent 240 times.
+In our runs this cost $0.0757 to $0.0762 per thousand products, and up to 235 of the 237 attributes
+the retailer supplied matched. The accuracy is fine. The cost is the instructions, sent 240 times.
 
 ## 2. Write the job as a batch file
 
@@ -111,8 +111,8 @@ uv run catalog run out/batch.jsonl
 
 Expect: /sent \d+ requests/
 
-In our runs packing cost $0.0311 to $0.0337 per thousand products, 41 to 46% less, and 232 of 237
-attributes matched, as many as one per request. Run it again, as you would after a crash:
+In our runs packing cost $0.0337 per thousand products, 55 to 56% less, and 232 of 237 attributes
+matched, close to one per request. Run it again, as you would after a crash:
 
 ```bash
 uv run catalog run out/batch.jsonl
@@ -145,7 +145,7 @@ Expect: /attributes match the retailer/
 
 In our runs the five packs took five to seven minutes and cost $0.0021, $0.0175 per thousand
 products, with 116 or 117 of 119 attributes matching and 8 or 9 of 120 products needing a person. The same packs live on
-the step 3 model cost $0.0311 per thousand. The batch waits; nothing about the file changes.
+the step 3 model cost $0.0337 per thousand. The batch waits; nothing about the file changes.
 
 ## 5. See it
 

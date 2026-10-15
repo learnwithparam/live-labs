@@ -12,7 +12,8 @@ import pytest
 
 from catalog.config import DEFAULT_BASE_URL, DEFAULT_MODEL
 from catalog.fill import INSTRUCTIONS, batch_lines, collect, one_lines, parse, read_jsonl, run_lines, settle, skus_in, submit
-from catalog.schema import Attributes
+from catalog.fill import schema_format
+from catalog.schema import Attributes, Pack
 from catalog.score import accuracy, load_products, load_supplied, tally, why_a_person
 from catalog.serve import Shelf, serve
 
@@ -185,3 +186,24 @@ def test_env_example_matches_the_code_defaults():
     )
     assert env["LLM_MODEL"] == DEFAULT_MODEL
     assert env["LLM_BASE_URL"] == DEFAULT_BASE_URL
+
+
+def objects_in(node):
+    """Every object in a JSON schema, nested definitions included."""
+    if isinstance(node, dict):
+        if "properties" in node:
+            yield node
+        for value in node.values():
+            yield from objects_in(value)
+    elif isinstance(node, list):
+        for value in node:
+            yield from objects_in(value)
+
+
+def test_both_reply_schemas_meet_openai_strict_mode():
+    # OpenAI models reject a schema where an object leaves a property optional or allows extra keys.
+    objects = [found for shape in (Attributes, Pack) for found in objects_in(schema_format(shape)["json_schema"]["schema"])]
+    assert len(objects) >= 3, "one product, the pack and the products inside it"
+    for found in objects:
+        assert found["required"] == list(found["properties"])
+        assert found["additionalProperties"] is False
