@@ -4,13 +4,13 @@ import os
 from pathlib import Path
 
 DEFAULT_BASE_URL = "https://openrouter.ai/api/v1"
-DEFAULT_MODEL = "google/gemini-2.5-flash"
+DEFAULT_MODEL = "openai/gpt-6-luna"
 # List prices in dollars per million tokens, input then output. The budget is costed from these.
 PRICES = {
-    "google/gemini-2.5-flash": (0.30, 2.50),
-    "google/gemini-2.5-flash-lite": (0.10, 0.40),
-    "anthropic/claude-haiku-4.5": (1.00, 5.00),
-    "openai/gpt-4.1-mini": (0.40, 1.60),
+    "openai/gpt-6-luna": (0.10, 0.50),
+    "anthropic/claude-haiku-5.5": (0.10, 0.50),
+    "nvidia/nemotron-3.5-lightning": (0.07, 0.20),
+    "qwen/qwen3.7-flash": (0.03, 0.13),
 }
 
 

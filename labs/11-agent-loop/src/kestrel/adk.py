@@ -20,7 +20,6 @@ from google.adk.sessions import InMemorySessionService
 from google.genai import types
 
 from kestrel.budget import Budget
-from kestrel.loop import TEMPERATURE
 
 # ADK flags its JSON schema tool declarations as experimental on every call; the notice is for ADK
 # developers, and it buried the tool calls in the terminal.
@@ -59,8 +58,7 @@ def run(message: str, system: str, tools: list[Callable], llm, budget: Budget,
         return None
 
     agent = LlmAgent(name="kestrel_support", model=llm, instruction=system, tools=tools,
-                     before_model_callback=before_model, after_model_callback=after_model,
-                     generate_content_config=types.GenerateContentConfig(temperature=TEMPERATURE))
+                     before_model_callback=before_model, after_model_callback=after_model)
 
     async def go() -> str:
         sessions = InMemorySessionService()

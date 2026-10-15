@@ -16,7 +16,7 @@ from kestrel.review import outcome, run_chat, score
 from kestrel.shop import Shop
 from kestrel.tools import OrderTools
 
-MODEL = "google/gemini-2.5-flash"
+MODEL = "openai/gpt-6-luna"
 
 
 def models(script, tokens=(1000, 50)):
@@ -74,8 +74,8 @@ def test_a_model_that_never_stops_is_handed_to_a_person_at_the_step_budget(engin
 @pytest.mark.parametrize("engine", ["loop", "adk"])
 def test_a_long_context_is_handed_to_a_person_at_the_cost_budget(engine):
     customer_chat = chat("KC-07")
-    # 20,000 tokens in per call at $0.30 a million: two calls take it past one cent.
-    shop, budget, got = run_chat(engine, customer_chat.customer, customer_chat.message, models([], tokens=(20000, 100)))
+    # 60,000 tokens in per call at $0.10 a million: two calls take it past one cent.
+    shop, budget, got = run_chat(engine, customer_chat.customer, customer_chat.message, models([], tokens=(60000, 100)))
     assert got["stopped"] == "budget" and budget.steps == 2 and budget.cost >= 0.01
     assert shop.handoffs()[0].startswith("cost budget")
 

@@ -145,16 +145,17 @@ uv run support review
 
 Expect: /Google ADK\s+\d of 8/
 
-In our run with `google/gemini-2.5-flash`:
+In our run with `openai/gpt-6-luna`:
 
 | Who answers | Resolved | Changes made | Passed to a person | Wrong | Steps | Cost |
 | --- | --- | --- | --- | --- | --- | --- |
-| Reply only | 3 of 8 | 0 of 5 | 0 of 2 | 7 | 10 | $0.0026 |
-| Our loop | 8 of 8 | 5 of 5 | 2 of 2 | 0 | 27 | $0.0075 |
-| Google ADK | 7 of 8 | 4 of 5 | 2 of 2 | 1 | 25 | $0.0078 |
+| Reply only | 3 of 8 | 0 of 5 | 0 of 2 | 7 | 10 | $0.0015 |
+| Our loop | 7 of 8 | 5 of 5 | 2 of 2 | 0 | 30 | $0.0033 |
+| Google ADK | 7 of 8 | 5 of 5 | 2 of 2 | 0 | 33 | $0.0040 |
 
-The reply-only bot resolved only the chats where nothing had to change. ADK's one miss was KC-04: it
-asked "Is that okay?" before starting a return the customer had asked about.
+The reply-only bot resolved only the chats where nothing had to change. Both loops missed KC-05 the same
+way: they handed the rain shell return to a person when it needed no one. Nothing they did was wrong, but a
+person spent time on it.
 
 Our first runs did worse, and the fixes are in the code. The model asked for order numbers until
 `find_orders` said to call it first. It told the customer "I will cancel it" and stopped, until the

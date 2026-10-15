@@ -13,9 +13,9 @@ from typing import Callable, get_type_hints
 
 from kestrel.budget import Budget
 
+# No temperature pin: reasoning models such as gpt-6-luna refuse one. Both engines send the same settings,
+# so the review still compares like with like.
 JSON_TYPES = {str: "string", int: "integer", float: "number", bool: "boolean"}
-# Support should act the same way on the same chat. Both engines use it, so the review compares like with like.
-TEMPERATURE = 0
 
 
 def tool_schema(tool: Callable) -> dict:
@@ -46,7 +46,7 @@ def run(message: str, system: str, tools: list[Callable], client, model: str, bu
             hand_off(reason)
             on_step({"kind": "handoff", "by": "budget", "reason": reason})
             return {"reply": "I am passing this to a colleague who will reply within 4 hours.", "stopped": "budget"}
-        response = client.chat.completions.create(model=model, messages=messages, tools=schemas, temperature=TEMPERATURE)
+        response = client.chat.completions.create(model=model, messages=messages, tools=schemas)
         budget.charge(response.usage.prompt_tokens, response.usage.completion_tokens)
         on_step({"kind": "budget", **budget.state()})
         said = response.choices[0].message
