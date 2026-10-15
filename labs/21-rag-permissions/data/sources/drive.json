@@ -1,0 +1,41 @@
+{
+  "$comment": "Mirrored from the company drive with the Drive API v3 shapes: each file and folder carries its own permissions list. Subfolders and files inherit their parent folder's permissions, as Drive does.",
+  "folders": [
+    {"id": "fld-finance", "name": "Finance", "parent": null, "owner": "maya@copperline.io",
+     "permissions": [{"type": "group", "role": "writer", "emailAddress": "finance@groups.copperline.io"}]},
+    {"id": "fld-board", "name": "Board", "parent": "fld-finance", "owner": "maya@copperline.io",
+     "permissions": [{"type": "group", "role": "reader", "emailAddress": "leadership@groups.copperline.io"}]},
+    {"id": "fld-people", "name": "People", "parent": null, "owner": "lena@copperline.io",
+     "permissions": [{"type": "group", "role": "writer", "emailAddress": "people-team@groups.copperline.io"}]},
+    {"id": "fld-comp", "name": "Compensation", "parent": "fld-people", "owner": "lena@copperline.io",
+     "permissions": [{"type": "group", "role": "reader", "emailAddress": "leadership@groups.copperline.io"}]},
+    {"id": "fld-company", "name": "Company", "parent": null, "owner": "lena@copperline.io",
+     "permissions": [{"type": "domain", "role": "reader", "domain": "copperline.io"}]},
+    {"id": "fld-sales", "name": "Sales", "parent": null, "owner": "tom@copperline.io",
+     "permissions": [{"type": "group", "role": "writer", "emailAddress": "sales@groups.copperline.io"},
+                     {"type": "group", "role": "reader", "emailAddress": "leadership@groups.copperline.io"}]},
+    {"id": "fld-brand", "name": "Brand", "parent": null, "owner": "priya@copperline.io",
+     "permissions": [{"type": "group", "role": "reader", "emailAddress": "engineering@groups.copperline.io"}]}
+  ],
+  "files": [
+    {"id": "drv-board-pack-q3", "title": "Q3 2026 board pack", "parent": "fld-board", "owner": "maya@copperline.io", "permissions": [],
+     "body": "Q3 2026 board pack, prepared for the board meeting on 9 October.\n\nRevenue for the quarter was 4.2 million euros, up 31 percent on Q3 2025. Net revenue retention held at 112 percent. Runway at the current burn is 31 months.\n\nThe board is asked to approve a bonus pool of 1.86 million euros for 2026, paid in March. Leadership recommends weighting it 60 percent company result, 40 percent individual.\n\nRisks: payout volume concentration in two banking partners, and the open SOC 2 access review findings."},
+    {"id": "drv-fy27-budget", "title": "FY27 budget draft", "parent": "fld-finance", "owner": "maya@copperline.io", "permissions": [],
+     "body": "FY27 budget draft, version 3. Not final until the board approves it in December.\n\nThe FY27 marketing budget is cut to 410 thousand euros, down from 655 thousand, with paid search paused in the first half.\n\nHeadcount: 14 new roles, all in Lisbon. Berlin hiring is frozen until the Brightwater integration is done.\n\nCloud spend target is 9 percent of revenue, from 12 percent today."},
+    {"id": "drv-larch-term-sheet", "title": "Project Larch: Brightwater term sheet", "parent": "fld-board", "owner": "maya@copperline.io",
+     "permissions": [{"type": "anyone", "role": "reader", "allowFileDiscovery": false}],
+     "openedByLinkBy": ["tom@copperline.io"],
+     "body": "Project Larch. Non-binding term sheet for the acquisition of Brightwater Payroll GmbH.\n\nCopperline pays 14.5 million euros: 9 million in cash at closing and 5.5 million in shares vesting over three years.\n\nBrightwater's 22 staff join Copperline. Their founders sign a two-year retention agreement.\n\nTarget signing date is 20 November. Do not discuss Project Larch outside the deal team."},
+    {"id": "drv-salary-bands", "title": "Salary bands 2026", "parent": "fld-comp", "owner": "lena@copperline.io", "permissions": [],
+     "body": "Salary bands for 2026, effective 1 January. Bands are reviewed each November against the Ravio benchmark.\n\nEngineering, Berlin: Senior Engineer 84,000 to 104,000 euros. Staff Engineer 108,000 to 142,000 euros.\n\nEngineering, Lisbon: Senior Engineer 58,000 to 74,000 euros. Staff Engineer 76,000 to 98,000 euros.\n\nNobody is paid below the bottom of their band. Offers above the band midpoint need VP approval."},
+    {"id": "drv-travel-policy", "title": "Travel and expense policy", "parent": "fld-company", "owner": "lena@copperline.io", "permissions": [],
+     "body": "Travel and expense policy for Copperline employees.\n\nBook trains for trips under five hours. Flights go through the travel tool, economy class only.\n\nThe hotel cap is 180 euros per night in Berlin, Lisbon and Amsterdam, and 240 euros per night in London.\n\nSubmit receipts in the expense tool within 30 days. Meals on travel days are covered up to 60 euros a day."},
+    {"id": "drv-holiday-calendar", "title": "Holiday calendar 2026", "parent": "fld-company", "owner": "lena@copperline.io", "permissions": [],
+     "body": "Holiday calendar 2026 for both offices.\n\nThe company is closed from 24 December to 1 January. Support keeps an on-call rota during the closure.\n\nLisbon follows Portuguese public holidays, Berlin follows the Berlin state holidays."},
+    {"id": "drv-halvorsen-deal", "title": "Halvorsen Logistics deal desk notes", "parent": "fld-sales", "owner": "tom@copperline.io", "permissions": [],
+     "body": "Deal desk notes for Halvorsen Logistics, 340 seats, three-year term.\n\nThe deal desk approved a 22% discount on list price for the three-year term, conditional on annual prepayment.\n\nHalvorsen asked for net 60 payment terms. Finance said no: net 30 only.\n\nCompetitor in the deal is Billwise. Close target is end of October."},
+    {"id": "drv-brand-brief", "title": "Brand refresh brief", "parent": "fld-brand", "owner": "priya@copperline.io",
+     "permissions": [{"type": "user", "role": "writer", "emailAddress": "jo.kim@studiokim.design"}],
+     "body": "Brand refresh brief for the studio.\n\nThe payouts product gets a new name at launch in February: Copperline Flow. Keep the copper wordmark, retire the coin icon.\n\nDeliverables: logo lockups, the app icon set, and a landing page hero by 15 December.\n\nThe new name is confidential until the launch post goes out."}
+  ]
+}

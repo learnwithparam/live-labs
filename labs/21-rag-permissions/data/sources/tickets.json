@@ -1,0 +1,24 @@
+{
+  "$comment": "Mirrored from the ticket tool in Jira's shapes: a project's browse permission says who sees its issues, and an issue with a security level is seen only by that level's members and its reporter.",
+  "projects": [
+    {"key": "SUP", "name": "Support escalations", "browse": {"groups": ["support", "engineering"], "users": []}},
+    {"key": "SEC", "name": "Security", "browse": {"groups": ["security"], "users": []}},
+    {"key": "PEOPLE", "name": "People operations", "browse": {"groups": ["people-team"], "users": []}}
+  ],
+  "security_levels": [
+    {"name": "hr-confidential", "groups": [], "users": ["lena"]},
+    {"name": "external-audit", "groups": ["ext-auditors-2026", "security"], "users": []}
+  ],
+  "issues": [
+    {"key": "SUP-311", "project": "SUP", "summary": "Payout to Aldermoor Bakery failed twice", "reporter": "sam", "security_level": null,
+     "description": "Aldermoor Bakery's weekly payout failed on 2 and 9 October.\n\nThe bank returned code AC04, account closed, for the IBAN ending 4471. The customer changed banks in September and did not update Copperline.\n\nNext step: Support asks the customer to add the new account, then Payouts reruns both payouts."},
+    {"key": "SUP-298", "project": "SUP", "summary": "Customer asks for a CSV export of all invoices", "reporter": "sam", "security_level": null,
+     "description": "Nordlicht Studios wants every invoice since 2023 as one CSV file.\n\nThe export page caps at 12 months. Engineering can run a one-off export with the invoices-export job.\n\nAgreed to send it by 20 October."},
+    {"key": "SEC-58", "project": "SEC", "summary": "Admin API has no rate limit on payout export", "reporter": "dev", "security_level": null,
+     "description": "Pen test finding from Northgate Security, rated CVSS 8.1.\n\nThe admin endpoint /v1/payouts/export has no rate limit, so a stolen admin token can pull every payout in minutes.\n\nFix due 30 October: 10 requests per minute per token, and an alert on any export over 5,000 rows."},
+    {"key": "SEC-61", "project": "SEC", "summary": "SOC 2 Type II access review evidence", "reporter": "priya", "security_level": "external-audit",
+     "description": "Evidence for the SOC 2 Type II access review, shared with the auditors from Kessler Audit.\n\nThe review found 3 orphaned admin accounts in the payouts console, belonging to people who left in 2025. All three were removed on 3 October.\n\nThe auditors need the removal log and the quarterly review sign-off by 31 October."},
+    {"key": "PEOPLE-17", "project": "PEOPLE", "summary": "Expense review: Berlin offsite hotel claims", "reporter": "lena", "security_level": "hr-confidential",
+     "description": "Review of hotel claims from the Berlin offsite in September.\n\nThe expense tool flagged 2,340 euros of hotel nights claimed twice, once on a card and once as a receipt.\n\nOutcome: an honest mistake from a booking tool export. The duplicate amount was reversed in the October payroll."}
+  ]
+}

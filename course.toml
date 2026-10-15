@@ -258,7 +258,7 @@ owns = "data permissions (ReBAC)"
 job = "Answer from company documents without showing anyone a file they cannot open, as Glean does"
 truth = "each source system's access list"
 metric = "documents leaked across permission test pairs (zero)"
-status = "planned"
+status = "ready"
 
 [[lab]]
 n = 22

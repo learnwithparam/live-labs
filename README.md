@@ -39,7 +39,7 @@ print what the README promises.
 | 18 | [Assess Car Damage Photos with Vision LLMs](labs/18-vision-damage) | Tractable damage appraisal | ready |
 | 19 | [Score Refund Risk with a Decision Model](labs/19-decision-ai) | Stripe Radar score, thresholds and review | ready |
 | 20 | [Ship a Remote MCP Server with OAuth](labs/20-remote-mcp-oauth) | Remote MCP servers from Linear, Sentry and Atlassian | ready |
-| 21 | Enforce Document Permissions in RAG with OpenFGA | Glean permission-aware search | planned |
+| 21 | [Enforce Document Permissions in RAG with OpenFGA](labs/21-rag-permissions) | Glean permission-aware search | ready |
 | 22 | Authorize AI Agent Actions with RBAC and ABAC | Block's Goose: read-only and destructive tools | planned |
 | 23 | Block Prompt Injection with Guardrails | Zillow Fair Housing Classifier | planned |
 | 24 | Redact PII and PHI before the LLM | Clinical scribe products under HIPAA | planned |

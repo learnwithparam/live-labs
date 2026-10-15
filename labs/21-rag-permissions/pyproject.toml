@@ -1,0 +1,27 @@
+[project]
+name = "lab-21-rag-permissions"
+version = "0.1.0"
+description = "Enforce Document Permissions in RAG with OpenFGA: a company search assistant that checks every retrieved chunk against each source's access list before the model reads it"
+requires-python = ">=3.11"
+dependencies = ["openfga-sdk==0.10.5", "openai==2.54.0"]
+
+[project.scripts]
+search = "copperline.cli:main"
+
+[dependency-groups]
+dev = ["pytest>=8.4"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/copperline"]
+
+[tool.uv]
+# Every dependency resolves to a release at least two weeks old, so a fresh one never lands untested.
+exclude-newer = "2026-10-01T00:00:00Z"
+
+[tool.pytest.ini_options]
+markers = ["proof: calls a real model; needs LLM_API_KEY"]
+addopts = "-m 'not proof'"

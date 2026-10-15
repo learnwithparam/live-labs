@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Copperline Search</title>
+<link rel="icon" href="data:,">
+<style>
+:root {
+  --paper: #FAFAFA; --card: #FFFFFF; --ink: #151515; --ink-2: #414141; --muted: #606060; --faint: #808080;
+  --line: #DFDFDF; --accent: #FAFF69; --accent-deep: #4F5101; --fill-dark: #1F1F1C;
+  --pass: #008138; --fail: #BF000F; --wait: #B75000;
+  --sans: Inter, Helvetica, Arial, sans-serif; --mono: Inconsolata, "Courier New", Courier, monospace;
+}
+* { box-sizing: border-box }
+html, body { margin: 0 }
+body { background: var(--paper); color: var(--ink); font: 15px/1.5 var(--sans); min-height: 100vh }
+button, input { font: inherit; color: inherit }
+button { cursor: pointer }
+button:focus-visible, input:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px }
+h1, h2, h3, p { margin: 0 }
+
+/* The search bar is the product: who you are searching as sits right beside what you ask. */
+.top { background: var(--fill-dark); color: var(--paper); padding: 18px 32px 22px }
+.brand { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; margin-bottom: 14px }
+.brand strong { font-size: 18px; letter-spacing: -0.02em }
+.brand span { color: var(--paper); opacity: .8; font-size: 13px }
+.ask { display: flex; gap: 10px; max-width: 72rem }
+.ask input { flex: 1; min-width: 0; border: 0; border-radius: 4px; padding: 13px 16px; font-size: 17px; background: var(--card); color: var(--ink) }
+.ask button { border: 0; border-radius: 4px; padding: 0 22px; background: var(--accent); color: var(--ink); font-weight: 700 }
+.ask button:disabled { opacity: .6; cursor: progress }
+.asking { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 14px }
+.asking > span { font-size: 13px; margin-right: 4px; white-space: nowrap; flex: none }
+.person { border: 1px solid var(--faint); background: transparent; color: var(--paper); border-radius: 999px; padding: 4px 12px 4px 4px; display: inline-flex; align-items: center; gap: 8px; font-size: 13px }
+.person .face { width: 24px; height: 24px; border-radius: 50%; background: var(--ink-2); display: grid; place-items: center; font-weight: 700; font-size: 11px }
+.person[aria-pressed="true"] { background: var(--paper); color: var(--ink); border-color: var(--paper) }
+.person[aria-pressed="true"] .face { background: var(--accent); color: var(--ink) }
+
+.layout { display: grid; grid-template-columns: minmax(0, 50rem) minmax(16rem, 21rem); gap: 40px; padding: 28px 32px 48px; justify-content: start }
+
+.modes { display: inline-flex; border: 1px solid var(--line); border-radius: 4px; overflow: hidden; background: var(--card); margin-bottom: 14px }
+.modes button { border: 0; background: transparent; padding: 7px 14px; font-size: 13px; color: var(--ink-2) }
+.modes button + button { border-left: 1px solid var(--line) }
+.modes button[aria-pressed="true"] { background: var(--ink); color: var(--paper) }
+.examples { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 26px }
+.examples button { border: 0; background: none; padding: 2px 0; margin-right: 14px; color: var(--ink-2); text-decoration: underline; text-decoration-color: var(--line); text-underline-offset: 3px; font-size: 13px; text-align: left }
+
+.answer { background: var(--card); border: 1px solid var(--line); border-left: 4px solid var(--ink); border-radius: 4px; padding: 18px 22px }
+.answer.refused { border-left-color: var(--faint) }
+.answer .who { color: var(--muted); font-size: 13px; margin-bottom: 6px }
+.answer .text { font-size: 18px; line-height: 1.45; white-space: pre-wrap }
+.answer .check { margin-top: 12px; font-size: 13px; color: var(--muted) }
+.answer .check.bad { color: var(--fail); font-weight: 600 }
+.empty { color: var(--muted); padding: 24px 0 }
+
+.sources h2 { font-size: 15px; margin: 28px 0 10px }
+.source { border-top: 1px solid var(--line); padding: 14px 0 }
+.source .head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap }
+.source .system { font-size: 12px; font-weight: 700; padding: 1px 8px; border-radius: 2px; background: var(--line); color: var(--ink) }
+.source h3 { font-size: 16px }
+.source .where { color: var(--muted); font-size: 13px }
+.source .cited { font-size: 12px; color: var(--accent-deep); font-weight: 700 }
+.source blockquote { margin: 8px 0 0; color: var(--ink-2); font-size: 14px; white-space: pre-wrap; max-width: 44rem }
+.source.denied { background: var(--card); border: 1px solid var(--fail); border-radius: 4px; padding: 14px 16px; margin: 8px 0 }
+.source .verdict { font-size: 13px; color: var(--fail); font-weight: 600; margin-top: 8px }
+.why { margin-top: 10px; border: 0; background: none; padding: 0; font-size: 13px; font-weight: 600; text-decoration: underline; text-underline-offset: 3px }
+
+/* The relation path: one node per hop from the person to the document, drawn in order when opened. */
+.chain { list-style: none; margin: 12px 0 0; padding: 0 0 0 4px }
+.chain li { position: relative; padding: 0 0 12px 24px; font-size: 14px; color: var(--ink-2); opacity: 1 }
+.chain li::before { content: ""; position: absolute; left: 0; top: 6px; width: 10px; height: 10px; border-radius: 50%; background: var(--card); border: 2px solid var(--ink) }
+.chain li::after { content: ""; position: absolute; left: 5px; top: 18px; bottom: 0; width: 2px; background: var(--line) }
+.chain li:last-child::after { display: none }
+.chain li:last-child::before { background: var(--accent); }
+.chain.drawing li { animation: hop .32s ease-out both }
+@keyframes hop { from { opacity: 0; transform: translateY(-6px) } to { opacity: 1; transform: none } }
+@media (prefers-reduced-motion: reduce) { .chain.drawing li { animation: none } }
+
+.rail { display: flex; flex-direction: column; gap: 22px }
+.rail section { background: var(--card); border: 1px solid var(--line); border-radius: 4px; padding: 16px 18px }
+.rail h2 { font-size: 14px; margin-bottom: 8px }
+.count { font-size: 40px; font-weight: 800; letter-spacing: -0.03em; line-height: 1 }
+.count.pass { color: var(--pass) }
+.rail .line { font-size: 13px; color: var(--ink-2); margin-top: 8px }
+.rail .line b.bad { color: var(--fail) }
+.rail .note { font-size: 12px; color: var(--muted); margin-top: 10px }
+.held { border-color: var(--wait) !important }
+.held .tag { color: var(--wait); font-weight: 700; font-size: 13px }
+.held .reason { font-size: 14px; margin: 6px 0 }
+.held .decide { display: flex; flex-direction: column; gap: 8px; margin-top: 12px }
+.held .decide button { border: 1px solid var(--ink); background: var(--card); border-radius: 4px; padding: 7px 10px; text-align: left; font-size: 13px }
+.held .decide button.primary { background: var(--ink); color: var(--paper) }
+.error { color: var(--fail); font-weight: 600 }
+
+@media (max-width: 900px) {
+  .top { padding: 16px }
+  .layout { grid-template-columns: minmax(0, 1fr); padding: 20px 16px 40px; gap: 28px }
+  .asking { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 4px }
+  .person { flex: none }
+  .ask button { padding: 0 14px }
+}
+</style>
+</head>
+<body data-surface="company search viewed as an employee">
+<header class="top">
+  <div class="brand"><strong>Copperline Search</strong><span>Drive, wiki and tickets, as the person asking can see them</span></div>
+  <form class="ask" id="ask">
+    <input id="question" aria-label="Question" placeholder="Ask about anything at Copperline" autocomplete="off">
+    <button id="go" type="submit">Search</button>
+  </form>
+  <div class="asking" id="people"><span>Viewing as</span></div>
+</header>
+
+<div class="layout">
+  <main>
+    <div class="modes" id="modes" role="group" aria-label="Permission check"></div>
+    <div class="examples" id="examples"></div>
+    <div id="result"><p class="empty">Pick a person, then ask. Try a question as Ravi, then as the person the document belongs to.</p></div>
+  </main>
+  <aside class="rail">
+    <section id="suite"></section>
+    <div id="held"></div>
+  </aside>
+</div>
+
+<script>
+const $ = (selector) => document.querySelector(selector);
+const MODE_NAMES = { post: "OpenFGA post-filter", pre: "OpenFGA pre-filter", naive: "No check, prompt only" };
+const view = { user: "ravi", mode: "post", state: null };
+
+function make(tag, className, text) {
+  const node = document.createElement(tag);
+  if (className) node.className = className;
+  // Model and document text always goes in as text, never as markup.
+  if (text !== undefined) node.textContent = text;
+  return node;
+}
+
+function initials(name) { return name.split(" ").map((part) => part[0]).join("") }
+function personName(id) { return view.state.people.find((person) => person.id === id).name }
+
+function drawPeople() {
+  const row = $("#people");
+  row.querySelectorAll("button").forEach((button) => button.remove());
+  for (const person of view.state.people) {
+    const button = make("button", "person");
+    button.type = "button";
+    button.title = person.title;
+    button.setAttribute("aria-pressed", String(person.id === view.user));
+    button.append(make("span", "face", initials(person.name)), make("span", "", person.name.split(" ")[0]));
+    button.onclick = () => { view.user = person.id; drawPeople() };
+    row.append(button);
+  }
+}
+
+function drawModes() {
+  const group = $("#modes");
+  group.replaceChildren();
+  for (const mode of ["post", "pre", "naive"]) {
+    const button = make("button", "", MODE_NAMES[mode]);
+    button.type = "button";
+    button.setAttribute("aria-pressed", String(mode === view.mode));
+    button.onclick = () => { view.mode = mode; drawModes() };
+    group.append(button);
+  }
+}
+
+function drawExamples() {
+  const box = $("#examples");
+  box.replaceChildren();
+  for (const pair of view.state.questions.slice(0, 6)) {
+    const button = make("button", "", pair.question);
+    button.type = "button";
+    button.onclick = () => { $("#question").value = pair.question; view.user = pair.denied; drawPeople() };
+    box.append(button);
+  }
+}
+
+function drawSuite() {
+  const box = $("#suite");
+  box.replaceChildren(make("h2", "", "Leak suite"));
+  const leaks = view.state.leaks;
+  if (!leaks) {
+    box.append(make("p", "line", "No run yet. Run `uv run search leaks` to test every permission pair."));
+    return;
+  }
+  const guarded = leaks.modes.post, naive = leaks.modes.naive;
+  box.append(make("div", "count" + (guarded.leaked === 0 ? " pass" : ""), String(guarded.leaked)));
+  box.append(make("p", "line", `documents leaked across ${leaks.pairs} permission test pairs with OpenFGA (pre-filter: ${leaks.modes.pre.leaked}).`));
+  const without = make("p", "line");
+  without.append("Without the check: ", make("b", "bad", `${naive.in_prompt} of ${leaks.pairs}`),
+    ` reached the model, ${naive.in_answer} came out in the answer.`);
+  box.append(without);
+  box.append(make("p", "line", `Allowed people still got their answer: ${guarded.answered_allowed} of ${leaks.pairs}.`));
+  box.append(make("p", "note", `${leaks.model}, $${leaks.cost.toFixed(4)} for the run.`));
+}
+
+function drawHeld() {
+  const box = $("#held");
+  box.replaceChildren();
+  for (const held of view.state.held) {
+    const card = make("section", "held");
+    card.append(make("h2", "", "Held for an admin"), make("p", "tag", `${held.title} is visible to ${personName(held.owner)} only`));
+    card.append(make("p", "reason", `Its access list ${held.reasons[0]}. Search will not guess who that is.`));
+    if (held.decision) {
+      card.append(make("p", "line", "The admin kept it owner-only."));
+    } else {
+      card.append(make("p", "note", "An admin decides: is that group an existing team, or should the ticket stay private?"));
+      const decide = make("div", "decide");
+      const map = make("button", "primary", "It is our Security team: grant them");
+      const keep = make("button", "", "Keep it owner-only");
+      map.onclick = () => settle(held.document, "map");
+      keep.onclick = () => settle(held.document, "keep");
+      decide.append(map, keep);
+      card.append(decide);
+    }
+    box.append(card);
+  }
+}
+
+async function settle(documentId, decision) {
+  const response = await fetch("/api/decide", { method: "POST", body: JSON.stringify({ document: documentId, decision }) });
+  view.state = await response.json();
+  drawHeld();
+}
+
+function chain(lines) {
+  const list = make("ol", "chain drawing");
+  lines.forEach((line, position) => {
+    const item = make("li", "", line);
+    item.style.animationDelay = `${position * 120}ms`;
+    list.append(item);
+  });
+  return list;
+}
+
+function drawSource(source) {
+  const card = make("article", "source" + (source.allowed ? "" : " denied"));
+  const head = make("div", "head");
+  head.append(make("span", "system", source.source), make("h3", "", source.title), make("span", "where", source.place));
+  if (source.cited) head.append(make("span", "cited", "cited"));
+  card.append(head, make("blockquote", "", source.text));
+  if (!source.allowed) {
+    card.append(make("p", "verdict", `${personName(view.user)} cannot open this. It reached the model anyway.`));
+    return card;
+  }
+  const why = make("button", "why", "Why can I see this?");
+  why.type = "button";
+  why.setAttribute("aria-expanded", "false");
+  why.onclick = () => {
+    const open = card.querySelector(".chain");
+    if (open) { open.remove(); why.setAttribute("aria-expanded", "false"); return }
+    card.append(chain(source.why));
+    why.setAttribute("aria-expanded", "true");
+  };
+  card.append(why);
+  return card;
+}
+
+function drawResult(result) {
+  const box = $("#result");
+  box.replaceChildren();
+  const refused = result.answer.startsWith("No document you can open");
+  const card = make("div", "answer" + (refused ? " refused" : ""));
+  card.append(make("p", "who", `Answer for ${personName(view.user)}, ${MODE_NAMES[view.mode]}`), make("p", "text", result.answer));
+  const leaked = result.sources.filter((source) => !source.allowed).length;
+  const check = view.mode === "post" ? `OpenFGA checked ${result.checked} documents and dropped ${result.dropped} chunks before the model read anything.`
+    : view.mode === "pre" ? `OpenFGA listed the ${result.checked} documents this person can open; retrieval searched only those.`
+    : `Nothing was checked. ${leaked} of the documents the model read are ones this person cannot open.`;
+  card.append(make("p", "check" + (leaked ? " bad" : ""), check));
+  box.append(card);
+  const list = make("section", "sources");
+  list.append(make("h2", "", result.sources.length ? "Sources the model read" : "No sources this person can open matched"));
+  result.sources.forEach((source) => list.append(drawSource(source)));
+  box.append(list);
+}
+
+$("#ask").onsubmit = async (event) => {
+  event.preventDefault();
+  const question = $("#question").value.trim();
+  if (!question) return;
+  $("#go").disabled = true;
+  $("#result").replaceChildren(make("p", "empty", `Searching as ${personName(view.user)}…`));
+  try {
+    const response = await fetch("/api/ask", { method: "POST", body: JSON.stringify({ user: view.user, question, mode: view.mode }) });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || "The search failed.");
+    drawResult(result);
+  } catch (error) {
+    $("#result").replaceChildren(make("p", "error", error.message));
+  }
+  $("#go").disabled = false;
+};
+
+(async () => {
+  view.state = await (await fetch("/api/state")).json();
+  const query = new URLSearchParams(location.search);
+  view.user = query.get("as") || view.user;
+  view.mode = query.get("mode") || view.mode;
+  drawPeople(); drawModes(); drawExamples(); drawSuite(); drawHeld();
+  if (query.get("q")) { $("#question").value = query.get("q"); $("#ask").requestSubmit() }
+})();
+</script>
+</body>
+</html>

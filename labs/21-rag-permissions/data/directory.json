@@ -1,0 +1,136 @@
+{
+ "company": "Copperline",
+ "about": "Copperline sells invoicing and payouts software to small businesses. 140 people, offices in Lisbon and Berlin.",
+ "users": [
+  {
+   "id": "maya",
+   "name": "Maya Okafor",
+   "title": "Chief Financial Officer",
+   "email": "maya@copperline.io"
+  },
+  {
+   "id": "priya",
+   "name": "Priya Shah",
+   "title": "VP Engineering",
+   "email": "priya@copperline.io"
+  },
+  {
+   "id": "ravi",
+   "name": "Ravi Menon",
+   "title": "Backend Engineer, Ledger team",
+   "email": "ravi@copperline.io"
+  },
+  {
+   "id": "dev",
+   "name": "Dev Arora",
+   "title": "Security Engineer",
+   "email": "dev@copperline.io"
+  },
+  {
+   "id": "lena",
+   "name": "Lena Fischer",
+   "title": "People Partner",
+   "email": "lena@copperline.io"
+  },
+  {
+   "id": "tom",
+   "name": "Tom Brandt",
+   "title": "Account Executive",
+   "email": "tom@copperline.io"
+  },
+  {
+   "id": "sam",
+   "name": "Sam Ortiz",
+   "title": "Support Lead",
+   "email": "sam@copperline.io"
+  },
+  {
+   "id": "jo",
+   "name": "Jo Kim",
+   "title": "Brand Designer (contractor)",
+   "email": "jo.kim@studiokim.design"
+  }
+ ],
+ "groups": [
+  {
+   "id": "all-staff",
+   "name": "All staff",
+   "members": [
+    "group:leadership",
+    "group:engineering",
+    "group:finance",
+    "group:people-team",
+    "group:sales",
+    "group:support"
+   ],
+   "email": "all-staff@groups.copperline.io"
+  },
+  {
+   "id": "leadership",
+   "name": "Leadership",
+   "members": [
+    "maya",
+    "priya"
+   ],
+   "email": "leadership@groups.copperline.io"
+  },
+  {
+   "id": "engineering",
+   "name": "Engineering",
+   "members": [
+    "priya",
+    "ravi",
+    "group:security"
+   ],
+   "email": "engineering@groups.copperline.io"
+  },
+  {
+   "id": "security",
+   "name": "Security",
+   "members": [
+    "dev"
+   ],
+   "email": "security@groups.copperline.io"
+  },
+  {
+   "id": "finance",
+   "name": "Finance",
+   "members": [
+    "maya"
+   ],
+   "email": "finance@groups.copperline.io"
+  },
+  {
+   "id": "people-team",
+   "name": "People team",
+   "members": [
+    "lena"
+   ],
+   "email": "people-team@groups.copperline.io"
+  },
+  {
+   "id": "sales",
+   "name": "Sales",
+   "members": [
+    "tom"
+   ],
+   "email": "sales@groups.copperline.io"
+  },
+  {
+   "id": "support",
+   "name": "Support",
+   "members": [
+    "sam"
+   ],
+   "email": "support@groups.copperline.io"
+  },
+  {
+   "id": "contractors",
+   "name": "Contractors",
+   "members": [
+    "jo"
+   ],
+   "email": "contractors@groups.copperline.io"
+  }
+ ]
+}

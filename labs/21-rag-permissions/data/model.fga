@@ -1,0 +1,32 @@
+model
+  schema 1.1
+
+# A person, by their directory id. Every check asks about one.
+type user
+
+# Directory groups nest: Security's members are Engineering's members too.
+type group
+  relations
+    define member: [user, group#member]
+
+# A drive folder, a wiki space or a ticket project. Access flows down to what sits inside.
+type folder
+  relations
+    define parent: [folder]
+    define owner: [user]
+    define editor: [user, group#member] or owner or editor from parent
+    define viewer: [user, group#member] or editor or viewer from parent
+
+# A shared link is its own object: whoever was sent the link may open the file.
+type link
+  relations
+    define recipient: [user, group#member]
+
+# A file, a wiki page or a ticket. Viewer is the one relation search checks.
+type document
+  relations
+    define parent: [folder]
+    define shared_link: [link]
+    define owner: [user]
+    define editor: [user, group#member] or owner or editor from parent
+    define viewer: [user, group#member] or editor or viewer from parent or recipient from shared_link

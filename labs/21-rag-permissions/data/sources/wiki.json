@@ -1,0 +1,21 @@
+{
+  "$comment": "Mirrored from the company wiki in Confluence's shapes: space permissions grant view, and a page restriction narrows a page to the users and groups it lists.",
+  "spaces": [
+    {"key": "ENG", "name": "Engineering", "permissions": {"view": {"groups": ["engineering"], "users": []}}},
+    {"key": "HANDBOOK", "name": "Handbook", "permissions": {"view": {"groups": ["all-staff"], "users": []}}},
+    {"key": "PEOPLE", "name": "People", "permissions": {"view": {"groups": ["people-team", "leadership"], "users": []}}}
+  ],
+  "pages": [
+    {"id": "wiki-ledger-runbook", "space": "ENG", "title": "Ledger service runbook", "author": "ravi", "restrictions": null,
+     "body": "Ledger service runbook. The ledger writes every balance change for invoices and payouts.\n\nReplica failover is manual. If the primary is down for more than two minutes, run ledgerctl promote --replica ledger-db-2 from the bastion host, then page the payouts on-call.\n\nNever restart the ledger during the 02:00 payout batch. Check the batch dashboard first.\n\nAlerts: ledger_lag_seconds over 30 pages the Ledger team."},
+    {"id": "wiki-payout-postmortem", "space": "ENG", "title": "Postmortem: duplicate payouts on 14 September", "author": "dev",
+     "restrictions": {"read": {"groups": ["security"], "users": ["priya"]}},
+     "body": "Postmortem for the duplicate payouts incident on 14 September. Restricted while the bank investigation is open.\n\nA retry in the payout worker ignored the idempotency key after a timeout. 412 payouts were duplicated, a total of 96,300 euros.\n\nAll but 7,900 euros has been recovered from the receiving banks. The remaining customers were contacted by Support.\n\nFix: the worker now checks the ledger before every retry."},
+    {"id": "wiki-oncall-pay", "space": "HANDBOOK", "title": "On-call pay", "author": "lena", "restrictions": null,
+     "body": "On-call pay for employees on a rota.\n\nOn-call is paid at 38 euros per hour of standby on weekends and public holidays, and 15 euros per hour on weeknights.\n\nAn incident you are paged for adds your normal hourly rate for the time you work it.\n\nLog your shifts in the HR tool by the 25th of the month."},
+    {"id": "wiki-parental-leave", "space": "HANDBOOK", "title": "Parental leave", "author": "lena", "restrictions": null,
+     "body": "Parental leave at Copperline.\n\nEvery parent gets 20 weeks of fully paid leave, taken in up to three blocks within two years of the birth or adoption.\n\nTell your manager and the People team eight weeks ahead."},
+    {"id": "wiki-platform-reorg", "space": "PEOPLE", "title": "Platform reorg plan", "author": "lena", "restrictions": null,
+     "body": "Platform reorg plan. Draft for leadership, not announced.\n\nOn 1 December the Ledger and Payouts teams merge into one Money Movement team under one engineering manager.\n\nThe two manager roles become one. The other manager moves to lead the Brightwater integration.\n\nAnnouncement planned for the all-hands on 26 November."}
+  ]
+}
