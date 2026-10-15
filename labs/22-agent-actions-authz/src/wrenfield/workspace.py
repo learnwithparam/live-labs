@@ -106,10 +106,14 @@ class Workspace:
         return {"branches": self.origin_heads(), "tables": {env: self.tables(env) for env in self.databases}}
 
     def file(self, path: str) -> Path:
+        # Relative only: an absolute path inside the repo would reach migrations/ without the policy seeing it.
+        if Path(path).is_absolute():
+            raise ToolFailed(f"{path} must be relative to the repo root.")
         target = (self.repo / path).resolve()
         if self.repo.resolve() not in target.parents:
             raise ToolFailed(f"{path} is outside the repo.")
-        if target.relative_to(self.repo.resolve()).parts[0] == ".git":
+        # Case-folded: on a case-insensitive disk ".GIT/config" is git's config, which can name a command to run.
+        if target.relative_to(self.repo.resolve()).parts[0].casefold() == ".git":
             raise ToolFailed(f"{path} is git's own folder, not the code.")
         return target
 

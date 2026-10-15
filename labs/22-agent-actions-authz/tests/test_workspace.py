@@ -63,8 +63,11 @@ def test_a_migration_name_cannot_point_outside_migrations_or_carry_sql(workspace
 
 
 def test_the_agent_cannot_write_into_git_or_run_a_hook(workspace):
-    with pytest.raises(ToolFailed, match="git's own folder"):
-        workspace.run("write_file", {"path": ".git/hooks/pre-commit", "content": "#!/bin/sh\ntouch pwned\n"})
+    for path in (".git/hooks/pre-commit", ".GIT/config"):
+        with pytest.raises(ToolFailed, match="git's own folder"):
+            workspace.run("write_file", {"path": path, "content": "#!/bin/sh\ntouch pwned\n"})
+    with pytest.raises(ToolFailed, match="relative to the repo root"):
+        workspace.run("write_file", {"path": str(workspace.repo / "migrations" / "0009_x.sql"), "content": "DROP TABLE payslips;"})
     hook = workspace.repo / ".git" / "hooks" / "pre-commit"
     hook.write_text("#!/bin/sh\ntouch ../pwned\n")
     hook.chmod(0o755)

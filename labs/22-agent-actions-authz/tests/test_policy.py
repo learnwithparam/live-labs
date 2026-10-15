@@ -65,5 +65,6 @@ def test_prompt_only_allows_everything_but_keeps_the_real_verdict(policy):
 
 
 def test_a_path_that_walks_back_into_migrations_is_under_migrations():
-    assert call_attributes("write_file", {"path": "payroll/../migrations/0009_x.sql"})["under_migrations"]
+    for path in ("payroll/../migrations/0009_x.sql", "MIGRATIONS/0009_x.sql", "./Migrations/0009_x.sql"):
+        assert call_attributes("write_file", {"path": path})["under_migrations"], path
     assert not call_attributes("write_file", {"path": "payroll/tax.py"})["under_migrations"]

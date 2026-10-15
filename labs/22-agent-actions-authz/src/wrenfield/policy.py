@@ -42,8 +42,8 @@ def call_attributes(tool: str, args: dict, lines_changed: int = 0) -> dict:
         "destructive": destructive(tool),
         "branch_protected": is_protected(args.get("branch", "")) if args.get("branch") else False,
         "environment": args.get("environment", ""),
-        # Normalised first, so "payroll/../migrations/x.sql" is under migrations/ as the tool will see it.
-        "under_migrations": Path(posixpath.normpath(args.get("path", "") or ".")).parts[:1] == ("migrations",),
+        # Normalised and case-folded, so "payroll/../MIGRATIONS/x.sql" is under migrations/ as the disk sees it.
+        "under_migrations": Path(posixpath.normpath(args.get("path", "") or ".").casefold()).parts[:1] == ("migrations",),
         "lines_changed": lines_changed,
     }
 
