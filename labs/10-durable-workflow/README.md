@@ -128,15 +128,15 @@ uv run refund review
 
 Expect: /durable\s+0\s+0\s+/
 
-In our run on 8 refunds, $3,901 due in total:
+In our run on `openai/gpt-6-luna` on 8 refunds, $3,901 due in total:
 
 | Way | Paid twice | Lost | Paid the right amount | Model calls | Dollars out |
 | --- | --- | --- | --- | --- | --- |
-| Plain script | 6 | 0 | 0 of 6 | 14 | $8,846 |
-| Temporal workflow | 0 | 0 | 5 of 6 | 12 | $4,423 |
+| Plain script | 6 | 0 | 0 of 6 | 14 | $7,802 |
+| Temporal workflow | 0 | 0 | 5 of 6 | 13 | $3,876 |
 
 The plain script paid every refund it reached twice. The workflow paid each once, though the worker
-died 6 times. Its 4 extra model calls were decide steps still running in the worker when it died.
+died 5 times. Its 5 extra model calls were decide steps still running in the worker when it died.
 They had no result to record, so Temporal ran them again. A finished decision was never asked again.
 
 Paying the right amount is a separate question: one decided amount did not match finance's ruling.
