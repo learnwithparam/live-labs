@@ -13,8 +13,8 @@ PAGE = Path(__file__).with_name("page.html")
 DECISIONS = ("label", "runbook")
 
 
-def shown(p: Passage) -> dict:
-    return {"id": p.id, "doc": p.doc, "section": p.section, "page": p.page, "text": p.text}
+def shown(passage: Passage) -> dict:
+    return {"id": passage.id, "doc": passage.doc, "section": passage.section, "page": passage.page, "text": passage.text}
 
 
 class Room:
@@ -29,14 +29,14 @@ class Room:
     def find(self, question: str, how: str) -> dict:
         with self.lock:
             hits = self.search.find(question, how)
-            label = next((g for g in self.golden if g.question == question), None)
+            label = next((label for label in self.golden if label.question == question), None)
             ranks = {way: rank_of(self.search, label, way) for way in WAYS} if label else None
         return {
             "how": how,
-            "hits": [shown(h.passage) | {"score": round(h.score, 3)} for h in hits],
+            "hits": [shown(hit.passage) | {"score": round(hit.score, 3)} for hit in hits],
             "label": label.passage if label else None,
             # The labelled section in full, so a person can read it beside what the search returned.
-            "labelled": next((shown(p) for p in self.search.passages if label and p.id == label.passage), None),
+            "labelled": next((shown(passage) for passage in self.search.passages if label and passage.id == label.passage), None),
             "ranks": ranks,
         }
 
@@ -89,9 +89,9 @@ def handler(room: Room) -> type[BaseHTTPRequestHandler]:
             if self.path == "/":
                 return self.send(200, PAGE.read_bytes(), "text/html; charset=utf-8")
             if self.path == "/api/room":
-                docs = sorted({p.doc for p in room.search.passages})
+                docs = sorted({passage.doc for passage in room.search.passages})
                 return self.send_json({"docs": docs, "sections": len(room.search.passages), "ways": WAYS,
-                                       "questions": [g.question for g in room.golden], "decisions": room.decisions()})
+                                       "questions": [label.question for label in room.golden], "decisions": room.decisions()})
             if self.path == "/api/quality":
                 return self.send_json(room.quality())
             self.send(404, b"not found", "text/plain")

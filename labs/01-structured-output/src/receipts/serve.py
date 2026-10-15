@@ -33,7 +33,7 @@ def arithmetic(reply: str) -> dict | None:
 
 
 def attempts(history: list[Attempt]) -> list[dict]:
-    return [{"reply": a.reply, "error": a.error, "sum": arithmetic(a.reply)} for a in history]
+    return [{"reply": attempt.reply, "error": attempt.error, "sum": arithmetic(attempt.reply)} for attempt in history]
 
 
 def charge_row(charge: Charge) -> dict:
@@ -52,7 +52,7 @@ class Desk:
 
     def extract(self, name: str) -> dict:
         self.results.pop(name, None)
-        taken = {r["charge"]["id"] for r in self.results.values() if r["charge"]}
+        taken = {result["charge"]["id"] for result in self.results.values() if result["charge"]}
         settled = settle(read_receipt(self.files[name]), self.client, self.model, self.charges, taken)
         done = settled.extraction or settled.failed
         found = settled.match
@@ -104,8 +104,8 @@ def handler(desk: Desk) -> type[BaseHTTPRequestHandler]:
             if self.path == "/":
                 return self.send(200, PAGE.read_bytes(), "text/html; charset=utf-8")
             if self.path == "/api/receipts":
-                names = [{"name": n, "kind": p.suffix[1:]} for n, p in desk.files.items()]
-                charges = [charge_row(c) for c in desk.charges]
+                names = [{"name": name, "kind": path.suffix[1:]} for name, path in desk.files.items()]
+                charges = [charge_row(charge) for charge in desk.charges]
                 return self.send_json({"model": desk.model, "receipts": names, "charges": charges, "results": desk.results})
             name = self.path.removeprefix("/files/")
             if name in desk.files:

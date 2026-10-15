@@ -25,18 +25,18 @@ class Shop:
             create table changes (seq integer primary key, kind text, order_id text, amount real, detail text);
             create table handoffs (seq integer primary key, reason text);
         """)
-        for o in seed["orders"]:
+        for order in seed["orders"]:
             self.db.execute("insert into orders values (?,?,?,?,?,?,?,?,?)",
-                            (o["id"], o["customer"], o["name"], o["item"], o["total"], o["status"], o["address"],
-                             o.get("delivered"), json.dumps(o.get("shipment"))))
+                            (order["id"], order["customer"], order["name"], order["item"], order["total"], order["status"], order["address"],
+                             order.get("delivered"), json.dumps(order.get("shipment"))))
 
     def order(self, order_id: str) -> dict | None:
         row = self.db.execute("select * from orders where id = ?", (order_id,)).fetchone()
         return {**dict(row), "shipment": json.loads(row["shipment"])} if row else None
 
     def orders_of(self, customer: str) -> list[dict]:
-        ids = [r["id"] for r in self.db.execute("select id from orders where customer = ? order by id desc", (customer,))]
-        return [self.order(i) for i in ids]
+        ids = [row["id"] for row in self.db.execute("select id from orders where customer = ? order by id desc", (customer,))]
+        return [self.order(order_id) for order_id in ids]
 
     def customer_name(self, customer: str) -> str:
         return self.db.execute("select name from orders where customer = ?", (customer,)).fetchone()["name"]
@@ -53,7 +53,7 @@ class Shop:
         self.db.execute("insert into handoffs (reason) values (?)", (reason,))
 
     def changes(self) -> list[dict]:
-        return [dict(r) for r in self.db.execute("select kind, order_id, amount, detail from changes order by seq")]
+        return [dict(row) for row in self.db.execute("select kind, order_id, amount, detail from changes order by seq")]
 
     def handoffs(self) -> list[str]:
-        return [r["reason"] for r in self.db.execute("select reason from handoffs order by seq")]
+        return [row["reason"] for row in self.db.execute("select reason from handoffs order by seq")]

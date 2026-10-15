@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<link rel="icon" href="data:,">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Northbeck product import</title>
 <style>
@@ -202,8 +203,8 @@ td small { display: block; color: var(--muted); font-size: 13px; margin-top: 2px
 </div>
 
 <script>
-const $ = (s) => document.querySelector(s)
-const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c])
+const $ = (selector) => document.querySelector(selector)
+const escapeHtml = (value) => String(value).replace(/[&<>"]/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[char])
 let products = [], how = 'workflow', current = null
 
 // The steps in the order the workflow declares them; the three writers share a start time.
@@ -211,37 +212,37 @@ const STEPS = { workflow: ['extract', 'title', 'description', 'features', 'check
 
 async function boot() {
   products = await (await fetch('/api/products')).json()
-  $('#product').innerHTML = products.map((p) => `<option value="${p.id}">${esc(p.product)}</option>`).join('')
+  $('#product').innerHTML = products.map((product) => `<option value="${product.id}">${escapeHtml(product.product)}</option>`).join('')
   showSheet([])
   renderRows([])
 }
 
-function product() { return products.find((p) => p.id === $('#product').value) }
+function product() { return products.find((option) => option.id === $('#product').value) }
 
 // Mark each quoted fact on the sheet. Quotes are matched loosely on spacing, as the workflow matched them.
 function showSheet(facts) {
-  const p = product(), sheet = p.sheet
-  $('#sheet-name').textContent = `${p.id}.txt`
+  const chosen = product(), sheet = chosen.sheet
+  $('#sheet-name').textContent = `${chosen.id}.txt`
   const ranges = []
-  for (const f of facts) {
-    const words = f.quote.trim().split(/\s+/).map((w) => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
-    const m = new RegExp(words.join('\\s+'), 'i').exec(sheet)
-    if (m && !ranges.some((r) => m.index < r.end && m.index + m[0].length > r.start)) ranges.push({ start: m.index, end: m.index + m[0].length, f })
+  for (const fact of facts) {
+    const words = fact.quote.trim().split(/\s+/).map((word) => word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+    const found = new RegExp(words.join('\\s+'), 'i').exec(sheet)
+    if (found && !ranges.some((range) => found.index < range.end && found.index + found[0].length > range.start)) ranges.push({ start: found.index, end: found.index + found[0].length, f: fact })
   }
-  ranges.sort((a, b) => a.start - b.start)
+  ranges.sort((left, right) => left.start - right.start)
   let html = '', at = 0
-  for (const r of ranges) {
-    html += esc(sheet.slice(at, r.start)) + `<mark data-f="${r.f.id}" class="${r.f.limit ? 'limit' : ''}" title="${r.f.id}: ${esc(r.f.fact)}">${esc(sheet.slice(r.start, r.end))}</mark>`
-    at = r.end
+  for (const range of ranges) {
+    html += escapeHtml(sheet.slice(at, range.start)) + `<mark data-f="${range.f.id}" class="${range.f.limit ? 'limit' : ''}" title="${range.f.id}: ${escapeHtml(range.f.fact)}">${escapeHtml(sheet.slice(range.start, range.end))}</mark>`
+    at = range.end
   }
-  $('#sheet').innerHTML = html + esc(sheet.slice(at))
+  $('#sheet').innerHTML = html + escapeHtml(sheet.slice(at))
 }
 
 // Lanes on a shared clock: a bar starts when its step starts and grows until it ends.
 let lanes = {}, t0 = 0, ticking = null
 function startRun() {
   lanes = {}
-  $('#lanes').innerHTML = STEPS[how].map((s) => `<div class="lane idle" data-step="${s}"><span class="name">${s}</span><div class="track"><div class="bar-fill" hidden></div></div><span class="ms"></span></div>`).join('')
+  $('#lanes').innerHTML = STEPS[how].map((step) => `<div class="lane idle" data-step="${step}"><span class="name">${step}</span><div class="track"><div class="bar-fill" hidden></div></div><span class="ms"></span></div>`).join('')
   $('#run-title').textContent = how === 'workflow' ? 'Workflow run' : 'One prompt run'
   $('#fork').hidden = true
   $('#run').hidden = false
@@ -252,30 +253,30 @@ function startRun() {
 function draw() {
   const now = performance.now() - t0
   $('#clock').textContent = `${(now / 1000).toFixed(1)} s`
-  const span = Math.max(now, ...Object.values(lanes).map((l) => l.end ?? 0), 1)
-  for (const [step, l] of Object.entries(lanes)) {
+  const span = Math.max(now, ...Object.values(lanes).map((timing) => timing.end ?? 0), 1)
+  for (const [step, timing] of Object.entries(lanes)) {
     const lane = document.querySelector(`.lane[data-step="${step}"]`)
     const bar = lane.querySelector('.bar-fill')
-    const end = l.end ?? now
+    const end = timing.end ?? now
     bar.hidden = false
-    bar.style.left = `${(l.start / span) * 100}%`
-    bar.style.width = `${((end - l.start) / span) * 100}%`
-    lane.querySelector('.ms').textContent = `${Math.round(end - l.start)} ms`
+    bar.style.left = `${(timing.start / span) * 100}%`
+    bar.style.width = `${((end - timing.start) / span) * 100}%`
+    lane.querySelector('.ms').textContent = `${Math.round(end - timing.start)} ms`
   }
 }
-function onStep(e) {
-  const lane = document.querySelector(`.lane[data-step="${e.step}"]`)
+function onStep(event) {
+  const lane = document.querySelector(`.lane[data-step="${event.step}"]`)
   if (!lane) return
   lane.classList.remove('idle')
-  if (e.phase === 'start') { lanes[e.step] = { start: e.ms }; lane.classList.add('live') }
-  else { lanes[e.step].end = e.ms; lane.classList.remove('live') }
-  if (e.step === 'publish' || e.step === 'repair') {
-    lane.classList.add(e.step)
+  if (event.phase === 'start') { lanes[event.step] = { start: event.ms }; lane.classList.add('live') }
+  else { lanes[event.step].end = event.ms; lane.classList.remove('live') }
+  if (event.step === 'publish' || event.step === 'repair') {
+    lane.classList.add(event.step)
     // Only one branch runs; the other lane stays empty, which is the point of a branch.
-    const other = document.querySelector(`.lane[data-step="${e.step === 'publish' ? 'repair' : 'publish'}"]`)
+    const other = document.querySelector(`.lane[data-step="${event.step === 'publish' ? 'repair' : 'publish'}"]`)
     other.querySelector('.ms').textContent = 'skipped'
     $('#fork').hidden = false
-    $('#fork').textContent = e.step === 'publish' ? 'Every claim passed the check, so the branch took publish.' : 'Some claims failed the check, so the branch took repair.'
+    $('#fork').textContent = event.step === 'publish' ? 'Every claim passed the check, so the branch took publish.' : 'Some claims failed the check, so the branch took repair.'
   }
   draw()
 }
@@ -288,13 +289,13 @@ function write() {
   showSheet([])
   startRun()
   const src = new EventSource(`/api/write?id=${encodeURIComponent($('#product').value)}&how=${how}`)
-  src.addEventListener('step', (m) => onStep(JSON.parse(m.data)))
-  src.addEventListener('done', (m) => {
+  src.addEventListener('step', (message) => onStep(JSON.parse(message.data)))
+  src.addEventListener('done', (message) => {
     src.close()
     clearInterval(ticking)
     draw()
     $('#write').disabled = false
-    current = JSON.parse(m.data)
+    current = JSON.parse(message.data)
     show(current)
   })
   src.onerror = () => {
@@ -306,7 +307,7 @@ function write() {
 }
 
 function show({ listing, edits, clean }) {
-  const p = product()
+  const chosen = product()
   $('#result').hidden = false
   $('#badge').className = `badge ${listing.status}`
   $('#badge').textContent = listing.status === 'published' ? 'Published' : 'Held for review'
@@ -315,36 +316,36 @@ function show({ listing, edits, clean }) {
   const audit = $('#audit')
   audit.className = `audit${edits.length ? '' : ' clean'}`
   audit.innerHTML = edits.length
-    ? `<b>Merchant audit: ${edits.length === 1 ? 'one edit' : `${edits.length} edits`} before this can stay live</b><ul>${edits.map((e) => `<li>${esc(e.why)}${e.says !== '(missing)' ? ` <em>"${esc(e.says)}"</em>` : ''}</li>`).join('')}</ul>`
+    ? `<b>Merchant audit: ${edits.length === 1 ? 'one edit' : `${edits.length} edits`} before this can stay live</b><ul>${edits.map((edit) => `<li>${escapeHtml(edit.why)}${edit.says !== '(missing)' ? ` <em>"${escapeHtml(edit.says)}"</em>` : ''}</li>`).join('')}</ul>`
     : `<b>Merchant audit: nothing to edit${clean ? '' : ' in the copy'}</b>`
   // A sentence the merchant would edit is underlined even when the workflow's own check passed it.
-  const flagged = (text) => edits.find((e) => e.says !== '(missing)' && text.includes(e.says.slice(0, 40)))
-  const claim = (i) => {
-    const flag = flagged(i.text)
-    const bad = !i.ok || flag
-    const cites = i.facts.length ? `<span class="cites">${i.facts.join(' ')}</span>` : ''
-    const why = !i.ok ? i.why : flag ? flag.why : ''
-    return `<span class="claim${bad ? ' bad' : ''}" data-facts="${i.facts.join(' ')}">${esc(i.text)}</span>${cites}${why ? `<span class="why">${esc(why)}</span>` : ''}`
+  const flagged = (text) => edits.find((edit) => edit.says !== '(missing)' && text.includes(edit.says.slice(0, 40)))
+  const claim = (item) => {
+    const flag = flagged(item.text)
+    const bad = !item.ok || flag
+    const cites = item.facts.length ? `<span class="cites">${item.facts.join(' ')}</span>` : ''
+    const why = !item.ok ? item.why : flag ? flag.why : ''
+    return `<span class="claim${bad ? ' bad' : ''}" data-facts="${item.facts.join(' ')}">${escapeHtml(item.text)}</span>${cites}${why ? `<span class="why">${escapeHtml(why)}</span>` : ''}`
   }
-  const of = (part) => listing.items.filter((i) => i.part === part && i.text)
+  const of = (part) => listing.items.filter((item) => item.part === part && item.text)
   const title = of('title')[0]
-  $('#pdp').innerHTML = !listing.items.length ? `<p class="empty">${esc(listing.why)}</p>` : `
-    <h2>${title ? claim(title) : esc(p.product)}</h2>
-    <div class="price">€${p.price}</div>
+  $('#pdp').innerHTML = !listing.items.length ? `<p class="empty">${escapeHtml(listing.why)}</p>` : `
+    <h2>${title ? claim(title) : escapeHtml(chosen.product)}</h2>
+    <div class="price">€${chosen.price}</div>
     <p class="desc">${of('description').map(claim).join(' ')}</p>
-    <ul>${of('feature').map((i) => `<li>${claim(i)}</li>`).join('')}</ul>
-    ${listing.cut.length ? `<div class="cutlist">Cut by repair, because no fact supports it:${listing.cut.map((c) => `<s>${esc(c)}</s>`).join('')}</div>` : ''}`
+    <ul>${of('feature').map((item) => `<li>${claim(item)}</li>`).join('')}</ul>
+    ${listing.cut.length ? `<div class="cutlist">Cut by repair, because no fact supports it:${listing.cut.map((sentence) => `<s>${escapeHtml(sentence)}</s>`).join('')}</div>` : ''}`
   showSheet(listing.facts)
   if (how === 'one-prompt') $('#sheet-name').textContent += ' (nothing quoted: one prompt cites no facts)'
 }
 
 // Click a claim to see the words on the sheet it stands on.
-$('#pdp').addEventListener('click', (e) => {
-  const c = e.target.closest('.claim')
-  document.querySelectorAll('.claim.on, .sheet mark.on').forEach((n) => n.classList.remove('on'))
-  if (!c) return
-  c.classList.add('on')
-  const ids = c.dataset.facts.split(' ').filter(Boolean)
+$('#pdp').addEventListener('click', (event) => {
+  const clicked = event.target.closest('.claim')
+  document.querySelectorAll('.claim.on, .sheet mark.on').forEach((element) => element.classList.remove('on'))
+  if (!clicked) return
+  clicked.classList.add('on')
+  const ids = clicked.dataset.facts.split(' ').filter(Boolean)
   ids.forEach((id) => document.querySelector(`.sheet mark[data-f="${id}"]`)?.classList.add('on'))
   document.querySelector('.sheet mark.on')?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
 })
@@ -358,37 +359,37 @@ async function decide(decision) {
 $('#anyway').onclick = () => decide('publish anyway')
 $('#edit').onclick = () => decide('edit')
 
-document.querySelectorAll('.how button').forEach((b) => (b.onclick = () => {
-  how = b.dataset.how
-  document.querySelectorAll('.how button').forEach((x) => x.setAttribute('aria-pressed', String(x === b)))
+document.querySelectorAll('.how button').forEach((button) => (button.onclick = () => {
+  how = button.dataset.how
+  document.querySelectorAll('.how button').forEach((button) => button.setAttribute('aria-pressed', String(button === button)))
 }))
 $('#product').onchange = () => { showSheet([]); $('#result').hidden = true; $('#run').hidden = true; $('#pdp').innerHTML = '<p class="empty">Write this listing to see its product page.</p>' }
 $('#write').onclick = write
-document.querySelectorAll('.views button').forEach((b) => (b.onclick = () => {
-  document.querySelectorAll('.views button').forEach((x) => x.setAttribute('aria-selected', String(x === b)))
-  $('#one').hidden = b.dataset.view !== 'one'
-  $('#all').hidden = b.dataset.view !== 'all'
+document.querySelectorAll('.views button').forEach((button) => (button.onclick = () => {
+  document.querySelectorAll('.views button').forEach((button) => button.setAttribute('aria-selected', String(button === button)))
+  $('#one').hidden = button.dataset.view !== 'one'
+  $('#all').hidden = button.dataset.view !== 'all'
 }))
 
 // The catalogue view: rows fill in as each listing lands, both ways side by side.
 let rows = []
-function outcome(r) {
-  if (!r) return '<span class="pill wait">waiting</span>'
-  if (r.clean) return '<span class="pill clean">live, nothing to edit</span>'
-  if (r.listing.status === 'held') return `<span class="pill held">held</span><small>${esc(r.listing.why)}</small>`
-  return `<span class="pill wrong">live with ${r.edits.length === 1 ? 'an error' : 'errors'}</span><small>${esc(r.edits[0].why)}</small>`
+function outcome(row) {
+  if (!row) return '<span class="pill wait">waiting</span>'
+  if (row.clean) return '<span class="pill clean">live, nothing to edit</span>'
+  if (row.listing.status === 'held') return `<span class="pill held">held</span><small>${escapeHtml(row.listing.why)}</small>`
+  return `<span class="pill wrong">live with ${row.edits.length === 1 ? 'an error' : 'errors'}</span><small>${escapeHtml(row.edits[0].why)}</small>`
 }
 function renderRows(list) {
   rows = list
-  const find = (id, h) => rows.find((r) => r.id === id && r.how === h)
-  $('#rows').innerHTML = products.map((p) => `<tr><td>${esc(p.product)}</td><td>${outcome(find(p.id, 'one-prompt'))}</td><td>${outcome(find(p.id, 'workflow'))}</td></tr>`).join('')
-  for (const h of ['one-prompt', 'workflow']) {
-    const mine = rows.filter((r) => r.how === h)
-    const n = (f) => mine.filter(f).length
-    const clean = n((r) => r.clean), held = n((r) => r.listing.status === 'held'), wrong = mine.length - clean - held
-    const pct = (k) => `${(k / products.length) * 100}%`
-    const cost = mine.reduce((s, r) => s + r.listing.cost, 0)
-    $(`#t-${h}`).innerHTML = `<b>${h === 'workflow' ? 'Workflow' : 'One prompt'}</b>
+  const find = (id, way) => rows.find((row) => row.id === id && row.how === way)
+  $('#rows').innerHTML = products.map((product) => `<tr><td>${escapeHtml(product.product)}</td><td>${outcome(find(product.id, 'one-prompt'))}</td><td>${outcome(find(product.id, 'workflow'))}</td></tr>`).join('')
+  for (const way of ['one-prompt', 'workflow']) {
+    const mine = rows.filter((row) => row.how === way)
+    const countWhere = (test) => mine.filter(test).length
+    const clean = countWhere((row) => row.clean), held = countWhere((row) => row.listing.status === 'held'), wrong = mine.length - clean - held
+    const pct = (count) => `${(count / products.length) * 100}%`
+    const cost = mine.reduce((sum, row) => sum + row.listing.cost, 0)
+    $(`#t-${way}`).innerHTML = `<b>${way === 'workflow' ? 'Workflow' : 'One prompt'}</b>
       <div class="big">${clean}<small> of ${products.length} published without an edit</small></div>
       <div class="split"><i style="width:${pct(clean)};background:var(--pass)"></i><i style="width:${pct(held)};background:var(--wait)"></i><i style="width:${pct(wrong)};background:var(--fail)"></i></div>
       <div class="meta">${held} held for a person, ${wrong} live with errors, $${cost.toFixed(4)} in model calls</div>`
@@ -399,7 +400,7 @@ $('#import').onclick = () => {
   const got = []
   renderRows(got)
   const src = new EventSource('/api/review')
-  src.addEventListener('row', (m) => { got.push(JSON.parse(m.data)); renderRows(got) })
+  src.addEventListener('row', (message) => { got.push(JSON.parse(message.data)); renderRows(got) })
   src.addEventListener('done', () => { src.close(); $('#import').disabled = false })
   src.onerror = () => { src.close(); $('#import').disabled = false }
 }

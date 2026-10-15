@@ -28,8 +28,8 @@ class FakeClient:
         self.chat = SimpleNamespace(completions=SimpleNamespace(create=self.create))
 
     def create(self, **kwargs):
-        system, posting = (m["content"] for m in kwargs["messages"])
-        name = next(n for n, text in POSTINGS.items() if text == posting)
+        system, posting = (message["content"] for message in kwargs["messages"])
+        name = next(name for name, text in POSTINGS.items() if text == posting)
         fields = dict(GOLDEN[name])
         if name == "lumen-swe2.txt" and len(system.split()) < 30:
             fields |= LAKH
@@ -38,7 +38,7 @@ class FakeClient:
 
 
 def test_the_golden_set_labels_every_posting_in_the_filter_shape():
-    assert set(GOLDEN) == {p.name for p in (LAB / "data/postings").glob("*.txt")}
+    assert set(GOLDEN) == {path.name for path in (LAB / "data/postings").glob("*.txt")}
     for approved in GOLDEN.values():
         Posting.model_validate(approved)
 
@@ -60,7 +60,7 @@ def test_a_change_that_only_fixes_passes_the_gate():
     before = {**GOLDEN, "harbor-support-parttime.txt": {**GOLDEN["harbor-support-parttime.txt"], "seniority": "junior"}}
     verdict = gate(GOLDEN, before, GOLDEN)
     assert not verdict.blocked and not verdict.needs_person
-    assert [(c.posting, c.field) for c in verdict.fixed] == [("harbor-support-parttime.txt", "seniority")]
+    assert [(change.posting, change.field) for change in verdict.fixed] == [("harbor-support-parttime.txt", "seniority")]
 
 
 def start(bench: Bench):
@@ -80,7 +80,7 @@ def test_the_bench_scores_two_prompts_and_shows_what_needs_a_person():
         server.shutdown()
     assert {"shipped", "shorter", "years-rule"} <= set(listing["prompts"]) and len(listing["postings"]) == 14
     assert verdict["blocked"] and verdict["needs_person"] == ["lumen-swe2.txt"]
-    assert verdict["after"]["salary_min"] == 13 and verdict["before"] == {f: 14 for f in FIELDS}
+    assert verdict["after"]["salary_min"] == 13 and verdict["before"] == {field: 14 for field in FIELDS}
     assert verdict["right"]["lumen-swe2.txt"]["salary_min"] is False and verdict["right"]["acme-backend.txt"]["salary_min"] is True
     assert 'id="tally"' in page and "A person decides" in page
 

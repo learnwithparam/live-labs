@@ -22,12 +22,12 @@ def client_and_model():
 
 
 def receipts_in(folder: Path) -> list[Path]:
-    return sorted(p for p in folder.iterdir() if p.suffix.lower() in {".txt", ".pdf", *IMAGE_TYPES})
+    return sorted(path for path in folder.iterdir() if path.suffix.lower() in {".txt", ".pdf", *IMAGE_TYPES})
 
 
 def totals_in(reply: dict) -> dict:
     """Every top-level key that could be the total; a naive reply names its own, sometimes two."""
-    return {k: v for k, v in reply.items() if re.search(r"total|balance|amount_due", k, re.I) and not re.search(r"sub", k, re.I)}
+    return {field: value for field, value in reply.items() if re.search(r"total|balance|amount_due", field, re.I) and not re.search(r"sub", field, re.I)}
 
 
 def naive_all(folder: Path) -> int:
@@ -53,7 +53,7 @@ def naive_all(folder: Path) -> int:
         totals = totals_in(parsed)
         # A ledger needs one number under one known key; anything else means code has to guess.
         unusable += not isinstance(parsed.get("total"), (int, float))
-        shown = ", ".join(f"{k}={v!r}" for k, v in totals.items()) or "no total key"
+        shown = ", ".join(f"{field}={value!r}" for field, value in totals.items()) or "no total key"
         print(f"{path.name:24} {note:16} {len(parsed):2} keys  {shown}")
     print(f"{fenced}/{len(paths)} not JSON as sent, {len(shapes)} different shapes, {unusable} with no number under `total`, on {model}")
     return 0

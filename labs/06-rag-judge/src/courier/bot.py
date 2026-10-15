@@ -38,4 +38,4 @@ def draft(question: str, help_centre: HelpCentre, client, model: str) -> Drafted
     if got is None:
         return Drafted(None, [], cost)
     # A model can cite an id it was not shown; only real sections count as sources.
-    return Drafted(got.reply, [c for c in got.cited if c in help_centre.by_id], cost)
+    return Drafted(got.reply, [passage_id for passage_id in got.cited if passage_id in help_centre.by_id], cost)

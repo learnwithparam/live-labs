@@ -56,16 +56,16 @@ def learner_env(env_file: Path | None) -> dict[str, str]:
 
 
 def run(lab: Path, env: dict[str, str]) -> int:
-    with tempfile.TemporaryDirectory() as tmp:
-        work = Path(tmp) / lab.name
-        shutil.copytree(lab, work, ignore=lambda _, names: [n for n in names if n in SKIP])
-        for n, (cmd, expect) in enumerate(steps(lab / "README.md"), 1):
-            print(f"\n[{n}] $ {cmd}")
+    with tempfile.TemporaryDirectory() as scratch_dir:
+        work = Path(scratch_dir) / lab.name
+        shutil.copytree(lab, work, ignore=lambda _, names: [name for name in names if name in SKIP])
+        for number, (cmd, expect) in enumerate(steps(lab / "README.md"), 1):
+            print(f"\n[{number}] $ {cmd}")
             done = subprocess.run(cmd, shell=True, cwd=work, env=env, capture_output=True, text=True, timeout=900)
             output = done.stdout + done.stderr
             print(output.rstrip())
             if expect and not matches(expect, output):
-                print(f"\nFAIL step {n}: expected {expect!r} in the output")
+                print(f"\nFAIL step {number}: expected {expect!r} in the output")
                 return 1
     print(f"\nwalkthrough passed: {lab.name}")
     return 0

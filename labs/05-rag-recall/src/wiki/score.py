@@ -31,20 +31,20 @@ def rank_of(search: Search, label: Label, how: str) -> int | None:
     return ids.index(label.passage) + 1 if label.passage in ids else None
 
 
-def recall(ranks: list[int | None], k: int) -> int:
-    return sum(1 for r in ranks if r is not None and r <= k)
+def recall(ranks: list[int | None], top_k: int) -> int:
+    return sum(1 for rank in ranks if rank is not None and rank <= top_k)
 
 
 def evaluate(search: Search, golden: list[Label], ways: tuple[str, ...] = WAYS) -> dict:
     ranks = {how: [rank_of(search, label, how) for label in golden] for how in ways}
     best = ways[-1]
-    rows = [{"question": label.question, "passage": label.passage, "ranks": {how: ranks[how][i] for how in ways}} for i, label in enumerate(golden)]
+    rows = [{"question": label.question, "passage": label.passage, "ranks": {how: ranks[how][index] for how in ways}} for index, label in enumerate(golden)]
     # Still outside the top five on the best way: no search setting fixes these, so a person reads the
     # question and the passages that came back, and decides whether the label or the runbook is wrong.
     person = [row for row in rows if row["ranks"][best] is None or row["ranks"][best] > SHOWN]
     return {
         "total": len(golden),
-        "recall": {how: {k: recall(ranks[how], k) for k in KS} for how in ways},
+        "recall": {how: {top_k: recall(ranks[how], top_k) for top_k in KS} for how in ways},
         "rows": rows,
         "person": [row["question"] for row in person],
     }

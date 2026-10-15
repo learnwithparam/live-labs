@@ -10,7 +10,7 @@ import Stemmer
 
 from policy.ingest import Passage
 
-K = 3
+TOP_K = 3
 # "deploys" in a section must match "deploy" in a search; without a stemmer they are different words.
 STEM = Stemmer.Stemmer("english")
 
@@ -18,22 +18,22 @@ STEM = Stemmer.Stemmer("english")
 class Policies:
     def __init__(self, passages: list[Passage]):
         self.passages = passages
-        self.by_id = {p.id: p for p in passages}
+        self.by_id = {passage.id: passage for passage in passages}
         # The document title and heading go into the index too: "Freeze window" is the words a person searches.
-        corpus = [f"{p.doc} {p.section} {p.text}" for p in passages]
+        corpus = [f"{passage.doc} {passage.section} {passage.text}" for passage in passages]
         self.index = bm25s.BM25()
         self.index.index(bm25s.tokenize(corpus, stopwords="en", stemmer=STEM, show_progress=False), show_progress=False)
 
-    def search(self, query: str, k: int = K) -> list[Passage]:
+    def search(self, query: str, top_k: int = TOP_K) -> list[Passage]:
         tokens = bm25s.tokenize([query], stopwords="en", stemmer=STEM, show_progress=False)
-        found, scores = self.index.retrieve(tokens, k=min(k, len(self.passages)), show_progress=False)
+        found, scores = self.index.retrieve(tokens, k=min(top_k, len(self.passages)), show_progress=False)
         # A score of 0 means no shared word: that passage would only invite a guess.
-        return [self.passages[i] for i, s in zip(found[0], scores[0]) if s > 0]
+        return [self.passages[index] for index, score in zip(found[0], scores[0]) if score > 0]
 
     def get(self, ids: list[str]) -> list[Passage]:
-        return [self.by_id[i] for i in ids if i in self.by_id]
+        return [self.by_id[passage_id] for passage_id in ids if passage_id in self.by_id]
 
 
 def listing(passages: list[Passage]) -> str:
     # Each passage carries its id in brackets, so the model can cite exactly the one it used.
-    return "\n\n".join(f"[{p.id}] {p.doc}, {p.section}\n{p.text}" for p in passages)
+    return "\n\n".join(f"[{passage.id}] {passage.doc}, {passage.section}\n{passage.text}" for passage in passages)

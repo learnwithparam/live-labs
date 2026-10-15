@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<link rel="icon" href="data:,">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Prompt change review</title>
 <style>
@@ -129,24 +130,24 @@ const BEFORE = "shipped";
 const $ = (id) => document.getElementById(id);
 let bench, result = null, opened = null;
 
-function esc(v) { return (v === null || v === undefined ? "none" : String(v)).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c]) }
+function escapeHtml(value) { return (value === null || value === undefined ? "none" : String(value)).replace(/[&<>]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[char]) }
 function words(stem) { return bench.prompts[stem].trim().split(/\s+/).length }
 // Line one of a posting is the role, and line two starts with the company.
 function who(name) { const [role, where] = bench.postings[name].split("\n"); return { company: where.split(" · ")[0], role } }
 // Pay prints in full with separators, so 2,800,000 and 28 sit side by side and the gap is plain.
-function shown(v) { return typeof v === "number" ? v.toLocaleString("en-US") : esc(v) }
+function shown(value) { return typeof value === "number" ? value.toLocaleString("en-US") : escapeHtml(value) }
 
 // A line diff by longest common subsequence, enough for prompt files that fit on one screen.
-function diffLines(a, b) {
-  const x = a.split("\n"), y = b.split("\n"), n = x.length, m = y.length;
-  const L = Array.from({ length: n + 1 }, () => new Array(m + 1).fill(0));
-  for (let i = n - 1; i >= 0; i--) for (let j = m - 1; j >= 0; j--) L[i][j] = x[i] === y[j] ? L[i + 1][j + 1] + 1 : Math.max(L[i + 1][j], L[i][j + 1]);
-  const out = []; let i = 0, j = 0;
-  while (i < n || j < m) {
-    if (i < n && j < m && x[i] === y[j]) { out.push(["same", x[i]]); i++; j++ }
+function diffLines(beforeText, afterText) {
+  const beforeLines = beforeText.split("\n"), afterLines = afterText.split("\n"), beforeCount = beforeLines.length, afterCount = afterLines.length;
+  const common = Array.from({ length: beforeCount + 1 }, () => new Array(afterCount + 1).fill(0));
+  for (let beforeIndex = beforeCount - 1; beforeIndex >= 0; beforeIndex--) for (let afterIndex = afterCount - 1; afterIndex >= 0; afterIndex--) common[beforeIndex][afterIndex] = beforeLines[beforeIndex] === afterLines[afterIndex] ? common[beforeIndex + 1][afterIndex + 1] + 1 : Math.max(common[beforeIndex + 1][afterIndex], common[beforeIndex][afterIndex + 1]);
+  const out = []; let beforeIndex = 0, afterIndex = 0;
+  while (beforeIndex < beforeCount || afterIndex < afterCount) {
+    if (beforeIndex < beforeCount && afterIndex < afterCount && beforeLines[beforeIndex] === afterLines[afterIndex]) { out.push(["same", beforeLines[beforeIndex]]); beforeIndex++; afterIndex++ }
     // Removed lines print before the lines that replace them, the way a code review reads.
-    else if (i < n && (j === m || L[i + 1][j] >= L[i][j + 1])) out.push(["del", x[i++]]);
-    else out.push(["add", y[j++]]);
+    else if (beforeIndex < beforeCount && (afterIndex === afterCount || common[beforeIndex + 1][afterIndex] >= common[beforeIndex][afterIndex + 1])) out.push(["del", beforeLines[beforeIndex++]]);
+    else out.push(["add", afterLines[afterIndex++]]);
   }
   return out;
 }
@@ -156,14 +157,14 @@ function drawChange() {
   $("change-title").textContent = TITLES[after] || after;
   $("change-about").textContent = `Replaces the prompt in production (${words(BEFORE)} words) with prompts/${after}.txt (${words(after)} words). Scored with ${bench.model}.`;
   $("after-file").textContent = `prompts/${after}.txt`;
-  $("diff").innerHTML = diffLines(bench.prompts[BEFORE].trim(), bench.prompts[after].trim()).map(([k, t]) => `<div class="${k}">${esc(t) || " "}</div>`).join("");
+  $("diff").innerHTML = diffLines(bench.prompts[BEFORE].trim(), bench.prompts[after].trim()).map(([kind, line]) => `<div class="${kind}">${escapeHtml(line) || " "}</div>`).join("");
 }
 
 // The server lists every broken and fixed field; anything else is right with both prompts or wrong with both.
-function cellState(name, f) {
-  if (result.regressed.some((c) => c.posting === name && c.field === f)) return "broke";
-  if (result.fixed.some((c) => c.posting === name && c.field === f)) return "fixed";
-  return result.right[name][f] ? "held" : "wrong";
+function cellState(name, field) {
+  if (result.regressed.some((change) => change.posting === name && change.field === field)) return "broke";
+  if (result.fixed.some((change) => change.posting === name && change.field === field)) return "fixed";
+  return result.right[name][field] ? "held" : "wrong";
 }
 
 function drawCheck() {
@@ -176,24 +177,24 @@ function drawCheck() {
     : "Passed. No filter is right on fewer postings than before.";
   $("verdict-about").textContent = result.blocked
     ? `${result.needs_person.length} postings need a person to read them. The other ${held} held, so nobody reads those.`
-    : `${result.fixed.length ? "The change fixed " + result.fixed.map((c) => `${c.field} for ${who(c.posting).company}`).join(", ") + ". " : ""}No posting needs a person.`;
+    : `${result.fixed.length ? "The change fixed " + result.fixed.map((change) => `${change.field} for ${who(change.posting).company}`).join(", ") + ". " : ""}No posting needs a person.`;
   $("fields").hidden = false;
-  $("fields").innerHTML = FIELDS.map((f) => {
-    const b = result.before[f], a = result.after[f];
-    return `<div class="field ${a < b ? "worse" : a > b ? "better" : ""}"><div class="name">${f}</div><div class="score">${b} → ${a}</div><div class="of">right, of ${result.total}</div></div>`;
+  $("fields").innerHTML = FIELDS.map((field) => {
+    const beforeScore = result.before[field], afterScore = result.after[field];
+    return `<div class="field ${afterScore < beforeScore ? "worse" : afterScore > beforeScore ? "better" : ""}"><div class="name">${field}</div><div class="score">${beforeScore} → ${afterScore}</div><div class="of">right, of ${result.total}</div></div>`;
   }).join("");
 }
 
 function drawMatrix() {
   $("matrix-box").hidden = false;
   // The postings a person must read come first, so the reviewer starts where the work is.
-  const names = Object.keys(bench.golden).sort((p, q) => result.needs_person.includes(q) - result.needs_person.includes(p));
+  const names = Object.keys(bench.golden).sort((left, right) => result.needs_person.includes(right) - result.needs_person.includes(left));
   const after = result.runs[$("change").value].readings;
-  let html = `<tr><th>Posting</th>${FIELDS.map((f) => `<th>${f}</th>`).join("")}<th></th></tr>`;
+  let html = `<tr><th>Posting</th>${FIELDS.map((field) => `<th>${field}</th>`).join("")}<th></th></tr>`;
   for (const name of names) {
     const { company, role } = who(name), needs = result.needs_person.includes(name);
-    html += `<tr class="row" tabindex="0" data-name="${name}" aria-expanded="${name === opened}"><td class="who">${esc(company)}<small>${esc(role)}</small></td>` +
-      FIELDS.map((f) => `<td><span class="cell ${cellState(name, f)}">${shown(after[name][f])}</span></td>`).join("") +
+    html += `<tr class="row" tabindex="0" data-name="${name}" aria-expanded="${name === opened}"><td class="who">${escapeHtml(company)}<small>${escapeHtml(role)}</small></td>` +
+      FIELDS.map((field) => `<td><span class="cell ${cellState(name, field)}">${shown(after[name][field])}</span></td>`).join("") +
       `<td><span class="flag ${needs ? "" : "held"}">${needs ? "Needs a person" : "Held"}</span></td></tr>`;
     if (name === opened) html += `<tr class="open"><td colspan="${FIELDS.length + 2}">${detail(name)}</td></tr>`;
   }
@@ -201,34 +202,34 @@ function drawMatrix() {
   for (const tr of document.querySelectorAll("tr.row")) {
     const toggle = () => { opened = opened === tr.dataset.name ? null : tr.dataset.name; drawMatrix() };
     tr.onclick = toggle;
-    tr.onkeydown = (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggle() } };
+    tr.onkeydown = (event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); toggle() } };
   }
 }
 
 // Mark the pay in the posting, so the eye lands where the salary filters read.
 function highlight(text) {
-  let out = esc(text);
-  for (const pat of [/\d[\d,.]*\s*(?:-|to)\s*[\d,.]+\s*LPA/g, /[€$£]\s?[\d,.]+k?(?:\s*(?:-|to)\s*[€$£]?\s?[\d,.]+k?)?/g]) out = out.replace(pat, (m) => `<mark>${m}</mark>`);
+  let out = escapeHtml(text);
+  for (const pat of [/\d[\d,.]*\s*(?:-|to)\s*[\d,.]+\s*LPA/g, /[€$£]\s?[\d,.]+k?(?:\s*(?:-|to)\s*[€$£]?\s?[\d,.]+k?)?/g]) out = out.replace(pat, (match) => `<mark>${match}</mark>`);
   return out;
 }
 
 function detail(name) {
-  const broke = result.regressed.filter((c) => c.posting === name);
+  const broke = result.regressed.filter((change) => change.posting === name);
   let why;
   if (broke.length) {
     why = `<b class="wait">Needs a person.</b> The new prompt broke ${broke.length === 1 ? "one filter" : broke.length + " filters"} on this posting:<ul>` +
-      broke.map((c) => `<li><span class="broke">${c.field}</span> was ${shown(c.before)} with the prompt in production. Now it is ${shown(c.after)}. A person approved ${shown(c.approved)}.</li>`).join("") +
+      broke.map((change) => `<li><span class="broke">${change.field}</span> was ${shown(change.before)} with the prompt in production. Now it is ${shown(change.after)}. A person approved ${shown(change.approved)}.</li>`).join("") +
       `</ul><div class="decide"><b>A person decides</b> which side is wrong. If the new prompt is wrong, the change goes back. If the approved answer is wrong, it is corrected in data/golden.jsonl.</div>`;
   } else {
-    why = `<b class="held">Held.</b> Every filter a person approved is still right with prompts/${esc($("change").value)}.txt, so nobody needs to read this posting.`;
+    why = `<b class="held">Held.</b> Every filter a person approved is still right with prompts/${escapeHtml($("change").value)}.txt, so nobody needs to read this posting.`;
   }
   return `<div class="open-grid"><pre>${highlight(bench.postings[name])}</pre><div class="why">${why}</div></div>`;
 }
 
 function drawMerge() {
-  const m = $("merge"); m.hidden = false;
-  m.className = "box merge " + (result.blocked ? "blocked" : "ready");
-  m.innerHTML = result.blocked
+  const merge = $("merge"); merge.hidden = false;
+  merge.className = "box merge " + (result.blocked ? "blocked" : "ready");
+  merge.innerHTML = result.blocked
     ? `<div class="icon fail">✕</div><div><h3>This change cannot ship yet</h3><p>The golden set check failed on ${result.worse.length === 1 ? "one filter" : result.worse.length + " filters"}. A change ships only when no filter gets worse.</p></div>`
     : `<div class="icon pass">✓</div><div><h3>This change can ship</h3><p>The golden set check passed. Every filter is right on at least as many postings as before.</p></div>`;
 }
@@ -243,10 +244,10 @@ function reset() {
 }
 
 async function run() {
-  const button = $("run"), n = Object.keys(bench.golden).length;
-  button.disabled = true; button.textContent = `Reading ${n} postings with both prompts...`;
-  const res = await fetch(`/api/gate/${BEFORE}/${$("change").value}`, { method: "POST" });
-  result = await res.json();
+  const button = $("run"), count = Object.keys(bench.golden).length;
+  button.disabled = true; button.textContent = `Reading ${count} postings with both prompts...`;
+  const response = await fetch(`/api/gate/${BEFORE}/${$("change").value}`, { method: "POST" });
+  result = await response.json();
   button.disabled = false; button.textContent = "Run the golden set check";
   drawCheck(); drawMatrix(); drawMerge();
 }

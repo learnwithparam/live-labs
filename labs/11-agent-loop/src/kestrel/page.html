@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<link rel="icon" href="data:,">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Kestrel Outdoor help</title>
 <style>
@@ -149,54 +150,54 @@ h1, h2, h3 { margin: 0; letter-spacing: -0.01em }
 </main>
 <script>
 const $ = (id) => document.getElementById(id);
-const money = (n) => "$" + Number(n).toFixed(2);
-const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+const money = (amount) => "$" + Number(amount).toFixed(2);
+const escapeHtml = (value) => String(value ?? "").replace(/[&<>"]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[char]);
 const NAMES = { reply: "Reply only", loop: "Our loop", adk: "Google ADK" };
 let data, chat, engine = "loop", budget = { max_steps: 8, max_cost: 0.01 };
 
 function showOrders(orders, changes = []) {
   // An order the agent changed carries the change, so the left side shows what really moved.
-  const moved = Object.fromEntries(changes.map((c) => [c.order_id, c]));
-  $("orders").innerHTML = orders.map((o) => {
-    const c = moved[o.id];
-    const what = c ? `<div class="what">Changed by the agent: ${esc(c.kind)}${c.amount ? " " + money(c.amount) : ""}${c.detail ? ", " + esc(c.detail) : ""}</div>` : "";
-    return `<article class="order${c ? " changed" : ""}">
-      <div><div class="item">${esc(o.item)}</div><div class="meta">${esc(o.id)}${o.delivered ? ", delivered " + esc(o.delivered) : ""}</div></div>
-      <div class="right"><div class="total">${money(o.total)}</div><span class="status ${esc(o.status.replace(/ /g, "-"))}">${esc(o.status)}</span></div>
-      <div class="ship">Ships to ${esc(o.address)}</div>${what}</article>`;
+  const moved = Object.fromEntries(changes.map((change) => [change.order_id, change]));
+  $("orders").innerHTML = orders.map((order) => {
+    const change = moved[order.id];
+    const what = change ? `<div class="what">Changed by the agent: ${escapeHtml(change.kind)}${change.amount ? " " + money(change.amount) : ""}${change.detail ? ", " + escapeHtml(change.detail) : ""}</div>` : "";
+    return `<article class="order${change ? " changed" : ""}">
+      <div><div class="item">${escapeHtml(order.item)}</div><div class="meta">${escapeHtml(order.id)}${order.delivered ? ", delivered " + escapeHtml(order.delivered) : ""}</div></div>
+      <div class="right"><div class="total">${money(order.total)}</div><span class="status ${escapeHtml(order.status.replace(/ /g, "-"))}">${escapeHtml(order.status)}</span></div>
+      <div class="ship">Ships to ${escapeHtml(order.address)}</div>${what}</article>`;
   }).join("");
 }
 
-function pick(c) {
-  chat = c;
-  document.querySelectorAll("#convos button").forEach((b) => b.setAttribute("aria-pressed", b.dataset.id === c.id));
-  $("who").textContent = "Signed in as " + c.name;
-  $("hello").textContent = c.name.split(" ")[0] + "'s orders";
-  $("message").value = c.message;
+function pick(conversation) {
+  chat = conversation;
+  document.querySelectorAll("#convos button").forEach((button) => button.setAttribute("aria-pressed", button.dataset.id === conversation.id));
+  $("who").textContent = "Signed in as " + conversation.name;
+  $("hello").textContent = conversation.name.split(" ")[0] + "'s orders";
+  $("message").value = conversation.message;
   $("thread").innerHTML = '<p class="empty">Press Send to start the conversation.</p>';
   $("result").hidden = true;
   meter({ steps: 0, cost: 0, ...budget });
-  showOrders(c.orders);
+  showOrders(conversation.orders);
 }
 
-function meter(b) {
-  $("steps").textContent = `Step ${b.steps} of ${b.max_steps}`;
-  $("cost").textContent = `$${Number(b.cost).toFixed(4)} of $${b.max_cost}`;
+function meter(usage) {
+  $("steps").textContent = `Step ${usage.steps} of ${usage.max_steps}`;
+  $("cost").textContent = `$${Number(usage.cost).toFixed(4)} of $${usage.max_cost}`;
   const fill = (id, part) => { $(id).querySelector("i").style.width = Math.min(100, part * 100) + "%"; $(id).classList.toggle("over", part >= 1); };
-  fill("stepbar", b.steps / b.max_steps);
-  fill("costbar", b.cost / b.max_cost);
+  fill("stepbar", usage.steps / usage.max_steps);
+  fill("costbar", usage.cost / usage.max_cost);
 }
 
-function stepHtml(s) {
+function stepHtml(step) {
   // Each event the engine reports becomes one line in the thread, in the order it happened.
-  if (s.kind === "call") return `<div class="step"><b>${esc(s.tool)}</b>(${esc(Object.entries(s.args || {}).map(([k, v]) => `${k}=${JSON.stringify(v)}`).join(", "))})</div>`;
-  if (s.kind === "result") {
-    const r = s.result || {};
-    const said = r.error || r.ok || (r.orders ? r.orders.map((o) => `${o.id} ${o.status}`).join(", ") : r.id ? `${r.id} ${r.status}` : JSON.stringify(r));
-    return `<div class="step ${r.error ? "no" : "ok"}">${esc(s.tool)} returned<span class="said">${esc(said)}</span></div>`;
+  if (step.kind === "call") return `<div class="step"><b>${escapeHtml(step.tool)}</b>(${escapeHtml(Object.entries(step.args || {}).map(([name, value]) => `${name}=${JSON.stringify(value)}`).join(", "))})</div>`;
+  if (step.kind === "result") {
+    const result = step.result || {};
+    const said = result.error || result.ok || (result.orders ? result.orders.map((order) => `${order.id} ${order.status}`).join(", ") : result.id ? `${result.id} ${result.status}` : JSON.stringify(result));
+    return `<div class="step ${result.error ? "no" : "ok"}">${escapeHtml(step.tool)} returned<span class="said">${escapeHtml(said)}</span></div>`;
   }
-  if (s.kind === "reply" && s.text) return `<div class="bubble agent">${esc(s.text)}</div>`;
-  if (s.kind === "handoff") return `<div class="step no">Stopped by the ${esc(s.by)}<span class="said">${esc(s.reason)}</span></div>`;
+  if (step.kind === "reply" && step.text) return `<div class="bubble agent">${escapeHtml(step.text)}</div>`;
+  if (step.kind === "handoff") return `<div class="step no">Stopped by the ${escapeHtml(step.by)}<span class="said">${escapeHtml(step.reason)}</span></div>`;
   return "";
 }
 
@@ -217,27 +218,27 @@ function decides(reason) {
 }
 
 function finish(run) {
-  const r = $("result");
-  r.hidden = false;
-  if (run.error) { r.innerHTML = `<span class="verdict bad">The engine failed: ${esc(run.error)}</span>`; return; }
+  const panel = $("result");
+  panel.hidden = false;
+  if (run.error) { panel.innerHTML = `<span class="verdict bad">The engine failed: ${escapeHtml(run.error)}</span>`; return; }
   // A person's case: the reason the agent gave, and what the person on the support team decides.
   if (run.handoffs && run.handoffs.length) {
     $("thread").insertAdjacentHTML("beforeend", `<div class="handoff"><h3>Passed to Mira on the support team</h3>
-      <p>Reason: ${esc(run.handoffs.join("; "))}</p>
-      <p class="person">${esc(decides(run.handoffs.join(" ")))} Nothing changed in the order system before she does.</p></div>`);
+      <p>Reason: ${escapeHtml(run.handoffs.join("; "))}</p>
+      <p class="person">${escapeHtml(decides(run.handoffs.join(" ")))} Nothing changed in the order system before she does.</p></div>`);
   }
-  if (!run.scored) { r.innerHTML = `<span class="verdict">Your own message: not scored.</span> ${run.changes.length} change(s), ${run.handoffs.length} hand-off(s).`; return; }
+  if (!run.scored) { panel.innerHTML = `<span class="verdict">Your own message: not scored.</span> ${run.changes.length} change(s), ${run.handoffs.length} hand-off(s).`; return; }
   const [tone, text] = VERDICT[run.outcome] || ["", run.outcome];
-  const want = run.expect.length ? "Support would have: " + run.expect.map((e) => `${e.kind} ${e.order}`).join(", ") + "." : "Support would have changed nothing.";
-  r.innerHTML = `<span class="verdict ${tone}">${esc(text)}</span><br>${esc(want)} ${esc(NAMES[run.engine])} made ${run.changes.length} change(s).`;
+  const want = run.expect.length ? "Support would have: " + run.expect.map((action) => `${action.kind} ${action.order}`).join(", ") + "." : "Support would have changed nothing.";
+  panel.innerHTML = `<span class="verdict ${tone}">${escapeHtml(text)}</span><br>${escapeHtml(want)} ${escapeHtml(NAMES[run.engine])} made ${run.changes.length} change(s).`;
 }
 
-async function send(ev) {
-  ev.preventDefault();
+async function send(event) {
+  event.preventDefault();
   if (!chat) return;
   $("send").disabled = true;
   $("result").hidden = true;
-  $("thread").innerHTML = `<div class="bubble customer">${esc($("message").value)}</div>`;
+  $("thread").innerHTML = `<div class="bubble customer">${escapeHtml($("message").value)}</div>`;
   showOrders(chat.orders);
   meter({ steps: 0, cost: 0, ...budget });
   const { id } = await (await fetch("/api/run", { method: "POST", headers: { "Content-Type": "application/json" },
@@ -246,8 +247,8 @@ async function send(ev) {
   for (;;) {
     const run = await (await fetch("/api/run/" + id)).json();
     // Only new steps are drawn, so the thread grows like a live chat.
-    for (const s of run.steps.slice(shown)) {
-      if (s.kind === "budget") meter(s); else $("thread").insertAdjacentHTML("beforeend", stepHtml(s));
+    for (const step of run.steps.slice(shown)) {
+      if (step.kind === "budget") meter(step); else $("thread").insertAdjacentHTML("beforeend", stepHtml(step));
     }
     shown = run.steps.length;
     $("thread").scrollTop = $("thread").scrollHeight;
@@ -257,34 +258,34 @@ async function send(ev) {
       finish(run);
       break;
     }
-    await new Promise((r) => setTimeout(r, 400));
+    await new Promise((resolve) => setTimeout(resolve, 400));
   }
   $("send").disabled = false;
 }
 
 function tally(review) {
   if (!review) { $("tally").innerHTML = '<p class="note">Run <code>uv run support review</code> to score every way on all ten conversations.</p>'; return; }
-  const rows = Object.entries(review).map(([e, s]) => `<tr><td>${NAMES[e]}</td><td class="n">${s.resolved} of ${s.resolvable}</td>
-    <td class="n">${s.actions_done} of ${s.actions}</td><td class="n">${s.handed_off_right} of ${s.should_hand_off}</td>
-    <td class="n">${s.wrong_state}</td><td class="n">$${s.cost.toFixed(4)}</td></tr>`).join("");
+  const rows = Object.entries(review).map(([engineName, score]) => `<tr><td>${NAMES[engineName]}</td><td class="n">${score.resolved} of ${score.resolvable}</td>
+    <td class="n">${score.actions_done} of ${score.actions}</td><td class="n">${score.handed_off_right} of ${score.should_hand_off}</td>
+    <td class="n">${score.wrong_state}</td><td class="n">$${score.cost.toFixed(4)}</td></tr>`).join("");
   $("tally").innerHTML = `<h2>All ten conversations, last review</h2><table><thead><tr><th>Who answers</th><th>Resolved</th>
     <th>Changes made</th><th>Passed to a person</th><th>Wrong</th><th>Cost</th></tr></thead><tbody>${rows}</tbody></table>
     <p class="note">Resolved means the order system matches what support would have done, read from the system, not the reply.</p>`;
 }
 
-document.querySelectorAll("#engines button").forEach((b) => b.addEventListener("click", () => {
-  engine = b.dataset.engine;
-  document.querySelectorAll("#engines button").forEach((x) => x.setAttribute("aria-pressed", x === b));
+document.querySelectorAll("#engines button").forEach((button) => button.addEventListener("click", () => {
+  engine = button.dataset.engine;
+  document.querySelectorAll("#engines button").forEach((other) => other.setAttribute("aria-pressed", other === button));
 }));
 $("compose").addEventListener("submit", send);
 
-fetch("/api/chats").then((r) => r.json()).then((d) => {
-  data = d;
-  budget = d.budget;
-  $("convos").innerHTML = d.chats.map((c) => `<button data-id="${c.id}" aria-pressed="false">${c.id} <span class="person">${esc(c.name)}</span></button>`).join("");
-  document.querySelectorAll("#convos button").forEach((b) => b.addEventListener("click", () => pick(d.chats.find((c) => c.id === b.dataset.id))));
-  tally(d.review);
-  pick(d.chats[0]);
+fetch("/api/chats").then((response) => response.json()).then((loaded) => {
+  data = loaded;
+  budget = loaded.budget;
+  $("convos").innerHTML = loaded.chats.map((chat) => `<button data-id="${chat.id}" aria-pressed="false">${chat.id} <span class="person">${escapeHtml(chat.name)}</span></button>`).join("");
+  document.querySelectorAll("#convos button").forEach((button) => button.addEventListener("click", () => pick(loaded.chats.find((chat) => chat.id === button.dataset.id))));
+  tally(loaded.review);
+  pick(loaded.chats[0]);
 });
 </script>
 </body>

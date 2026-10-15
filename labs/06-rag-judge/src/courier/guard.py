@@ -53,8 +53,8 @@ def guard(question: str, reply: str | None, sources: list[Passage], client, mode
     if got is None or not got.claims:
         # A check that did not run is not a pass.
         return Guarded(False, why="The grounding check did not return a result.", cost=cost)
-    claims = [c.model_dump() for c in got.claims]
-    bad = [c for c in claims if c["verdict"] == "unsupported"]
+    claims = [claim.model_dump() for claim in got.claims]
+    bad = [claim for claim in claims if claim["verdict"] == "unsupported"]
     if bad:
         return Guarded(False, claims, f"{len(bad)} of {len(claims)} claims have no support: {bad[0]['claim'].rstrip('.')}.", cost)
     return Guarded(True, claims, f"All {len(claims)} claims found in the cited sections.", cost)

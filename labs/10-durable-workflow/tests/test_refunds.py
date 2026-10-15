@@ -30,7 +30,7 @@ class FakeLLM:
 
     def create(self, **kwargs):
         self.calls += 1
-        refund = next(r for r in requests() if r.message in kwargs["messages"][1]["content"])
+        refund = next(refund_request for refund_request in requests() if refund_request.message in kwargs["messages"][1]["content"])
         amount = refund.ruling if self.amount is None else self.amount
         reply = json.dumps({"amount": amount, "rules": ["R1"], "reason": "Per the policy."})
         return SimpleNamespace(choices=[SimpleNamespace(message=SimpleNamespace(content=reply))], usage=SimpleNamespace(cost=0.0001))
@@ -38,8 +38,8 @@ class FakeLLM:
 
 def test_eight_requests_with_a_ruling_and_code_decides_who_approves():
     reqs = requests()
-    assert [r.id for r in reqs] == [f"RF-30{i}" for i in range(1, 9)]
-    assert sum(r.ruling > APPROVAL_OVER for r in reqs) == 3
+    assert [refund_request.id for refund_request in reqs] == [f"RF-30{number}" for number in range(1, 9)]
+    assert sum(refund_request.ruling > APPROVAL_OVER for refund_request in reqs) == 3
     got, cost = decide(request("RF-301"), FakeLLM(), "m")
     assert got == {"amount": 1241.0, "rules": ["R1"], "reason": "Per the policy.", "needs_approval": True} and cost == 0.0001
 
@@ -90,7 +90,7 @@ async def test_a_small_refund_pays_without_a_manager(env, tmp_path):
     ledger = Ledger(tmp_path / "l.db")
     got = await run_refund(env, ledger, FakeLLM(), "RF-302")
     assert got["stage"] == "paid" and got["verdict"] is None
-    assert [p["cents"] for p in ledger.payouts("durable")] == [21800]
+    assert [payout["cents"] for payout in ledger.payouts("durable")] == [21800]
 
 
 async def test_a_large_refund_waits_for_the_manager_then_pays_once(env, tmp_path):
@@ -109,7 +109,7 @@ async def test_a_large_refund_waits_for_the_manager_then_pays_once(env, tmp_path
 
 async def test_a_rejected_refund_pays_nothing(env, tmp_path):
     ledger = Ledger(tmp_path / "l.db")
-    got = await run_refund(env, ledger, FakeLLM(), "RF-301", lambda h: h.signal(RefundWorkflow.reject, "Priya"))
+    got = await run_refund(env, ledger, FakeLLM(), "RF-301", lambda handle: handle.signal(RefundWorkflow.reject, "Priya"))
     assert got["stage"] == "rejected" and ledger.payouts() == []
 
 
@@ -178,9 +178,9 @@ async def test_the_desk_reads_a_refund_from_its_history_and_refuses_a_foreign_or
 
         def call(path, data=None, headers=None):
             body = json.dumps(data).encode() if data is not None else None
-            req = urllib.request.Request(base + path, body, headers={"Content-Type": "application/json", **(headers or {})})
-            with urllib.request.urlopen(req) as res:
-                return json.loads(res.read())
+            request = urllib.request.Request(base + path, body, headers={"Content-Type": "application/json", **(headers or {})})
+            with urllib.request.urlopen(request) as response:
+                return json.loads(response.read())
 
         await asyncio.to_thread(call, "/api/start", {"refund": "RF-301"})
         handle = env.client.get_workflow_handle(room.started["RF-301"])

@@ -18,19 +18,19 @@ const NEGATED = /\b(?:not|no|never|without|isn't|aren't|doesn't|don't|excluded|s
 const EVERYWHERE = [{ says: 'lifetime', why: 'No supplier sheet gives a lifetime warranty.' }]
 
 function sentences(listing: Listing): string[] {
-  return listing.items.flatMap((i) => plain(i.text).split(/(?<=[.!?;])\s+/)).filter(Boolean)
+  return listing.items.flatMap((item) => plain(item.text).split(/(?<=[.!?;])\s+/)).filter(Boolean)
 }
 
 export function audit(listing: Listing, product: Product): Edit[] {
   const said = sentences(listing)
   const edits: Edit[] = []
   const onSheet = new Set(numbers(product.sheet))
-  for (const s of said) {
-    const stray = numbers(s).filter((n) => !onSheet.has(n))
-    if (stray.length) edits.push({ says: s, why: `${stray.join(', ')} is not on the supplier sheet.` })
+  for (const sentence of said) {
+    const stray = numbers(sentence).filter((number) => !onSheet.has(number))
+    if (stray.length) edits.push({ says: sentence, why: `${stray.join(', ')} is not on the supplier sheet.` })
   }
   for (const rule of [...product.never, ...EVERYWHERE]) {
-    const hit = said.find((s) => new RegExp(rule.says, 'i').test(s) && !NEGATED.test(s))
+    const hit = said.find((sentence) => new RegExp(rule.says, 'i').test(sentence) && !NEGATED.test(sentence))
     if (hit) edits.push({ says: hit, why: rule.why ?? '' })
   }
   const all = said.join(' ')

@@ -35,22 +35,22 @@ class Fake:
     def dense(self, texts, query):
         out = []
         for text in texts:
-            v = [0.0] * self.size
-            for w in words(text):
-                v[zlib.crc32(w.encode()) % self.size] += 1.0
-            out.append(v if any(v) else [1.0] + [0.0] * (self.size - 1))
+            vector = [0.0] * self.size
+            for word in words(text):
+                vector[zlib.crc32(word.encode()) % self.size] += 1.0
+            out.append(vector if any(vector) else [1.0] + [0.0] * (self.size - 1))
         return out
 
     def sparse(self, texts, query):
         out = []
         for text in texts:
-            ids = sorted({zlib.crc32(w.encode()) for w in words(text)}) or [0]
+            ids = sorted({zlib.crc32(word.encode()) for word in words(text)}) or [0]
             out.append(models.SparseVector(indices=ids, values=[1.0] * len(ids)))
         return out
 
     def rerank(self, question, texts):
         asked = set(words(question))
-        return [float(len(asked & set(words(t)))) for t in texts]
+        return [float(len(asked & set(words(text)))) for text in texts]
 
 
 @pytest.fixture(scope="module")
@@ -60,20 +60,20 @@ def search():
 
 def test_ingest_gives_one_passage_per_section_with_unique_ids():
     assert len(PASSAGES) == 64
-    assert len({p.id for p in PASSAGES}) == 64
-    assert len({p.doc for p in PASSAGES}) == 14
+    assert len({passage.id for passage in PASSAGES}) == 64
+    assert len({passage.doc for passage in PASSAGES}) == 14
 
 
 def test_every_label_points_at_a_real_section():
-    ids = {p.id for p in PASSAGES}
+    ids = {passage.id for passage in PASSAGES}
     golden = load_golden(GOLDEN)
     assert len(golden) == 40
-    assert [g.passage for g in golden if g.passage not in ids] == []
+    assert [label.passage for label in golden if label.passage not in ids] == []
 
 
 def test_recall_counts_ranks_at_or_above_k():
     ranks = [1, 3, None, 6, 2]
-    assert [recall(ranks, k) for k in KS] == [1, 3, 3, 4]
+    assert [recall(ranks, top_k) for top_k in KS] == [1, 3, 3, 4]
 
 
 @pytest.mark.parametrize("how", WAYS)
@@ -81,13 +81,13 @@ def test_every_way_returns_k_hits_and_finds_an_exact_identifier(search, how):
     hits = search.find("RECON-MISMATCH-22: the ledger has a payment the bank file does not", how, 5)
     # BM25 returns only sections that share a word, so it can return fewer than k.
     assert 1 <= len(hits) <= 5
-    assert any(h.passage.id == "reconciliation-job#recon-mismatch-22" for h in hits)
+    assert any(hit.passage.id == "reconciliation-job#recon-mismatch-22" for hit in hits)
 
 
 def test_rerank_only_reorders_the_hybrid_shortlist(search):
     question = "consumer stuck on one bad event"
-    shortlist = {h.passage.id for h in search.find(question, "hybrid", SHORTLIST)}
-    assert {h.passage.id for h in search.find(question, "rerank", 10)} <= shortlist
+    shortlist = {hit.passage.id for hit in search.find(question, "hybrid", SHORTLIST)}
+    assert {hit.passage.id for hit in search.find(question, "rerank", 10)} <= shortlist
 
 
 def test_an_unknown_way_is_refused(search):

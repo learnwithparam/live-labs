@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<link rel="icon" href="data:,">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>#payments-oncall</title>
 <style>
@@ -117,8 +118,8 @@ form button { border: 0; background: var(--ink); color: var(--paper); border-rad
 </main>
 
 <script>
-const $ = (s) => document.querySelector(s);
-const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+const $ = (selector) => document.querySelector(selector);
+const escapeHtml = (value) => String(value).replace(/[&<>"]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[char]);
 const WAYS = { section: "sections", size: "300-character chunks" };
 const TRY = [
   "One partition of settlement-consumer is stuck on a message it cannot parse. How do I skip it?",
@@ -138,14 +139,14 @@ function post(html) {
   thread.lastElementChild.scrollIntoView({ block: "end" });
   return thread.lastElementChild;
 }
-const sys = (text) => post(`<div class="sys">${esc(text)}</div>`);
+const sys = (text) => post(`<div class="sys">${escapeHtml(text)}</div>`);
 const docTitle = (doc) => doc.replace(/\.pdf$/, "");
 
 // Mark the fact inside a passage, so the person checking sees the exact words the answer rests on.
 function marked(text, fact) {
   const at = fact ? text.toLowerCase().indexOf(fact.toLowerCase()) : -1;
-  if (at < 0) return esc(text);
-  return esc(text.slice(0, at)) + `<mark>${esc(text.slice(at, at + fact.length))}</mark>` + esc(text.slice(at + fact.length));
+  if (at < 0) return escapeHtml(text);
+  return escapeHtml(text.slice(0, at)) + `<mark>${escapeHtml(text.slice(at, at + fact.length))}</mark>` + escapeHtml(text.slice(at + fact.length));
 }
 // A fact that is something to type (a command, a slash command) names the tool to look for in the answer.
 const typed = (fact) => fact && (/^[a-z/][\w./-]* \S/.test(fact) || fact.endsWith("()"));
@@ -158,49 +159,49 @@ function command(answer, fact) {
   const rest = answer.slice(at), end = rest.search(/\.(\s+[A-Z]|\s*$)/);
   return end < 0 ? rest : rest.slice(0, end);
 }
-const prose = (text) => esc(text).replace(/`([^`]+)`/g, "<code>$1</code>");
-const capital = (t) => t.charAt(0).toUpperCase() + t.slice(1);
+const prose = (text) => escapeHtml(text).replace(/`([^`]+)`/g, "<code>$1</code>");
+const capital = (word) => word.charAt(0).toUpperCase() + word.slice(1);
 
-function answerHtml(r) {
-  if (r.answer === null) return `<p>I could not find this in the runbooks, so I will not guess.</p>`;
-  let html = `<p>${prose(r.answer)}</p>`;
-  const cmd = command(r.answer, r.fact);
-  if (cmd) html += `<div class="cmd"><span>${esc(cmd)}</span><button type="button" class="copy">Copy</button></div>`;
+function answerHtml(reply) {
+  if (reply.answer === null) return `<p>I could not find this in the runbooks, so I will not guess.</p>`;
+  let html = `<p>${prose(reply.answer)}</p>`;
+  const cmd = command(reply.answer, reply.fact);
+  if (cmd) html += `<div class="cmd"><span>${escapeHtml(cmd)}</span><button type="button" class="copy">Copy</button></div>`;
   return html;
 }
 
-function sourcesHtml(r, n) {
-  const cited = r.found.filter((p) => r.cited.includes(p.id));
+function sourcesHtml(reply, turn) {
+  const cited = reply.found.filter((passage) => reply.cited.includes(passage.id));
   if (!cited.length) return "";
-  const chips = cited.map((p, i) => `<button class="cite" aria-expanded="false" data-p="${n}-${i}"><b>${esc(docTitle(p.doc))}</b>, ${esc(p.section)}, page ${p.page}</button>`).join("");
-  const quotes = cited.map((p, i) => `<div class="passage" id="p${n}-${i}" hidden><div class="where">${esc(p.id)}</div>${marked(p.text, r.fact)}</div>`).join("");
+  const chips = cited.map((passage, index) => `<button class="cite" aria-expanded="false" data-p="${turn}-${index}"><b>${escapeHtml(docTitle(passage.doc))}</b>, ${escapeHtml(passage.section)}, page ${passage.page}</button>`).join("");
+  const quotes = cited.map((passage, index) => `<div class="passage" id="p${turn}-${index}" hidden><div class="where">${escapeHtml(passage.id)}</div>${marked(passage.text, reply.fact)}</div>`).join("");
   return `<div class="sources">${chips}</div>${quotes}`;
 }
 
-function verdictHtml(r) {
-  if (r.supported === null) return `<div class="unchecked">Not checked: this question has no approved answer in the set yet.</div>`;
-  if (r.supported) return `<div class="ok">The cited passage holds ${esc(r.fact)}. No person needed.</div>`;
-  return `<div class="handoff"><p><b>Needs a person.</b> ${esc(capital(r.reason))}.</p>
+function verdictHtml(reply) {
+  if (reply.supported === null) return `<div class="unchecked">Not checked: this question has no approved answer in the set yet.</div>`;
+  if (reply.supported) return `<div class="ok">The cited passage holds ${escapeHtml(reply.fact)}. No person needed.</div>`;
+  return `<div class="handoff"><p><b>Needs a person.</b> ${escapeHtml(capital(reply.reason))}.</p>
     <p>A person decides: they answer in this thread or hand it to the team that owns it, and the answer becomes a runbook page.</p>
     <button type="button" class="hand">Hand to the on-call lead</button></div>`;
 }
 
 let asked = 0;
 async function ask(question) {
-  const n = asked++, way = how;
-  post(`<div class="msg"><div class="av you">You</div><div><span class="who">You</span><span class="when">${clock()}</span><div class="text"><p>${esc(question)}</p></div></div></div>`);
-  const bot = post(`<div class="msg bot" data-q="${esc(question)}"><div class="av bot">RB</div><div><span class="who">Runbook bot</span><span class="when">${clock()}</span><span class="tag">read from ${WAYS[way]}</span><div class="text typing" aria-label="The bot is answering"><span></span><span></span><span></span></div></div></div>`);
-  const r = await fetch(`/api/ask/${way}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ question }) }).then((x) => x.json());
+  const turn = asked++, way = how;
+  post(`<div class="msg"><div class="av you">You</div><div><span class="who">You</span><span class="when">${clock()}</span><div class="text"><p>${escapeHtml(question)}</p></div></div></div>`);
+  const bot = post(`<div class="msg bot" data-q="${escapeHtml(question)}"><div class="av bot">RB</div><div><span class="who">Runbook bot</span><span class="when">${clock()}</span><span class="tag">read from ${WAYS[way]}</span><div class="text typing" aria-label="The bot is answering"><span></span><span></span><span></span></div></div></div>`);
+  const reply = await fetch(`/api/ask/${way}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ question }) }).then((response) => response.json());
   const body = bot.querySelector(".text");
   body.classList.remove("typing");
   body.removeAttribute("aria-label");
-  body.innerHTML = answerHtml(r) + sourcesHtml(r, n) + verdictHtml(r);
-  bot.classList.add(r.supported === false ? "person" : r.supported ? "stands" : "unchecked");
+  body.innerHTML = answerHtml(reply) + sourcesHtml(reply, turn) + verdictHtml(reply);
+  bot.classList.add(reply.supported === false ? "person" : reply.supported ? "stands" : "unchecked");
   bot.scrollIntoView({ block: "end" });
 }
 
-thread.addEventListener("click", (e) => {
-  const cite = e.target.closest(".cite");
+thread.addEventListener("click", (event) => {
+  const cite = event.target.closest(".cite");
   if (cite) {
     const open = cite.getAttribute("aria-expanded") !== "true";
     cite.setAttribute("aria-expanded", open);
@@ -208,61 +209,61 @@ thread.addEventListener("click", (e) => {
     passage.hidden = !open;
     if (open) passage.scrollIntoView({ block: "nearest" });
   }
-  const hand = e.target.closest(".hand");
+  const hand = event.target.closest(".hand");
   if (hand) {
     hand.disabled = true;
     hand.textContent = "Handed to the on-call lead";
     sys("The on-call lead was paged. The question stays open until a person answers it.");
   }
-  const copy = e.target.closest(".copy");
+  const copy = event.target.closest(".copy");
   if (copy) {
     navigator.clipboard?.writeText(copy.previousElementSibling.textContent).catch(() => {});
     copy.textContent = "Copied";
   }
-  const again = e.target.closest("[data-ask]");
+  const again = event.target.closest("[data-ask]");
   if (again) ask(again.dataset.ask);
 });
 
-document.querySelectorAll(".way").forEach((b) => b.addEventListener("click", () => {
-  if (b.dataset.how === how) return;
-  how = b.dataset.how;
-  document.querySelectorAll(".way").forEach((x) => x.setAttribute("aria-pressed", x === b));
+document.querySelectorAll(".way").forEach((button) => button.addEventListener("click", () => {
+  if (button.dataset.how === how) return;
+  how = button.dataset.how;
+  document.querySelectorAll(".way").forEach((other) => other.setAttribute("aria-pressed", other === button));
   sys(`The bot now reads the runbooks as ${WAYS[how]}.`);
 }));
 
 // The metric, once per way: answers whose citation holds the fact, and the questions a person takes.
 function showTally() {
-  $("#tally").innerHTML = ["section", "size"].filter((w) => runs[w]).map((w) => {
-    const t = runs[w].tally;
-    return `<p>From ${WAYS[w]}: ${t.supported} of ${t.questions} answered with a citation that holds the fact, no person needed. <span class="need">${t.person} need a person.</span></p>`;
+  $("#tally").innerHTML = ["section", "size"].filter((way) => runs[way]).map((way) => {
+    const tally = runs[way].tally;
+    return `<p>From ${WAYS[way]}: ${tally.supported} of ${tally.questions} answered with a citation that holds the fact, no person needed. <span class="need">${tally.person} need a person.</span></p>`;
   }).join("");
 }
 
 $("#check").addEventListener("click", async () => {
-  const b = $("#check"), way = how;
-  b.disabled = true;
-  b.textContent = `Checking ${questions.length} questions`;
-  runs[way] = await fetch(`/api/answer/${way}`, { method: "POST" }).then((x) => x.json());
-  const t = runs[way].tally, person = runs[way].rows.filter((r) => !r.supported);
+  const button = $("#check"), way = how;
+  button.disabled = true;
+  button.textContent = `Checking ${questions.length} questions`;
+  runs[way] = await fetch(`/api/answer/${way}`, { method: "POST" }).then((response) => response.json());
+  const tally = runs[way].tally, person = runs[way].rows.filter((row) => !row.supported);
   post(`<div class="msg bot summary" data-how="${way}"><div class="av bot">RB</div><div><span class="who">Runbook bot</span><span class="when">${clock()}</span><span class="tag">read from ${WAYS[way]}</span>
-    <div class="text"><p>I answered all ${t.questions} questions in the set from ${WAYS[way]}. ${t.supported} stand on a citation that holds the fact. These ${t.person} need a person:</p>
-    <ul class="list">${person.map((r) => `<li><button data-ask="${esc(r.question)}">${esc(r.question)}</button></li>`).join("")}</ul></div></div></div>`);
+    <div class="text"><p>I answered all ${tally.questions} questions in the set from ${WAYS[way]}. ${tally.supported} stand on a citation that holds the fact. These ${tally.person} need a person:</p>
+    <ul class="list">${person.map((row) => `<li><button data-ask="${escapeHtml(row.question)}">${escapeHtml(row.question)}</button></li>`).join("")}</ul></div></div></div>`);
   showTally();
-  b.disabled = false;
-  b.textContent = "Check every question";
+  button.disabled = false;
+  button.textContent = "Check every question";
 });
 
-$("#ask").addEventListener("submit", (e) => {
-  e.preventDefault();
-  const q = $("#q").value.trim();
-  if (q) { $("#q").value = ""; ask(q); }
+$("#ask").addEventListener("submit", (event) => {
+  event.preventDefault();
+  const draft = $("#q").value.trim();
+  if (draft) { $("#q").value = ""; ask(draft); }
 });
 
-fetch("/api/room").then((x) => x.json()).then((room) => {
+fetch("/api/room").then((response) => response.json()).then((room) => {
   questions = room.questions;
-  $("#docs").innerHTML = room.docs.map((d) => `<li class="doc">${esc(d)}</li>`).join("");
-  $("#try").innerHTML = TRY.filter((q) => questions.includes(q)).map((q) => `<button type="button" data-ask="${esc(q)}" title="${esc(q)}">${esc(q)}</button>`).join("");
-  $("#try").addEventListener("click", (e) => { const b = e.target.closest("[data-ask]"); if (b) ask(b.dataset.ask); });
+  $("#docs").innerHTML = room.docs.map((doc) => `<li class="doc">${escapeHtml(doc)}</li>`).join("");
+  $("#try").innerHTML = TRY.filter((question) => questions.includes(question)).map((question) => `<button type="button" data-ask="${escapeHtml(question)}" title="${escapeHtml(question)}">${escapeHtml(question)}</button>`).join("");
+  $("#try").addEventListener("click", (event) => { const button = event.target.closest("[data-ask]"); if (button) ask(button.dataset.ask); });
   post(`<div class="msg"><div class="av bot">RB</div><div><span class="who">Runbook bot</span><span class="when">${clock()}</span>
     <div class="text"><p>I answer from the ${room.docs.length} runbooks on the left, and from nothing else. Every answer cites the section it came from: open the citation and check the command before you run it. When the runbooks do not hold the answer, I say so and a person takes it.</p></div></div></div>`);
 });

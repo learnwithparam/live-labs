@@ -52,13 +52,13 @@ def route(text: str) -> int:
     got["both"] = second_opinion(got["llm"], got["decision"])
     stop(built)
     for how in ("embedding", "llm", "decision"):
-        r = got[how]
-        print(f"{NAMES[how]:<16}picks {r.queue:<13}confidence {r.confidence:.2f}  ->  {destination(r)}")
+        route = got[how]
+        print(f"{NAMES[how]:<16}picks {route.queue:<13}confidence {route.confidence:.2f}  ->  {destination(route)}")
     agree = "agree" if got["llm"].queue == got["decision"].queue else "disagree"
     print(f"{NAMES['both']:<16}they {agree}, decision at {got['decision'].confidence:.2f}  ->  {destination(got['both'])}")
     print("\nDecision model, every queue:")
-    for queue, p in sorted(got["decision"].probabilities.items(), key=lambda kv: -kv[1]):
-        print(f"  {queue:<13}{p:.2f} {'#' * round(p * 40)}")
+    for queue, probability in sorted(got["decision"].probabilities.items(), key=lambda pair: -pair[1]):
+        print(f"  {queue:<13}{probability:.2f} {'#' * round(probability * 40)}")
     return 0
 
 
@@ -75,15 +75,15 @@ def review() -> int:
         stop(built)
     print(f"\n{'':<16}{'reassigned':<12}{'to a person':<13}{'right first time':<18}{'p95':<10}cost per 1,000")
     for how in WAYS:
-        s = result[how]
-        print(f"{NAMES[how]:<16}{s['reassigned']:<12}{s['to_person']:<13}{s['right_first_time']:<18}"
-              f"{s['p95_ms'] / 1000:<10.2f}${s['cost_per_1000']:.3f}")
+        summary = result[how]
+        print(f"{NAMES[how]:<16}{summary['reassigned']:<12}{summary['to_person']:<13}{summary['right_first_time']:<18}"
+              f"{summary['p95_ms'] / 1000:<10.2f}${summary['cost_per_1000']:.3f}")
     print("\nLLM + decision sent to a person, with what each said:")
-    rows = {(r["how"], r["id"]): r for r in result["rows"]}
-    for t in tickets:
-        if rows[("both", t.id)]["to"] == "person":
-            llm, dec = rows[("llm", t.id)], rows[("decision", t.id)]
-            print(f"  {t.id}  LLM {llm['queue']} {llm['confidence']:.2f}, decision {dec['queue']} {dec['confidence']:.2f}, solved in {t.queue}")
+    rows = {(row["how"], row["id"]): row for row in result["rows"]}
+    for ticket in tickets:
+        if rows[("both", ticket.id)]["to"] == "person":
+            llm, dec = rows[("llm", ticket.id)], rows[("decision", ticket.id)]
+            print(f"  {ticket.id}  LLM {llm['queue']} {llm['confidence']:.2f}, decision {dec['queue']} {dec['confidence']:.2f}, solved in {ticket.queue}")
     Path("out").mkdir(exist_ok=True)
     Path("out/review.json").write_text(json.dumps(result, indent=1))
     print("\nEvery ticket and every probability: out/review.json")

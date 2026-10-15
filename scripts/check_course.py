@@ -30,11 +30,21 @@ OPENING = ["## The product job", "## What you will be able to do"]
 # (14 Oct 2026): each page names its surface on <body data-surface> and no two share a layout.
 SURFACE = re.compile(r'<body[^>]*\bdata-surface="([^"]+)"')
 LAYOUT = re.compile(r"grid-template-columns:\s*([^;}]+)")
+# Without an icon the browser asks for /favicon.ico, the lab server answers 404, and the console shows an error.
+ICON = re.compile(r'<link[^>]*\brel="icon"')
 # The modules a lab teaches from carry why-comments; plumbing (the CLI, settings, the server) is exempt.
 PLUMBING = {"__init__.py", "cli.py", "config.py", "serve.py", "cli.ts", "config.ts", "serve.ts"}
 WHY_PER_40 = 3
 # Plain English: a README sentence longer than this was the "hard English" the owner rejected.
 LONGEST_SENTENCE = 40
+# Learners read every line, and the owner rejected `[p, v]` as unreadable (15 Oct 2026): a name says what
+# it holds. One letter (except `_` and `$`) or a clipped word fails, in Python, TypeScript and page scripts.
+CRYPTIC = {"res", "resp", "req", "msg", "fn", "cb", "el", "ev", "evt", "btn", "buf", "esc", "idx", "ix", "tmp",
+           "obj", "val", "kv", "li", "cm", "tm", "rid", "wid", "qid", "pid", "dd", "rr", "tk"}
+IDENT = r"([A-Za-z_$][\w$]*)"
+JS_BINDING = re.compile(rf"\b(?:const|let|var)\s+{IDENT}|\(\s*{IDENT}\s*(?:,|\)\s*=>)|(?<=,)\s*{IDENT}\s*\)\s*=>"
+                        rf"|\b{IDENT}\s*=>|\bcatch\s*\(\s*{IDENT}\s*\)")
+SCRIPT = re.compile(r"(<script[^>]*>)(.*?)</script>", re.S)
 LAB_POINTER = re.compile(r"\blabs? (?:\d+|one|two|three)\b|\b(?:next|previous|later|earlier|last) lab\b", re.I)
 
 
@@ -70,7 +80,9 @@ def page_problems(pages: dict[str, str]) -> list[str]:
             found.append(f"{name}: surface {surface.group(1)!r} is already {surfaces[surface.group(1)]}'s")
         else:
             surfaces[surface.group(1)] = name
-        layout = tuple(sorted({" ".join(v.split()) for v in LAYOUT.findall(html)}))
+        if not ICON.search(html):
+            found.append(f"{name}: no <link rel=\"icon\">, so the browser's favicon request fails")
+        layout = tuple(sorted({" ".join(value.split()) for value in LAYOUT.findall(html)}))
         if layout and layout in layouts:
             found.append(f"{name}: same grid layout as {layouts[layout]}")
         layouts.setdefault(layout, name)
@@ -105,10 +117,37 @@ def comment_problems(name: str, source: str) -> list[str]:
         if isinstance(node, (ast.Module, ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)) and ast.get_docstring(node):
             docs |= set(range(node.body[0].lineno, node.body[0].end_lineno + 1))
     lines = source.splitlines()
-    why = sum(1 for n, line in enumerate(lines, 1) if line.strip().startswith("#") or "  # " in line or n in docs)
-    code = sum(1 for n, line in enumerate(lines, 1) if line.strip() and not line.strip().startswith("#") and n not in docs)
+    why = sum(1 for line_number, line in enumerate(lines, 1) if line.strip().startswith("#") or "  # " in line or line_number in docs)
+    code = sum(1 for line_number, line in enumerate(lines, 1) if line.strip() and not line.strip().startswith("#") and line_number not in docs)
     need = code * WHY_PER_40 // 40
     return [f"{name}: {why} why-comment lines for {code} lines of code, needs {need}"] if why < need else []
+
+
+def unclear(name: str) -> bool:
+    # `_` is a name thrown away, and `$` the usual query-selector helper; both say what they are.
+    return (len(name) == 1 and name not in "_$") or name in CRYPTIC
+
+
+def naming_problems(name: str, source: str) -> list[str]:
+    """Every name a module binds (variables, arguments, loop and except names) says what it holds."""
+    if name.endswith(".py"):
+        bound = []
+        for node in ast.walk(ast.parse(source)):
+            if isinstance(node, ast.Name) and isinstance(node.ctx, ast.Store):
+                bound.append((node.lineno, node.id))
+            elif isinstance(node, ast.arg):
+                bound.append((node.lineno, node.arg))
+            elif isinstance(node, ast.ExceptHandler) and node.name:
+                bound.append((node.lineno, node.name))
+    else:
+        # A page's CSS has commas in parentheses too, so only its <script> blocks are read as code.
+        code = source if not name.endswith(".html") else "".join(
+            "\n" * source.count("\n", previous.end(2) if previous else 0, block.start(2)) + block.group(2)
+            for previous, block in zip([None, *SCRIPT.finditer(source)], SCRIPT.finditer(source)))
+        bound = [(code.count("\n", 0, match.start()) + 1, next(group for group in match.groups() if group))
+                 for match in JS_BINDING.finditer(code)]
+    return [f"{name}:{line}: unclear name {bound_name!r}; say what it holds"
+            for line, bound_name in sorted(set(bound)) if unclear(bound_name)]
 
 
 def sentences(readme: str) -> list[str]:
@@ -120,13 +159,13 @@ def sentences(readme: str) -> list[str]:
             continue
         # Each list item is its own sentence, so a list never reads as one long run-on.
         for item in re.split(r"^\s*(?:[-*]|\d+\.)\s+", para, flags=re.M):
-            found += [s for s in re.split(r"(?<=[.!?:])\s+", item.replace("\n", " ")) if s.strip()]
+            found += [sentence for sentence in re.split(r"(?<=[.!?:])\s+", item.replace("\n", " ")) if sentence.strip()]
     return found
 
 
 def plain_problems(readme: str) -> list[str]:
     """No README sentence runs past LONGEST_SENTENCE words, and none uses an em dash."""
-    found = [f"sentence of {len(s.split())} words: {s[:60]!r}..." for s in sentences(readme) if len(s.split()) > LONGEST_SENTENCE]
+    found = [f"sentence of {len(sentence.split())} words: {sentence[:60]!r}..." for sentence in sentences(readme) if len(sentence.split()) > LONGEST_SENTENCE]
     return found + (["an em dash; use a full stop or a comma"] if "\u2014" in readme else [])
 
 
@@ -148,23 +187,30 @@ def problems(course: dict, readme: str) -> list[str]:
         else:
             owners[concept] = lab["slug"]
     ready = {lab["slug"] for lab in labs if lab["status"] == "ready"}
-    folders = {p.name for p in (ROOT / "labs").iterdir() if p.is_dir()}
-    found += [f"labs/{s}: folder exists but course.toml does not mark it ready" for s in folders - ready]
+    folders = {folder.name for folder in (ROOT / "labs").iterdir() if folder.is_dir()}
+    found += [f"labs/{slug}: folder exists but course.toml does not mark it ready" for slug in folders - ready]
     for slug in sorted(ready):
         lab = ROOT / "labs" / slug
-        found += [f"labs/{slug}: missing {f}" for f in REQUIRED + KINDS[kind(lab)] if not (lab / f).exists()]
+        found += [f"labs/{slug}: missing {required}" for required in REQUIRED + KINDS[kind(lab)] if not (lab / required).exists()]
         if (lab / "README.md").exists() and not any(expect for _, expect in steps(lab / "README.md")):
             found.append(f"labs/{slug}/README.md: no step with an Expect: line")
         if (lab / "README.md").exists():
-            found += [f"labs/{slug}/README.md: {p}" for p in opening_problems((lab / "README.md").read_text())]
+            found += [f"labs/{slug}/README.md: {problem}" for problem in opening_problems((lab / "README.md").read_text())]
             title = next(row["title"] for row in labs if row["slug"] == slug)
-            found += [f"labs/{slug}/README.md: {p}" for p in title_problems((lab / "README.md").read_text(), title)]
-            found += [f"labs/{slug}/README.md: points at another lab ({m.group(0)!r})" for m in LAB_POINTER.finditer((lab / "README.md").read_text())]
-            found += [f"labs/{slug}/README.md: {p}" for p in plain_problems((lab / "README.md").read_text())]
+            found += [f"labs/{slug}/README.md: {problem}" for problem in title_problems((lab / "README.md").read_text(), title)]
+            found += [f"labs/{slug}/README.md: points at another lab ({match.group(0)!r})" for match in LAB_POINTER.finditer((lab / "README.md").read_text())]
+            found += [f"labs/{slug}/README.md: {problem}" for problem in plain_problems((lab / "README.md").read_text())]
         for module in sorted([*(lab / "src").glob("*/*.py"), *(lab / "src").glob("*.ts")]):
             if module.name not in PLUMBING:
                 found += comment_problems(str(module.relative_to(ROOT)), module.read_text())
-    found += page_problems({str(p.relative_to(ROOT)): p.read_text() for p in [*(ROOT / "labs").glob("*/src/*/page.html"), *(ROOT / "labs").glob("*/src/page.html")]})
+    code = [*(ROOT / "scripts").glob("*.py")]
+    for slug in sorted(ready):
+        lab = ROOT / "labs" / slug
+        code += [path for pattern in ("src/**/*.py", "src/**/*.ts", "src/**/page.html", "tests/*.py", "tests/*.ts")
+                 for path in lab.glob(pattern) if not {".venv", "node_modules"} & set(path.parts)]
+    for path in sorted(code):
+        found += naming_problems(str(path.relative_to(ROOT)), path.read_text())
+    found += page_problems({str(path.relative_to(ROOT)): path.read_text() for path in [*(ROOT / "labs").glob("*/src/*/page.html"), *(ROOT / "labs").glob("*/src/page.html")]})
     if course_map(course) not in readme:
         found.append("README.md: course map is stale; run `make readme`")
     return found

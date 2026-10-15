@@ -8,7 +8,7 @@ import { onePrompt } from '../src/onePrompt.js'
 import { serve } from '../src/serve.js'
 import { CHECK, DESCRIPTION, EXTRACT, FEATURES, REPAIR, TITLE, codeCheck, missingLimits, REPAIR_ROUNDS, unId, write, type Fact, type StepEvent } from '../src/workflow.js'
 
-const tent = load().find((p) => p.id === 'tarn-2p-tent')!
+const tent = load().find((product) => product.id === 'tarn-2p-tent')!
 const FACTS = [
   { fact: 'The tent sleeps 2 people.', quote: '2 person', limit: false },
   { fact: 'It is not for snow.', quote: 'Not designed for snow loading', limit: true },
@@ -30,7 +30,7 @@ function fake(plan: Plan = {}): { ask: Ask; calls: string[] } {
     if (instructions === REPAIR) return { text: plan.repair ? plan.repair(prompt) : 'Fixed.', facts: [] }
     if (instructions === CHECK) {
       const items = [...prompt.matchAll(/Item (\d+): (.*)/g)]
-      return { verdicts: items.map(([, n, text]) => ({ item: Number(n), supported: !plan.reject?.test(text), why: 'unsupported' })) }
+      return { verdicts: items.map(([, itemNumber, text]) => ({ item: Number(itemNumber), supported: !plan.reject?.test(text), why: 'unsupported' })) }
     }
     return { title: 'Tarn 2', description: ['Roomy.'], features: ['Sleeps 2.'] }
   }
@@ -60,7 +60,7 @@ describe('code checks', () => {
 
   it('turns a limit no item cites into a failed bullet for repair to write', () => {
     const items = [{ part: 'feature' as const, text: 'Weighs 2.1 kg.', facts: ['F1'], ok: true, why: '' }]
-    expect(missingLimits(items, facts).map((i) => i.facts)).toEqual([['F2']])
+    expect(missingLimits(items, facts).map((item) => item.facts)).toEqual([['F2']])
   })
 })
 
@@ -68,13 +68,13 @@ describe('the workflow', () => {
   it('drops an invented fact, runs the writers together, and publishes when every claim passes', async () => {
     const { ask } = fake()
     const steps: StepEvent[] = []
-    const listing = await write(ask, tent.sheet, (e) => steps.push(e))
+    const listing = await write(ask, tent.sheet, (event) => steps.push(event))
     expect(listing.status).toBe('published')
-    expect(listing.facts.map((f) => f.quote)).not.toContain('waterproof to 10000 mm')
-    const order = steps.map((e) => `${e.phase}:${e.step}`)
+    expect(listing.facts.map((fact) => fact.quote)).not.toContain('waterproof to 10000 mm')
+    const order = steps.map((event) => `${event.phase}:${event.step}`)
     // All three writers start before any of them ends: that is the parallel step.
-    const firstEnd = Math.min(...['title', 'description', 'features'].map((s) => order.indexOf(`end:${s}`)))
-    for (const s of ['title', 'description', 'features']) expect(order.indexOf(`start:${s}`)).toBeLessThan(firstEnd)
+    const firstEnd = Math.min(...['title', 'description', 'features'].map((part) => order.indexOf(`end:${part}`)))
+    for (const part of ['title', 'description', 'features']) expect(order.indexOf(`start:${part}`)).toBeLessThan(firstEnd)
     expect(order).toContain('end:publish')
     expect(order).not.toContain('start:repair')
   })
@@ -82,16 +82,16 @@ describe('the workflow', () => {
   it('repairs a claim with a stray number, then publishes', async () => {
     const { ask, calls } = fake({ features: [{ text: 'Sleeps 3.', facts: ['F1'] }, { text: 'Not for snow.', facts: ['F2'] }], repair: () => 'Sleeps 2.' })
     const listing = await write(ask, tent.sheet)
-    expect(calls.filter((c) => c === REPAIR)).toHaveLength(1)
+    expect(calls.filter((call) => call === REPAIR)).toHaveLength(1)
     expect(listing).toMatchObject({ status: 'published', repaired: 1 })
-    expect(listing.items.map((i) => i.text)).toContain('Sleeps 2.')
+    expect(listing.items.map((item) => item.text)).toContain('Sleeps 2.')
   })
 
   it('writes a missing limit through the repair branch', async () => {
     const { ask } = fake({ features: [{ text: 'Sleeps 2.', facts: ['F1'] }], repair: () => 'Not designed for snow loading.' })
     const listing = await write(ask, tent.sheet)
     expect(listing.status).toBe('published')
-    expect(listing.items.map((i) => i.text)).toContain('Not designed for snow loading.')
+    expect(listing.items.map((item) => item.text)).toContain('Not designed for snow loading.')
   })
 
   it('cuts a sentence repair cannot source, but holds a limit it cannot source', async () => {
@@ -99,7 +99,7 @@ describe('the workflow', () => {
     const kept = await write(cut.ask, tent.sheet)
     expect(kept).toMatchObject({ status: 'published', cut: ['Still BAD.'] })
     // It got every round of repair before it was cut.
-    expect(cut.calls.filter((c) => c === REPAIR)).toHaveLength(REPAIR_ROUNDS)
+    expect(cut.calls.filter((call) => call === REPAIR)).toHaveLength(REPAIR_ROUNDS)
 
     const held = fake({ features: [{ text: 'Sleeps 2.', facts: ['F1'] }, { text: 'Snow is fine BAD.', facts: ['F2'] }], reject: /BAD/, repair: () => 'Still BAD.' })
     expect((await write(held.ask, tent.sheet)).status).toBe('held')
@@ -121,14 +121,14 @@ describe('the merchant audit', () => {
     const ok = listing(['A 2 person, 3-season tent.', 'Not for winter or snow.'])
     expect(audit(ok, tent)).toEqual([])
     expect(cleanlyPublished(ok, [])).toBe(true)
-    const whys = audit(listing(['A 2 person, 3-season tent for winter.', 'Lifetime warranty, 7 pegs.']), tent).map((e) => e.why)
+    const whys = audit(listing(['A 2 person, 3-season tent for winter.', 'Lifetime warranty, 7 pegs.']), tent).map((edit) => edit.why)
     expect(whys.join(' ')).toMatch(/not for snow or winter/)
     expect(whys.join(' ')).toMatch(/lifetime warranty/)
     expect(whys.join(' ')).toMatch(/7 is not on the supplier sheet/)
   })
 
   it('asks for a fact the merchant requires', () => {
-    expect(audit(listing(['A 3-season tent.']), tent).map((e) => e.why)).toEqual(['The listing must state its capacity, 2 person.'])
+    expect(audit(listing(['A 3-season tent.']), tent).map((edit) => edit.why)).toEqual(['The listing must state its capacity, 2 person.'])
   })
 
   it('publishes one-prompt copy unchecked, so only the audit can catch it', async () => {

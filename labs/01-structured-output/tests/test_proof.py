@@ -29,7 +29,7 @@ def test_receipts_match_their_card_charges_and_never_the_wrong_one():
     client, model = client_and_model()
     charges, taken, got = load_charges(LAB / "data/card-transactions.csv"), set(), {}
     paths = receipts_in(LAB / "data/receipts")
-    assert {p.name for p in paths} == set(PAYS)
+    assert {path.name for path in paths} == set(PAYS)
     for path in paths:
         charge = settle(read_receipt(path), client, model, charges, taken).match.charge
         got[path.name] = charge.id if charge else None

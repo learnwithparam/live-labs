@@ -81,15 +81,15 @@ const Verdicts = z.object({ verdicts: z.array(z.object({ item: z.number(), suppo
 export const unId = (text: string) => text.replace(/\s*[([]?\bF\d+(?:\s*,\s*F\d+)*[)\]]?/g, '').trim()
 
 function listFacts(facts: Fact[]): string {
-  return facts.map((f) => `${f.id}${f.limit ? ' (limit)' : ''}: ${f.fact} (sheet: "${f.quote}")`).join('\n')
+  return facts.map((fact) => `${fact.id}${fact.limit ? ' (limit)' : ''}: ${fact.fact} (sheet: "${fact.quote}")`).join('\n')
 }
 
 /** A limit no item cites becomes an empty, failed bullet, so the repair branch writes it. */
 export function missingLimits(items: Checked[], facts: Fact[]): Checked[] {
-  const cited = new Set(items.flatMap((i) => i.facts))
+  const cited = new Set(items.flatMap((item) => item.facts))
   return facts
-    .filter((f) => f.limit && !cited.has(f.id))
-    .map((f) => ({ part: 'feature' as const, text: '', facts: [f.id], ok: false, why: `A limit the buyer must know is missing: ${f.fact}` }))
+    .filter((fact) => fact.limit && !cited.has(fact.id))
+    .map((fact) => ({ part: 'feature' as const, text: '', facts: [fact.id], ok: false, why: `A limit the buyer must know is missing: ${fact.fact}` }))
 }
 
 /**
@@ -97,11 +97,11 @@ export function missingLimits(items: Checked[], facts: Fact[]): Checked[] {
  * in one of them. A model checks the rest, but only items that pass here reach it.
  */
 export function codeCheck(item: z.infer<typeof Item>, facts: Fact[]): string {
-  const cited = facts.filter((f) => item.facts.includes(f.id))
+  const cited = facts.filter((fact) => item.facts.includes(fact.id))
   if (!cited.length) return 'It cites no fact from the sheet.'
   if (/\bF\d+\b/.test(item.text)) return 'It shows a fact id to the buyer.'
-  const known = new Set(cited.flatMap((f) => numbers(`${f.fact} ${f.quote}`)))
-  const stray = numbers(item.text).find((n) => !known.has(n))
+  const known = new Set(cited.flatMap((fact) => numbers(`${fact.fact} ${fact.quote}`)))
+  const stray = numbers(item.text).find((number) => !known.has(number))
   return stray ? `"${stray}" is in no fact it cites.` : ''
 }
 
@@ -111,14 +111,14 @@ async function checkItems(ask: Ask, items: Checked[], facts: Fact[]): Promise<{ 
     const why = codeCheck(item, facts)
     return { ...item, ok: !why, why }
   })
-  const open = out.map((item, n) => ({ item, n })).filter(({ item }) => item.ok)
+  const open = out.map((item, position) => ({ item, position })).filter(({ item }) => item.ok)
   if (!open.length) return { items: out, cost: 0 }
   const prompt = open
-    .map(({ item, n }) => `Item ${n}: ${item.text}\nCited facts:\n${listFacts(facts.filter((f) => item.facts.includes(f.id)))}`)
+    .map(({ item, position }) => `Item ${position}: ${item.text}\nCited facts:\n${listFacts(facts.filter((fact) => item.facts.includes(fact.id)))}`)
     .join('\n\n')
   const { object, cost } = await ask(CHECK, prompt, Verdicts)
-  for (const { item, n } of open) {
-    const verdict = object?.verdicts.find((v) => v.item === n)
+  for (const { item, position } of open) {
+    const verdict = object?.verdicts.find((entry) => entry.item === position)
     // An item the check did not return a verdict for is not a pass.
     item.ok = verdict?.supported ?? false
     item.why = verdict ? (verdict.supported ? '' : verdict.why) : 'The check returned no verdict.'
@@ -138,9 +138,9 @@ export function build(ask: Ask) {
       const { object, cost } = await ask(EXTRACT, inputData.sheet, Facts)
       const all = object?.facts ?? []
       // A fact whose quote is not on the sheet came from the model, not the supplier: drop it.
-      const kept = all.filter((f) => onSheet(f.quote, inputData.sheet))
-      const facts = kept.map((f, n) => ({ ...f, id: `F${n + 1}` }))
-      return { facts, dropped: all.filter((f) => !kept.includes(f)).map((f) => f.fact), cost }
+      const kept = all.filter((fact) => onSheet(fact.quote, inputData.sheet))
+      const facts = kept.map((fact, index) => ({ ...fact, id: `F${index + 1}` }))
+      return { facts, dropped: all.filter((fact) => !kept.includes(fact)).map((fact) => fact.fact), cost }
     },
   })
 
@@ -152,7 +152,7 @@ export function build(ask: Ask) {
       outputSchema: Copy,
       execute: async ({ inputData }) => {
         const { object, cost } = await ask(instructions, listFacts(inputData.facts), z.object({ items: z.array(Item) }))
-        return { items: (object?.items ?? []).map((i) => ({ ...i, text: unId(i.text) })), cost }
+        return { items: (object?.items ?? []).map((item) => ({ ...item, text: unId(item.text) })), cost }
       },
     })
 
@@ -164,11 +164,11 @@ export function build(ask: Ask) {
       // The parallel step hands over each writer's output by id; the facts come from extract.
       const { facts, cost: extracted } = getStepResult(extract) as z.infer<typeof Extracted>
       const parts = [
-        ...inputData.title.items.slice(0, 1).map((i) => ({ ...i, part: 'title' as const })),
+        ...inputData.title.items.slice(0, 1).map((item) => ({ ...item, part: 'title' as const })),
         // A model asked for 3 sentences can return 13; the page has room for 3, so code holds the line.
-        ...inputData.description.items.slice(0, 3).map((i) => ({ ...i, part: 'description' as const })),
-        ...inputData.features.items.map((i) => ({ ...i, part: 'feature' as const })),
-      ].map((i) => ({ ...i, ok: false, why: '' }))
+        ...inputData.description.items.slice(0, 3).map((item) => ({ ...item, part: 'description' as const })),
+        ...inputData.features.items.map((item) => ({ ...item, part: 'feature' as const })),
+      ].map((item) => ({ ...item, ok: false, why: '' }))
       const written = inputData.title.cost + inputData.description.cost + inputData.features.cost
       if (!parts.length) return { facts, items: [], cost: extracted + written }
       const { items, cost } = await checkItems(ask, parts, facts)
@@ -198,30 +198,30 @@ export function build(ask: Ask) {
     execute: async ({ inputData }) => {
       const { facts } = inputData
       let cost = inputData.cost
-      const failed = inputData.items.filter((i) => !i.ok)
+      const failed = inputData.items.filter((check) => !check.ok)
       let all = inputData.items
-      for (let round = 0; round < REPAIR_ROUNDS && all.some((i) => !i.ok); round++) {
-        const open = all.filter((i) => !i.ok)
+      for (let round = 0; round < REPAIR_ROUNDS && all.some((check) => !check.ok); round++) {
+        const open = all.filter((check) => !check.ok)
         const rewritten = await Promise.all(
           open.map(async (item) => {
-            const cited = facts.filter((f) => item.facts.includes(f.id))
-            const rest = all.filter((i) => i !== item && i.text).map((i) => `- ${i.text}`).join('\n')
+            const cited = facts.filter((fact) => item.facts.includes(fact.id))
+            const rest = all.filter((other) => other !== item && other.text).map((other) => `- ${other.text}`).join('\n')
             const prompt = `Item: ${item.text || '(missing)'}\nWhy it failed: ${item.why}\nCited facts:\n${listFacts(cited)}\n\nThe rest of the listing:\n${rest}`
-            const { object, cost: c } = await ask(REPAIR, prompt, Item)
-            cost += c
+            const { object, cost: repairCost } = await ask(REPAIR, prompt, Item)
+            cost += repairCost
             return { ...item, text: object ? unId(object.text) : item.text, facts: object?.facts.length ? object.facts : item.facts }
           }),
         )
         const rechecked = await checkItems(ask, rewritten, facts)
         cost += rechecked.cost
-        const fixed = new Map(open.map((item, n) => [item, rechecked.items[n]]))
+        const fixed = new Map(open.map((item, index) => [item, rechecked.items[index]]))
         all = all.map((item) => fixed.get(item) ?? item)
       }
-      const limits = new Set(facts.filter((f) => f.limit).map((f) => f.id))
-      const mustKeep = (i: Checked) => i.part === 'title' || i.facts.some((id) => limits.has(id))
-      const cut = all.filter((i) => !i.ok && !mustKeep(i) && i.text).map((i) => i.text)
-      const items = all.filter((i) => i.ok || mustKeep(i))
-      const still = items.filter((i) => !i.ok)
+      const limits = new Set(facts.filter((fact) => fact.limit).map((fact) => fact.id))
+      const mustKeep = (check: Checked) => check.part === 'title' || check.facts.some((id) => limits.has(id))
+      const cut = all.filter((check) => !check.ok && !mustKeep(check) && check.text).map((check) => check.text)
+      const items = all.filter((check) => check.ok || mustKeep(check))
+      const still = items.filter((check) => !check.ok)
       const repaired = failed.length - still.length - cut.length
       if (!items.length) return { status: 'held' as const, items, facts, repaired: 0, cut, why: 'The writers returned no copy.', cost }
       return still.length
@@ -235,8 +235,8 @@ export function build(ask: Ask) {
     .parallel([writer('title', TITLE), writer('description', DESCRIPTION), writer('features', FEATURES)])
     .then(check)
     .branch([
-      [async ({ inputData }) => inputData.items.length > 0 && inputData.items.every((i) => i.ok), publish],
-      [async ({ inputData }) => !inputData.items.length || inputData.items.some((i) => !i.ok), repair],
+      [async ({ inputData }) => inputData.items.length > 0 && inputData.items.every((item) => item.ok), publish],
+      [async ({ inputData }) => !inputData.items.length || inputData.items.some((item) => !item.ok), repair],
     ])
     .commit()
 }
@@ -244,7 +244,7 @@ export function build(ask: Ask) {
 export type StepEvent = { step: string; phase: 'start' | 'end'; ms: number }
 
 /** Run the workflow on one sheet, reporting each step as it starts and ends. */
-export async function write(ask: Ask, sheet: string, onStep: (e: StepEvent) => void = () => {}): Promise<Listing> {
+export async function write(ask: Ask, sheet: string, onStep: (step: StepEvent) => void = () => {}): Promise<Listing> {
   const run = await build(ask).createRun()
   const t0 = Date.now()
   const stream = run.stream({ inputData: { sheet } })

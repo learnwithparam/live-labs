@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<link rel="icon" href="data:,">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Swiftbite courier support</title>
 <style>
@@ -160,97 +161,97 @@ main.report { max-width: 1060px; margin: 0 auto; padding: 32px 24px 48px }
 </section>
 
 <script>
-const $ = (s) => document.querySelector(s);
-const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
-const post = (url, body) => fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }).then((r) => r.json());
+const $ = (selector) => document.querySelector(selector);
+const escapeHtml = (text) => String(text ?? "").replace(/[&<>"]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[char]);
+const post = (url, body) => fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }).then((response) => response.json());
 let room, current, checks = {}, sent = {}, judgeView = "judge", cellFilter = null, quality = null;
 
-function stateOf(t) {
-  if (sent[t.id]) return ["sent", sent[t.id] === "send" ? "Sent" : "Rewriting"];
-  const c = checks[t.id];
-  if (!c) return ["", "Draft waiting"];
-  return c.send ? ["ok", "Ready to send"] : ["held", "Held for you"];
+function stateOf(ticket) {
+  if (sent[ticket.id]) return ["sent", sent[ticket.id] === "send" ? "Sent" : "Rewriting"];
+  const check = checks[ticket.id];
+  if (!check) return ["", "Draft waiting"];
+  return check.send ? ["ok", "Ready to send"] : ["held", "Held for you"];
 }
 
 function drawQueue() {
-  $("#queue").innerHTML = room.tickets.map((t) => {
-    const [cls, label] = stateOf(t);
-    return `<button class="ticket" data-id="${t.id}" aria-current="${t.id === current}">
-      <b>${esc(t.courier)} <small>${t.id}</small></b><span>${esc(t.question)}</span>
+  $("#queue").innerHTML = room.tickets.map((ticket) => {
+    const [cls, label] = stateOf(ticket);
+    return `<button class="ticket" data-id="${ticket.id}" aria-current="${ticket.id === current}">
+      <b>${escapeHtml(ticket.courier)} <small>${ticket.id}</small></b><span>${escapeHtml(ticket.question)}</span>
       <div class="state ${cls}">${label}</div></button>`;
   }).join("");
-  document.querySelectorAll(".ticket").forEach((b) => (b.onclick = () => open(b.dataset.id)));
+  document.querySelectorAll(".ticket").forEach((button) => (button.onclick = () => open(button.dataset.id)));
 }
 
-function claimsHtml(c) {
-  return c.claims.map((k) => `<div class="claim ${k.verdict === "supported" ? "yes" : "no"}">
-    <span class="mark ${k.verdict === "supported" ? "yes" : "no"}" aria-label="${k.verdict}">${k.verdict === "supported" ? "✓" : "✕"}</span>
-    <div><p>${esc(k.claim)}</p>${k.quote ? `<blockquote>${esc(k.quote)}<cite>${esc(k.section || "")}</cite></blockquote>` : `<blockquote>No cited section says this.</blockquote>`}</div></div>`).join("");
+function claimsHtml(check) {
+  return check.claims.map((claim) => `<div class="claim ${claim.verdict === "supported" ? "yes" : "no"}">
+    <span class="mark ${claim.verdict === "supported" ? "yes" : "no"}" aria-label="${claim.verdict}">${claim.verdict === "supported" ? "✓" : "✕"}</span>
+    <div><p>${escapeHtml(claim.claim)}</p>${claim.quote ? `<blockquote>${escapeHtml(claim.quote)}<cite>${escapeHtml(claim.section || "")}</cite></blockquote>` : `<blockquote>No cited section says this.</blockquote>`}</div></div>`).join("");
 }
 
-function verdictHtml(t, c) {
-  if (sent[t.id]) return `<div class="verdict"><p>${sent[t.id] === "send" ? "Sent to the courier." : "Sent back for a rewrite. The courier waits for an agent."}</p></div>`;
-  if (c.send) return `<div class="verdict ok"><p><strong class="ok">Checked.</strong> ${esc(c.why)}</p><button class="btn primary" data-do="send">Send reply</button></div>`;
-  return `<div class="verdict held"><p><strong class="held">Held for you.</strong> ${esc(c.why)} Rewrite it from the help centre, or send it as written if the check is wrong.</p>
+function verdictHtml(ticket, check) {
+  if (sent[ticket.id]) return `<div class="verdict"><p>${sent[ticket.id] === "send" ? "Sent to the courier." : "Sent back for a rewrite. The courier waits for an agent."}</p></div>`;
+  if (check.send) return `<div class="verdict ok"><p><strong class="ok">Checked.</strong> ${escapeHtml(check.why)}</p><button class="btn primary" data-do="send">Send reply</button></div>`;
+  return `<div class="verdict held"><p><strong class="held">Held for you.</strong> ${escapeHtml(check.why)} Rewrite it from the help centre, or send it as written if the check is wrong.</p>
     <button class="btn primary" data-do="rewrite">Rewrite before sending</button><button class="btn" data-do="send">Send as written</button></div>`;
 }
 
-function sourcesHtml(c) {
-  if (!c.sources?.length) return "";
-  return `<details class="sources"><summary>Cited help centre sections (${c.sources.length})</summary>${c.sources.map((s) => `<div class="source"><b>${esc(s.article)}: ${esc(s.section)}</b>${esc(s.text)}</div>`).join("")}</details>`;
+function sourcesHtml(check) {
+  if (!check.sources?.length) return "";
+  return `<details class="sources"><summary>Cited help centre sections (${check.sources.length})</summary>${check.sources.map((source) => `<div class="source"><b>${escapeHtml(source.article)}: ${escapeHtml(source.section)}</b>${escapeHtml(source.text)}</div>`).join("")}</details>`;
 }
 
-function drawConvo(t) {
-  const c = checks[t.id];
-  const body = !t.answer ? "No draft: the help centre does not cover this." : esc(t.answer);
-  $("#convo").innerHTML = `<div class="who-line"><h1>${esc(t.courier)}</h1><span>${t.id}${t.live ? ", typed here" : ""}</span></div>
-    <p class="bubble courier">${esc(t.question)}</p>
-    <div class="bubble draft ${sent[t.id] === "send" ? "sent" : ""}"><small>${sent[t.id] === "send" ? "Sent by the bot" : "Bot draft, not sent"}</small>${body}</div>
-    ${c ? verdictHtml(t, c) : ""}
-    <div class="check"><h2>Grounding check <span>${c ? `${c.claims.filter((k) => k.verdict === "supported").length} of ${c.claims.length} claims supported` : ""}</span></h2>
-    ${c ? (c.claims.length ? claimsHtml(c) : `<p class="thinking">${esc(c.why)}</p>`) : `<p class="thinking">Splitting the draft into claims and checking each against what it cites...</p>`}</div>
-    ${c ? sourcesHtml(c) : ""}`;
-  document.querySelectorAll("[data-do]").forEach((b) => (b.onclick = async () => {
-    b.disabled = true;
-    await post("/api/decide", { ticket: t.id, decision: b.dataset.do });
-    sent[t.id] = b.dataset.do; drawQueue(); drawConvo(t);
+function drawConvo(ticket) {
+  const check = checks[ticket.id];
+  const body = !ticket.answer ? "No draft: the help centre does not cover this." : escapeHtml(ticket.answer);
+  $("#convo").innerHTML = `<div class="who-line"><h1>${escapeHtml(ticket.courier)}</h1><span>${ticket.id}${ticket.live ? ", typed here" : ""}</span></div>
+    <p class="bubble courier">${escapeHtml(ticket.question)}</p>
+    <div class="bubble draft ${sent[ticket.id] === "send" ? "sent" : ""}"><small>${sent[ticket.id] === "send" ? "Sent by the bot" : "Bot draft, not sent"}</small>${body}</div>
+    ${check ? verdictHtml(ticket, check) : ""}
+    <div class="check"><h2>Grounding check <span>${check ? `${check.claims.filter((claim) => claim.verdict === "supported").length} of ${check.claims.length} claims supported` : ""}</span></h2>
+    ${check ? (check.claims.length ? claimsHtml(check) : `<p class="thinking">${escapeHtml(check.why)}</p>`) : `<p class="thinking">Splitting the draft into claims and checking each against what it cites...</p>`}</div>
+    ${check ? sourcesHtml(check) : ""}`;
+  document.querySelectorAll("[data-do]").forEach((button) => (button.onclick = async () => {
+    button.disabled = true;
+    await post("/api/decide", { ticket: ticket.id, decision: button.dataset.do });
+    sent[ticket.id] = button.dataset.do; drawQueue(); drawConvo(ticket);
   }));
 }
 
 async function open(id) {
   current = id; drawQueue();
-  const t = room.tickets.find((x) => x.id === id);
-  drawConvo(t);
-  if (!checks[id] && !t.live) {
+  const ticket = room.tickets.find((candidate) => candidate.id === id);
+  drawConvo(ticket);
+  if (!checks[id] && !ticket.live) {
     checks[id] = await post("/api/check", { ticket: id });
-    drawQueue(); if (current === id) drawConvo(t);
+    drawQueue(); if (current === id) drawConvo(ticket);
   }
 }
 
 async function ask(question) {
-  const id = `NEW-${room.tickets.filter((t) => t.live).length + 1}`;
-  const t = { id, courier: "Test courier", question, answer: "", cited: [], live: true };
-  room.tickets.unshift(t);
+  const id = `NEW-${room.tickets.filter((other) => other.live).length + 1}`;
+  const ticket = { id, courier: "Test courier", question, answer: "", cited: [], live: true };
+  room.tickets.unshift(ticket);
   current = id; drawQueue();
-  $("#convo").innerHTML = `<div class="who-line"><h1>Test courier</h1><span>${id}, typed here</span></div><p class="bubble courier">${esc(question)}</p><p class="thinking">Searching the help centre, drafting a reply, then checking it...</p>`;
+  $("#convo").innerHTML = `<div class="who-line"><h1>Test courier</h1><span>${id}, typed here</span></div><p class="bubble courier">${escapeHtml(question)}</p><p class="thinking">Searching the help centre, drafting a reply, then checking it...</p>`;
   const got = await post("/api/ask", { question });
-  t.answer = got.reply; t.cited = got.cited;
-  checks[id] = got; drawQueue(); if (current === id) drawConvo(t);
+  ticket.answer = got.reply; ticket.cited = got.cited;
+  checks[id] = got; drawQueue(); if (current === id) drawConvo(ticket);
 }
 
 function drawReport() {
-  const q = quality, a = q[judgeView], m = a.matrix, g = q.guard;
-  const shown = q.rows.filter((r) => !cellFilter || (r.human === cellFilter[0] && r[judgeView] === cellFilter[1]));
-  const cell = (h, j) => {
-    const n = m[h][j], right = h === j;
-    return `<button class="cell ${right ? "right" : "wrong"} ${n ? "some" : ""}" data-cell="${h},${j}" aria-pressed="${cellFilter?.join() === `${h},${j}`}"><strong>${n}</strong>${right ? "agree" : "disagree"}</button>`;
+  const report = quality, judged = report[judgeView], matrix = judged.matrix, guard = report.guard;
+  const shown = report.rows.filter((row) => !cellFilter || (row.human === cellFilter[0] && row[judgeView] === cellFilter[1]));
+  const cell = (agentVerdict, judgeVerdict) => {
+    const count = matrix[agentVerdict][judgeVerdict], right = agentVerdict === judgeVerdict;
+    return `<button class="cell ${right ? "right" : "wrong"} ${count ? "some" : ""}" data-cell="${agentVerdict},${judgeVerdict}" aria-pressed="${cellFilter?.join() === `${agentVerdict},${judgeVerdict}`}"><strong>${count}</strong>${right ? "agree" : "disagree"}</button>`;
   };
   $("#reportBody").innerHTML = `<h1>Can the judge stand in for an agent?</h1>
-    <p class="lede">Support agents labelled ${q.rows.length} replies pass or fail. The grounding check ran on each before sending, and the judge reviewed each after. Here is how often they match the agents.</p>
+    <p class="lede">Support agents labelled ${report.rows.length} replies pass or fail. The grounding check ran on each before sending, and the judge reviewed each after. Here is how often they match the agents.</p>
     <div class="before-after">
-      <div class="ba bad"><strong>${g.unsupported}</strong><span>unsupported replies would reach couriers with no check</span></div>
-      <div class="ba good"><strong>${g.sent.length}</strong><span>reach couriers with the grounding check${g.sent.length ? `: ${g.sent.join(", ")}` : ""}</span></div>
-      <div class="ba"><strong>${g.held_good.length}</strong><span>good replies held for an agent by mistake</span></div>
+      <div class="ba bad"><strong>${guard.unsupported}</strong><span>unsupported replies would reach couriers with no check</span></div>
+      <div class="ba good"><strong>${guard.sent.length}</strong><span>reach couriers with the grounding check${guard.sent.length ? `: ${guard.sent.join(", ")}` : ""}</span></div>
+      <div class="ba"><strong>${guard.held_good.length}</strong><span>good replies held for an agent by mistake</span></div>
     </div>
     <div class="judges" role="group" aria-label="Which judge">
       <button data-judge="judge" aria-pressed="${judgeView === "judge"}">Judge with sources and rubric</button>
@@ -262,42 +263,42 @@ function drawReport() {
         <span class="r">Agent: pass</span>${cell("pass", "pass")}${cell("pass", "fail")}
         <span class="r">Agent: fail</span>${cell("fail", "pass")}${cell("fail", "fail")}
       </div>
-      <div class="score"><strong>${a.agree} of ${a.total} agree</strong>
-        <p>Cohen's kappa ${a.kappa}. It discounts the matches two raters would get by chance, so 0 is a coin toss and 1 is full agreement.</p>
-        <p>${judgeView === "naive" ? `With no sources, the judge passes ${m.fail.pass} replies agents failed: it grades how a reply sounds, and a confident wrong number sounds fine.` : a.disagree.length ? `Read the ${a.disagree.length} disagreements below before you let this judge review the sample alone.` : "No disagreements on this set. Keep labelling a fresh sample every week, because a judge drifts when the help centre changes."}</p>
-        <p style="color:var(--muted);font-size:14px">Check on ${esc(q.model)}, judge on ${esc(q.judge_model)}, $${q.cost.toFixed(4)} for this review.</p></div>
+      <div class="score"><strong>${judged.agree} of ${judged.total} agree</strong>
+        <p>Cohen's kappa ${judged.kappa}. It discounts the matches two raters would get by chance, so 0 is a coin toss and 1 is full agreement.</p>
+        <p>${judgeView === "naive" ? `With no sources, the judge passes ${matrix.fail.pass} replies agents failed: it grades how a reply sounds, and a confident wrong number sounds fine.` : judged.disagree.length ? `Read the ${judged.disagree.length} disagreements below before you let this judge review the sample alone.` : "No disagreements on this set. Keep labelling a fresh sample every week, because a judge drifts when the help centre changes."}</p>
+        <p style="color:var(--muted);font-size:14px">Check on ${escapeHtml(report.model)}, judge on ${escapeHtml(report.judge_model)}, $${report.cost.toFixed(4)} for this review.</p></div>
     </div>
     <div class="rows"><h2>${cellFilter ? `${shown.length} replies where the agent said ${cellFilter[0]} and the judge said ${cellFilter[1]}` : `All ${shown.length} labelled replies`}${cellFilter ? `<button id="clear">Show all</button>` : ""}</h2>
-    ${shown.map((r) => `<div class="row ${r.human === r[judgeView] ? "" : "off"}"><span class="id">${r.id}</span>
-      <div><b>${esc(r.question)}</b><q>${esc(r.answer)}</q></div>
-      <div><span class="v ${r.human}">Agent: ${r.human}</span><span class="why">${esc(r.reason)}</span></div>
-      <div><span class="v ${r[judgeView]}">Judge: ${r[judgeView]}</span><span class="why">${esc(judgeView === "naive" ? r.naive_reason : r.judge_reason)}</span></div></div>`).join("")}</div>`;
-  document.querySelectorAll("[data-judge]").forEach((b) => (b.onclick = () => { judgeView = b.dataset.judge; cellFilter = null; drawReport(); }));
-  document.querySelectorAll("[data-cell]").forEach((b) => (b.onclick = () => { const c = b.dataset.cell.split(","); cellFilter = cellFilter?.join() === c.join() ? null : c; drawReport(); }));
+    ${shown.map((row) => `<div class="row ${row.human === row[judgeView] ? "" : "off"}"><span class="id">${row.id}</span>
+      <div><b>${escapeHtml(row.question)}</b><q>${escapeHtml(row.answer)}</q></div>
+      <div><span class="v ${row.human}">Agent: ${row.human}</span><span class="why">${escapeHtml(row.reason)}</span></div>
+      <div><span class="v ${row[judgeView]}">Judge: ${row[judgeView]}</span><span class="why">${escapeHtml(judgeView === "naive" ? row.naive_reason : row.judge_reason)}</span></div></div>`).join("")}</div>`;
+  document.querySelectorAll("[data-judge]").forEach((button) => (button.onclick = () => { judgeView = button.dataset.judge; cellFilter = null; drawReport(); }));
+  document.querySelectorAll("[data-cell]").forEach((button) => (button.onclick = () => { const cell = button.dataset.cell.split(","); cellFilter = cellFilter?.join() === cell.join() ? null : cell; drawReport(); }));
   if ($("#clear")) $("#clear").onclick = () => { cellFilter = null; drawReport(); };
 }
 
 async function showReport() {
   if (quality) return drawReport();
   $("#reportBody").innerHTML = `<p class="loading">Running the check, the judge and the no-sources judge on 20 labelled replies. About 20 seconds...</p>`;
-  quality = await fetch("/api/quality").then((r) => r.json());
+  quality = await fetch("/api/quality").then((response) => response.json());
   drawReport();
 }
 
-document.querySelectorAll("[data-tab]").forEach((b) => (b.onclick = () => {
-  document.querySelectorAll("[data-tab]").forEach((x) => x.setAttribute("aria-selected", x === b));
-  $("#inbox").hidden = b.dataset.tab !== "inbox"; $("#report").hidden = b.dataset.tab !== "report";
-  if (b.dataset.tab === "report") showReport();
+document.querySelectorAll("[data-tab]").forEach((tab) => (tab.onclick = () => {
+  document.querySelectorAll("[data-tab]").forEach((other) => other.setAttribute("aria-selected", other === tab));
+  $("#inbox").hidden = tab.dataset.tab !== "inbox"; $("#report").hidden = tab.dataset.tab !== "report";
+  if (tab.dataset.tab === "report") showReport();
 }));
-$("#ask").onsubmit = (e) => { e.preventDefault(); const v = $("#q").value.trim(); if (v) { $("#q").value = ""; ask(v); } };
+$("#ask").onsubmit = (event) => { event.preventDefault(); const asked = $("#q").value.trim(); if (asked) { $("#q").value = ""; ask(asked); } };
 
-fetch("/api/room").then((r) => r.json()).then((r) => {
-  room = r;
-  r.decisions.forEach((d) => (sent[d.ticket] = d.decision));
-  $("#models").textContent = `${r.sections} help centre sections`;
-  $("#chips").innerHTML = r.questions.slice(0, 8).map((q) => `<button type="button">${esc(q)}</button>`).join("");
-  document.querySelectorAll("#chips button").forEach((b) => (b.onclick = () => ask(b.textContent)));
-  open(r.tickets[0].id);
+fetch("/api/room").then((response) => response.json()).then((loaded) => {
+  room = loaded;
+  loaded.decisions.forEach((decision) => (sent[decision.ticket] = decision.decision));
+  $("#models").textContent = `${loaded.sections} help centre sections`;
+  $("#chips").innerHTML = loaded.questions.slice(0, 8).map((question) => `<button type="button">${escapeHtml(question)}</button>`).join("");
+  document.querySelectorAll("#chips button").forEach((button) => (button.onclick = () => ask(button.textContent)));
+  open(loaded.tickets[0].id);
 });
 </script>
 </body>

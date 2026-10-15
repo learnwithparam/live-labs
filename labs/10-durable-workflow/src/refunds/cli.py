@@ -143,8 +143,8 @@ def approve(refund: str, reject: bool, manager: str) -> int:
 def show_ledger(path: Path) -> int:
     rows = Ledger(path).payouts()
     print(f"{'payout':<8}{'refund':<9}{'customer':<14}{'amount':>10}  {'how':<9}idempotency key")
-    for p in rows:
-        print(f"{p['id']:<8}{p['refund']:<9}{p['customer']:<14}{p['cents'] / 100:>10.2f}  {p['how']:<9}{p['idempotency_key'] or 'none'}")
+    for payout in rows:
+        print(f"{payout['id']:<8}{payout['refund']:<9}{payout['customer']:<14}{payout['cents'] / 100:>10.2f}  {payout['how']:<9}{payout['idempotency_key'] or 'none'}")
     return 0
 
 
@@ -159,7 +159,7 @@ def review() -> int:
     for marker in (REVIEW_LEDGER.parent / "crashed").glob("*"):
         marker.unlink()
     print(f"{len(reqs)} refunds each way, each crashed right after its payout. Model {model}.\n")
-    show = lambda e: print(f"  {e['how']:<8}{e.get('refund', ''):<8}{e['event']}")
+    show = lambda event: print(f"  {event['how']:<8}{event.get('refund', ''):<8}{event['event']}")
     decided = {"naive": naive_way(reqs, ledger, client, model, on_event=show)}
 
     async def go():
@@ -176,9 +176,9 @@ def review() -> int:
     result = {how: score(reqs, ledger, how, decided[how]) for how in WAYS} | {"worker_deaths": deaths, "decide_attempts": attempts}
     print(f"\n{'':<10}{'paid twice':<12}{'lost':<7}{'paid right':<13}{'model calls':<13}dollars out (due)")
     for how in WAYS:
-        s = result[how]
-        print(f"{how:<10}{s['paid_twice']:<12}{s['lost']:<7}{str(s['paid_right']) + ' of ' + str(s['due']):<13}"
-              f"{s['model_calls']:<13}${s['dollars_out']:,.2f} (${s['dollars_due']:,.2f})")
+        summary = result[how]
+        print(f"{how:<10}{summary['paid_twice']:<12}{summary['lost']:<7}{str(summary['paid_right']) + ' of ' + str(summary['due']):<13}"
+              f"{summary['model_calls']:<13}${summary['dollars_out']:,.2f} (${summary['dollars_due']:,.2f})")
     retried = attempts - len(reqs)
     lost = result["durable"]["lost"]
     print(f"\nThe durable worker died {deaths} times and lost {lost or 'nothing'}. {retried} model calls were a decide that was")

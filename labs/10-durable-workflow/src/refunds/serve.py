@@ -74,9 +74,9 @@ class Room:
         return {"alive": alive, "pid": self.worker.pid if alive else None, "crash_after_pay": self.crash_after_pay}
 
     def start(self, refund: str) -> None:
-        wid = workflow_id(refund, self.run)
-        self.call(self.client.start_workflow(RefundWorkflow.run, refund, id=wid, task_queue=DESK_QUEUE))
-        self.started[refund] = wid
+        flow_id = workflow_id(refund, self.run)
+        self.call(self.client.start_workflow(RefundWorkflow.run, refund, id=flow_id, task_queue=DESK_QUEUE))
+        self.started[refund] = flow_id
 
     def verdict(self, refund: str, reject: bool, manager: str) -> None:
         handle = self.client.get_workflow_handle(self.started[refund])
@@ -97,19 +97,19 @@ class Room:
             marker.unlink()
         self.run, self.started = uuid.uuid4().hex[:6], {}
 
-    async def flow(self, refund: str, wid: str) -> dict:
-        handle = self.client.get_workflow_handle(wid)
+    async def flow(self, refund: str, flow_id: str) -> dict:
+        handle = self.client.get_workflow_handle(flow_id)
         history = await handle.fetch_history()
-        return {"id": wid, "status": status(history), "events": timeline(history)}
+        return {"id": flow_id, "status": status(history), "events": timeline(history)}
 
     def desk(self) -> dict:
         async def all_flows():
-            got = await asyncio.gather(*(self.flow(r, w) for r, w in self.started.items()), return_exceptions=True)
-            return {r: (g if not isinstance(g, BaseException) else {"id": self.started[r], "error": str(g)}) for r, g in zip(self.started, got)}
+            got = await asyncio.gather(*(self.flow(refund, flow_id) for refund, flow_id in self.started.items()), return_exceptions=True)
+            return {refund: (outcome if not isinstance(outcome, BaseException) else {"id": self.started[refund], "error": str(outcome)}) for refund, outcome in zip(self.started, got)}
 
         known = orders()
         return {
-            "refunds": [{"id": r.id, "received": r.received, "message": r.message, "order": known[r.order]} for r in requests()],
+            "refunds": [{"id": refund_request.id, "received": refund_request.received, "message": refund_request.message, "order": known[refund_request.order]} for refund_request in requests()],
             "flows": self.call(all_flows()) if self.started else {},
             "worker": self.worker_state(),
             "payouts": self.ledger.payouts(),
@@ -159,7 +159,7 @@ def handler(room: Room) -> type[BaseHTTPRequestHandler]:
                 return self.send(403, b"forbidden", "text/plain")
             data = self.body()
             refund = str(data.get("refund", ""))
-            known = {r.id for r in requests()}
+            known = {refund_request.id for refund_request in requests()}
             if self.path == "/api/start":
                 if refund not in known:
                     return self.send(400, b"one of the refund requests", "text/plain")

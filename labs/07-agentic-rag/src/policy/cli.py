@@ -29,8 +29,8 @@ def show_step(node: str, update: dict) -> None:
     if node == "plan":
         print(f"plan    {len(update['queries'])} searches")
     elif node == "search":
-        for s in update["searches"]:
-            print(f"search  {s['query']!r}\n          found {', '.join(s['found']) or 'nothing'}")
+        for search in update["searches"]:
+            print(f"search  {search['query']!r}\n          found {', '.join(search['found']) or 'nothing'}")
     elif node == "check":
         print(f"check   missing: {update['missing']}" if update["queries"] else "check   enough to answer")
 
@@ -69,16 +69,16 @@ def review() -> int:
     print(f"{len(questions)} questions with an expert's answer. Pipelines on {model}, graded by {judge}.\n")
     print(f"{'':9}{'accepted':<12}{'sections found':<17}{'calls':<8}cost per question")
     for how in WAYS:
-        s = result[how]
-        print(f"{how:9}{str(s['accepted']) + ' of ' + str(s['total']):<12}{str(s['found']) + ' of ' + str(s['needs']):<17}"
-              f"{s['calls_per_question']:<8}${s['cost_per_question']:.5f}")
-    rows = {(r["id"], r["how"]): r for r in result["rows"]}
+        summary = result[how]
+        print(f"{how:9}{str(summary['accepted']) + ' of ' + str(summary['total']):<12}{str(summary['found']) + ' of ' + str(summary['needs']):<17}"
+              f"{summary['calls_per_question']:<8}${summary['cost_per_question']:.5f}")
+    rows = {(row["id"], row["how"]): row for row in result["rows"]}
     print("\nNot accepted:")
-    for q in questions:
+    for question in questions:
         for how in WAYS:
-            r = rows[(q.id, how)]
-            if not r["accepted"]:
-                print(f"  {q.id} {how:8} {r['reason']}")
+            answer_row = rows[(question.id, how)]
+            if not answer_row["accepted"]:
+                print(f"  {question.id} {how:8} {answer_row['reason']}")
     print(f"\nSent to a person (agentic): {', '.join(result['agentic']['to_a_person']) or 'none'}")
     Path("out").mkdir(exist_ok=True)
     Path("out/review.json").write_text(json.dumps(result, indent=1))

@@ -45,22 +45,22 @@ def one_body(product: Product, model: str) -> dict:
 def pack_body(products: list[Product], model: str) -> dict:
     """Many products under one copy of the instructions: the instructions are paid for once per pack."""
     # 24 products become 24 short lines. The long INSTRUCTIONS above are sent once for all of them.
-    listing = "\n".join(p.line() for p in products)
+    listing = "\n".join(product.line() for product in products)
     messages = [{"role": "system", "content": INSTRUCTIONS}, {"role": "user", "content": f"One line per product: sku, title and description, split by a bar.\n{listing}"}]
     # The reply must be a list of products, each with its sku, so every answer can be matched to a product.
     return {"model": model, "messages": messages, "temperature": 0, "response_format": schema_format(Pack)}
 
 
 def one_lines(products: list[Product], model: str) -> list[dict]:
-    return [{"custom_id": f"one-{p.sku}", "method": "POST", "url": ENDPOINT, "body": one_body(p, model)} for p in products]
+    return [{"custom_id": f"one-{product.sku}", "method": "POST", "url": ENDPOINT, "body": one_body(product, model)} for product in products]
 
 
 def batch_lines(products: list[Product], model: str, size: int) -> list[dict]:
     """The batch file: one request per pack, each line keyed by `custom_id`."""
     # Cut the catalogue into packs: 240 products at 24 a pack is 10 requests.
-    packs = [products[i : i + size] for i in range(0, len(products), size)]
+    packs = [products[start : start + size] for start in range(0, len(products), size)]
     # Each line is the format batch APIs read. custom_id is how a result finds its way back to its pack.
-    return [{"custom_id": f"pack-{n:04d}", "method": "POST", "url": ENDPOINT, "body": pack_body(pack, model)} for n, pack in enumerate(packs)]
+    return [{"custom_id": f"pack-{number:04d}", "method": "POST", "url": ENDPOINT, "body": pack_body(pack, model)} for number, pack in enumerate(packs)]
 
 
 def parse(reply: str, wanted: list[str]) -> tuple[list[Attributes], list[str]]:
@@ -72,8 +72,8 @@ def parse(reply: str, wanted: list[str]) -> tuple[list[Attributes], list[str]]:
             filled = [Attributes.model_validate_json(reply)]
         except ValidationError:
             return [], wanted
-    kept = [a for a in filled if a.sku in wanted]
-    seen = {a.sku for a in kept}
+    kept = [attributes for attributes in filled if attributes.sku in wanted]
+    seen = {attributes.sku for attributes in kept}
     return kept, [sku for sku in wanted if sku not in seen]
 
 
@@ -119,8 +119,8 @@ BATCH_PRICE_IN, BATCH_PRICE_OUT = 0.05e-6, 0.25e-6
 
 def anthropic_params(body: dict, model: str) -> dict:
     """One line of the batch file as a Messages request. The reply schema becomes a tool the model must call."""
-    system = next(m["content"] for m in body["messages"] if m["role"] == "system")
-    user = [m for m in body["messages"] if m["role"] != "system"]
+    system = next(message["content"] for message in body["messages"] if message["role"] == "system")
+    user = [message for message in body["messages"] if message["role"] != "system"]
     schema = body["response_format"]["json_schema"]
     tool = {"name": schema["name"], "description": "Record the filled attributes.", "input_schema": schema["schema"]}
     return {"model": model, "max_tokens": 8192, "system": system, "messages": user,
@@ -158,7 +158,7 @@ def filled_in(done_path: Path) -> tuple[dict[str, Attributes], float, list[str]]
     filled, cost, asked = {}, 0.0, []
     for row in read_jsonl(done_path):
         kept, _ = parse(row["reply"], row["skus"])
-        filled |= {a.sku: a for a in kept}
+        filled |= {attributes.sku: attributes for attributes in kept}
         cost += row["cost"]
         asked += row["skus"]
     return filled, cost, [sku for sku in dict.fromkeys(asked) if sku not in filled]

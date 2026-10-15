@@ -36,7 +36,7 @@ def one_at_a_time(catalogue: Path) -> int:
     checkpoint.unlink(missing_ok=True)
     lines = one_lines(products, model)
     run_lines(lines, client, checkpoint)
-    filled, cost = settle(checkpoint, {p.sku: p for p in products}, client, model)
+    filled, cost = settle(checkpoint, {product.sku: product for product in products}, client, model)
     report(f"one at a time on {model}", len(lines), tally(products, filled, load_supplied(SUPPLIED), cost))
     return 0
 
@@ -68,7 +68,7 @@ def run_file(path: Path, catalogue: Path) -> int:
     sent = run_lines(lines, client, CHECKPOINT)
     print(f"sent {sent['sent']} requests, {sent['skipped']} already done in {CHECKPOINT}")
     products = load_products(catalogue)
-    filled, cost = settle(CHECKPOINT, {p.sku: p for p in products}, client, model)
+    filled, cost = settle(CHECKPOINT, {product.sku: product for product in products}, client, model)
     report(f"packed on {model}", len(lines), tally(products, filled, load_supplied(SUPPLIED), cost))
     return 0
 
@@ -133,7 +133,7 @@ def collect_batch(batch_id: str | None, path: Path, catalogue: Path, wait: bool)
                 out.write(json.dumps({**row, "skus": skus_in(lines[row["custom_id"]]["body"])}) + "\n")
     filled, cost, _ = filled_in(BATCH_CHECKPOINT)
     asked = {sku for row in read_jsonl(BATCH_CHECKPOINT) for sku in row["skus"]}
-    products = [p for p in load_products(catalogue) if p.sku in asked]
+    products = [product for product in load_products(catalogue) if product.sku in asked]
     supplied = {sku: row for sku, row in load_supplied(SUPPLIED).items() if sku in asked}
     report(f"batch on {model}", len(rows), tally(products, filled, supplied, cost))
     return 0

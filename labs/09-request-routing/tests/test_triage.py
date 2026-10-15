@@ -22,10 +22,10 @@ from triage.tickets import Ticket, history, inbox, queues
 def test_six_queues_ten_past_tickets_each_and_a_morning_inbox():
     names = list(queues())
     assert names == ["payroll", "tax", "benefits", "billing", "access", "integrations"]
-    assert Counter(t.queue for t in history()) == {q: 10 for q in names}
+    assert Counter(ticket.queue for ticket in history()) == {queue: 10 for queue in names}
     tickets = inbox()
-    assert len(tickets) == 72 and len({t.id for t in tickets}) == 72
-    assert {t.queue for t in tickets} == set(names)
+    assert len(tickets) == 72 and len({ticket.id for ticket in tickets}) == 72
+    assert {ticket.queue for ticket in tickets} == set(names)
 
 
 def test_a_confident_route_goes_to_its_queue_and_a_doubtful_one_to_a_person():
@@ -85,10 +85,10 @@ def test_the_llm_route_keeps_its_own_confidence_and_an_unparsed_reply_goes_to_a_
 
 
 def test_the_embedding_router_lets_the_five_nearest_vote():
-    past = [Ticket(f"H{i}", "", word, queue) for i, (word, queue) in enumerate(
+    past = [Ticket(f"H{index}", "", word, queue) for index, (word, queue) in enumerate(
         [("pay", "payroll")] * 3 + [("tax", "tax")] * 2 + [("login", "access")] * 4)]
     vectors = {"pay": [1, 0, 0], "tax": [0.9, 0.1, 0], "login": [0, 0, 1]}
-    router = EmbeddingRouter(past, lambda texts: [vectors[t.split()[-1]] for t in texts])
+    router = EmbeddingRouter(past, lambda texts: [vectors[text.split()[-1]] for text in texts])
     got = router(Ticket("T", "", "pay", "payroll"))
     assert (got.queue, got.confidence) == ("payroll", 0.6)
     assert got.probabilities == {"payroll": 0.6, "tax": 0.4}
@@ -117,13 +117,13 @@ def test_review_counts_reassigned_person_and_caught_and_adds_the_second_opinion(
     assert got["decision"]["to_person"] == 1 and got["decision"]["caught"] == 1 and got["decision"]["reassigned"] == 0
     # The pair reuses both answers: B's wrong LLM pick is caught because the decision model disagreed.
     assert got["both"]["reassigned"] == 0 and got["both"]["to_person"] == 1 and got["both"]["right_first_time"] == 2
-    assert [r["to"] for r in got["rows"] if r["how"] == "both"] == ["payroll", PERSON, "tax"]
+    assert [row["to"] for row in got["rows"] if row["how"] == "both"] == ["payroll", PERSON, "tax"]
 
 
 def test_the_second_opinion_never_reassigns_more_than_the_llm_alone():
     tickets = inbox()
-    llm = Fixed({t.id: ("payroll", 0.9) for t in tickets[::3]}, default=("tax", 0.9))
-    decision = Fixed({t.id: ("payroll", 0.7) for t in tickets[::2]}, default=("tax", 0.65))
+    llm = Fixed({ticket.id: ("payroll", 0.9) for ticket in tickets[::3]}, default=("tax", 0.9))
+    decision = Fixed({ticket.id: ("payroll", 0.7) for ticket in tickets[::2]}, default=("tax", 0.65))
     got = review(tickets, {"llm": llm, "decision": decision})
     assert got["both"]["reassigned"] <= got["llm"]["reassigned"]
     assert summary(got["rows"], "both")["tickets"] == len(tickets)

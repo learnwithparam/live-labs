@@ -21,28 +21,28 @@ export async function one(ask: Ask, product: Product, how: How): Promise<Row> {
 }
 
 export function summary(rows: Row[], how: How): Summary {
-  const mine = rows.filter((r) => r.how === how)
+  const mine = rows.filter((row) => row.how === how)
   return {
     how,
-    clean: mine.filter((r) => r.clean).length,
-    held: mine.filter((r) => r.listing.status === 'held').length,
+    clean: mine.filter((row) => row.clean).length,
+    held: mine.filter((row) => row.listing.status === 'held').length,
     // The costly outcome: live on the store with something a merchant would have to take back.
-    wrong: mine.filter((r) => r.listing.status === 'published' && r.edits.length).length,
+    wrong: mine.filter((row) => row.listing.status === 'published' && row.edits.length).length,
     total: mine.length,
-    cost: mine.reduce((sum, r) => sum + r.listing.cost, 0),
+    cost: mine.reduce((sum, row) => sum + row.listing.cost, 0),
   }
 }
 
 /** Every product both ways, a few at a time, reporting each row as it lands. */
-export async function review(ask: Ask, products: Product[], onRow: (r: Row) => void = () => {}, width = 6): Promise<Row[]> {
-  const jobs = products.flatMap((p) => (['one-prompt', 'workflow'] as How[]).map((how) => ({ p, how })))
+export async function review(ask: Ask, products: Product[], onRow: (result: Row) => void = () => {}, width = 6): Promise<Row[]> {
+  const jobs = products.flatMap((product) => (['one-prompt', 'workflow'] as How[]).map((how) => ({ product, how })))
   const rows: Row[] = []
   let next = 0
   // A small pool keeps within the provider's rate limit and still finishes in under a minute.
   const lane = async () => {
     while (next < jobs.length) {
-      const { p, how } = jobs[next++]
-      const row = await one(ask, p, how)
+      const { product, how } = jobs[next++]
+      const row = await one(ask, product, how)
       rows.push(row)
       onRow(row)
     }

@@ -14,9 +14,9 @@ export type Ask = <T extends z.ZodType>(
   shape: T,
 ) => Promise<{ object: z.infer<T> | null; cost: number }>
 
-export function mastraAsk(s: Settings): Ask {
+export function mastraAsk(settings: Settings): Ask {
   // Mastra's model router takes any OpenAI-compatible endpoint as provider/model plus a URL and key.
-  const model = { id: `openrouter/${s.model}` as `${string}/${string}`, url: s.baseUrl, apiKey: s.apiKey }
+  const model = { id: `openrouter/${settings.model}` as `${string}/${string}`, url: settings.baseUrl, apiKey: settings.apiKey }
   return async (instructions, prompt, shape) => {
     const agent = new Agent({ id: 'listing-step', name: 'listing-step', instructions, model })
     try {

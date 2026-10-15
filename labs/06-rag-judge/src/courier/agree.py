@@ -27,21 +27,21 @@ def load_labelled(path: Path) -> list[Labelled]:
 
 
 def kappa(human: list[str], judge: list[str]) -> float:
-    n = len(human)
-    observed = sum(h == j for h, j in zip(human, judge)) / n
+    count = len(human)
+    observed = sum(human_verdict == judge_verdict for human_verdict, judge_verdict in zip(human, judge)) / count
     # Chance agreement: both say pass by luck, plus both say fail by luck, from each one's own rates.
-    chance = sum((human.count(v) / n) * (judge.count(v) / n) for v in ("pass", "fail"))
+    chance = sum((human.count(verdict) / count) * (judge.count(verdict) / count) for verdict in ("pass", "fail"))
     return 1.0 if chance == 1 else (observed - chance) / (1 - chance)
 
 
 def agreement(rows: list[Labelled], verdicts: list[str]) -> dict:
-    human = [r.human for r in rows]
+    human = [row.human for row in rows]
     # Rows are the person's verdict, columns the judge's: the off-diagonal cells are the ones to read.
-    matrix = {h: {j: sum(1 for a, b in zip(human, verdicts) if (a, b) == (h, j)) for j in ("pass", "fail")} for h in ("pass", "fail")}
+    matrix = {human_verdict: {judge_verdict: sum(1 for human_said, judge_said in zip(human, verdicts) if (human_said, judge_said) == (human_verdict, judge_verdict)) for judge_verdict in ("pass", "fail")} for human_verdict in ("pass", "fail")}
     return {
-        "agree": sum(h == j for h, j in zip(human, verdicts)),
+        "agree": sum(human_verdict == judge_verdict for human_verdict, judge_verdict in zip(human, verdicts)),
         "total": len(rows),
         "kappa": round(kappa(human, verdicts), 2),
         "matrix": matrix,
-        "disagree": [r.id for r, v in zip(rows, verdicts) if v != r.human],
+        "disagree": [row.id for row, verdict in zip(rows, verdicts) if verdict != row.human],
     }

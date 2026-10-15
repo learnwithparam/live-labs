@@ -28,7 +28,7 @@ class Room:
         self.lock = threading.Lock()
 
     def sections(self, ids: list[str]) -> list[dict]:
-        return [{"id": p.id, "doc": p.doc, "section": p.section, "page": p.page, "text": p.text} for p in self.policies.get(ids)]
+        return [{"id": passage.id, "doc": passage.doc, "section": passage.section, "page": passage.page, "text": passage.text} for passage in self.policies.get(ids)]
 
     def run(self, question: str, how: str):
         """Yield each step as it finishes, then the answer with its sections."""
@@ -49,12 +49,12 @@ class Room:
                "sources": self.sections(result["cited"] or result["sources"]), "cost": result["cost"],
                "calls": result["calls"], "at": time.monotonic() - began}
 
-    def check(self, qid: str, answer: str) -> dict | None:
-        q = next((q for q in self.questions if q.id == qid), None)
-        if q is None:
+    def check(self, question_id: str, answer: str) -> dict | None:
+        question = next((question for question in self.questions if question.id == question_id), None)
+        if question is None:
             return None
-        graded, _ = grade(q, answer, self.client, self.judge)
-        return graded | {"points": q.points}
+        graded, _ = grade(question, answer, self.client, self.judge)
+        return graded | {"points": question.points}
 
     def quality(self) -> dict:
         # One review at a time, run once: it is about 100 model calls, and every viewer sees the same result.
@@ -108,11 +108,11 @@ def handler(room: Room) -> type[BaseHTTPRequestHandler]:
             if self.path == "/":
                 return self.send(200, PAGE.read_bytes(), "text/html; charset=utf-8")
             if self.path == "/api/room":
-                return self.send_json({"questions": [{"id": q.id, "question": q.question} for q in room.questions],
+                return self.send_json({"questions": [{"id": question.id, "question": question.question} for question in room.questions],
                                        "sections": len(room.policies.passages), "model": room.model, "judge_model": room.judge,
                                        "escalated": room.escalated(), "reviewed": room.report is not None})
             if self.path == "/api/review":
-                return self.send_json(room.quality() | {"points": {q.id: q.points for q in room.questions}})
+                return self.send_json(room.quality() | {"points": {question.id: question.points for question in room.questions}})
             self.send(404, b"not found", "text/plain")
 
         def do_POST(self) -> None:

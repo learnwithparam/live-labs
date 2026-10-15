@@ -14,10 +14,10 @@ def run(message: str, system: str, orders: list[dict], client, model: str, budge
         on_step: Callable[[dict], None] = lambda step: None) -> dict:
     # It can see the orders, so it can answer "where is my parcel". It cannot change them.
     context = f"{system}\n\nThe customer's orders:\n{json.dumps(orders, indent=1)}"
-    res = client.chat.completions.create(model=model, messages=[
+    response = client.chat.completions.create(model=model, messages=[
         {"role": "system", "content": context}, {"role": "user", "content": message}])
-    budget.charge(res.usage.prompt_tokens, res.usage.completion_tokens)
+    budget.charge(response.usage.prompt_tokens, response.usage.completion_tokens)
     on_step({"kind": "budget", **budget.state()})
-    reply = res.choices[0].message.content or ""
+    reply = response.choices[0].message.content or ""
     on_step({"kind": "reply", "text": reply})
     return {"reply": reply, "stopped": "reply"}

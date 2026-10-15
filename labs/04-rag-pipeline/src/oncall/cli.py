@@ -22,8 +22,8 @@ def show_ingest(docs: Path, how: str) -> int:
 
     passages = ingest(docs, how)
     print(f"{len(passages)} passages by {how} from {len(list(docs.glob('*.pdf')))} PDFs")
-    for p in passages[:3]:
-        print(f"\n[{p.id}] page {p.page}\n{p.text}")
+    for passage in passages[:3]:
+        print(f"\n[{passage.id}] page {passage.page}\n{passage.text}")
     return 0
 
 
@@ -40,7 +40,7 @@ def ask(question: str, how: str) -> int:
 
     client, model = client_and_model()
     reply = Desk(DOCS, client, model, how).ask(question)
-    print(f"found: {', '.join(p.id for p in reply.passages)}")
+    print(f"found: {', '.join(passage.id for passage in reply.passages)}")
     print(f"answer: {reply.answer}\ncited: {', '.join(reply.cited) or 'nothing'}")
     return 0
 
@@ -54,9 +54,9 @@ def evaluate(how: str) -> int:
     for row in result["rows"]:
         mark = "ok    " if row["supported"] else "person"
         print(f"{mark} {row['question'][:70]}" + (f"\n       {row['reason']}" if row["reason"] else ""))
-    t = result["tally"]
-    print(f"\n{how} passages on {model}: {t['supported']} of {t['answered']} answers supported by their citation ({t['share']:.0%}), "
-          f"{t['person']} of {t['questions']} questions go to a person, cost ${t['cost']:.4f}")
+    tally = result["tally"]
+    print(f"\n{how} passages on {model}: {tally['supported']} of {tally['answered']} answers supported by their citation ({tally['share']:.0%}), "
+          f"{tally['person']} of {tally['questions']} questions go to a person, cost ${tally['cost']:.4f}")
     return 0
 
 

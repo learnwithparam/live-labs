@@ -13,66 +13,66 @@ import { write } from './workflow.js'
 const PAGE = join(dirname(fileURLToPath(import.meta.url)), 'page.html')
 
 // The page drives a paid model, so only this machine may call it: no other host, no other site.
-function local(req: IncomingMessage, port: number): boolean {
+function local(request: IncomingMessage, port: number): boolean {
   const ok = [`127.0.0.1:${port}`, `localhost:${port}`]
-  const origin = req.headers.origin
-  return ok.includes(req.headers.host ?? '') && (!origin || ok.some((h) => origin === `http://${h}`))
+  const origin = request.headers.origin
+  return ok.includes(request.headers.host ?? '') && (!origin || ok.some((host) => origin === `http://${host}`))
 }
 
-function events(res: ServerResponse): (type: string, data: unknown) => void {
-  res.writeHead(200, { 'content-type': 'text/event-stream', 'cache-control': 'no-store', connection: 'keep-alive' })
-  return (type, data) => res.write(`event: ${type}\ndata: ${JSON.stringify(data)}\n\n`)
+function events(response: ServerResponse): (type: string, data: unknown) => void {
+  response.writeHead(200, { 'content-type': 'text/event-stream', 'cache-control': 'no-store', connection: 'keep-alive' })
+  return (type, data) => response.write(`event: ${type}\ndata: ${JSON.stringify(data)}\n\n`)
 }
 
 export function serve(products: Product[], ask: Ask, port: number): Server {
-  const server = createServer(async (req, res) => {
-    if (!local(req, port)) {
-      res.writeHead(403).end('local only')
+  const server = createServer(async (request, response) => {
+    if (!local(request, port)) {
+      response.writeHead(403).end('local only')
       return
     }
-    const url = new URL(req.url ?? '/', `http://127.0.0.1:${port}`)
+    const url = new URL(request.url ?? '/', `http://127.0.0.1:${port}`)
     try {
       if (url.pathname === '/') {
-        res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' }).end(readFileSync(PAGE))
+        response.writeHead(200, { 'content-type': 'text/html; charset=utf-8' }).end(readFileSync(PAGE))
       } else if (url.pathname === '/api/products') {
         const rows = products.map(({ id, product, price, sheet }) => ({ id, product, price, sheet }))
-        res.writeHead(200, { 'content-type': 'application/json' }).end(JSON.stringify(rows))
+        response.writeHead(200, { 'content-type': 'application/json' }).end(JSON.stringify(rows))
       } else if (url.pathname === '/api/write') {
-        const product = products.find((p) => p.id === url.searchParams.get('id'))
-        if (!product) return void res.writeHead(404).end('no such product')
-        const send = events(res)
+        const product = products.find((candidate) => candidate.id === url.searchParams.get('id'))
+        if (!product) return void response.writeHead(404).end('no such product')
+        const send = events(response)
         const listing =
           url.searchParams.get('how') === 'one-prompt'
             ? await (async () => {
                 send('step', { step: 'one-prompt', phase: 'start', ms: 0 })
                 const t0 = Date.now()
-                const l = await onePrompt(ask, product.sheet)
+                const draft = await onePrompt(ask, product.sheet)
                 send('step', { step: 'one-prompt', phase: 'end', ms: Date.now() - t0 })
-                return l
+                return draft
               })()
-            : await write(ask, product.sheet, (e) => send('step', e))
+            : await write(ask, product.sheet, (event) => send('step', event))
         const edits = audit(listing, product)
         send('done', { listing, edits, clean: cleanlyPublished(listing, edits) })
-        res.end()
+        response.end()
       } else if (url.pathname === '/api/review') {
-        const send = events(res)
-        const rows = await review(ask, products, (r) => send('row', r))
+        const send = events(response)
+        const rows = await review(ask, products, (row) => send('row', row))
         send('done', { summaries: [summary(rows, 'one-prompt'), summary(rows, 'workflow')] })
-        res.end()
-      } else if (url.pathname === '/api/decide' && req.method === 'POST') {
+        response.end()
+      } else if (url.pathname === '/api/decide' && request.method === 'POST') {
         // A held listing waits for a merchandiser; what they chose is kept beside the review.
         let body = ''
-        for await (const chunk of req) body += chunk
+        for await (const chunk of request) body += chunk
         const { id, decision } = JSON.parse(body)
         mkdirSync('out', { recursive: true })
         appendFileSync('out/merchant.jsonl', JSON.stringify({ id, decision, at: new Date().toISOString() }) + '\n')
-        res.writeHead(200, { 'content-type': 'application/json' }).end('{"saved":true}')
+        response.writeHead(200, { 'content-type': 'application/json' }).end('{"saved":true}')
       } else {
-        res.writeHead(404).end('not found')
+        response.writeHead(404).end('not found')
       }
     } catch (error) {
-      if (!res.headersSent) res.writeHead(500)
-      res.end(String(error))
+      if (!response.headersSent) response.writeHead(500)
+      response.end(String(error))
     }
   })
   return server.listen(port, '127.0.0.1')

@@ -15,7 +15,7 @@ class Bench:
     """The prompt files, the postings, the approved labels, the model and every run scored so far."""
 
     def __init__(self, prompts: Path, postings: Path, golden: Path, client, model: str):
-        self.prompts = {p.stem: p for p in sorted(prompts.glob("*.txt"))}
+        self.prompts = {path.stem: path for path in sorted(prompts.glob("*.txt"))}
         self.golden = load_golden(golden)
         self.postings = {name: (postings / name).read_text() for name in self.golden}
         self.client, self.model = client, model
@@ -24,7 +24,7 @@ class Bench:
     def run(self, stem: str) -> dict:
         if stem not in self.runs:
             readings = read_all(self.postings, self.prompts[stem].read_text(), self.client, self.model)
-            self.runs[stem] = {"readings": {n: r.fields for n, r in readings.items()}, "cost": sum(r.cost for r in readings.values())}
+            self.runs[stem] = {"readings": {name: reading.fields for name, reading in readings.items()}, "cost": sum(reading.cost for reading in readings.values())}
         return self.runs[stem]
 
     def compare(self, before: str, after: str) -> dict:
@@ -36,8 +36,8 @@ class Bench:
             "worse": verdict.worse,
             "blocked": verdict.blocked,
             "needs_person": verdict.needs_person,
-            "regressed": [asdict(c) for c in verdict.regressed],
-            "fixed": [asdict(c) for c in verdict.fixed],
+            "regressed": [asdict(change) for change in verdict.regressed],
+            "fixed": [asdict(change) for change in verdict.fixed],
             # Which filters the new prompt gets right, so the page can tell "wrong with both" from "right with both".
             "right": right(self.golden, self.runs[after]["readings"]),
             "runs": {before: self.runs[before], after: self.runs[after]},
@@ -79,7 +79,7 @@ def handler(bench: Bench) -> type[BaseHTTPRequestHandler]:
             if not self.local():
                 return self.send(403, b"forbidden", "text/plain")
             parts = self.path.removeprefix("/api/gate/").split("/")
-            if len(parts) != 2 or not all(p in bench.prompts for p in parts):
+            if len(parts) != 2 or not all(stem in bench.prompts for stem in parts):
                 return self.send(404, b"not found", "text/plain")
             self.send_json(bench.compare(*parts))
 

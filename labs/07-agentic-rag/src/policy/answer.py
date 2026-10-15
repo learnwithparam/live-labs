@@ -35,5 +35,5 @@ def write(question: str, ids: list[str], policies: Policies, client, model: str)
     if got is None:
         return {"answer": "", "cited": [], "covered": False}, cost
     # A citation the model made up is dropped: the page links each one to a real section.
-    cited = [i for i in got.cited if i in policies.by_id]
+    cited = [passage_id for passage_id in got.cited if passage_id in policies.by_id]
     return {"answer": got.answer, "cited": cited, "covered": got.covered}, cost

@@ -21,7 +21,7 @@ def chats(path: Path = DATA / "chats.jsonl") -> list[Chat]:
 
 
 def chat(chat_id: str) -> Chat:
-    return next(c for c in chats() if c.id == chat_id)
+    return next(chat for chat in chats() if chat.id == chat_id)
 
 
 def instruction(shop: Shop, customer: str, tools: bool = True) -> str:
@@ -45,9 +45,9 @@ def matches(chat: Chat, shop: Shop) -> bool:
     if len(got) != len(chat.expect):
         return False
     for want in chat.expect:
-        hit = [g for g in got if g["kind"] == want["kind"] and g["order_id"] == want["order"]
-               and ("amount" not in want or abs((g["amount"] or 0) - want["amount"]) < 0.005)
-               and want.get("detail", "") in (g["detail"] or "")]
+        hit = [change for change in got if change["kind"] == want["kind"] and change["order_id"] == want["order"]
+               and ("amount" not in want or abs((change["amount"] or 0) - want["amount"]) < 0.005)
+               and want.get("detail", "") in (change["detail"] or "")]
         if not hit:
             return False
     return True

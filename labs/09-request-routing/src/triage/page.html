@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<link rel="icon" href="data:,">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Tallyroll triage board</title>
 <style>
@@ -147,134 +148,134 @@ const HOW = {
 const $ = (id) => document.getElementById(id);
 const state = { room: null, way: "both", rows: {}, live: [], open: null, handoffs: {} };
 
-function esc(s) { return String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
+function escapeHtml(text) { return String(text).replace(/[&<>"]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[char])); }
 
 async function load() {
   state.room = await (await fetch("/api/room")).json();
-  for (const h of state.room.handoffs) state.handoffs[h.id] = h.queue;
+  for (const handoff of state.room.handoffs) state.handoffs[handoff.id] = handoff.queue;
   if (state.room.review) take(state.room.review.rows);
-  $("ways").innerHTML = state.room.ways.map((w) => `<button type="button" data-way="${w}" aria-pressed="${w === state.way}">${NAMES[w]}</button>`).join("");
+  $("ways").innerHTML = state.room.ways.map((way) => `<button type="button" data-way="${way}" aria-pressed="${way === state.way}">${NAMES[way]}</button>`).join("");
   draw();
   if (!state.room.review) $("status").textContent = "No review yet. Route the inbox to fill the board.";
 }
 
-function take(rows) { for (const r of rows) state.rows[r.how + ":" + r.id] = r; }
+function take(rows) { for (const row of rows) state.rows[row.how + ":" + row.id] = row; }
 
 // Where each ticket sits for the router on screen, with what it was finally solved in beside it.
 function placed() {
   const out = [];
-  for (const t of state.room.tickets) {
-    const r = state.rows[state.way + ":" + t.id];
-    if (r) out.push({ t, r });
+  for (const ticket of state.room.tickets) {
+    const routing = state.rows[state.way + ":" + ticket.id];
+    if (routing) out.push({ ticket, routing });
   }
-  return state.live.filter((l) => l.result[state.way]).map((l) => ({ t: l.ticket, r: l.result[state.way], fresh: true })).concat(out);
+  return state.live.filter((entry) => entry.result[state.way]).map((entry) => ({ ticket: entry.ticket, routing: entry.result[state.way], fresh: true })).concat(out);
 }
 
 function score() {
-  const s = state.room.review && state.room.review[state.way];
-  const n = state.room.tickets.length;
-  $("s-re").innerHTML = s ? `${s.reassigned} <small>of ${n}</small>` : "-";
-  $("s-re").classList.toggle("bad", !!s && s.reassigned > 4);
-  $("s-person").innerHTML = s ? `${s.to_person} <small>of ${n}</small>` : "-";
-  $("s-right").innerHTML = s ? `${s.right_first_time} <small>of ${n}</small>` : "-";
-  $("s-speed").innerHTML = s ? `${(s.p95_ms / 1000).toFixed(2)} s<br><small>${s.cost_per_1000 ? "$" + s.cost_per_1000.toFixed(3) + " per 1,000 tickets" : "No API bill: it runs here"}</small>` : "-";
+  const summary = state.room.review && state.room.review[state.way];
+  const total = state.room.tickets.length;
+  $("s-re").innerHTML = summary ? `${summary.reassigned} <small>of ${total}</small>` : "-";
+  $("s-re").classList.toggle("bad", !!summary && summary.reassigned > 4);
+  $("s-person").innerHTML = summary ? `${summary.to_person} <small>of ${total}</small>` : "-";
+  $("s-right").innerHTML = summary ? `${summary.right_first_time} <small>of ${total}</small>` : "-";
+  $("s-speed").innerHTML = summary ? `${(summary.p95_ms / 1000).toFixed(2)} s<br><small>${summary.cost_per_1000 ? "$" + summary.cost_per_1000.toFixed(3) + " per 1,000 tickets" : "No API bill: it runs here"}</small>` : "-";
   $("how").textContent = HOW[state.way];
 }
 
 // Why a ticket is in doubt, in the router's own numbers. For the pair, both picks: they disagreed or the decision was low.
-function doubt(t, r) {
-  if (state.way !== "both") return `${esc(r.queue)} at ${r.confidence.toFixed(2)}`;
-  const at = (how) => state.rows[how + ":" + t.id] || (state.live.find((l) => l.ticket.id === t.id) || { result: {} }).result[how];
+function doubt(ticket, routing) {
+  if (state.way !== "both") return `${escapeHtml(routing.queue)} at ${routing.confidence.toFixed(2)}`;
+  const at = (how) => state.rows[how + ":" + ticket.id] || (state.live.find((entry) => entry.ticket.id === ticket.id) || { result: {} }).result[how];
   const llm = at("llm"), dec = at("decision");
-  return llm && dec ? `LLM ${esc(llm.queue)}, decision ${esc(dec.queue)} ${dec.confidence.toFixed(2)}` : esc(r.queue);
+  return llm && dec ? `LLM ${escapeHtml(llm.queue)}, decision ${escapeHtml(dec.queue)} ${dec.confidence.toFixed(2)}` : escapeHtml(routing.queue);
 }
 
-function card({ t, r, fresh }) {
-  const person = r.to === "person";
-  const handed = state.handoffs[t.id];
-  const known = t.solved_in && !fresh;
-  const cls = ["ticket", fresh ? "new" : "", person ? (handed ? "done" : "") : known ? (r.to === t.solved_in ? "right" : "wrong") : ""].join(" ");
+function card({ ticket, routing, fresh }) {
+  const person = routing.to === "person";
+  const handed = state.handoffs[ticket.id];
+  const known = ticket.solved_in && !fresh;
+  const cls = ["ticket", fresh ? "new" : "", person ? (handed ? "done" : "") : known ? (routing.to === ticket.solved_in ? "right" : "wrong") : ""].join(" ");
   const meta = person
-    ? (handed ? `You routed it to ${handed}` : doubt(t, r))
-    : known && r.to !== t.solved_in ? `<span class="moved">Moved to ${esc(t.solved_in)}</span>` : `confidence ${r.confidence.toFixed(2)}`;
-  return `<li><button class="${cls}" data-id="${esc(t.id)}"><span class="id">${esc(t.id)}</span><span class="subj">${esc(t.subject || t.body.slice(0, 70))}</span><span class="meta">${meta}</span></button></li>`;
+    ? (handed ? `You routed it to ${handed}` : doubt(ticket, routing))
+    : known && routing.to !== ticket.solved_in ? `<span class="moved">Moved to ${escapeHtml(ticket.solved_in)}</span>` : `confidence ${routing.confidence.toFixed(2)}`;
+  return `<li><button class="${cls}" data-id="${escapeHtml(ticket.id)}"><span class="id">${escapeHtml(ticket.id)}</span><span class="subj">${escapeHtml(ticket.subject || ticket.body.slice(0, 70))}</span><span class="meta">${meta}</span></button></li>`;
 }
 
 function draw() {
   const before = positions();
   const lanes = ["person", ...Object.keys(state.room.queues)];
   const all = placed();
-  $("lanes").innerHTML = lanes.map((q) => {
-    const here = all.filter((x) => x.r.to === q);
-    const wrong = here.filter((x) => q !== "person" && !x.fresh && x.t.solved_in && x.t.solved_in !== q).length;
-    const title = q === "person" ? "Needs a person" : q;
-    const sub = q === "person" ? `${here.length} to route by hand` : `${here.length}${wrong ? `, ${wrong} wrong` : ""}`;
-    return `<section class="lane ${q === "person" ? "person" : ""}" aria-label="${title}"><header><b>${title}</b><span>${sub}</span></header>
-      <ol>${here.map(card).join("") || `<li class="empty">${q === "person" ? "Nothing in doubt." : "Empty."}</li>`}</ol></section>`;
+  $("lanes").innerHTML = lanes.map((lane) => {
+    const here = all.filter((placement) => placement.routing.to === lane);
+    const wrong = here.filter((placement) => lane !== "person" && !placement.fresh && placement.ticket.solved_in && placement.ticket.solved_in !== lane).length;
+    const title = lane === "person" ? "Needs a person" : lane;
+    const sub = lane === "person" ? `${here.length} to route by hand` : `${here.length}${wrong ? `, ${wrong} wrong` : ""}`;
+    return `<section class="lane ${lane === "person" ? "person" : ""}" aria-label="${title}"><header><b>${title}</b><span>${sub}</span></header>
+      <ol>${here.map(card).join("") || `<li class="empty">${lane === "person" ? "Nothing in doubt." : "Empty."}</li>`}</ol></section>`;
   }).join("");
   score();
   glide(before);
-  for (const b of $("ways").children) b.setAttribute("aria-pressed", b.dataset.way === state.way);
+  for (const button of $("ways").children) button.setAttribute("aria-pressed", button.dataset.way === state.way);
 }
 
 // The one motion on the page: when the router changes, each ticket slides from its old lane to its new one.
 function positions() {
   const at = {};
-  for (const el of document.querySelectorAll(".ticket")) at[el.dataset.id] = el.getBoundingClientRect();
+  for (const ticketButton of document.querySelectorAll(".ticket")) at[ticketButton.dataset.id] = ticketButton.getBoundingClientRect();
   return at;
 }
 function glide(before) {
   if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-  for (const el of document.querySelectorAll(".ticket")) {
-    const was = before[el.dataset.id];
+  for (const ticketButton of document.querySelectorAll(".ticket")) {
+    const was = before[ticketButton.dataset.id];
     if (!was) continue;
-    const now = el.getBoundingClientRect();
+    const now = ticketButton.getBoundingClientRect();
     const dx = was.left - now.left, dy = was.top - now.top;
     if (!dx && !dy) continue;
-    el.style.transform = `translate(${dx}px, ${dy}px)`;
-    el.style.transition = "none";
-    requestAnimationFrame(() => { el.style.transition = "transform 0.45s ease-in-out"; el.style.transform = ""; });
+    ticketButton.style.transform = `translate(${dx}px, ${dy}px)`;
+    ticketButton.style.transition = "none";
+    requestAnimationFrame(() => { ticketButton.style.transition = "transform 0.45s ease-in-out"; ticketButton.style.transform = ""; });
   }
 }
 
 function bars(probs, top, truth) {
   const qs = Object.keys(state.room.queues);
   const cut = state.room.confident * 100;
-  return `<div class="bars">${qs.map((q) => {
-    const p = probs[q] || 0;
-    return `<div class="barrow ${q === top ? "top" : ""} ${q === truth ? "truth" : ""}"><b>${q}</b><span class="track"><span class="fill" style="width:${(p * 100).toFixed(1)}%"></span><span class="cut" style="left:${cut}%"></span></span><span class="p">${p.toFixed(2)}</span></div>`;
+  return `<div class="bars">${qs.map((queue) => {
+    const probability = probs[queue] || 0;
+    return `<div class="barrow ${queue === top ? "top" : ""} ${queue === truth ? "truth" : ""}"><b>${queue}</b><span class="track"><span class="fill" style="width:${(probability * 100).toFixed(1)}%"></span><span class="cut" style="left:${cut}%"></span></span><span class="p">${probability.toFixed(2)}</span></div>`;
   }).join("")}</div>`;
 }
 
-function verdict(r, truth) {
+function verdict(routing, truth) {
   const name = NAMES[state.way];
-  if (r.to === "person") {
-    if (state.way === "both") return `<div class="verdict person">The LLM said ${esc(r.queue)}, and the decision model ${r.confidence ? "agreed" : "did not agree with 0.6 or more"}. A person routes it.</div>`;
-    return `<div class="verdict person">${name} picked ${esc(r.queue)} at ${r.confidence.toFixed(2)}, under 0.6. A person routes it.</div>`;
+  if (routing.to === "person") {
+    if (state.way === "both") return `<div class="verdict person">The LLM said ${escapeHtml(routing.queue)}, and the decision model ${routing.confidence ? "agreed" : "did not agree with 0.6 or more"}. A person routes it.</div>`;
+    return `<div class="verdict person">${name} picked ${escapeHtml(routing.queue)} at ${routing.confidence.toFixed(2)}, under 0.6. A person routes it.</div>`;
   }
-  if (truth && r.to !== truth) return `<div class="verdict wrong">${name} sent it to ${esc(r.to)} at ${r.confidence.toFixed(2)}. It was solved in ${esc(truth)}, so an agent had to move it.</div>`;
-  return `<div class="verdict">${name} sent it to ${esc(r.to)} at ${r.confidence.toFixed(2)}${truth ? ", where it was solved" : ""}.</div>`;
+  if (truth && routing.to !== truth) return `<div class="verdict wrong">${name} sent it to ${escapeHtml(routing.to)} at ${routing.confidence.toFixed(2)}. It was solved in ${escapeHtml(truth)}, so an agent had to move it.</div>`;
+  return `<div class="verdict">${name} sent it to ${escapeHtml(routing.to)} at ${routing.confidence.toFixed(2)}${truth ? ", where it was solved" : ""}.</div>`;
 }
 
 function openTicket(id) {
-  const live = state.live.find((l) => l.ticket.id === id);
-  const t = live ? live.ticket : state.room.tickets.find((x) => x.id === id);
+  const live = state.live.find((entry) => entry.ticket.id === id);
+  const ticket = live ? live.ticket : state.room.tickets.find((candidate) => candidate.id === id);
   const get = (how) => live ? live.result[how] : state.rows[how + ":" + id];
-  const r = get(state.way), llm = get("llm"), dec = get("decision");
-  const truth = live ? "" : t.solved_in;
+  const routing = get(state.way), llm = get("llm"), dec = get("decision");
+  const truth = live ? "" : ticket.solved_in;
   const handed = state.handoffs[id];
   state.open = id;
   $("drawer").innerHTML = `<button class="close" id="close">Close</button>
-    <span class="label">${esc(t.id)}${truth ? `, finally solved in <b>${esc(truth)}</b>` : ""}</span>
-    <h2>${esc(t.subject || "New ticket")}</h2><p class="body">${esc(t.body)}</p>
-    ${verdict(r, truth)}
-    <div class="saids" style="margin-top:12px">${llm ? `<div class="said"><b>LLM</b>${esc(llm.queue)}, confidence ${llm.confidence.toFixed(2)} it wrote itself</div>` : ""}
-      ${dec ? `<div class="said"><b>Decision model</b>${esc(dec.queue)}, probability ${dec.confidence.toFixed(2)}</div>` : ""}</div>
+    <span class="label">${escapeHtml(ticket.id)}${truth ? `, finally solved in <b>${escapeHtml(truth)}</b>` : ""}</span>
+    <h2>${escapeHtml(ticket.subject || "New ticket")}</h2><p class="body">${escapeHtml(ticket.body)}</p>
+    ${verdict(routing, truth)}
+    <div class="saids" style="margin-top:12px">${llm ? `<div class="said"><b>LLM</b>${escapeHtml(llm.queue)}, confidence ${llm.confidence.toFixed(2)} it wrote itself</div>` : ""}
+      ${dec ? `<div class="said"><b>Decision model</b>${escapeHtml(dec.queue)}, probability ${dec.confidence.toFixed(2)}</div>` : ""}</div>
     ${dec ? `<h3>The decision model's probability for every queue</h3>${bars(dec.probabilities, dec.queue, truth)}
       <p class="legend">The dashed line is 0.6. Under it, a ticket goes to a person.${truth ? " The underlined queue is where it was solved." : ""}</p>` : ""}
-    ${r.to === "person" ? `<h3>You are on triage. Pick its queue.</h3>
-      <div class="assign">${Object.keys(state.room.queues).map((q) => `<button data-assign="${q}" class="${handed === q ? "picked" : ""}">${q}</button>`).join("")}</div>
-      <p class="note">${handed ? `Sent to ${esc(handed)}. It is logged in out/handoffs.jsonl for the routing review.` : "Your choice is logged, so next quarter's history can teach the routers."}</p>` : ""}`;
+    ${routing.to === "person" ? `<h3>You are on triage. Pick its queue.</h3>
+      <div class="assign">${Object.keys(state.room.queues).map((queue) => `<button data-assign="${queue}" class="${handed === queue ? "picked" : ""}">${queue}</button>`).join("")}</div>
+      <p class="note">${handed ? `Sent to ${escapeHtml(handed)}. It is logged in out/handoffs.jsonl for the routing review.` : "Your choice is logged, so next quarter's history can teach the routers."}</p>` : ""}`;
   $("drawer").classList.add("open");
   $("drawer").setAttribute("aria-hidden", "false");
   $("close").focus();
@@ -282,48 +283,48 @@ function openTicket(id) {
 
 function closeDrawer() { $("drawer").classList.remove("open"); $("drawer").setAttribute("aria-hidden", "true"); state.open = null; }
 
-$("ways").addEventListener("click", (e) => {
-  const b = e.target.closest("button"); if (!b) return;
-  state.way = b.dataset.way; draw();
+$("ways").addEventListener("click", (event) => {
+  const button = event.target.closest("button"); if (!button) return;
+  state.way = button.dataset.way; draw();
   if (state.open) openTicket(state.open);
 });
-$("lanes").addEventListener("click", (e) => { const b = e.target.closest(".ticket"); if (b) openTicket(b.dataset.id); });
-$("drawer").addEventListener("click", async (e) => {
-  if (e.target.id === "close") return closeDrawer();
-  const q = e.target.dataset.assign; if (!q) return;
-  const got = await (await fetch("/api/handoff", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: state.open, queue: q }) })).json();
-  for (const h of got) state.handoffs[h.id] = h.queue;
+$("lanes").addEventListener("click", (event) => { const ticketButton = event.target.closest(".ticket"); if (ticketButton) openTicket(ticketButton.dataset.id); });
+$("drawer").addEventListener("click", async (event) => {
+  if (event.target.id === "close") return closeDrawer();
+  const queue = event.target.dataset.assign; if (!queue) return;
+  const got = await (await fetch("/api/handoff", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: state.open, queue: queue }) })).json();
+  for (const handoff of got) state.handoffs[handoff.id] = handoff.queue;
   draw(); openTicket(state.open);
 });
-document.addEventListener("keydown", (e) => { if (e.key === "Escape" && state.open) closeDrawer(); });
+document.addEventListener("keydown", (event) => { if (event.key === "Escape" && state.open) closeDrawer(); });
 
-$("compose").addEventListener("submit", async (e) => {
-  e.preventDefault();
+$("compose").addEventListener("submit", async (event) => {
+  event.preventDefault();
   const text = $("text").value.trim(); if (!text) return;
   $("route").disabled = true; $("status").textContent = "Routing with every router...";
-  const res = await fetch("/api/route", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text }), signal: AbortSignal.timeout(120000) }).catch(() => ({ ok: false }));
+  const response = await fetch("/api/route", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text }), signal: AbortSignal.timeout(120000) }).catch(() => ({ ok: false }));
   $("route").disabled = false;
-  if (!res.ok) { $("status").textContent = "Could not route it. Check the terminal running triage serve."; return; }
+  if (!response.ok) { $("status").textContent = "Could not route it. Check the terminal running triage serve."; return; }
   const id = "NEW-" + (state.live.length + 1);
-  state.live.unshift({ ticket: { id, subject: "", body: text }, result: await res.json() });
+  state.live.unshift({ ticket: { id, subject: "", body: text }, result: await response.json() });
   $("status").textContent = `${id} routed.`; $("text").value = "";
   draw(); openTicket(id);
 });
 
 $("rerun").addEventListener("click", async () => {
   $("rerun").disabled = true; state.rows = {}; draw();
-  let n = 0;
-  const res = await fetch("/api/review", { method: "POST" });
-  const reader = res.body.getReader(); const dec = new TextDecoder(); let buf = "";
+  let routed = 0;
+  const response = await fetch("/api/review", { method: "POST" });
+  const reader = response.body.getReader(); const dec = new TextDecoder(); let pending = "";
   for (;;) {
     const { done, value } = await reader.read(); if (done) break;
-    buf += dec.decode(value, { stream: true });
-    const lines = buf.split("\n"); buf = lines.pop();
+    pending += dec.decode(value, { stream: true });
+    const lines = pending.split("\n"); pending = lines.pop();
     for (const line of lines) {
       if (!line) continue;
-      const ev = JSON.parse(line);
-      if (ev.row) { take([ev.row]); n++; $("status").textContent = `${n} routings so far`; if (ev.row.how === state.way) draw(); }
-      if (ev.summary) { state.room.review = Object.assign({ rows: Object.values(state.rows) }, ev.summary); $("status").textContent = "Inbox routed."; draw(); }
+      const message = JSON.parse(line);
+      if (message.row) { take([message.row]); routed++; $("status").textContent = `${routed} routings so far`; if (message.row.how === state.way) draw(); }
+      if (message.summary) { state.room.review = Object.assign({ rows: Object.values(state.rows) }, message.summary); $("status").textContent = "Inbox routed."; draw(); }
     }
   }
   $("rerun").disabled = false;

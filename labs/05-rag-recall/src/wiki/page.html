@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<link rel="icon" href="data:,">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Ledgerline runbooks</title>
 <style>
@@ -148,33 +149,33 @@ const NAMES = { keyword: "Keyword", embedding: "Embedding", hybrid: "Hybrid", re
 const KS = [1, 3, 5, 10];
 let room = null, how = "rerank", report = null;
 const $ = (id) => document.getElementById(id);
-const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
-const post = (url, body) => fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }).then((r) => r.json());
+const escapeHtml = (value) => String(value).replace(/[&<>"]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[char]);
+const post = (url, body) => fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }).then((response) => response.json());
 
 // Highlight the question's own words in a snippet, the way a search page shows why a result matched.
 function highlight(text, question) {
   const words = [...new Set(question.toLowerCase().match(/[a-z0-9-]{4,}/g) || [])];
-  let html = esc(text);
-  for (const w of words) html = html.replace(new RegExp(`\\b(${w.replace(/[-]/g, "\\-")})`, "gi"), "<mark>$1</mark>");
+  let html = escapeHtml(text);
+  for (const word of words) html = html.replace(new RegExp(`\\b(${word.replace(/[-]/g, "\\-")})`, "gi"), "<mark>$1</mark>");
   return html;
 }
 
 async function load() {
-  room = await fetch("/api/room").then((r) => r.json());
+  room = await fetch("/api/room").then((response) => response.json());
   $("corpus").textContent = `Searching ${room.sections} sections across ${room.docs.length} runbooks from the payments wiki.`;
   $("who").textContent = `${room.questions.length} labelled questions`;
   for (const way of room.ways) {
-    const b = document.createElement("button");
-    b.type = "button"; b.textContent = NAMES[way]; b.dataset.how = way;
-    b.setAttribute("aria-pressed", String(way === how));
-    b.onclick = () => { how = way; document.querySelectorAll("#ways button").forEach((x) => x.setAttribute("aria-pressed", String(x.dataset.how === how))); if ($("question").value.trim()) search(); };
-    $("ways").append(b);
+    const button = document.createElement("button");
+    button.type = "button"; button.textContent = NAMES[way]; button.dataset.how = way;
+    button.setAttribute("aria-pressed", String(way === how));
+    button.onclick = () => { how = way; document.querySelectorAll("#ways button").forEach((other) => other.setAttribute("aria-pressed", String(other.dataset.how === how))); if ($("question").value.trim()) search(); };
+    $("ways").append(button);
   }
-  for (const n of [0, 12, 2, 17]) {
-    const b = document.createElement("button");
-    b.type = "button"; b.textContent = room.questions[n]; b.className = "pick";
-    b.onclick = () => { $("question").value = room.questions[n]; search(); };
-    $("try").append(b);
+  for (const questionIndex of [0, 12, 2, 17]) {
+    const button = document.createElement("button");
+    button.type = "button"; button.textContent = room.questions[questionIndex]; button.className = "pick";
+    button.onclick = () => { $("question").value = room.questions[questionIndex]; search(); };
+    $("try").append(button);
   }
 }
 
@@ -182,49 +183,49 @@ async function search() {
   const question = $("question").value.trim();
   if (!question) return;
   $("count").textContent = `Searching with ${NAMES[how]}...`;
-  const res = await post("/api/search", { question, how });
-  $("count").textContent = `Top ${res.hits.length} sections, ${NAMES[how]}`;
-  const rank = res.hits.findIndex((h) => h.id === res.label) + 1;
-  if (res.label) {
-    const others = room.ways.map((w) => `<span class="${w === how ? "now" : ""}">${NAMES[w]}: ${res.ranks[w] ? "rank " + res.ranks[w] : "not in top 10"}</span>`).join("");
+  const result = await post("/api/search", { question, how });
+  $("count").textContent = `Top ${result.hits.length} sections, ${NAMES[how]}`;
+  const rank = result.hits.findIndex((hit) => hit.id === result.label) + 1;
+  if (result.label) {
+    const others = room.ways.map((way) => `<span class="${way === how ? "now" : ""}">${NAMES[way]}: ${result.ranks[way] ? "rank " + result.ranks[way] : "not in top 10"}</span>`).join("");
     $("verdict").innerHTML = rank
-      ? `<div class="verdict hit"><b class="n">Labelled section at rank ${rank}.</b> A person marked <span class="crumb">${esc(res.label)}</span> as the answer to this question.<div class="across">${others}</div></div>`
-      : `<div class="verdict miss"><b class="n">Labelled section missing from the top 5.</b> The answer is <span class="crumb">${esc(res.label)}</span>, and an answer built from these results cannot cite it.<div class="across">${others}</div></div>`;
+      ? `<div class="verdict hit"><b class="n">Labelled section at rank ${rank}.</b> A person marked <span class="crumb">${escapeHtml(result.label)}</span> as the answer to this question.<div class="across">${others}</div></div>`
+      : `<div class="verdict miss"><b class="n">Labelled section missing from the top 5.</b> The answer is <span class="crumb">${escapeHtml(result.label)}</span>, and an answer built from these results cannot cite it.<div class="across">${others}</div></div>`;
   } else {
     $("verdict").innerHTML = `<div class="verdict">Nobody has labelled this question, so the page cannot tell whether these results are right.</div>`;
   }
-  $("results").innerHTML = res.hits.map((h) => `
-    <li class="result ${h.id === res.label ? "labelled" : ""}">
-      <div class="crumb">${esc(h.doc)} &rsaquo; page ${h.page}</div>
-      <h3>${esc(h.section)}</h3>
-      <p>${highlight(h.text.length > 320 ? h.text.slice(0, 320) + "..." : h.text, question)}</p>
-      <div class="meta"><span>score ${h.score}</span>${h.id === res.label ? '<span class="tag">Labelled answer</span>' : ""}</div>
+  $("results").innerHTML = result.hits.map((hit) => `
+    <li class="result ${hit.id === result.label ? "labelled" : ""}">
+      <div class="crumb">${escapeHtml(hit.doc)} &rsaquo; page ${hit.page}</div>
+      <h3>${escapeHtml(hit.section)}</h3>
+      <p>${highlight(hit.text.length > 320 ? hit.text.slice(0, 320) + "..." : hit.text, question)}</p>
+      <div class="meta"><span>score ${hit.score}</span>${hit.id === result.label ? '<span class="tag">Labelled answer</span>' : ""}</div>
     </li>`).join("") || `<p class="empty">No sections came back.</p>`;
 }
 
 // The recall@k chart: one line per way, so the gap between them is the lesson.
-function chart(r) {
-  const W = 640, H = 320, L = 48, R = 24, T = 20, B = 70;
-  const x = (i) => L + (i * (W - L - R)) / (KS.length - 1);
+function chart(report) {
+  const width = 640, height = 320, padLeft = 48, padRight = 24, padTop = 20, padBottom = 70;
+  const xForColumn = (index) => padLeft + (index * (width - padLeft - padRight)) / (KS.length - 1);
   // The axis starts at half: every way finds most sections, and the gap that matters is near the top.
-  const y = (v) => T + (1 - (v / r.total - 0.5) / 0.5) * (H - T - B);
+  const yForCount = (count) => padTop + (1 - (count / report.total - 0.5) / 0.5) * (height - padTop - padBottom);
   const styles = { keyword: 'stroke="#808080" stroke-dasharray="2 5"', embedding: 'stroke="#606060" stroke-dasharray="8 6"', hybrid: 'stroke="#414141"', rerank: 'stroke="#151515" stroke-width="4"' };
-  let s = `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Recall at k for each way of searching">`;
-  for (const v of [0.5, 0.6, 0.7, 0.8, 0.9, 1]) {
-    s += `<line x1="${L}" x2="${W - R}" y1="${y(v * r.total)}" y2="${y(v * r.total)}" stroke="#DFDFDF"/><text x="${L - 8}" y="${y(v * r.total) + 5}" text-anchor="end" font-size="13" fill="#606060">${Math.round(v * 100)}%</text>`;
+  let svg = `<svg class="chart" viewBox="0 0 ${width} ${height}" role="img" aria-label="Recall at k for each way of searching">`;
+  for (const share of [0.5, 0.6, 0.7, 0.8, 0.9, 1]) {
+    svg += `<line x1="${padLeft}" x2="${width - padRight}" y1="${yForCount(share * report.total)}" y2="${yForCount(share * report.total)}" stroke="#DFDFDF"/><text x="${padLeft - 8}" y="${yForCount(share * report.total) + 5}" text-anchor="end" font-size="13" fill="#606060">${Math.round(share * 100)}%</text>`;
   }
-  KS.forEach((k, i) => { s += `<text x="${x(i)}" y="${H - 44}" text-anchor="middle" font-size="13" fill="#606060">top ${k}</text>`; });
-  for (const way of Object.keys(r.recall)) {
-    const pts = KS.map((k, i) => [x(i), y(r.recall[way][k])]);
-    s += `<polyline fill="none" stroke-width="2.5" ${styles[way]} points="${pts.map((p) => p.join(",")).join(" ")}"/>`;
-    s += pts.map((p) => `<circle cx="${p[0]}" cy="${p[1]}" r="${way === "rerank" ? 6 : 4}" fill="${way === "rerank" ? "#FAFF69" : "#FFFFFF"}" stroke="#151515" stroke-width="1.5"/>`).join("");
+  KS.forEach((cutoff, index) => { svg += `<text x="${xForColumn(index)}" y="${height - 44}" text-anchor="middle" font-size="13" fill="#606060">top ${cutoff}</text>`; });
+  for (const way of Object.keys(report.recall)) {
+    const pts = KS.map((cutoff, index) => [xForColumn(index), yForCount(report.recall[way][cutoff])]);
+    svg += `<polyline fill="none" stroke-width="2.5" ${styles[way]} points="${pts.map((point) => point.join(",")).join(" ")}"/>`;
+    svg += pts.map((point) => `<circle cx="${point[0]}" cy="${point[1]}" r="${way === "rerank" ? 6 : 4}" fill="${way === "rerank" ? "#FAFF69" : "#FFFFFF"}" stroke="#151515" stroke-width="1.5"/>`).join("");
   }
   // A legend under the axis: the lines meet near the top, so labels at their ends would collide.
-  Object.keys(r.recall).forEach((way, i) => {
-    const lx = L + i * 140, ly = H - 4;
-    s += `<line x1="${lx}" x2="${lx + 28}" y1="${ly - 5}" y2="${ly - 5}" stroke-width="2.5" ${styles[way]}/><text x="${lx + 36}" y="${ly}" font-size="14" fill="#151515" font-weight="${way === "rerank" ? 700 : 400}">${NAMES[way]}</text>`;
+  Object.keys(report.recall).forEach((way, index) => {
+    const lx = padLeft + index * 140, ly = height - 4;
+    svg += `<line x1="${lx}" x2="${lx + 28}" y1="${ly - 5}" y2="${ly - 5}" stroke-width="2.5" ${styles[way]}/><text x="${lx + 36}" y="${ly}" font-size="14" fill="#151515" font-weight="${way === "rerank" ? 700 : 400}">${NAMES[way]}</text>`;
   });
-  return s + "</svg>";
+  return svg + "</svg>";
 }
 
 function track(rank) {
@@ -235,55 +236,55 @@ function track(rank) {
 async function measure() {
   if (report) return;
   $("report").innerHTML = `<p class="measuring">Measuring ${room.questions.length} labelled questions four ways. The reranker reads 20 sections per question, so this takes about a minute.</p>`;
-  report = await fetch("/api/quality").then((r) => r.json());
+  report = await fetch("/api/quality").then((response) => response.json());
   const best = Object.keys(report.recall).at(-1);
-  const top = (k) => Math.max(...Object.values(report.recall).map((v) => v[k]));
+  const top = (cutoff) => Math.max(...Object.values(report.recall).map((recallAt) => recallAt[cutoff]));
   $("qsub").textContent = `${report.total} questions a person labelled with the section that answers them, searched four ways.`;
-  const table = `<table class="recall"><thead><tr><th>Way</th>${KS.map((k) => `<th>top ${k}</th>`).join("")}</tr></thead><tbody>${Object.keys(report.recall).map((w) => `<tr><td>${NAMES[w]}</td>${KS.map((k) => `<td class="${report.recall[w][k] === top(k) ? "best" : ""}">${report.recall[w][k]} of ${report.total}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
-  const rows = report.rows.map((row) => `<tr class="${report.person.includes(row.question) ? "person" : ""}"><td class="qq">${esc(row.question)}</td>${Object.keys(report.recall).map((w) => `<td>${track(row.ranks[w])}</td>`).join("")}</tr>`).join("");
+  const table = `<table class="recall"><thead><tr><th>Way</th>${KS.map((cutoff) => `<th>top ${cutoff}</th>`).join("")}</tr></thead><tbody>${Object.keys(report.recall).map((way) => `<tr><td>${NAMES[way]}</td>${KS.map((cutoff) => `<td class="${report.recall[way][cutoff] === top(cutoff) ? "best" : ""}">${report.recall[way][cutoff]} of ${report.total}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
+  const rows = report.rows.map((row) => `<tr class="${report.person.includes(row.question) ? "person" : ""}"><td class="qq">${escapeHtml(row.question)}</td>${Object.keys(report.recall).map((way) => `<td>${track(row.ranks[way])}</td>`).join("")}</tr>`).join("");
   $("report").innerHTML = `
     <div class="panel"><h2>Recall at top k</h2><p class="hint">How many labelled questions have their section within the top k results. An answer cites the top 5.</p>
       <div class="chartwrap">${chart(report)}${table}</div></div>
     <div class="panel" id="person"><h2>Needs a person (${report.person.length})</h2><p class="hint">Still outside the top 5 on ${NAMES[best]}. No search setting fixes these: either the label is wrong, or the runbook needs rewording.</p><div id="cases"></div></div>
     <div class="panel"><h2>Every question</h2><p class="hint">Where each way placed the labelled section: rank 1 on the left, rank 10 on the right, red when it is not in the top 10.</p>
-      <div style="overflow-x:auto"><table class="ranks"><thead><tr><th>Question</th>${Object.keys(report.recall).map((w) => `<th>${NAMES[w]}</th>`).join("")}</tr></thead><tbody>${rows}</tbody></table></div></div>`;
+      <div style="overflow-x:auto"><table class="ranks"><thead><tr><th>Question</th>${Object.keys(report.recall).map((way) => `<th>${NAMES[way]}</th>`).join("")}</tr></thead><tbody>${rows}</tbody></table></div></div>`;
   for (const question of report.person) showCase(question, best);
 }
 
 // One case: the labelled section on the left, what the search put first on the right, and the decision.
 async function showCase(question, best) {
-  const res = await post("/api/search", { question, how: best });
-  const top = res.hits[0];
-  const done = room.decisions.find((d) => d.question === question);
-  const el = document.createElement("div");
-  el.className = "case";
-  el.innerHTML = `<p class="q">${esc(question)}</p>
+  const result = await post("/api/search", { question, how: best });
+  const top = result.hits[0];
+  const done = room.decisions.find((decision) => decision.question === question);
+  const card = document.createElement("div");
+  card.className = "case";
+  card.innerHTML = `<p class="q">${escapeHtml(question)}</p>
     <div class="compare">
-      <section><h4>Labelled answer</h4><span class="crumb">${esc(res.labelled.id)}</span><p>${esc(res.labelled.text)}</p></section>
-      <section><h4>Search put this first</h4><span class="crumb">${esc(top.id)}</span><p>${esc(top.text)}</p></section>
+      <section><h4>Labelled answer</h4><span class="crumb">${escapeHtml(result.labelled.id)}</span><p>${escapeHtml(result.labelled.text)}</p></section>
+      <section><h4>Search put this first</h4><span class="crumb">${escapeHtml(top.id)}</span><p>${escapeHtml(top.text)}</p></section>
     </div>
     <div class="decide"></div>`;
-  const decide = el.querySelector(".decide");
-  const settle = (d) => { decide.innerHTML = `<span class="decided">${d.decision === "label" ? "Label moved to " + esc(d.passage) : "Runbook queued for rewording"}.</span>`; };
+  const decide = card.querySelector(".decide");
+  const settle = (decision) => { decide.innerHTML = `<span class="decided">${decision.decision === "label" ? "Label moved to " + escapeHtml(decision.passage) : "Runbook queued for rewording"}.</span>`; };
   if (done) settle(done);
   else {
     decide.innerHTML = `<button class="primary" data-d="label">Move the label to the top result</button><button data-d="runbook">Reword the runbook</button>`;
-    decide.querySelectorAll("button").forEach((b) => b.onclick = async () => {
-      const passage = b.dataset.d === "label" ? top.id : res.label;
-      room.decisions = await post("/api/review", { question, decision: b.dataset.d, passage });
-      settle({ decision: b.dataset.d, passage });
+    decide.querySelectorAll("button").forEach((button) => button.onclick = async () => {
+      const passage = button.dataset.d === "label" ? top.id : result.label;
+      room.decisions = await post("/api/review", { question, decision: button.dataset.d, passage });
+      settle({ decision: button.dataset.d, passage });
     });
   }
-  $("cases").append(el);
+  $("cases").append(card);
 }
 
-document.querySelectorAll("nav button").forEach((b) => b.onclick = () => {
-  document.querySelectorAll("nav button").forEach((x) => x.setAttribute("aria-selected", String(x === b)));
-  $("search").hidden = b.dataset.tab !== "search";
-  $("quality").hidden = b.dataset.tab !== "quality";
-  if (b.dataset.tab === "quality") measure();
+document.querySelectorAll("nav button").forEach((tab) => tab.onclick = () => {
+  document.querySelectorAll("nav button").forEach((other) => other.setAttribute("aria-selected", String(other === tab)));
+  $("search").hidden = tab.dataset.tab !== "search";
+  $("quality").hidden = tab.dataset.tab !== "quality";
+  if (tab.dataset.tab === "quality") measure();
 });
-$("ask").onsubmit = (e) => { e.preventDefault(); search(); };
+$("ask").onsubmit = (event) => { event.preventDefault(); search(); };
 load();
 </script>
 </body>

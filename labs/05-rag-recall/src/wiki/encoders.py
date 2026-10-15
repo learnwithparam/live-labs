@@ -28,11 +28,11 @@ class FastEmbed:
     def dense(self, texts: list[str], query: bool) -> list[list[float]]:
         # bge models embed a question differently from a passage; query_embed adds the instruction for it.
         vectors = self.dense_model.query_embed(texts) if query else self.dense_model.embed(texts)
-        return [v.tolist() for v in vectors]
+        return [vector.tolist() for vector in vectors]
 
     def sparse(self, texts: list[str], query: bool) -> list[models.SparseVector]:
         vectors = self.sparse_model.query_embed(texts) if query else self.sparse_model.embed(texts)
-        return [models.SparseVector(indices=v.indices.tolist(), values=v.values.tolist()) for v in vectors]
+        return [models.SparseVector(indices=vector.indices.tolist(), values=vector.values.tolist()) for vector in vectors]
 
     def rerank(self, question: str, texts: list[str]) -> list[float]:
-        return [float(s) for s in self.reranker.rerank(question, texts)]
+        return [float(score) for score in self.reranker.rerank(question, texts)]

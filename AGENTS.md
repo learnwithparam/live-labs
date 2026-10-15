@@ -10,6 +10,7 @@ Topic rules live in `.claude/rules/` and load when a matching file is read:
 
 - `lab-product-job.md`: every lab is a named company's job with a truth and a metric; the title is the
   topic, the job is the subtitle.
+- `naming.md`: a name says what it holds; no one-letter or clipped names in code learners read.
 
 ## Other rules the gate holds
 

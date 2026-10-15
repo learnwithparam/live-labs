@@ -25,9 +25,9 @@ class Shelf:
         """Fill every product one way. The checkpoint makes a second press free: nothing is sent twice."""
         lines, checkpoint = self.lines(way), self.out / f"{way}.jsonl"
         sent = run_lines(lines, self.client, checkpoint)
-        filled, cost = settle(checkpoint, {p.sku: p for p in self.products}, self.client, self.model)
+        filled, cost = settle(checkpoint, {product.sku: product for product in self.products}, self.client, self.model)
         result = tally(self.products, filled, self.supplied, cost)
-        person = {p.sku: why_a_person(p, filled.get(p.sku)) for p in self.products if p.sku in result.person}
+        person = {product.sku: why_a_person(product, filled.get(product.sku)) for product in self.products if product.sku in result.person}
         return {
             "requests": len(lines),
             "sent": sent["sent"],
@@ -37,7 +37,7 @@ class Shelf:
             "total": result.total,
             "filled": result.filled,
             "person": person,
-            "attributes": {sku: a.model_dump() for sku, a in filled.items()},
+            "attributes": {sku: attributes.model_dump() for sku, attributes in filled.items()},
         }
 
 
@@ -68,7 +68,7 @@ def handler(shelf: Shelf) -> type[BaseHTTPRequestHandler]:
             if self.path == "/":
                 return self.send(200, PAGE.read_bytes(), "text/html; charset=utf-8")
             if self.path == "/api/shelf":
-                products = [vars(p) for p in shelf.products]
+                products = [vars(product) for product in shelf.products]
                 return self.send_json({"model": shelf.model, "size": shelf.size, "products": products, "supplied": shelf.supplied})
             self.send(404, b"not found", "text/plain")
 

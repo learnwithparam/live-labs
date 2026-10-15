@@ -19,7 +19,7 @@ from catalog.serve import Shelf, serve
 LAB = Path(__file__).parent.parent
 CATALOGUE, SUPPLIED = LAB / "data/catalogue.csv", LAB / "data/retailer-attributes.csv"
 PRODUCTS = load_products(CATALOGUE)
-BY_SKU = {p.sku: p for p in PRODUCTS}
+BY_SKU = {product.sku: product for product in PRODUCTS}
 RETAILER = load_supplied(SUPPLIED)
 DROPPED = "SKU10005"  # the sku the fake leaves out of any pack reply, as a real model sometimes does
 
@@ -44,7 +44,7 @@ class FakeClient:
         if len(skus) == 1:
             content = json.dumps(answer(skus[0]))
         else:
-            content = json.dumps({"products": [answer(s) for s in skus if s != DROPPED]})
+            content = json.dumps({"products": [answer(sku) for sku in skus if sku != DROPPED]})
         return SimpleNamespace(choices=[SimpleNamespace(message=SimpleNamespace(content=content))], usage=SimpleNamespace(cost=0.0001))
 
 
@@ -60,7 +60,7 @@ def test_the_batch_file_packs_products_under_one_copy_of_the_instructions():
 
 def test_a_reply_that_drops_or_mangles_a_sku_names_it():
     filled, dropped = parse(json.dumps({"products": [answer("SKU10000")]}), ["SKU10000", "SKU10001"])
-    assert [a.sku for a in filled] == ["SKU10000"] and dropped == ["SKU10001"]
+    assert [attributes.sku for attributes in filled] == ["SKU10000"] and dropped == ["SKU10001"]
     assert parse("not json", ["SKU10000"]) == ([], ["SKU10000"])
     stranger = json.dumps({"products": [answer("SKU10000") | {"sku": "SKU99999"}]})
     assert parse(stranger, ["SKU10000"]) == ([], ["SKU10000"])
@@ -87,7 +87,7 @@ def test_a_dropped_sku_is_retried_once_on_its_own(tmp_path):
 def test_accuracy_counts_only_what_the_retailer_supplied():
     filled = {sku: Attributes(**answer(sku)) for sku in RETAILER}
     right, total = accuracy(filled, RETAILER)
-    assert right == total == sum(1 for row in RETAILER.values() for k, v in row.items() if k != "sku" and v != "")
+    assert right == total == sum(1 for row in RETAILER.values() for field, value in row.items() if field != "sku" and value != "")
     wrong = {**filled, "SKU10000": filled["SKU10000"].model_copy(update={"size_value": 1.0})}
     assert accuracy(wrong, RETAILER) == (total - 1, total)
     assert accuracy({}, RETAILER) == (0, total)
@@ -123,7 +123,7 @@ class FakeBatches:
         for request in self.requests:
             params = request["params"]
             assert params["tool_choice"] == {"type": "tool", "name": "pack"} and params["tools"][0]["name"] == "pack"
-            call = SimpleNamespace(type="tool_use", input={"products": [answer(s) for s in skus_in(params)]})
+            call = SimpleNamespace(type="tool_use", input={"products": [answer(sku) for sku in skus_in(params)]})
             message = SimpleNamespace(content=[call], usage=SimpleNamespace(input_tokens=1_000_000, output_tokens=1_000_000))
             yield SimpleNamespace(custom_id=request["custom_id"], result=SimpleNamespace(type="succeeded", message=message))
         yield SimpleNamespace(custom_id="pack-9999", result=SimpleNamespace(type="errored"))
@@ -132,13 +132,13 @@ class FakeBatches:
 def test_the_same_file_goes_to_a_batch_api_and_comes_back_as_checkpoint_rows():
     lines, api = batch_lines(PRODUCTS, "any-model", 24), FakeBatches()
     assert submit(lines, api, "claude-haiku-5-5", 5) == "msgbatch-1" and len(api.requests) == 5
-    assert {r["params"]["model"] for r in api.requests} == {"claude-haiku-5-5"}
+    assert {request["params"]["model"] for request in api.requests} == {"claude-haiku-5-5"}
     assert api.requests[0]["params"]["system"] == INSTRUCTIONS
     assert collect("msgbatch-1", api) is None
     api.status = "ended"
     rows, errors = collect("msgbatch-1", api)
     assert errors == ["pack-9999: errored"]
-    assert [r["custom_id"] for r in rows] == [line["custom_id"] for line in lines[:5]]
+    assert [row["custom_id"] for row in rows] == [line["custom_id"] for line in lines[:5]]
     assert rows[0]["cost"] == pytest.approx(0.30)  # a million tokens each way at the batch price
     kept, dropped = parse(rows[0]["reply"], skus_in(lines[0]["body"]))
     assert len(kept) == 24 and not dropped

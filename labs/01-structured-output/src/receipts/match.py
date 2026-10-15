@@ -48,18 +48,18 @@ def load_charges(path: Path) -> list[Charge]:
 
     with path.open() as rows:
         return [
-            Charge(r["id"], date.fromisoformat(r["date"]), r["descriptor"], float(r["amount"]), money(r["original_amount"]), r["original_currency"] or None)
-            for r in csv.DictReader(rows)
+            Charge(row["id"], date.fromisoformat(row["date"]), row["descriptor"], float(row["amount"]), money(row["original_amount"]), row["original_currency"] or None)
+            for row in csv.DictReader(rows)
         ]
 
 
 def words(name: str) -> set[str]:
-    return {w for w in re.findall(r"[a-z0-9]+", name.lower()) if len(w) >= 4}
+    return {word for word in re.findall(r"[a-z0-9]+", name.lower()) if len(word) >= 4}
 
 
 def same_merchant(merchant: str, descriptor: str) -> bool:
     """A bank descriptor is the merchant's name cut short and upper-cased; one shared word is enough."""
-    return any(a.startswith(b) or b.startswith(a) for a in words(merchant) for b in words(descriptor))
+    return any(merchant_word.startswith(descriptor_word) or descriptor_word.startswith(merchant_word) for merchant_word in words(merchant) for descriptor_word in words(descriptor))
 
 
 def tip_on(receipt: Receipt, charge: Charge) -> float | None:
@@ -85,7 +85,7 @@ def match(receipt: Receipt, charges: list[Charge], taken: set[str] = frozenset()
         if tip is not None and days in POSTING_DAYS and same_merchant(receipt.merchant, charge.descriptor):
             fits.append((tip > 0, abs(days), tip, charge))
     if not fits:
-        first, last = (receipt.date + timedelta(days=d) for d in (POSTING_DAYS[0], POSTING_DAYS[-1]))
+        first, last = (receipt.date + timedelta(days=offset) for offset in (POSTING_DAYS[0], POSTING_DAYS[-1]))
         return Match(None, {}, f"no card charge of {receipt.currency} {receipt.total:.2f} from {receipt.merchant} "
                      f"posted {first:%d %b} to {last:%d %b}: paid another way, or the extraction is wrong")
     fits.sort(key=lambda fit: fit[:2])

@@ -24,12 +24,12 @@ class Decision(BaseModel):
     reason: str
 
 
-def decide(req: Request, client, model: str) -> tuple[dict, float]:
+def decide(refund_request: Request, client, model: str) -> tuple[dict, float]:
     """One model call. Returns the decision as plain data, ready to be stored in a workflow's history."""
-    order = orders()[req.order]
+    order = orders()[refund_request.order]
     response = client.chat.completions.create(
         model=model,
-        messages=[{"role": "system", "content": f"{INSTRUCTIONS}\n\n{policy()}"}, {"role": "user", "content": facts(req, order)}],
+        messages=[{"role": "system", "content": f"{INSTRUCTIONS}\n\n{policy()}"}, {"role": "user", "content": facts(refund_request, order)}],
         temperature=0,
         response_format={"type": "json_schema", "json_schema": {"name": "decision", "schema": Decision.model_json_schema()}},
     )

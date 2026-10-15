@@ -39,22 +39,22 @@ def load(folder: Path) -> list[Passage]:
 class HelpCentre:
     def __init__(self, passages: list[Passage]):
         self.passages = passages
-        self.by_id = {p.id: p for p in passages}
+        self.by_id = {passage.id: passage for passage in passages}
         # The heading goes into the index too: "Instant payout" is often the only words a courier types.
-        corpus = [f"{p.article} {p.section} {p.text}" for p in passages]
+        corpus = [f"{passage.article} {passage.section} {passage.text}" for passage in passages]
         self.index = bm25s.BM25()
         self.index.index(bm25s.tokenize(corpus, stopwords="en", show_progress=False), show_progress=False)
 
-    def search(self, question: str, k: int = 4) -> list[Passage]:
+    def search(self, question: str, top_k: int = 4) -> list[Passage]:
         tokens = bm25s.tokenize([question], stopwords="en", show_progress=False)
-        found, scores = self.index.retrieve(tokens, k=min(k, len(self.passages)), show_progress=False)
+        found, scores = self.index.retrieve(tokens, k=min(top_k, len(self.passages)), show_progress=False)
         # BM25 scores 0 when no word is shared; those passages would only invite a guess.
-        return [self.passages[i] for i, s in zip(found[0], scores[0]) if s > 0]
+        return [self.passages[index] for index, score in zip(found[0], scores[0]) if score > 0]
 
     def get(self, ids: list[str]) -> list[Passage]:
-        return [self.by_id[i] for i in ids if i in self.by_id]
+        return [self.by_id[passage_id] for passage_id in ids if passage_id in self.by_id]
 
 
 def listing(passages: list[Passage]) -> str:
     # Each passage carries its id in brackets, so a model can name exactly the one it used.
-    return "\n\n".join(f"[{p.id}] {p.article}: {p.section}\n{p.text}" for p in passages)
+    return "\n\n".join(f"[{passage.id}] {passage.article}: {passage.section}\n{passage.text}" for passage in passages)

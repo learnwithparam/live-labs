@@ -19,7 +19,7 @@ class Request:
 
 
 def orders() -> dict[str, dict]:
-    return {o["order"]: o for o in json.loads((DATA / "orders.json").read_text())}
+    return {order["order"]: order for order in json.loads((DATA / "orders.json").read_text())}
 
 
 def policy() -> str:
@@ -31,19 +31,19 @@ def requests() -> list[Request]:
 
 
 def request(refund_id: str) -> Request:
-    found = [r for r in requests() if r.id == refund_id]
+    found = [refund_request for refund_request in requests() if refund_request.id == refund_id]
     if not found:
-        raise SystemExit(f"No refund request {refund_id}. They are {', '.join(r.id for r in requests())}.")
+        raise SystemExit(f"No refund request {refund_id}. They are {', '.join(refund_request.id for refund_request in requests())}.")
     return found[0]
 
 
-def days(n: int) -> str:
-    return f"{n} day" if n == 1 else f"{n} days"
+def days(count: int) -> str:
+    return f"{count} day" if count == 1 else f"{count} days"
 
 
-def facts(req: Request, order: dict) -> str:
+def facts(refund_request: Request, order: dict) -> str:
     """The order and the dates, worked out in code. A model that has to count days gets them wrong."""
-    received, delivered = date.fromisoformat(req.received), date.fromisoformat(order["delivered"])
+    received, delivered = date.fromisoformat(refund_request.received), date.fromisoformat(order["delivered"])
     late = (delivered - date.fromisoformat(order["promised"])).days
     return "\n".join([
         f"Order {order['order']}: {order['item']}",
@@ -51,5 +51,5 @@ def facts(req: Request, order: dict) -> str:
         f"Made to order: {'yes' if order['made_to_order'] else 'no'}",
         f"Delivered {days(late)} after the promised date" if late > 0 else "Delivered on time",
         f"Request received {days((received - delivered).days)} after delivery",
-        f"Customer's message: {req.message}",
+        f"Customer's message: {refund_request.message}",
     ])

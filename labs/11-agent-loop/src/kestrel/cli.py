@@ -27,7 +27,7 @@ def models(engines=("reply", "loop", "adk")) -> dict:
 
 def show(step: dict) -> None:
     if step["kind"] == "call":
-        print(f"  call    {step['tool']}({', '.join(f'{k}={v!r}' for k, v in step['args'].items())})")
+        print(f"  call    {step['tool']}({', '.join(f'{name}={value!r}' for name, value in step['args'].items())})")
     elif step["kind"] == "result":
         print(f"  result  {json.dumps(step['result'])[:110]}")
     elif step["kind"] == "budget":
@@ -41,29 +41,29 @@ def one_chat(chat_id: str, engine: str, max_steps: int | None) -> int:
     from kestrel.chats import chat
     from kestrel.review import outcome, run_chat
 
-    c, m = chat(chat_id), models((engine,))
-    print(f"{c.id} {NAMES[engine]}. Customer: {c.message}\n")
-    budget = Budget(m["model"], **({"max_steps": max_steps} if max_steps else {}))
-    shop, budget, got = run_chat(engine, c.customer, c.message, m, show, budget)
+    customer_chat, engine_models = chat(chat_id), models((engine,))
+    print(f"{customer_chat.id} {NAMES[engine]}. Customer: {customer_chat.message}\n")
+    budget = Budget(engine_models["model"], **({"max_steps": max_steps} if max_steps else {}))
+    shop, budget, got = run_chat(engine, customer_chat.customer, customer_chat.message, engine_models, show, budget)
     print(f"\nAssistant: {got['reply'].strip()}\n")
     changes = shop.changes()
-    print("Order system: " + ("; ".join(f"{x['kind']} {x['order_id']}" + (f" ${x['amount']:.2f}" if x["amount"] else "")
-                                        for x in changes) if changes else "no change"))
-    print(f"Outcome: {outcome(c, shop, got)}. {budget.steps} model calls, ${budget.cost:.4f}.")
+    print("Order system: " + ("; ".join(f"{change['kind']} {change['order_id']}" + (f" ${change['amount']:.2f}" if change["amount"] else "")
+                                        for change in changes) if changes else "no change"))
+    print(f"Outcome: {outcome(customer_chat, shop, got)}. {budget.steps} model calls, ${budget.cost:.4f}.")
     return 0
 
 
 def review_all(max_steps: int | None) -> int:
     from kestrel.review import ENGINES, review
 
-    m = models()
-    print(f"10 chats on each engine, each on a fresh order system. Model {m['model']}.\n")
-    got = review(m, max_steps=max_steps, on_row=lambda r: print(f"  {NAMES[r['engine']]:<11}{r['chat']}  {r['outcome']}"))
+    engine_models = models()
+    print(f"10 chats on each engine, each on a fresh order system. Model {engine_models['model']}.\n")
+    got = review(engine_models, max_steps=max_steps, on_row=lambda row: print(f"  {NAMES[row['engine']]:<11}{row['chat']}  {row['outcome']}"))
     print(f"\n{'':<12}{'resolved':<10}{'actions':<9}{'hand-offs':<11}{'wrong':<7}{'over budget':<13}{'steps':<7}cost")
     for engine in ENGINES:
-        s = got[engine]["score"]
-        print(f"{NAMES[engine]:<12}{s['resolved']} of {s['resolvable']:<5}{s['actions_done']} of {s['actions']:<4}"
-              f"{s['handed_off_right']} of {s['should_hand_off']:<6}{s['wrong_state']:<7}{s['over_budget']:<13}{s['steps']:<7}${s['cost']:.4f}")
+        score = got[engine]["score"]
+        print(f"{NAMES[engine]:<12}{score['resolved']} of {score['resolvable']:<5}{score['actions_done']} of {score['actions']:<4}"
+              f"{score['handed_off_right']} of {score['should_hand_off']:<6}{score['wrong_state']:<7}{score['over_budget']:<13}{score['steps']:<7}${score['cost']:.4f}")
     REVIEW.parent.mkdir(exist_ok=True)
     REVIEW.write_text(json.dumps(got, indent=1))
     print(f"\nEvery chat, reply and change: {REVIEW}")

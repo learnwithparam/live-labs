@@ -21,10 +21,10 @@ def test_the_golden_set_blocks_the_shorter_prompt_and_passes_the_fix():
 
     def run(stem: str) -> dict:
         prompt = (LAB / "prompts" / f"{stem}.txt").read_text()
-        return {name: r.fields for name, r in read_all(postings, prompt, client, model).items()}
+        return {name: reading.fields for name, reading in read_all(postings, prompt, client, model).items()}
 
     shipped, shorter, years = run("shipped"), run("shorter"), run("years-rule")
-    weak = {f: n for f, n in gate(golden, shipped, shipped).before.items() if n < MIN_RIGHT}
+    weak = {field: right for field, right in gate(golden, shipped, shipped).before.items() if right < MIN_RIGHT}
     assert not weak, f"{model} under the shipped prompt: {weak}"
     blocked = gate(golden, shipped, shorter)
     assert blocked.blocked and blocked.needs_person, f"{model}: the shorter prompt was not caught"

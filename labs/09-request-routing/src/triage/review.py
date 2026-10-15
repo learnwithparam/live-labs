@@ -20,30 +20,30 @@ def p95(values: list[float]) -> float:
 
 
 def summary(rows: list[dict], how: str) -> dict:
-    mine = [r for r in rows if r["how"] == how]
-    routed = [r for r in mine if r["to"] != PERSON]
+    mine = [row for row in rows if row["how"] == how]
+    routed = [row for row in mine if row["to"] != PERSON]
     return {
         "tickets": len(mine),
         # The metric: routed straight to a queue that turned out to be the wrong one.
-        "reassigned": sum(r["to"] != r["truth"] for r in routed),
+        "reassigned": sum(row["to"] != row["truth"] for row in routed),
         "to_person": len(mine) - len(routed),
-        "right_first_time": sum(r["to"] == r["truth"] for r in routed),
+        "right_first_time": sum(row["to"] == row["truth"] for row in routed),
         # Its top pick was wrong, but its confidence was low enough that a person caught it.
-        "caught": sum(r["to"] == PERSON and r["queue"] != r["truth"] for r in mine),
-        "top_pick_right": sum(r["queue"] == r["truth"] for r in mine),
-        "p95_ms": round(p95([r["ms"] for r in mine]), 1),
-        "cost_per_1000": round(1000 * sum(r["cost"] for r in mine) / max(1, len(mine)), 4),
+        "caught": sum(row["to"] == PERSON and row["queue"] != row["truth"] for row in mine),
+        "top_pick_right": sum(row["queue"] == row["truth"] for row in mine),
+        "p95_ms": round(p95([row["ms"] for row in mine]), 1),
+        "cost_per_1000": round(1000 * sum(row["cost"] for row in mine) / max(1, len(mine)), 4),
     }
 
 
 def row(how: str, ticket: Ticket, route: Route) -> dict:
     return {"how": how, "id": ticket.id, "truth": ticket.queue, "queue": route.queue, "to": destination(route),
-            "confidence": round(route.confidence, 3), "probabilities": {q: round(p, 3) for q, p in route.probabilities.items()},
+            "confidence": round(route.confidence, 3), "probabilities": {queue: round(probability, 3) for queue, probability in route.probabilities.items()},
             "ms": round(route.ms, 1), "cost": route.cost}
 
 
-def as_route(r: dict) -> Route:
-    return Route(r["queue"], r["confidence"], r["probabilities"], r["ms"], r["cost"])
+def as_route(row: dict) -> Route:
+    return Route(row["queue"], row["confidence"], row["probabilities"], row["ms"], row["cost"])
 
 
 def review(tickets: list[Ticket], routers: dict, on_row=None) -> dict:
@@ -58,7 +58,7 @@ def review(tickets: list[Ticket], routers: dict, on_row=None) -> dict:
                     on_row(rows[-1])
     if "llm" in routers and "decision" in routers:
         # Both ran on every ticket, so the second opinion costs no extra call: it reuses their answers.
-        routes = {(r["how"], r["id"]): r for r in rows}
+        routes = {(row["how"], row["id"]): row for row in rows}
         for ticket in tickets:
             llm, decision = (as_route(routes[(how, ticket.id)]) for how in ("llm", "decision"))
             rows.append(row("both", ticket, second_opinion(llm, decision)))

@@ -76,7 +76,7 @@ def run(message: str, system: str, tools: list[Callable], llm, budget: Budget,
             for done in event.get_function_responses():
                 on_step({"kind": "result", "tool": done.name, "result": done.response})
             if event.is_final_response() and event.content and event.content.parts:
-                reply = "".join(p.text or "" for p in event.content.parts)
+                reply = "".join(part.text or "" for part in event.content.parts)
         return reply
 
     try:

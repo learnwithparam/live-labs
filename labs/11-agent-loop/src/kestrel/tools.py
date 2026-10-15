@@ -31,7 +31,7 @@ class OrderTools:
 
         Call this first whenever the customer names an item but not an order number, instead of asking them.
         """
-        return {"orders": [{k: o[k] for k in ("id", "item", "status", "total")} for o in self.shop.orders_of(self.customer)]}
+        return {"orders": [{field: order[field] for field in ("id", "item", "status", "total")} for order in self.shop.orders_of(self.customer)]}
 
     def get_order(self, order_id: str) -> dict:
         """Look up one of the customer's orders: status, address, delivery date and tracking.
@@ -42,7 +42,7 @@ class OrderTools:
         order = self._own(order_id)
         if not order:
             return {"error": f"No order {order_id} on this customer's account."}
-        return {k: order[k] for k in ("id", "item", "status", "total", "address", "delivered", "shipment")}
+        return {field: order[field] for field in ("id", "item", "status", "total", "address", "delivered", "shipment")}
 
     def cancel_order(self, order_id: str) -> dict:
         """Cancel an order that has not shipped yet. Policy P1.

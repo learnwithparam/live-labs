@@ -30,9 +30,9 @@ def lines(path: Path) -> list[Line]:
     """Every text run in reading order with its printed size, so headings and page furniture can be told apart."""
     found: list[Line] = []
     for number, page in enumerate(PdfReader(path).pages, 1):
-        def visit(text, cm, tm, font, size, number=number):
+        def visit(text, user_matrix, text_matrix, font, size, number=number):
             if text.strip():
-                found.append(Line(text.strip(), round(size * tm[0], 1), number))
+                found.append(Line(text.strip(), round(size * text_matrix[0], 1), number))
 
         page.extract_text(visitor_text=visit)
     return found
@@ -84,4 +84,4 @@ def by_size(path: Path, size: int = 300) -> list[Passage]:
 
 def ingest(folder: Path, how: str = "section") -> list[Passage]:
     split = by_section if how == "section" else by_size
-    return [p for path in sorted(folder.glob("*.pdf")) for p in split(path)]
+    return [passage for path in sorted(folder.glob("*.pdf")) for passage in split(path)]

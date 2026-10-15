@@ -14,33 +14,33 @@ from policy.search import Policies
 WAYS = ("plain", "agentic")
 
 
-def one(q: Question, how: str, policies: Policies, client, model: str, judge: str) -> dict:
+def one(question: Question, how: str, policies: Policies, client, model: str, judge: str) -> dict:
     run = plain if how == "plain" else agentic
-    got = run(q.question, policies, client, model)
-    graded, grade_cost = grade(q, got["answer"], client, judge)
-    return {"id": q.id, "how": how, "answer": got["answer"], "cited": got["cited"], "covered": got["covered"],
-            "searches": got["searches"], "found": found(q, got["sources"]), "needs": len(q.needs),
+    got = run(question.question, policies, client, model)
+    graded, grade_cost = grade(question, got["answer"], client, judge)
+    return {"id": question.id, "how": how, "answer": got["answer"], "cited": got["cited"], "covered": got["covered"],
+            "searches": got["searches"], "found": found(question, got["sources"]), "needs": len(question.needs),
             "cost": got["cost"], "calls": got["calls"], "grade_cost": grade_cost, **graded}
 
 
 def summary(rows: list[dict], total: int) -> dict:
     return {
-        "accepted": sum(r["accepted"] for r in rows),
+        "accepted": sum(row["accepted"] for row in rows),
         "total": total,
-        "found": sum(r["found"] for r in rows),
-        "needs": sum(r["needs"] for r in rows),
-        "cost_per_question": round(sum(r["cost"] for r in rows) / total, 6),
-        "calls_per_question": round(sum(r["calls"] for r in rows) / total, 1),
+        "found": sum(row["found"] for row in rows),
+        "needs": sum(row["needs"] for row in rows),
+        "cost_per_question": round(sum(row["cost"] for row in rows) / total, 6),
+        "calls_per_question": round(sum(row["calls"] for row in rows) / total, 1),
         # Not covered means the model said so: a person answers, nothing wrong is sent.
-        "to_a_person": [r["id"] for r in rows if not r["covered"]],
+        "to_a_person": [row["id"] for row in rows if not row["covered"]],
     }
 
 
 def review(questions: list[Question], policies: Policies, client, model: str, judge: str) -> dict:
-    jobs = [(q, how) for q in questions for how in WAYS]
+    jobs = [(question, how) for question in questions for how in WAYS]
     # The questions are independent, so they run side by side; each graph run is still one at a time.
     with ThreadPoolExecutor(8) as pool:
         rows = list(pool.map(lambda job: one(*job, policies, client, model, judge), jobs))
-    by_way = {how: [r for r in rows if r["how"] == how] for how in WAYS}
+    by_way = {how: [row for row in rows if row["how"] == how] for how in WAYS}
     return {"rows": rows, **{how: summary(by_way[how], len(questions)) for how in WAYS},
-            "grading_cost": round(sum(r["grade_cost"] for r in rows), 6)}
+            "grading_cost": round(sum(row["grade_cost"] for row in rows), 6)}

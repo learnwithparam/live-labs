@@ -38,10 +38,10 @@ def ask(question: str) -> int:
 
 
 def show(name: str, result: dict) -> None:
-    m = result["matrix"]
+    matrix = result["matrix"]
     print(f"{name:7} agrees with agents on {result['agree']} of {result['total']}, kappa {result['kappa']}")
-    print(f"        agent pass: judge pass {m['pass']['pass']}, judge fail {m['pass']['fail']}")
-    print(f"        agent fail: judge pass {m['fail']['pass']}, judge fail {m['fail']['fail']}")
+    print(f"        agent pass: judge pass {matrix['pass']['pass']}, judge fail {matrix['pass']['fail']}")
+    print(f"        agent fail: judge pass {matrix['fail']['pass']}, judge fail {matrix['fail']['fail']}")
 
 
 def review(naive: bool) -> int:
@@ -51,19 +51,19 @@ def review(naive: bool) -> int:
     client, model, judge = client_and_models()
     rows = load_labelled(LABELLED)
     result = run(rows, help_centre(), client, model, judge)
-    g = result["guard"]
+    guard = result["guard"]
     print(f"{len(rows)} replies agents labelled. Guard on {model}, judge on {judge}.\n")
-    print(f"Without the guard: {g['unsupported']} unsupported replies sent")
-    print(f"With the guard:    {len(g['sent'])} unsupported replies sent {g['sent']}")
-    print(f"Good replies held for an agent: {len(g['held_good'])} {g['held_good']}\n")
+    print(f"Without the guard: {guard['unsupported']} unsupported replies sent")
+    print(f"With the guard:    {len(guard['sent'])} unsupported replies sent {guard['sent']}")
+    print(f"Good replies held for an agent: {len(guard['held_good'])} {guard['held_good']}\n")
     if naive:
         show("Naive", result["naive"])
     show("Judge", result["judge"])
-    by_id = {r["id"]: r for r in result["rows"]}
+    by_id = {row["id"]: row for row in result["rows"]}
     print("\nWhere the judge and the agent disagree:")
-    for i in result["judge"]["disagree"]:
-        r = by_id[i]
-        print(f"  {i} agent {r['human']}, judge {r['judge']}: {r['judge_reason']}")
+    for ticket_id in result["judge"]["disagree"]:
+        row = by_id[ticket_id]
+        print(f"  {ticket_id} agent {row['human']}, judge {row['judge']}: {row['judge_reason']}")
     Path("out").mkdir(exist_ok=True)
     Path("out/review.json").write_text(json.dumps(result, indent=1))
     print(f"\nCost ${result['cost']:.4f}. Full results in out/review.json")

@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from check_course import KINDS, LAB_POINTER, kind, ROOT, comment_problems, course_map, opening_problems, page_problems, plain_problems, problems, title_problems
+from check_course import KINDS, LAB_POINTER, kind, ROOT, comment_problems, course_map, naming_problems, opening_problems, page_problems, plain_problems, problems, title_problems
 from walkthrough import matches, scene, steps
 
 import json
@@ -34,7 +34,7 @@ def test_scene_marks_each_expectation(tmp_path):
 def test_two_labs_cannot_own_one_concept():
     course = tomllib.loads((ROOT / "course.toml").read_text())
     course["lab"][1]["owns"] = course["lab"][0]["owns"]
-    assert any("already owned by 01-" in p for p in problems(course, ""))
+    assert any("already owned by 01-" in problem for problem in problems(course, ""))
 
 
 def test_every_lab_names_its_job_truth_and_metric():
@@ -42,8 +42,8 @@ def test_every_lab_names_its_job_truth_and_metric():
     course["lab"][3]["truth"] = " "
     del course["lab"][4]["metric"]
     found = problems(course, "")
-    assert any(p.endswith("no `truth`") for p in found)
-    assert any(p.endswith("no `metric`") for p in found)
+    assert any(problem.endswith("no `truth`") for problem in found)
+    assert any(problem.endswith("no `metric`") for problem in found)
 
 
 def test_a_readme_opens_with_the_job_before_any_command():
@@ -83,16 +83,18 @@ def test_every_colour_a_lab_page_uses_is_a_workshop_token():
 
 
 def test_two_lab_pages_cannot_share_a_surface_or_a_layout():
-    chat = '<body data-surface="team chat"><style>.a { grid-template-columns: 240px 1fr }</style>'
-    shop = '<body data-surface="storefront"><style>.a { grid-template-columns: 240px 1fr }</style>'
+    icon = '<link rel="icon" href="data:,">'
+    chat = icon + '<body data-surface="team chat"><style>.a { grid-template-columns: 240px 1fr }</style>'
+    shop = icon + '<body data-surface="storefront"><style>.a { grid-template-columns: 240px 1fr }</style>'
     assert page_problems({"a": chat}) == []
     assert page_problems({"a": chat, "b": chat.replace("240px 1fr", "1fr 1fr")}) == ["b: surface 'team chat' is already a's"]
     assert page_problems({"a": chat, "b": shop}) == ["b: same grid layout as a"]
-    assert page_problems({"a": "<body>"}) == ["a: <body> has no data-surface naming the product surface"]
+    assert page_problems({"a": icon + "<body>"}) == ["a: <body> has no data-surface naming the product surface"]
+    assert page_problems({"a": chat.replace(icon, "")}) == ['a: no <link rel="icon">, so the browser\'s favicon request fails']
 
 
 def test_a_teaching_module_needs_why_comments():
-    bare = "\n".join(f"x{n} = {n}" for n in range(40))
+    bare = "\n".join(f"x{number} = {number}" for number in range(40))
     assert comment_problems("m.py", bare) == ["m.py: 0 why-comment lines for 40 lines of code, needs 3"]
     why = '"""Why this module exists."""\n# why one\n# why two\n' + bare
     assert comment_problems("m.py", why) == []
@@ -101,13 +103,13 @@ def test_a_teaching_module_needs_why_comments():
 def test_a_readme_sentence_stays_short_and_a_list_item_counts_alone():
     long = " ".join(["word"] * 41) + "."
     assert plain_problems(long)[0].startswith("sentence of 41 words")
-    listed = "You can:\n\n" + "\n".join(f"- do thing {n} with " + " ".join(["word"] * 8) for n in range(6))
+    listed = "You can:\n\n" + "\n".join(f"- do thing {number} with " + " ".join(["word"] * 8) for number in range(6))
     assert plain_problems(listed) == []
     assert plain_problems("A \u2014 B.") == ["an em dash; use a full stop or a comma"]
 
 
 def test_a_typescript_module_needs_why_comments_too():
-    bare = "\n".join(f"const x{n} = {n}" for n in range(40))
+    bare = "\n".join(f"const x{number} = {number}" for number in range(40))
     assert comment_problems("m.ts", bare) == ["m.ts: 0 why-comment lines for 40 lines of code, needs 3"]
     why = "/**\n * Why this module exists.\n */\n" + bare
     assert comment_problems("m.ts", why) == []
@@ -119,3 +121,15 @@ def test_a_typescript_lab_needs_its_lock_file_and_proof(tmp_path):
     assert kind(tmp_path) == "node"
     assert "package-lock.json" in KINDS[kind(tmp_path)] and "tests/proof.test.ts" in KINDS["node"]
     assert kind(tmp_path / "missing") == "python"
+
+
+def test_a_name_says_what_it_holds_in_python_typescript_and_pages():
+    python = "rows = load()\nfor p in rows:\n    pass\ntry:\n    go()\nexcept OSError as e:\n    res = [v for v in rows]\n_ = 1\n"
+    assert naming_problems("m.py", python) == [f"m.py:{line}: unclear name {name!r}; say what it holds"
+                                               for line, name in [(2, "p"), (6, "e"), (7, "res"), (7, "v")]]
+    assert naming_problems("m.py", "for row in rows:\n    total = row\n") == []
+    typescript = "const f = (r) => r.ok;\nitems.map((item, i) => item);\ntry {} catch (err) {}\n"
+    assert [problem.split("unclear name ")[1] for problem in naming_problems("m.ts", typescript)] == [
+        "'f'; say what it holds", "'r'; say what it holds", "'i'; say what it holds"]
+    page = "<style>.a { color: rgba(0, 0, 0, 1) }</style>\n<script>\nconst $ = (id) => id;\nconst el = $(\"x\");\n</script>"
+    assert naming_problems("page.html", page) == ["page.html:4: unclear name 'el'; say what it holds"]

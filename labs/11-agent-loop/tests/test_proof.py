@@ -13,13 +13,13 @@ from kestrel.cli import review_all
 @pytest.mark.proof
 def test_an_agent_loop_resolves_chats_a_reply_cannot_and_hands_off_the_risky_ones():
     assert review_all(None) == 0
-    got = {engine: r["score"] for engine, r in json.loads(Path("out/review.json").read_text()).items()}
+    got = {engine: result["score"] for engine, result in json.loads(Path("out/review.json").read_text()).items()}
     # A reply can promise a cancellation, but only a tool call moves the order system.
     assert got["reply"]["actions_done"] == 0, got["reply"]
     for engine in ("loop", "adk"):
-        s = got[engine]
-        assert s["resolved"] >= 6, f"{engine}: {s}"
-        assert s["handed_off_right"] == s["should_hand_off"] == 2, f"{engine}: {s}"
+        score = got[engine]
+        assert score["resolved"] >= 6, f"{engine}: {score}"
+        assert score["handed_off_right"] == score["should_hand_off"] == 2, f"{engine}: {score}"
         # The budget is a ceiling for a confused chat, not the normal case.
-        assert s["over_budget"] == 0, f"{engine}: {s}"
-        assert s["resolved"] > got["reply"]["resolved"], f"{engine} did no better than a reply: {s}"
+        assert score["over_budget"] == 0, f"{engine}: {score}"
+        assert score["resolved"] > got["reply"]["resolved"], f"{engine} did no better than a reply: {score}"

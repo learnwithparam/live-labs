@@ -9,14 +9,14 @@ from catalog.schema import ATTRIBUTES, Attributes, same
 
 
 def load_products(path: Path) -> list[Product]:
-    with path.open() as f:
-        return [Product(**row) for row in csv.DictReader(f)]
+    with path.open() as file:
+        return [Product(**row) for row in csv.DictReader(file)]
 
 
 def load_supplied(path: Path) -> dict[str, dict]:
     """sku -> the attributes the retailer supplied. A blank cell is one the retailer did not know."""
-    with path.open() as f:
-        return {row["sku"]: row for row in csv.DictReader(f)}
+    with path.open() as file:
+        return {row["sku"]: row for row in csv.DictReader(file)}
 
 
 def accuracy(filled: dict[str, Attributes], supplied: dict[str, dict]) -> tuple[int, int]:
@@ -60,6 +60,6 @@ class Tally:
 
 
 def tally(products: list[Product], filled: dict[str, Attributes], supplied: dict[str, dict], cost: float) -> Tally:
-    person = [p.sku for p in products if why_a_person(p, filled.get(p.sku))]
+    person = [product.sku for product in products if why_a_person(product, filled.get(product.sku))]
     right, total = accuracy(filled, supplied)
     return Tally(len(products), len(products) - len(person), person, right, total, cost)

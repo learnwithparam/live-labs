@@ -16,7 +16,7 @@ from kestrel.tools import OrderTools
 ENGINES = ("reply", "loop", "adk")
 
 
-def run_chat(engine: str, customer: str, message: str, models: dict, on_step: Callable[[dict], None] = lambda s: None,
+def run_chat(engine: str, customer: str, message: str, models: dict, on_step: Callable[[dict], None] = lambda step: None,
              budget: Budget | None = None) -> tuple[Shop, Budget, dict]:
     """One chat. `models` holds an OpenAI client, its model name, and an ADK model for the ADK engine."""
     shop = Shop()
@@ -48,22 +48,22 @@ def outcome(chat: Chat, shop: Shop, got: dict) -> str:
 
 
 def score(rows: list[dict]) -> dict:
-    resolvable = [r for r in rows if not r["handoff"]]
-    actions = [r for r in resolvable if r["expect"]]
+    resolvable = [row for row in rows if not row["handoff"]]
+    actions = [row for row in resolvable if row["expect"]]
     return {
         "chats": len(rows),
-        "resolved": sum(r["outcome"] == "resolved" for r in resolvable),
+        "resolved": sum(row["outcome"] == "resolved" for row in resolvable),
         "resolvable": len(resolvable),
         # The chats that needed a change in the order system: a reply alone cannot do these.
-        "actions_done": sum(r["outcome"] == "resolved" for r in actions),
+        "actions_done": sum(row["outcome"] == "resolved" for row in actions),
         "actions": len(actions),
-        "handed_off_right": sum(r["outcome"] == "handed off" for r in rows),
-        "should_hand_off": sum(r["handoff"] for r in rows),
-        "wrong_state": sum(r["outcome"] in ("wrong state", "missed hand-off") for r in rows),
-        "needless_hand_offs": sum(r["outcome"] == "handed off needlessly" for r in rows),
-        "over_budget": sum(r["outcome"] == "over budget" for r in rows),
-        "steps": sum(r["steps"] for r in rows),
-        "cost": round(sum(r["cost"] for r in rows), 5),
+        "handed_off_right": sum(row["outcome"] == "handed off" for row in rows),
+        "should_hand_off": sum(row["handoff"] for row in rows),
+        "wrong_state": sum(row["outcome"] in ("wrong state", "missed hand-off") for row in rows),
+        "needless_hand_offs": sum(row["outcome"] == "handed off needlessly" for row in rows),
+        "over_budget": sum(row["outcome"] == "over budget" for row in rows),
+        "steps": sum(row["steps"] for row in rows),
+        "cost": round(sum(row["cost"] for row in rows), 5),
     }
 
 
@@ -82,6 +82,6 @@ def review(models: dict, engines=ENGINES, max_steps: int | None = None, on_row=N
     for engine in engines:
         # Chats are independent, each on its own order system, so they run side by side.
         with ThreadPoolExecutor(5) as pool:
-            rows = list(pool.map(lambda c: one(engine, c), chats()))
+            rows = list(pool.map(lambda customer_chat: one(engine, customer_chat), chats()))
         result[engine] = {"score": score(rows), "rows": rows}
     return result

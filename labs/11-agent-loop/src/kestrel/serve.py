@@ -31,19 +31,19 @@ class Desk:
     def chats(self) -> dict:
         shop = Shop()
         review = json.loads(self.review_file.read_text()) if self.review_file.exists() else None
-        return {"chats": [{"id": c.id, "customer": c.customer, "name": shop.customer_name(c.customer), "message": c.message,
-                           "handoff": c.handoff, "orders": shop.orders_of(c.customer)} for c in chats()],
-                "review": {e: r["score"] for e, r in review.items()} if review else None,
+        return {"chats": [{"id": chat.id, "customer": chat.customer, "name": shop.customer_name(chat.customer), "message": chat.message,
+                           "handoff": chat.handoff, "orders": shop.orders_of(chat.customer)} for chat in chats()],
+                "review": {engine: result["score"] for engine, result in review.items()} if review else None,
                 "budget": {"max_steps": MAX_STEPS, "max_cost": MAX_COST}}
 
     def start(self, chat_id: str, engine: str, message: str | None) -> str:
-        seeded = next(c for c in chats() if c.id == chat_id)
+        seeded = next(chat for chat in chats() if chat.id == chat_id)
         text = (message or "").strip() or seeded.message
         run = {"steps": [], "done": False, "chat": seeded.id, "engine": engine, "orders": Shop().orders_of(seeded.customer),
                # A message the learner typed has no answer key, so it is shown but not scored.
                "scored": text == seeded.message}
-        rid = uuid.uuid4().hex[:8]
-        self.runs[rid] = run
+        run_id = uuid.uuid4().hex[:8]
+        self.runs[run_id] = run
 
         def go():
             try:
@@ -53,12 +53,12 @@ class Desk:
                            orders=shop.orders_of(seeded.customer), budget=budget.state(),
                            outcome=outcome(seeded, shop, got) if run["scored"] else None,
                            expect=seeded.expect, matches=matches(seeded, shop))
-            except Exception as e:  # shown on the page, so a bad key reads as a message, not a hang
-                run.update(error=str(e))
+            except Exception as error:  # shown on the page, so a bad key reads as a message, not a hang
+                run.update(error=str(error))
             run["done"] = True
 
         threading.Thread(target=go, daemon=True).start()
-        return rid
+        return run_id
 
 
 def handler(desk: Desk) -> type[BaseHTTPRequestHandler]:
@@ -95,10 +95,10 @@ def handler(desk: Desk) -> type[BaseHTTPRequestHandler]:
                 return self.send(403, b"forbidden", "text/plain")
             data = json.loads(self.rfile.read(int(self.headers.get("Content-Length") or 0)) or b"{}")
             if self.path == "/api/run":
-                if data.get("chat") not in {c.id for c in chats()} or data.get("engine") not in ("reply", "loop", "adk"):
+                if data.get("chat") not in {chat.id for chat in chats()} or data.get("engine") not in ("reply", "loop", "adk"):
                     return self.send(400, b"a seeded chat and an engine", "text/plain")
-                rid = desk.start(data["chat"], data["engine"], data.get("message"))
-                return self.send(200, json.dumps({"id": rid}).encode(), "application/json")
+                run_id = desk.start(data["chat"], data["engine"], data.get("message"))
+                return self.send(200, json.dumps({"id": run_id}).encode(), "application/json")
             self.send(404, b"not found", "text/plain")
 
     return Handler

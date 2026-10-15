@@ -60,11 +60,11 @@ def test_help_centre_splits_articles_into_sections_and_finds_them(centre):
 
 def test_every_labelled_reply_cites_real_sections_and_half_fail():
     rows = load_labelled(LAB / "data/labelled.jsonl")
-    ids = {p.id for p in load(LAB / "data/help")}
-    assert len(rows) == 20 and all(set(r.cited) <= ids for r in rows)
-    assert sum(r.human == "fail" for r in rows) == 10
-    assert {r.kind for r in rows} == {"supported", "unsupported", "unsafe", "off-question"}
-    assert all((r.human == "pass") == (r.kind == "supported") for r in rows)
+    ids = {passage.id for passage in load(LAB / "data/help")}
+    assert len(rows) == 20 and all(set(row.cited) <= ids for row in rows)
+    assert sum(row.human == "fail" for row in rows) == 10
+    assert {row.kind for row in rows} == {"supported", "unsupported", "unsafe", "off-question"}
+    assert all((row.human == "pass") == (row.kind == "supported") for row in rows)
 
 
 def test_kappa_is_one_for_full_agreement_and_zero_for_a_judge_that_passes_everything():
@@ -111,7 +111,7 @@ def test_review_counts_unsupported_replies_sent_and_both_judges(centre):
     assert got["guard"]["unsupported"] == 8
     assert "T-1042" not in got["guard"]["sent"] and len(got["guard"]["sent"]) == 7
     assert got["naive"]["matrix"]["fail"]["pass"] == 10  # the naive fake passes everything
-    assert got["judge"]["disagree"] == [r.id for r in rows if r.human == "fail" and r.id != "T-1042"]
+    assert got["judge"]["disagree"] == [row.id for row in rows if row.human == "fail" and row.id != "T-1042"]
 
 
 def test_the_page_serves_only_to_this_machine_and_records_decisions(centre, tmp_path):
@@ -126,10 +126,10 @@ def test_the_page_serves_only_to_this_machine_and_records_decisions(centre, tmp_
         assert len(json.loads(urllib.request.urlopen(base + "/api/room").read())["tickets"]) == 20
 
         def post(path, body, origin=None):
-            req = urllib.request.Request(base + path, json.dumps(body).encode(), {"Content-Type": "application/json"})
+            request = urllib.request.Request(base + path, json.dumps(body).encode(), {"Content-Type": "application/json"})
             if origin:
-                req.add_header("Origin", origin)
-            return json.loads(urllib.request.urlopen(req).read())
+                request.add_header("Origin", origin)
+            return json.loads(urllib.request.urlopen(request).read())
 
         assert post("/api/check", {"ticket": "T-1042"})["send"] is False
         assert post("/api/decide", {"ticket": "T-1042", "decision": "rewrite"}) == [{"ticket": "T-1042", "decision": "rewrite"}]

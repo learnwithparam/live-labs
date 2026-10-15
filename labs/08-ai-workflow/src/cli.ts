@@ -24,30 +24,30 @@ async function main(): Promise<number> {
   const [command, ...rest] = process.argv.slice(2)
   const products = load()
   if (command === 'write') {
-    const product = products.find((p) => p.id === rest[0])
+    const product = products.find((candidate) => candidate.id === rest[0])
     if (!product) {
-      console.log(`Pick a product: ${products.map((p) => p.id).join(', ')}`)
+      console.log(`Pick a product: ${products.map((option) => option.id).join(', ')}`)
       return 2
     }
     const ask = mastraAsk(settings())
     const listing = rest.includes('--one-prompt')
       ? await onePrompt(ask, product.sheet)
-      : await write(ask, product.sheet, (e) => console.log(`${String(e.ms).padStart(6)} ms  ${e.phase === 'start' ? 'start' : 'done '}  ${e.step}`))
+      : await write(ask, product.sheet, (event) => console.log(`${String(event.ms).padStart(6)} ms  ${event.phase === 'start' ? 'start' : 'done '}  ${event.step}`))
     console.log(`\n${product.product}: ${listing.status}. ${listing.why}`)
     show(listing)
     const edits = audit(listing, product)
     console.log(`\nMerchant audit: ${edits.length ? `${edits.length} edit(s) needed` : 'nothing to edit'}`)
-    for (const e of edits) console.log(`  - ${e.why}  (${e.says})`)
+    for (const edit of edits) console.log(`  - ${edit.why}  (${edit.says})`)
     console.log(`Cost: $${listing.cost.toFixed(5)}`)
     return 0
   }
   if (command === 'review') {
-    const rows = await review(mastraAsk(settings()), products, (r) =>
-      console.log(`${r.how.padEnd(10)} ${r.id.padEnd(20)} ${r.clean ? 'clean' : r.listing.status === 'held' ? 'held' : `live, ${r.edits.length} edit(s)`}`),
+    const rows = await review(mastraAsk(settings()), products, (row) =>
+      console.log(`${row.how.padEnd(10)} ${row.id.padEnd(20)} ${row.clean ? 'clean' : row.listing.status === 'held' ? 'held' : `live, ${row.edits.length} edit(s)`}`),
     )
     console.log('')
-    for (const s of [summary(rows, 'one-prompt'), summary(rows, 'workflow')]) {
-      console.log(`${s.how.padEnd(10)} published without an edit: ${s.clean} of ${s.total}, held ${s.held}, live with errors ${s.wrong}, $${s.cost.toFixed(4)}`)
+    for (const totals of [summary(rows, 'one-prompt'), summary(rows, 'workflow')]) {
+      console.log(`${totals.how.padEnd(10)} published without an edit: ${totals.clean} of ${totals.total}, held ${totals.held}, live with errors ${totals.wrong}, $${totals.cost.toFixed(4)}`)
     }
     mkdirSync('out', { recursive: true })
     writeFileSync('out/review.json', JSON.stringify(rows, null, 2))

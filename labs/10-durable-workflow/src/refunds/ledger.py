@@ -48,7 +48,7 @@ class Ledger:
     def payouts(self, how: str | None = None) -> list[dict]:
         with closing(self.connect()) as db:
             rows = db.execute("select * from payouts where ? is null or how = ? order by id", (how, how)).fetchall()
-        return [dict(r) for r in rows]
+        return [dict(row) for row in rows]
 
     def count_call(self, refund: str, how: str) -> None:
         with closing(self.connect()) as db, db:
@@ -57,7 +57,7 @@ class Ledger:
     def calls(self, how: str) -> dict[str, int]:
         with closing(self.connect()) as db:
             rows = db.execute("select refund, count(*) from model_calls where how = ? group by refund", (how,)).fetchall()
-        return {r[0]: r[1] for r in rows}
+        return {row[0]: row[1] for row in rows}
 
     # The plain script has no workflow to signal, so a manager's verdict waits in a table it polls.
     def record_verdict(self, refund: str, verdict: str, manager: str) -> None:

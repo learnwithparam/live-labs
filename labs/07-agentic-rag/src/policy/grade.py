@@ -46,31 +46,31 @@ def load(path: Path) -> list[Question]:
     return [Question(**json.loads(line)) for line in path.read_text().splitlines() if line.strip()]
 
 
-def grade(q: Question, answer: str, client, model: str) -> tuple[dict, float]:
+def grade(question: Question, answer: str, client, model: str) -> tuple[dict, float]:
     if not answer:
         # No answer is not accepted, but it is not wrong advice either: it goes to a person.
-        return {"accepted": False, "made": [False] * len(q.points), "contradicts": False, "reason": "No answer."}, 0.0
-    points = "\n".join(f"{n}. {p}" for n, p in enumerate(q.points, 1))
-    user = f"Question: {q.question}\n\nExpert's points:\n{points}\n\nAnswer: {answer}"
+        return {"accepted": False, "made": [False] * len(question.points), "contradicts": False, "reason": "No answer."}, 0.0
+    points = "\n".join(f"{number}. {point}" for number, point in enumerate(question.points, 1))
+    user = f"Question: {question.question}\n\nExpert's points:\n{points}\n\nAnswer: {answer}"
     got, cost = ask(client, model, INSTRUCTIONS, user, Grade)
     if got is None:
         # One retry: a grade that did not parse says nothing about the answer.
         got, again = ask(client, model, INSTRUCTIONS, user, Grade)
         cost += again
     if got is None:
-        return {"accepted": False, "made": [False] * len(q.points), "contradicts": False, "reason": "The grader did not return a result."}, cost
+        return {"accepted": False, "made": [False] * len(question.points), "contradicts": False, "reason": "The grader did not return a result."}, cost
     # A point counts as made only with a quote behind it; a point the grader skipped is not made.
-    by_number = {p.point: p.made and bool(p.quote.strip()) for p in got.points}
-    made = [by_number.get(n, False) for n in range(1, len(q.points) + 1)]
+    by_number = {point.point: point.made and bool(point.quote.strip()) for point in got.points}
+    made = [by_number.get(number, False) for number in range(1, len(question.points) + 1)]
     accepted = all(made) and not got.contradicts
     # The reason is written from the marks, so a page never shows "not accepted" with nothing under it.
-    missed = [f"Missed point {n}: {p}" for n, (p, ok) in enumerate(zip(q.points, made), 1) if not ok]
+    missed = [f"Missed point {number}: {point}" for number, (point, ok) in enumerate(zip(question.points, made), 1) if not ok]
     if got.contradicts:
         missed.append(f"Contradicts the expert: {got.reason.strip() or 'the grader gave no reason'}")
     reason = " ".join(missed) or "Every point made."
     return {"accepted": accepted, "made": made, "contradicts": got.contradicts, "reason": reason}, cost
 
 
-def found(q: Question, sources: list[str]) -> int:
+def found(question: Question, sources: list[str]) -> int:
     """How many of the sections the expert used were in front of the model: no model, no opinion."""
-    return sum(1 for need in q.needs if need in sources)
+    return sum(1 for need in question.needs if need in sources)

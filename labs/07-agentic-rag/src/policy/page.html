@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<link rel="icon" href="data:,">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Ledgerline policy desk</title>
 <style>
@@ -195,97 +196,97 @@ main { max-width: 1240px; margin: 0 auto; padding: 28px 32px 56px }
 </main>
 
 <script>
-const $ = (s) => document.querySelector(s);
-const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"})[c]);
+const $ = (selector) => document.querySelector(selector);
+const escapeHtml = (raw) => String(raw ?? "").replace(/[&<>"]/g, (char) => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"})[char]);
 let room = null, how = "agentic", seen = new Set(), rounds = 0, last = null;
 
 async function load() {
   room = await (await fetch("/api/room")).json();
   $("#model").textContent = `${room.sections} policy sections, answers on ${room.model}`;
-  for (const q of room.questions) $("#pick").insertAdjacentHTML("beforeend", `<option value="${q.id}">${q.id}: ${esc(q.question.slice(0, 70))}…</option>`);
+  for (const question of room.questions) $("#pick").insertAdjacentHTML("beforeend", `<option value="${question.id}">${question.id}: ${escapeHtml(question.question.slice(0, 70))}…</option>`);
 }
 
-$("#pick").addEventListener("change", (e) => {
-  const q = room.questions.find((x) => x.id === e.target.value);
-  if (q) $("#question").value = q.question;
+$("#pick").addEventListener("change", (event) => {
+  const picked = room.questions.find((candidate) => candidate.id === event.target.value);
+  if (picked) $("#question").value = picked.question;
 });
-document.querySelectorAll(".how button").forEach((b) => b.addEventListener("click", () => {
-  how = b.dataset.how;
-  document.querySelectorAll(".how button").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+document.querySelectorAll(".how button").forEach((button) => button.addEventListener("click", () => {
+  how = button.dataset.how;
+  document.querySelectorAll(".how button").forEach((other) => other.setAttribute("aria-pressed", String(other === button)));
 }));
 
 function stop(name, state, note) {
-  const g = $(`#s-${name}`);
-  g.classList.remove("done", "now", "skip");
-  if (state) g.classList.add(state);
+  const stopElement = $(`#s-${name}`);
+  stopElement.classList.remove("done", "now", "skip");
+  if (state) stopElement.classList.add(state);
   if (note !== undefined) $(`#n-${name}`).textContent = note;
 }
 
 function resetRoute() {
-  for (const n of ["plan", "search", "check", "answer"]) stop(n, how === "plain" && (n === "plan" || n === "check") ? "skip" : "", "");
-  for (const r of ["r1", "r2", "r3"]) $(`#${r}`).classList.remove("on");
+  for (const step of ["plan", "search", "check", "answer"]) stop(step, how === "plain" && (step === "plan" || step === "check") ? "skip" : "", "");
+  for (const routeId of ["r1", "r2", "r3"]) $(`#${routeId}`).classList.remove("on");
   $("#loop").classList.remove("on");
   $("#loopnote").textContent = "";
 }
 
-const secs = (t) => `${t.toFixed(1)}s`;
+const secs = (seconds) => `${seconds.toFixed(1)}s`;
 
 function addStep(cls, at, html) {
   $("#steps").insertAdjacentHTML("beforeend", `<div class="step ${cls}"><div class="t">${secs(at)}</div><div class="what">${html}</div></div>`);
 }
 
 // Each event from the server is one finished node of the graph: draw it on the route and in the log.
-function onEvent(e) {
-  if (e.node === "plan") {
-    stop("plan", "done", `${e.queries.length} searches`); stop("search", "now"); $("#r1").classList.add("on");
-    addStep("", e.at, `<b>Planned ${e.queries.length} searches</b>${e.queries.map((q) => `<div class="query"><code>${esc(q)}</code></div>`).join("")}`);
-  } else if (e.node === "search") {
+function onEvent(event) {
+  if (event.node === "plan") {
+    stop("plan", "done", `${event.queries.length} searches`); stop("search", "now"); $("#r1").classList.add("on");
+    addStep("", event.at, `<b>Planned ${event.queries.length} searches</b>${event.queries.map((query) => `<div class="query"><code>${escapeHtml(query)}</code></div>`).join("")}`);
+  } else if (event.node === "search") {
     rounds += 1;
     stop("search", "done", rounds > 1 ? `${rounds} rounds` : "1 round");
     $("#r2").classList.add("on");
     if (how !== "plain") stop("check", "now");
-    const blocks = e.searches.map((s) => {
-      const hits = s.found.map((id) => { const fresh = !seen.has(id); return `<span class="hit ${fresh ? "new" : ""}">${esc(id)}</span>`; }).join("");
-      s.found.forEach((id) => seen.add(id));
-      return `<div class="query"><code>${esc(s.query)}</code><div class="hits">${hits || '<span class="hit">nothing</span>'}</div></div>`;
+    const blocks = event.searches.map((search) => {
+      const hits = search.found.map((id) => { const fresh = !seen.has(id); return `<span class="hit ${fresh ? "new" : ""}">${escapeHtml(id)}</span>`; }).join("");
+      search.found.forEach((id) => seen.add(id));
+      return `<div class="query"><code>${escapeHtml(search.query)}</code><div class="hits">${hits || '<span class="hit">nothing</span>'}</div></div>`;
     }).join("");
-    addStep("", e.at, `<b>${rounds > 1 ? "Searched again" : "Searched"}: ${seen.size} sections in hand</b>${blocks}`);
-  } else if (e.node === "check") {
-    if (e.queries && e.queries.length) {
+    addStep("", event.at, `<b>${rounds > 1 ? "Searched again" : "Searched"}: ${seen.size} sections in hand</b>${blocks}`);
+  } else if (event.node === "check") {
+    if (event.queries && event.queries.length) {
       stop("check", "done", "something missing"); stop("search", "now"); $("#loop").classList.add("on");
       $("#loopnote").textContent = "goes back for what is missing";
-      addStep("missing", e.at, `<b>Still missing</b>${esc(e.missing)}`);
+      addStep("missing", event.at, `<b>Still missing</b>${escapeHtml(event.missing)}`);
     } else {
       stop("check", "done", "enough"); stop("answer", "now"); $("#r3").classList.add("on");
-      addStep("enough", e.at, `<b>Enough to answer</b>Every part of the question has a section behind it.`);
+      addStep("enough", event.at, `<b>Enough to answer</b>Every part of the question has a section behind it.`);
     }
-  } else if (e.node === "answer") {
+  } else if (event.node === "answer") {
     if (how === "plain") { $("#r3").classList.add("on"); }
-    stop("answer", "done", secs(e.at));
-    addStep("", e.at, `<b>Answered from ${e.sources.length} sections</b>${e.calls} model ${e.calls === 1 ? "call" : "calls"}, $${e.cost.toFixed(5)}`);
-    showAnswer(e);
+    stop("answer", "done", secs(event.at));
+    addStep("", event.at, `<b>Answered from ${event.sources.length} sections</b>${event.calls} model ${event.calls === 1 ? "call" : "calls"}, $${event.cost.toFixed(5)}`);
+    showAnswer(event);
   }
 }
 
-function showAnswer(e) {
-  last = e;
-  const order = e.cited.length ? e.cited : e.sources.map((s) => s.id);
+function showAnswer(event) {
+  last = event;
+  const order = event.cited.length ? event.cited : event.sources.map((source) => source.id);
   // Citations come back as [section-id]; the page turns each into a numbered link to the section below.
-  let text = esc(e.answer || "The policies found do not answer this.");
-  text = text.replace(/\[([a-z0-9-]+#[a-z0-9-]+)\]/g, (m, id) => {
-    const n = order.indexOf(id) + 1;
-    return n ? `<sup><a href="#src-${n}">${n}</a></sup>` : "";
+  let text = escapeHtml(event.answer || "The policies found do not answer this.");
+  text = text.replace(/\[([a-z0-9-]+#[a-z0-9-]+)\]/g, (match, id) => {
+    const number = order.indexOf(id) + 1;
+    return number ? `<sup><a href="#src-${number}">${number}</a></sup>` : "";
   });
   text = text.replace(/`([^`]+)`/g, "<code>$1</code>");
-  const paras = text.split(/\n+/).map((p) => `<p>${p}</p>`).join("");
-  const byId = Object.fromEntries(e.sources.map((s) => [s.id, s]));
-  const list = order.map((id, i) => byId[id]).filter(Boolean).map((s, i) =>
-    `<li id="src-${i + 1}"><span class="n">${i + 1}</span>${esc(s.doc)}, ${esc(s.section)}, page ${s.page}<details><summary class="id">${esc(s.id)}</summary><p>${esc(s.text)}</p></details></li>`).join("");
-  const gap = !e.covered ? `<div class="notice" id="gap"><b>The policies do not cover all of this.</b> A person who owns them should answer it.<br><button class="quiet" id="send">Send to the policy owners</button></div>`
+  const paras = text.split(/\n+/).map((paragraph) => `<p>${paragraph}</p>`).join("");
+  const byId = Object.fromEntries(event.sources.map((source) => [source.id, source]));
+  const list = order.map((id, index) => byId[id]).filter(Boolean).map((source, index) =>
+    `<li id="src-${index + 1}"><span class="n">${index + 1}</span>${escapeHtml(source.doc)}, ${escapeHtml(source.section)}, page ${source.page}<details><summary class="id">${escapeHtml(source.id)}</summary><p>${escapeHtml(source.text)}</p></details></li>`).join("");
+  const gap = !event.covered ? `<div class="notice" id="gap"><b>The policies do not cover all of this.</b> A person who owns them should answer it.<br><button class="quiet" id="send">Send to the policy owners</button></div>`
     : `<button class="quiet" id="send">Wrong or incomplete? Send to the policy owners</button>`;
-  $("#answer").innerHTML = `<div class="answer ${e.covered ? "" : "gap"}">${paras}<div class="meta">${how === "plain" ? "Plain RAG" : "Agent"}, ${secs(e.at)}, ${e.calls} model ${e.calls === 1 ? "call" : "calls"}</div><ol class="sources">${list}</ol></div>${gap}`;
+  $("#answer").innerHTML = `<div class="answer ${event.covered ? "" : "gap"}">${paras}<div class="meta">${how === "plain" ? "Plain RAG" : "Agent"}, ${secs(event.at)}, ${event.calls} model ${event.calls === 1 ? "call" : "calls"}</div><ol class="sources">${list}</ol></div>${gap}`;
   $("#send").addEventListener("click", escalate);
-  gradeIt(e.answer);
+  gradeIt(event.answer);
 }
 
 async function escalate() {
@@ -296,16 +297,16 @@ async function escalate() {
 
 // A question from the expert's set is graded against the expert's points, the same check the review runs.
 async function gradeIt(answer) {
-  const q = room.questions.find((x) => x.question === $("#question").value.trim());
-  if (!q) { $("#experts").innerHTML = ""; return; }
+  const question = room.questions.find((candidate) => candidate.question === $("#question").value.trim());
+  if (!question) { $("#experts").innerHTML = ""; return; }
   $("#experts").innerHTML = `<div class="experts"><h3>The expert's points <span class="waiting">grading</span></h3></div>`;
-  const g = await (await fetch("/api/grade", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({id: q.id, answer})})).json();
-  const points = g.points.map((p, i) => `<div class="point"><span class="tick ${g.made[i] ? "yes" : "no"}">${g.made[i] ? "✓" : "✗"}</span><span>${esc(p)}</span></div>`).join("");
-  $("#experts").innerHTML = `<div class="experts"><h3>The expert's points <span class="${g.accepted ? "ok" : "bad"}">${g.accepted ? "Accepted" : "Not accepted"}</span></h3>${points}</div>`;
+  const grade = await (await fetch("/api/grade", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({id: question.id, answer})})).json();
+  const points = grade.points.map((point, index) => `<div class="point"><span class="tick ${grade.made[index] ? "yes" : "no"}">${grade.made[index] ? "✓" : "✗"}</span><span>${escapeHtml(point)}</span></div>`).join("");
+  $("#experts").innerHTML = `<div class="experts"><h3>The expert's points <span class="${grade.accepted ? "ok" : "bad"}">${grade.accepted ? "Accepted" : "Not accepted"}</span></h3>${points}</div>`;
 }
 
-$("#ask").addEventListener("submit", async (ev) => {
-  ev.preventDefault();
+$("#ask").addEventListener("submit", async (event) => {
+  event.preventDefault();
   const question = $("#question").value.trim();
   if (!question) return;
   $("#go").disabled = true; seen = new Set(); rounds = 0;
@@ -313,15 +314,15 @@ $("#ask").addEventListener("submit", async (ev) => {
   $("#steps").innerHTML = ""; $("#experts").innerHTML = "";
   $("#answer").innerHTML = `<div class="empty">Working. Each finished step shows on the left.</div>`;
   // The server sends one JSON line per finished step; read them as they arrive.
-  const res = await fetch("/api/ask", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({question, how})});
-  const reader = res.body.getReader(), dec = new TextDecoder();
-  let buf = "";
+  const response = await fetch("/api/ask", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({question, how})});
+  const reader = response.body.getReader(), dec = new TextDecoder();
+  let pending = "";
   for (;;) {
     const {done, value} = await reader.read();
     if (done) break;
-    buf += dec.decode(value, {stream: true});
+    pending += dec.decode(value, {stream: true});
     let nl;
-    while ((nl = buf.indexOf("\n")) >= 0) { const line = buf.slice(0, nl); buf = buf.slice(nl + 1); if (line.trim()) onEvent(JSON.parse(line)); }
+    while ((nl = pending.indexOf("\n")) >= 0) { const line = pending.slice(0, nl); pending = pending.slice(nl + 1); if (line.trim()) onEvent(JSON.parse(line)); }
   }
   $("#go").disabled = false;
 });
@@ -341,31 +342,31 @@ async function loadReview() {
   if (!room.reviewed) $("#review").innerHTML = `<div class="score wait-box">Running both ways on 16 questions and grading every answer. This takes about a minute.</div>`;
   review = await (await fetch("/api/review")).json();
   const line = (key, name, sub, cls) => {
-    const s = review[key];
+    const score = review[key];
     return `<div class="name">${name}<small>${sub}</small></div>
-      <div class="bar ${cls}"><i style="width:${(100 * s.accepted / s.total).toFixed(1)}%"></i><span>${s.accepted} of ${s.total} accepted</span></div>
-      <div class="cost">${s.found} of ${s.needs} expert sections found<br>${s.calls_per_question} ${s.calls_per_question === 1 ? "call" : "calls"}, $${s.cost_per_question.toFixed(5)} a question</div>`;
+      <div class="bar ${cls}"><i style="width:${(100 * score.accepted / score.total).toFixed(1)}%"></i><span>${score.accepted} of ${score.total} accepted</span></div>
+      <div class="cost">${score.found} of ${score.needs} expert sections found<br>${score.calls_per_question} ${score.calls_per_question === 1 ? "call" : "calls"}, $${score.cost_per_question.toFixed(5)} a question</div>`;
   };
-  const rows = Object.fromEntries(review.rows.map((r) => [`${r.id}/${r.how}`, r]));
-  const cell = (r) => `<span class="pill"><b class="${r.accepted ? "ok" : r.covered ? "bad" : "waiting"}">${r.accepted ? "✓ accepted" : r.covered ? "✗ not accepted" : "to a person"}</b> <small>${r.found} of ${r.needs} sections</small></span>`;
-  const ids = [...new Set(review.rows.map((r) => r.id))].sort();
+  const rows = Object.fromEntries(review.rows.map((row) => [`${row.id}/${row.how}`, row]));
+  const cell = (row) => `<span class="pill"><b class="${row.accepted ? "ok" : row.covered ? "bad" : "waiting"}">${row.accepted ? "✓ accepted" : row.covered ? "✗ not accepted" : "to a person"}</b> <small>${row.found} of ${row.needs} sections</small></span>`;
+  const ids = [...new Set(review.rows.map((row) => row.id))].sort();
   const body = ids.map((id) => {
-    const p = rows[`${id}/plain`], a = rows[`${id}/agentic`], q = room.questions.find((x) => x.id === id);
-    return `<button class="row" aria-expanded="false" data-id="${id}"><span class="id">${id}</span><span class="q">${esc(q.question)}</span>${cell(p)}${cell(a)}</button>
+    const plain = rows[`${id}/plain`], agentic = rows[`${id}/agentic`], question = room.questions.find((candidate) => candidate.id === id);
+    return `<button class="row" aria-expanded="false" data-id="${id}"><span class="id">${id}</span><span class="q">${escapeHtml(question.question)}</span>${cell(plain)}${cell(agentic)}</button>
       <div class="open" id="open-${id}" hidden>
-        <div class="experts"><h3>The expert's points</h3>${review.points[id].map((pt, i) => `<div class="point"><span class="tick ${a.made[i] ? "yes" : "no"}">${a.made[i] ? "✓" : "✗"}</span><span>${esc(pt)}</span></div>`).join("")}<div class="meta">Ticks are the agent's answer.</div></div>
+        <div class="experts"><h3>The expert's points</h3>${review.points[id].map((pt, index) => `<div class="point"><span class="tick ${agentic.made[index] ? "yes" : "no"}">${agentic.made[index] ? "✓" : "✗"}</span><span>${escapeHtml(pt)}</span></div>`).join("")}<div class="meta">Ticks are the agent's answer.</div></div>
         <div class="pair" style="margin-top:12px">
-          <div><h4>Plain RAG <span class="${p.accepted ? "ok" : "bad"}">${p.accepted ? "accepted" : "not accepted"}</span></h4>${esc(p.answer || "No answer.")}<div class="meta">${esc(p.reason)}</div></div>
-          <div><h4>Agent <span class="${a.accepted ? "ok" : "bad"}">${a.accepted ? "accepted" : "not accepted"}</span></h4>${esc(a.answer || "No answer.")}<div class="meta">${esc(a.reason)}</div></div>
+          <div><h4>Plain RAG <span class="${plain.accepted ? "ok" : "bad"}">${plain.accepted ? "accepted" : "not accepted"}</span></h4>${escapeHtml(plain.answer || "No answer.")}<div class="meta">${escapeHtml(plain.reason)}</div></div>
+          <div><h4>Agent <span class="${agentic.accepted ? "ok" : "bad"}">${agentic.accepted ? "accepted" : "not accepted"}</span></h4>${escapeHtml(agentic.answer || "No answer.")}<div class="meta">${escapeHtml(agentic.reason)}</div></div>
         </div>
       </div>`;
   }).join("");
   $("#review").innerHTML = `<div class="score">${line("plain", "Plain RAG", "one search", "")}${line("agentic", "Agent", "plans, checks, retries", "agent")}</div>
     <div class="board"><div class="row head"><span>#</span><span>Question</span><span>Plain RAG</span><span>Agent</span></div>${body}</div>`;
-  document.querySelectorAll(".row[data-id]").forEach((b) => b.addEventListener("click", () => {
-    const open = b.getAttribute("aria-expanded") === "true";
-    b.setAttribute("aria-expanded", String(!open));
-    $(`#open-${b.dataset.id}`).hidden = open;
+  document.querySelectorAll(".row[data-id]").forEach((row) => row.addEventListener("click", () => {
+    const open = row.getAttribute("aria-expanded") === "true";
+    row.setAttribute("aria-expanded", String(!open));
+    $(`#open-${row.dataset.id}`).hidden = open;
   }));
 }
 

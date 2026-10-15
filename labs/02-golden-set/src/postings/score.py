@@ -15,14 +15,14 @@ def load_golden(path: Path) -> dict[str, dict]:
 
 def right(golden: dict[str, dict], readings: dict[str, dict]) -> dict[str, dict[str, bool]]:
     """posting -> field -> whether the run agrees with the approved value."""
-    return {name: {f: same(f, readings[name][f], approved[f]) for f in FIELDS} for name, approved in golden.items()}
+    return {name: {field: same(field, readings[name][field], approved[field]) for field in FIELDS} for name, approved in golden.items()}
 
 
 def accuracy(golden: dict[str, dict], readings: dict[str, dict]) -> dict[str, int]:
     """field -> how many postings the run got right. The number the team watches, one per field."""
     marks = right(golden, readings)
     # Count down each column, not across each row: "salary_min 12 of 14" says which filter broke.
-    return {f: sum(marks[name][f] for name in golden) for f in FIELDS}
+    return {field: sum(marks[name][field] for name in golden) for field in FIELDS}
 
 
 @dataclass
@@ -45,7 +45,7 @@ class Verdict:
     @property
     def worse(self) -> list[str]:
         # One field down is enough. A better total does not pay for a salary filter that hides jobs.
-        return [f for f in FIELDS if self.after[f] < self.before[f]]
+        return [field for field in FIELDS if self.after[field] < self.before[field]]
 
     @property
     def blocked(self) -> bool:
@@ -54,7 +54,7 @@ class Verdict:
     @property
     def needs_person(self) -> list[str]:
         """Postings a field went from right to wrong on: a person reads each and decides who is wrong."""
-        return sorted({c.posting for c in self.regressed})
+        return sorted({change.posting for change in self.regressed})
 
 
 def gate(golden: dict[str, dict], before: dict[str, dict], after: dict[str, dict]) -> Verdict:
@@ -62,13 +62,13 @@ def gate(golden: dict[str, dict], before: dict[str, dict], after: dict[str, dict
     was, now = right(golden, before), right(golden, after)
     verdict = Verdict(accuracy(golden, before), accuracy(golden, after), len(golden))
     for name, approved in golden.items():
-        for f in FIELDS:
-            change = Change(name, f, approved[f], before[name][f], after[name][f])
+        for field in FIELDS:
+            change = Change(name, field, approved[field], before[name][field], after[name][field])
             # Right before and wrong after: the change broke this field on this posting.
-            if was[name][f] and not now[name][f]:
+            if was[name][field] and not now[name][field]:
                 verdict.regressed.append(change)
             # Wrong before and right after: the change fixed it.
-            elif now[name][f] and not was[name][f]:
+            elif now[name][field] and not was[name][field]:
                 verdict.fixed.append(change)
     return verdict
 

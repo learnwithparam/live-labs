@@ -37,7 +37,7 @@ def schema_format() -> dict:
 
 def listing(passages: list[Passage]) -> str:
     # Each passage carries its id in brackets, so the model can cite exactly the ones it used.
-    return "\n\n".join(f"[{p.id}] {p.doc}, {p.section}, page {p.page}\n{p.text}" for p in passages)
+    return "\n\n".join(f"[{passage.id}] {passage.doc}, {passage.section}, page {passage.page}\n{passage.text}" for passage in passages)
 
 
 def answer(question: str, passages: list[Passage], client, model: str) -> Reply:

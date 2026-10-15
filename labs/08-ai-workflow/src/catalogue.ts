@@ -12,7 +12,7 @@ export type Rule = { says: string; why?: string; what?: string }
 export type Product = { id: string; product: string; price: number; sheet: string; never: Rule[]; must: Rule[] }
 
 export function load(data = 'data'): Product[] {
-  const rows = readFileSync(join(data, 'merchant.jsonl'), 'utf8').trim().split('\n').map((l) => JSON.parse(l))
+  const rows = readFileSync(join(data, 'merchant.jsonl'), 'utf8').trim().split('\n').map((line) => JSON.parse(line))
   const sheets = new Set(readdirSync(join(data, 'sheets')))
   return rows.map((row) => {
     // A rule row with no sheet would silently drop a product from the review.
@@ -28,11 +28,11 @@ export function plain(text: string): string {
 
 /** Every number in a text, without thousands commas, so "8,900" on the sheet matches "8900" in copy. */
 export function numbers(text: string): string[] {
-  return [...plain(text).replace(/(\d),(\d{3})\b/g, '$1$2').matchAll(/\d+(?:\.\d+)?/g)].map((m) => m[0])
+  return [...plain(text).replace(/(\d),(\d{3})\b/g, '$1$2').matchAll(/\d+(?:\.\d+)?/g)].map((match) => match[0])
 }
 
 /** True when a quote appears on the sheet word for word, ignoring spacing and case. */
 export function onSheet(quote: string, sheet: string): boolean {
-  const q = plain(quote).toLowerCase()
-  return q.length > 2 && plain(sheet).toLowerCase().includes(q)
+  const plainQuote = plain(quote).toLowerCase()
+  return plainQuote.length > 2 && plain(sheet).toLowerCase().includes(plainQuote)
 }

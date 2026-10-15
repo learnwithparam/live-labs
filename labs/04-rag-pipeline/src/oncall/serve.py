@@ -32,7 +32,7 @@ class Room:
         key = (how, question)
         if key not in self.answers:
             reply = self.desk(how).ask(question)
-            known = next((q for q in self.questions if q.question == question), None)
+            known = next((listed_question for listed_question in self.questions if listed_question.question == question), None)
             self.answers[key] = row(question, reply, judge(known, reply) if known else None)
         return self.answers[key]
 
@@ -69,8 +69,8 @@ def handler(room: Room) -> type[BaseHTTPRequestHandler]:
             if self.path == "/":
                 return self.send(200, PAGE.read_bytes(), "text/html; charset=utf-8")
             if self.path == "/api/room":
-                docs = sorted(p.name for p in room.docs.glob("*.pdf"))
-                return self.send_json({"model": room.model, "docs": docs, "questions": [q.question for q in room.questions]})
+                docs = sorted(path.name for path in room.docs.glob("*.pdf"))
+                return self.send_json({"model": room.model, "docs": docs, "questions": [question.question for question in room.questions]})
             self.send(404, b"not found", "text/plain")
 
         def do_POST(self) -> None:

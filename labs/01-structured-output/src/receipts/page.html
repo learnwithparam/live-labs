@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<link rel="icon" href="data:,">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Receipt matcher</title>
 <style>
@@ -88,8 +89,8 @@ table.book td.num { padding-right: 16px }
 <script>
 const state = { receipts: [], charges: [], results: {}, current: null };
 const $ = (id) => document.getElementById(id);
-const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
-const money = (n) => (typeof n === "number" ? n.toFixed(2) : esc(n));
+const escapeHtml = (text) => String(text).replace(/[&<>"]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[char]);
+const money = (amount) => (typeof amount === "number" ? amount.toFixed(2) : escapeHtml(amount));
 
 async function load() {
   const data = await (await fetch("/api/receipts")).json();
@@ -100,55 +101,55 @@ async function load() {
 
 function select(name) {
   state.current = name;
-  const r = state.receipts.find((x) => x.name === name);
+  const receipt = state.receipts.find((candidate) => candidate.name === name);
   const src = "/files/" + encodeURIComponent(name);
-  $("source").innerHTML = r.kind === "pdf" ? `<iframe title="${esc(name)}" src="${src}#toolbar=0&view=FitH"></iframe>`
-    : r.kind === "txt" ? "<pre id='text'></pre>" : `<img alt="Photo of ${esc(name)}" src="${src}">`;
-  if (r.kind === "txt") fetch(src).then((res) => res.text()).then((t) => ($("text").textContent = t));
+  $("source").innerHTML = receipt.kind === "pdf" ? `<iframe title="${escapeHtml(name)}" src="${src}#toolbar=0&view=FitH"></iframe>`
+    : receipt.kind === "txt" ? "<pre id='text'></pre>" : `<img alt="Photo of ${escapeHtml(name)}" src="${src}">`;
+  if (receipt.kind === "txt") fetch(src).then((response) => response.text()).then((text) => ($("text").textContent = text));
   const done = state.results[name];
   $("result").innerHTML = done ? outcome(done) : '<p class="empty">Ask the obvious way first, then extract and match.</p>';
   render();
 }
 
 function render() {
-  $("list").innerHTML = state.receipts.map((r) => {
-    const status = state.results[r.name]?.status || "";
-    return `<li><button data-name="${esc(r.name)}" aria-current="${r.name === state.current}">${esc(r.name.replace(/\.\w+$/, ""))}
-      <span class="kind">${r.kind}</span><span class="dot ${status}" title="${status}"></span></button></li>`;
+  $("list").innerHTML = state.receipts.map((receipt) => {
+    const status = state.results[receipt.name]?.status || "";
+    return `<li><button data-name="${escapeHtml(receipt.name)}" aria-current="${receipt.name === state.current}">${escapeHtml(receipt.name.replace(/\.\w+$/, ""))}
+      <span class="kind">${receipt.kind}</span><span class="dot ${status}" title="${status}"></span></button></li>`;
   }).join("");
-  const paidBy = Object.fromEntries(Object.entries(state.results).filter(([, v]) => v.charge).map(([k, v]) => [v.charge.id, k]));
-  $("feed").innerHTML = `<table class="book"><tr><th>Date</th><th>Descriptor</th><th>USD</th><th>Receipt</th></tr>${state.charges.map((c) =>
-    `<tr class="${paidBy[c.id] === state.current ? "hit" : ""}"><td>${c.date.slice(5)}</td><td>${esc(c.descriptor)}${c.original_currency ? ` <span class="kind">${c.original_currency} ${money(c.original_amount)}</span>` : ""}</td>
-    <td class="num">${money(c.amount)}</td><td>${paidBy[c.id] ? esc(paidBy[c.id].replace(/\.\w+$/, "")) : ""}</td></tr>`).join("")}</table>`;
-  const person = Object.entries(state.results).filter(([, v]) => v.status === "person");
+  const paidBy = Object.fromEntries(Object.entries(state.results).filter(([, result]) => result.charge).map(([name, result]) => [result.charge.id, name]));
+  $("feed").innerHTML = `<table class="book"><tr><th>Date</th><th>Descriptor</th><th>USD</th><th>Receipt</th></tr>${state.charges.map((charge) =>
+    `<tr class="${paidBy[charge.id] === state.current ? "hit" : ""}"><td>${charge.date.slice(5)}</td><td>${escapeHtml(charge.descriptor)}${charge.original_currency ? ` <span class="kind">${charge.original_currency} ${money(charge.original_amount)}</span>` : ""}</td>
+    <td class="num">${money(charge.amount)}</td><td>${paidBy[charge.id] ? escapeHtml(paidBy[charge.id].replace(/\.\w+$/, "")) : ""}</td></tr>`).join("")}</table>`;
+  const person = Object.entries(state.results).filter(([, result]) => result.status === "person");
   const settled = Object.keys(state.results).length;
   $("tally").innerHTML = settled ? `<span class="pass">${settled - person.length} of ${settled} matched with no person</span>, <span class="wait">${person.length} need${person.length === 1 ? "s" : ""} a person</span>` : "";
-  $("review").innerHTML = person.length ? `<table class="book"><tr><th>Receipt</th><th>Why</th></tr>${person.map(([k, v]) =>
-    `<tr><td>${esc(k)}</td><td class="wait">${esc(v.reason)}</td></tr>`).join("")}</table>`
+  $("review").innerHTML = person.length ? `<table class="book"><tr><th>Receipt</th><th>Why</th></tr>${person.map(([name, result]) =>
+    `<tr><td>${escapeHtml(name)}</td><td class="wait">${escapeHtml(result.reason)}</td></tr>`).join("")}</table>`
     : '<p class="empty">No receipt is waiting on a person.</p>';
 }
 
-const firstLine = (error) => (error.split("\n").find((l) => l.includes("error,")) || error.split("\n")[1] || error).replace(/^\s*Value error, /, "").replace(/ \[type=.*$/, "");
+const firstLine = (error) => (error.split("\n").find((line) => line.includes("error,")) || error.split("\n")[1] || error).replace(/^\s*Value error, /, "").replace(/ \[type=.*$/, "");
 
-function sum(s) {
-  if (!s) return '<p class="fail">The reply did not even parse as a ledger entry.</p>';
-  const rows = s.items.map(([d, a]) => `<tr><td>${esc(d)}</td><td>${money(a)}</td></tr>`);
-  if (s.discount) rows.push(`<tr><td>minus discount</td><td>-${money(s.discount)}</td></tr>`);
-  rows.push(s.tax_included ? `<tr><td>tax ${money(s.tax)}, already in the prices</td><td>+0.00</td></tr>` : `<tr><td>plus tax</td><td>+${money(s.tax)}</td></tr>`);
-  if (s.tip) rows.push(`<tr><td>plus tip</td><td>+${money(s.tip)}</td></tr>`);
-  const ok = Math.abs(s.expected - s.total) <= 0.01;
-  rows.push(`<tr class="result"><td>adds up to</td><td>${money(s.expected)}</td></tr>`);
-  rows.push(`<tr class="result ${ok ? "pass" : "fail"}"><td>printed total ${ok ? "matches" : "does not match"}</td><td>${money(s.total)}</td></tr>`);
+function sum(breakdown) {
+  if (!breakdown) return '<p class="fail">The reply did not even parse as a ledger entry.</p>';
+  const rows = breakdown.items.map(([description, amount]) => `<tr><td>${escapeHtml(description)}</td><td>${money(amount)}</td></tr>`);
+  if (breakdown.discount) rows.push(`<tr><td>minus discount</td><td>-${money(breakdown.discount)}</td></tr>`);
+  rows.push(breakdown.tax_included ? `<tr><td>tax ${money(breakdown.tax)}, already in the prices</td><td>+0.00</td></tr>` : `<tr><td>plus tax</td><td>+${money(breakdown.tax)}</td></tr>`);
+  if (breakdown.tip) rows.push(`<tr><td>plus tip</td><td>+${money(breakdown.tip)}</td></tr>`);
+  const ok = Math.abs(breakdown.expected - breakdown.total) <= 0.01;
+  rows.push(`<tr class="result"><td>adds up to</td><td>${money(breakdown.expected)}</td></tr>`);
+  rows.push(`<tr class="result ${ok ? "pass" : "fail"}"><td>printed total ${ok ? "matches" : "does not match"}</td><td>${money(breakdown.total)}</td></tr>`);
   return `<table class="sum">${rows.join("")}</table>`;
 }
 
-function outcome(o) {
-  const parts = o.attempts.map((a, i) => `<div class="attempt"><h3>Attempt ${i + 1}</h3>${sum(a.sum)}
-    ${a.error ? `<div class="sentback"><strong>Sent back to the model:</strong>\n${esc(firstLine(a.error))}</div>` : ""}</div>`);
-  const end = o.charge
-    ? `<div class="charge ${o.entry ? "" : "flag"}"><div class="desc">${o.charge.id} ${esc(o.charge.descriptor)}</div><ul>${Object.entries(o.checks).map(([k, v]) =>
-      `<li><b>${k}</b>${esc(v)}</li>`).join("")}</ul><div class="verdict pass">${o.entry ? "Matched with no person" : "Matched, flagged"}: ${esc(o.reason)}</div></div>`
-    : `<div class="outcome wait">Needs a person: ${esc(o.reason)}<p class="decide">A person decides: attach it to a charge by hand, or file it as out of pocket.</p></div>`;
+function outcome(result) {
+  const parts = result.attempts.map((attempt, index) => `<div class="attempt"><h3>Attempt ${index + 1}</h3>${sum(attempt.sum)}
+    ${attempt.error ? `<div class="sentback"><strong>Sent back to the model:</strong>\n${escapeHtml(firstLine(attempt.error))}</div>` : ""}</div>`);
+  const end = result.charge
+    ? `<div class="charge ${result.entry ? "" : "flag"}"><div class="desc">${result.charge.id} ${escapeHtml(result.charge.descriptor)}</div><ul>${Object.entries(result.checks).map(([check, detail]) =>
+      `<li><b>${check}</b>${escapeHtml(detail)}</li>`).join("")}</ul><div class="verdict pass">${result.entry ? "Matched with no person" : "Matched, flagged"}: ${escapeHtml(result.reason)}</div></div>`
+    : `<div class="outcome wait">Needs a person: ${escapeHtml(result.reason)}<p class="decide">A person decides: attach it to a charge by hand, or file it as out of pocket.</p></div>`;
   return parts.join("") + end;
 }
 
@@ -156,16 +157,16 @@ async function post(action, name) {
   return (await fetch(`/api/${action}/${encodeURIComponent(name)}`, { method: "POST" })).json();
 }
 
-async function busy(fn) {
-  document.querySelectorAll("button").forEach((b) => (b.disabled = true));
-  try { await fn(); } finally { document.querySelectorAll("button").forEach((b) => (b.disabled = false)); }
+async function busy(work) {
+  document.querySelectorAll("button").forEach((button) => (button.disabled = true));
+  try { await work(); } finally { document.querySelectorAll("button").forEach((button) => (button.disabled = false)); }
 }
 
-$("list").addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) select(b.dataset.name); });
+$("list").addEventListener("click", (event) => { const button = event.target.closest("button"); if (button) select(button.dataset.name); });
 $("naive").addEventListener("click", () => busy(async () => {
   $("result").innerHTML = '<p class="empty">Asking with no schema and no rule...</p>';
-  const n = await post("naive", state.current);
-  $("result").innerHTML = `<pre class="raw">${esc(n.reply)}</pre><p class="verdict ${n.plain_json ? "pass" : "fail"}">${n.plain_json
+  const naive = await post("naive", state.current);
+  $("result").innerHTML = `<pre class="raw">${escapeHtml(naive.reply)}</pre><p class="verdict ${naive.plain_json ? "pass" : "fail"}">${naive.plain_json
     ? "Plain JSON this time. Now find the total: every receipt names it differently."
     : "Not JSON as sent: json.loads fails on the Markdown fence around it."}</p>`;
 }));
@@ -175,7 +176,7 @@ $("extract").addEventListener("click", () => busy(async () => {
   select(state.current);
 }));
 $("run-all").addEventListener("click", () => busy(async () => {
-  for (const r of state.receipts) { state.results[r.name] = await post("extract", r.name); select(r.name); }
+  for (const receipt of state.receipts) { state.results[receipt.name] = await post("extract", receipt.name); select(receipt.name); }
 }));
 load();
 </script>

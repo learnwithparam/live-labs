@@ -36,9 +36,9 @@ class Hit:
     score: float
 
 
-def text_of(p: Passage) -> str:
+def text_of(passage: Passage) -> str:
     # The heading goes in with the body: engineers ask with the words a heading uses ("poison message").
-    return f"{p.section}. {p.text}"
+    return f"{passage.section}. {passage.text}"
 
 
 class Search:
@@ -55,34 +55,34 @@ class Search:
             # BM25 needs to know how rare each word is across all passages; Qdrant keeps that count (IDF).
             sparse_vectors_config={"bm25": models.SparseVectorParams(modifier=models.Modifier.IDF)},
         )
-        texts = [text_of(p) for p in passages]
+        texts = [text_of(passage) for passage in passages]
         dense, sparse = encoders.dense(texts, query=False), encoders.sparse(texts, query=False)
-        points = [models.PointStruct(id=i, vector={"dense": d, "bm25": s}) for i, (d, s) in enumerate(zip(dense, sparse))]
+        points = [models.PointStruct(id=index, vector={"dense": dense_vector, "bm25": sparse_vector}) for index, (dense_vector, sparse_vector) in enumerate(zip(dense, sparse))]
         self.client.upsert(COLLECTION, points)
 
-    def find(self, question: str, how: str, k: int = 5) -> list[Hit]:
+    def find(self, question: str, how: str, top_k: int = 5) -> list[Hit]:
         if how not in WAYS:
             raise ValueError(f"how must be one of {WAYS}")
         if how == "rerank":
-            return self.reranked(question, k)
+            return self.reranked(question, top_k)
         dense = self.encoders.dense([question], query=True)[0]
         sparse = self.encoders.sparse([question], query=True)[0]
         if how == "keyword":
-            found = self.client.query_points(COLLECTION, query=sparse, using="bm25", limit=k).points
+            found = self.client.query_points(COLLECTION, query=sparse, using="bm25", limit=top_k).points
         elif how == "embedding":
-            found = self.client.query_points(COLLECTION, query=dense, using="dense", limit=k).points
+            found = self.client.query_points(COLLECTION, query=dense, using="dense", limit=top_k).points
         else:
             # Each search brings back its own top list, then fusion scores a passage by its rank in each:
             # 1/(60 + rank). Ranks, not raw scores, because BM25 and cosine scores are on different scales.
-            fetch = max(k, SHORTLIST)
+            fetch = max(top_k, SHORTLIST)
             prefetch = [models.Prefetch(query=sparse, using="bm25", limit=fetch), models.Prefetch(query=dense, using="dense", limit=fetch)]
-            found = self.client.query_points(COLLECTION, prefetch=prefetch, query=models.FusionQuery(fusion=models.Fusion.RRF), limit=k).points
-        return [Hit(self.passages[p.id], p.score) for p in found]
+            found = self.client.query_points(COLLECTION, prefetch=prefetch, query=models.FusionQuery(fusion=models.Fusion.RRF), limit=top_k).points
+        return [Hit(self.passages[point.id], point.score) for point in found]
 
-    def reranked(self, question: str, k: int) -> list[Hit]:
+    def reranked(self, question: str, top_k: int) -> list[Hit]:
         shortlist = self.find(question, "hybrid", SHORTLIST)
         # A cross-encoder reads the question and one passage as a single input, so it sees that
         # "us-east-1 payouts" belongs to the payout runbook, which two separate vectors cannot.
-        scores = self.encoders.rerank(question, [text_of(h.passage) for h in shortlist])
+        scores = self.encoders.rerank(question, [text_of(hit.passage) for hit in shortlist])
         ranked = sorted(zip(shortlist, scores), key=lambda pair: -pair[1])
-        return [Hit(hit.passage, score) for hit, score in ranked[:k]]
+        return [Hit(hit.passage, score) for hit, score in ranked[:top_k]]

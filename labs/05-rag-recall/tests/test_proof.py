@@ -17,7 +17,7 @@ def test_hybrid_and_rerank_raise_recall_on_the_golden_set():
     from wiki.search import Search
 
     result = evaluate(Search(ingest(LAB / "data/docs"), FastEmbed()), load_golden(LAB / "data/golden.jsonl"))
-    r, total = result["recall"], result["total"]
-    assert r["rerank"][5] >= MIN_RECALL_AT_5 * total, r
-    assert r["hybrid"][5] >= max(r["keyword"][5], r["embedding"][5]), r
-    assert r["rerank"][1] > r["hybrid"][1], r
+    recall, total = result["recall"], result["total"]
+    assert recall["rerank"][5] >= MIN_RECALL_AT_5 * total, recall
+    assert recall["hybrid"][5] >= max(recall["keyword"][5], recall["embedding"][5]), recall
+    assert recall["rerank"][1] > recall["hybrid"][1], recall

@@ -32,8 +32,8 @@ class Room:
         got = {how: router(ticket) for how, router in self.routers.items()}
         if "llm" in got and "decision" in got:
             got["both"] = second_opinion(got["llm"], got["decision"])
-        return {how: {"queue": r.queue, "confidence": round(r.confidence, 3), "to": destination(r),
-                      "probabilities": r.probabilities, "ms": round(r.ms), "cost": r.cost} for how, r in got.items()}
+        return {how: {"queue": route.queue, "confidence": round(route.confidence, 3), "to": destination(route),
+                      "probabilities": route.probabilities, "ms": round(route.ms), "cost": route.cost} for how, route in got.items()}
 
     def run(self):
         """Yield each routed ticket as it lands, then the summaries, and keep the result for the next visitor."""
@@ -102,8 +102,8 @@ def handler(room: Room) -> type[BaseHTTPRequestHandler]:
                 return self.send(200, PAGE.read_bytes(), "text/html; charset=utf-8")
             if self.path == "/api/room":
                 return self.send_json({
-                    "queues": queues_guide(), "confident": CONFIDENT, "ways": [w for w in WAYS if w == "both" or w in room.routers],
-                    "tickets": [{"id": t.id, "subject": t.subject, "body": t.body, "solved_in": t.queue} for t in room.tickets],
+                    "queues": queues_guide(), "confident": CONFIDENT, "ways": [way for way in WAYS if way == "both" or way in room.routers],
+                    "tickets": [{"id": ticket.id, "subject": ticket.subject, "body": ticket.body, "solved_in": ticket.queue} for ticket in room.tickets],
                     "review": room.report, "handoffs": room.handoffs()})
             self.send(404, b"not found", "text/plain")
 

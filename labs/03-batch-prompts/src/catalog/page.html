@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<link rel="icon" href="data:,">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Harvest Lane catalogue</title>
 <style>
@@ -127,84 +128,84 @@ const PAGE_SIZE = 24;
 const $ = (id) => document.getElementById(id);
 let shelf, runs = {}, shown = "packed", filter = { category: null, organic: false, vegan: false, person: false }, limit = PAGE_SIZE;
 
-const money = (v) => "$" + v.toFixed(v < 0.01 ? 4 : 3);
-const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c]);
+const money = (amount) => "$" + amount.toFixed(amount < 0.01 ? 4 : 3);
+const escapeHtml = (text) => String(text).replace(/[&<>]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[char]);
 
 // The storefront shows whichever run finished last, so the filters are what that job produced.
 function current() { return runs[shown] }
 
 function drawJob() {
-  const n = shelf.products.length;
-  $("sub").textContent = `${n} products from retailers, filled by ${shelf.model}`;
+  const productCount = shelf.products.length;
+  $("sub").textContent = `${productCount} products from retailers, filled by ${shelf.model}`;
   $("job-about").textContent = `Retailers send a title and a description. The storefront needs category, size, organic and vegan. Packed sends ${shelf.size} products per request. A rerun reads the checkpoint and sends only what is not done yet.`;
-  const cheapest = Math.min(...Object.values(runs).map((r) => r.per_thousand));
-  $("ways").innerHTML = Object.entries(WAYS).map(([way, w]) => {
-    const r = runs[way];
-    const cell = (v) => (r ? v : "<span class='status'>not run</span>");
-    return `<tr><td class="way">${w.name}<small>${w.note}</small></td>
-      <td>${cell(r && r.requests)}</td>
-      <td>${cell(r && `${r.sent}${r.sent === 0 ? " <span class='status done'>all in the checkpoint</span>" : ""}`)}</td>
-      <td>${cell(r && money(r.cost))}</td>
-      <td class="${r && r.per_thousand === cheapest && Object.keys(runs).length > 1 ? "cheap" : ""}">${cell(r && money(r.per_thousand))}</td>
-      <td>${cell(r && `${r.right} of ${r.total}`)}</td>
-      <td>${cell(r && Object.keys(r.person).length)}</td>
-      <td><button class="run" data-way="${way}">${r ? "Run again" : "Run"}</button></td></tr>`;
+  const cheapest = Math.min(...Object.values(runs).map((run) => run.per_thousand));
+  $("ways").innerHTML = Object.entries(WAYS).map(([way, details]) => {
+    const run = runs[way];
+    const cell = (value) => (run ? value : "<span class='status'>not run</span>");
+    return `<tr><td class="way">${details.name}<small>${details.note}</small></td>
+      <td>${cell(run && run.requests)}</td>
+      <td>${cell(run && `${run.sent}${run.sent === 0 ? " <span class='status done'>all in the checkpoint</span>" : ""}`)}</td>
+      <td>${cell(run && money(run.cost))}</td>
+      <td class="${run && run.per_thousand === cheapest && Object.keys(runs).length > 1 ? "cheap" : ""}">${cell(run && money(run.per_thousand))}</td>
+      <td>${cell(run && `${run.right} of ${run.total}`)}</td>
+      <td>${cell(run && Object.keys(run.person).length)}</td>
+      <td><button class="run" data-way="${way}">${run ? "Run again" : "Run"}</button></td></tr>`;
   }).join("");
-  for (const b of document.querySelectorAll(".run")) b.onclick = () => fill(b.dataset.way, b);
-  const r = current();
-  $("tally").textContent = r ? `Filled with no person: ${r.filled} of ${n}. ${Object.keys(r.person).length} need a person.` : "";
+  for (const button of document.querySelectorAll(".run")) button.onclick = () => fill(button.dataset.way, button);
+  const run = current();
+  $("tally").textContent = run ? `Filled with no person: ${run.filled} of ${productCount}. ${Object.keys(run.person).length} need a person.` : "";
 }
 
-function matches(p) {
-  const r = current(), a = r && r.attributes[p.sku];
-  if (filter.person) return r && p.sku in r.person;
-  if (!a) return !filter.category && !filter.organic && !filter.vegan;
-  if (filter.category && a.category !== filter.category) return false;
-  if (filter.organic && !a.organic) return false;
+function matches(product) {
+  const run = current(), attributes = run && run.attributes[product.sku];
+  if (filter.person) return run && product.sku in run.person;
+  if (!attributes) return !filter.category && !filter.organic && !filter.vegan;
+  if (filter.category && attributes.category !== filter.category) return false;
+  if (filter.organic && !attributes.organic) return false;
   // A product waiting on a person never shows under vegan: it is not guessed.
-  if (filter.vegan && (a.vegan !== "yes" || p.sku in r.person)) return false;
+  if (filter.vegan && (attributes.vegan !== "yes" || product.sku in run.person)) return false;
   return true;
 }
 
 function drawFilters() {
-  const r = current(), f = $("filters");
-  if (!r) {
-    f.innerHTML = `<div class="empty-note">No product has a category, size or diet yet, so shoppers cannot filter. Run tonight's job to fill them.</div>`;
+  const run = current(), panel = $("filters");
+  if (!run) {
+    panel.innerHTML = `<div class="empty-note">No product has a category, size or diet yet, so shoppers cannot filter. Run tonight's job to fill them.</div>`;
     return;
   }
   const counts = {};
-  for (const a of Object.values(r.attributes)) counts[a.category] = (counts[a.category] || 0) + 1;
-  const all = Object.values(r.attributes);
-  f.innerHTML = `<h3>Category</h3>` +
+  for (const attributes of Object.values(run.attributes)) counts[attributes.category] = (counts[attributes.category] || 0) + 1;
+  const all = Object.values(run.attributes);
+  panel.innerHTML = `<h3>Category</h3>` +
     `<label><input type="radio" name="cat" value="" ${!filter.category ? "checked" : ""}> All <span class="n">${all.length}</span></label>` +
-    Object.entries(CATEGORIES).map(([k, [name]]) => `<label><input type="radio" name="cat" value="${k}" ${filter.category === k ? "checked" : ""}> ${name} <span class="n">${counts[k] || 0}</span></label>`).join("") +
+    Object.entries(CATEGORIES).map(([category, [name]]) => `<label><input type="radio" name="cat" value="${category}" ${filter.category === category ? "checked" : ""}> ${name} <span class="n">${counts[category] || 0}</span></label>`).join("") +
     `<h3>Diet and farming</h3>` +
-    `<label><input type="checkbox" id="f-organic" ${filter.organic ? "checked" : ""}> Organic <span class="n">${all.filter((a) => a.organic).length}</span></label>` +
-    `<label><input type="checkbox" id="f-vegan" ${filter.vegan ? "checked" : ""}> Vegan <span class="n">${all.filter((a) => a.vegan === "yes").length}</span></label>` +
-    `<div class="person-filter"><label><input type="checkbox" id="f-person" ${filter.person ? "checked" : ""}> Needs a person <span class="n">${Object.keys(r.person).length}</span></label></div>`;
-  for (const input of f.querySelectorAll("input[name=cat]")) input.onchange = () => { filter.category = input.value || null; filter.person = false; limit = PAGE_SIZE; drawFilters(); drawGrid() };
-  $("f-organic").onchange = (e) => { filter.organic = e.target.checked; limit = PAGE_SIZE; drawGrid() };
-  $("f-vegan").onchange = (e) => { filter.vegan = e.target.checked; limit = PAGE_SIZE; drawGrid() };
+    `<label><input type="checkbox" id="f-organic" ${filter.organic ? "checked" : ""}> Organic <span class="n">${all.filter((attributes) => attributes.organic).length}</span></label>` +
+    `<label><input type="checkbox" id="f-vegan" ${filter.vegan ? "checked" : ""}> Vegan <span class="n">${all.filter((attributes) => attributes.vegan === "yes").length}</span></label>` +
+    `<div class="person-filter"><label><input type="checkbox" id="f-person" ${filter.person ? "checked" : ""}> Needs a person <span class="n">${Object.keys(run.person).length}</span></label></div>`;
+  for (const input of panel.querySelectorAll("input[name=cat]")) input.onchange = () => { filter.category = input.value || null; filter.person = false; limit = PAGE_SIZE; drawFilters(); drawGrid() };
+  $("f-organic").onchange = (event) => { filter.organic = event.target.checked; limit = PAGE_SIZE; drawGrid() };
+  $("f-vegan").onchange = (event) => { filter.vegan = event.target.checked; limit = PAGE_SIZE; drawGrid() };
   // The person queue is every product waiting on someone, whatever its category, so the category resets to All.
-  $("f-person").onchange = (e) => { filter.person = e.target.checked; if (filter.person) filter.category = null; limit = PAGE_SIZE; drawFilters(); drawGrid() };
+  $("f-person").onchange = (event) => { filter.person = event.target.checked; if (filter.person) filter.category = null; limit = PAGE_SIZE; drawFilters(); drawGrid() };
 }
 
-function size(a) { return a.size_unit === "count" ? `${a.size_value} count` : `${a.size_value} ${a.size_unit}` }
+function size(attributes) { return attributes.size_unit === "count" ? `${attributes.size_value} count` : `${attributes.size_value} ${attributes.size_unit}` }
 
-function card(p) {
-  const r = current(), a = r && r.attributes[p.sku], needs = r && p.sku in r.person;
-  const kind = PICTURES.find(([word]) => p.title.toLowerCase().includes(word));
-  const icon = kind ? kind[1] : a ? CATEGORIES[a.category][1] : "📦";
+function card(product) {
+  const run = current(), attributes = run && run.attributes[product.sku], needs = run && product.sku in run.person;
+  const kind = PICTURES.find(([word]) => product.title.toLowerCase().includes(word));
+  const icon = kind ? kind[1] : attributes ? CATEGORIES[attributes.category][1] : "📦";
   let badges = "";
-  if (!a) badges = `<span class="badge none">No filters yet</span>`;
+  if (!attributes) badges = `<span class="badge none">No filters yet</span>`;
   else {
-    badges += `<span class="badge">${CATEGORIES[a.category][0]}</span>`;
-    if (a.organic) badges += `<span class="badge green">Organic</span>`;
-    if (a.vegan === "yes" && !needs) badges += `<span class="badge green">Vegan</span>`;
+    badges += `<span class="badge">${CATEGORIES[attributes.category][0]}</span>`;
+    if (attributes.organic) badges += `<span class="badge green">Organic</span>`;
+    if (attributes.vegan === "yes" && !needs) badges += `<span class="badge green">Vegan</span>`;
     if (needs) badges += `<span class="badge person">Needs a person</span>`;
   }
-  return `<button class="card ${needs ? "needs" : ""}" data-sku="${p.sku}"><div class="tile" aria-hidden="true">${icon}</div><div class="body">
-    <div class="name">${esc(p.title)}</div><div class="size">${a ? size(a) : "size unknown"}</div><div class="badges">${badges}</div></div></button>`;
+  return `<button class="card ${needs ? "needs" : ""}" data-sku="${product.sku}"><div class="tile" aria-hidden="true">${icon}</div><div class="body">
+    <div class="name">${escapeHtml(product.title)}</div><div class="size">${attributes ? size(attributes) : "size unknown"}</div><div class="badges">${badges}</div></div></button>`;
 }
 
 function drawGrid() {
@@ -213,25 +214,25 @@ function drawGrid() {
   $("results-count").textContent = `${list.length} products`;
   $("grid").innerHTML = list.slice(0, limit).map(card).join("");
   $("more").hidden = list.length <= limit;
-  for (const c of document.querySelectorAll(".card")) c.onclick = () => open(c.dataset.sku);
+  for (const productCard of document.querySelectorAll(".card")) productCard.onclick = () => open(productCard.dataset.sku);
 }
 
 function open(sku) {
-  const p = shelf.products.find((x) => x.sku === sku), r = current(), a = r && r.attributes[sku];
+  const product = shelf.products.find((candidate) => candidate.sku === sku), run = current(), attributes = run && run.attributes[sku];
   const sample = shelf.supplied[sku];
-  const rows = a ? ["category", "size_value", "size_unit", "organic", "vegan"].map((k) => {
-    const want = sample && sample[k], miss = want !== undefined && String(want) !== String(a[k]) && !(k === "size_value" && Math.abs(a[k] - want) <= 0.02 * want);
-    return `<tr><td>${k}</td><td>${esc(a[k])}</td>${sample ? `<td class="${miss ? "miss" : ""}">${esc(want)}</td>` : ""}</tr>`;
+  const rows = attributes ? ["category", "size_value", "size_unit", "organic", "vegan"].map((field) => {
+    const want = sample && sample[field], miss = want !== undefined && String(want) !== String(attributes[field]) && !(field === "size_value" && Math.abs(attributes[field] - want) <= 0.02 * want);
+    return `<tr><td>${field}</td><td>${escapeHtml(attributes[field])}</td>${sample ? `<td class="${miss ? "miss" : ""}">${escapeHtml(want)}</td>` : ""}</tr>`;
   }).join("") : "";
   let note = "";
-  if (r && sku in r.person) {
-    note = `<div class="decide"><b>Needs a person.</b> ${esc(r.person[sku].charAt(0).toUpperCase() + r.person[sku].slice(1))}.<p>A person decides: they read the pack or ask the retailer, then set vegan. Until then the product stays out of the vegan filter.</p></div>`;
-  } else if (a) {
+  if (run && sku in run.person) {
+    note = `<div class="decide"><b>Needs a person.</b> ${escapeHtml(run.person[sku].charAt(0).toUpperCase() + run.person[sku].slice(1))}.<p>A person decides: they read the pack or ask the retailer, then set vegan. Until then the product stays out of the vegan filter.</p></div>`;
+  } else if (attributes) {
     note = `<div class="ok"><b>Filled with no person.</b> Every filter is set from the retailer's own text, so the product is live.</div>`;
   }
-  $("drawer").innerHTML = `<button class="close" id="close">Close</button><h2>${esc(p.title)}</h2><div class="sku">${p.sku}</div>
-    <div class="text">${esc(p.description)}</div>
-    ${a ? `<table><tr><th>Filter</th><th>Filled tonight</th>${sample ? "<th>Retailer's sample</th>" : ""}</tr>${rows}</table>` : "<p>Nothing is filled yet.</p>"}
+  $("drawer").innerHTML = `<button class="close" id="close">Close</button><h2>${escapeHtml(product.title)}</h2><div class="sku">${product.sku}</div>
+    <div class="text">${escapeHtml(product.description)}</div>
+    ${attributes ? `<table><tr><th>Filter</th><th>Filled tonight</th>${sample ? "<th>Retailer's sample</th>" : ""}</tr>${rows}</table>` : "<p>Nothing is filled yet.</p>"}
     ${note}`;
   $("drawer").hidden = false;
   $("close").onclick = () => { $("drawer").hidden = true };
@@ -239,15 +240,15 @@ function open(sku) {
 }
 
 async function fill(way, button) {
-  const n = shelf.products.length;
+  const productCount = shelf.products.length;
   button.disabled = true;
-  button.textContent = runs[way] ? "Reading the checkpoint..." : `Filling ${n} products...`;
+  button.textContent = runs[way] ? "Reading the checkpoint..." : `Filling ${productCount} products...`;
   runs[way] = await (await fetch(`/api/fill/${way}`, { method: "POST" })).json();
   shown = way;
   drawJob(); drawFilters(); drawGrid();
 }
 
-document.addEventListener("keydown", (e) => { if (e.key === "Escape") $("drawer").hidden = true });
+document.addEventListener("keydown", (event) => { if (event.key === "Escape") $("drawer").hidden = true });
 $("more").onclick = () => { limit += PAGE_SIZE; drawGrid() };
 
 (async () => {

@@ -26,18 +26,18 @@ def show_ingest(docs: Path) -> int:
 
     passages = ingest(docs)
     print(f"{len(passages)} sections from {len(list(docs.glob('*.pdf')))} PDFs")
-    for p in passages[:3]:
-        print(f"  [{p.id}] {p.doc}, page {p.page}")
+    for passage in passages[:3]:
+        print(f"  [{passage.id}] {passage.doc}, page {passage.page}")
     return 0
 
 
 def search(question: str, how: str) -> int:
     from wiki.score import load_golden
 
-    label = next((g.passage for g in load_golden(GOLDEN) if g.question == question), None)
-    for n, hit in enumerate(build().find(question, how), 1):
+    label = next((label.passage for label in load_golden(GOLDEN) if label.question == question), None)
+    for rank, hit in enumerate(build().find(question, how), 1):
         mark = "  <- labelled" if hit.passage.id == label else ""
-        print(f"{n}. {hit.passage.id}  {hit.score:.3f}{mark}")
+        print(f"{rank}. {hit.passage.id}  {hit.score:.3f}{mark}")
     return 0
 
 
@@ -48,9 +48,9 @@ def evaluate(ways: list[str]) -> int:
     golden = load_golden(GOLDEN)
     result = run(build(), golden, tuple(ways))
     print(f"{result['total']} labelled questions\n")
-    print(f"{'':11}" + "".join(f"{'recall@' + str(k):<12}" for k in KS))
+    print(f"{'':11}" + "".join(f"{'recall@' + str(top_k):<12}" for top_k in KS))
     for how in ways:
-        print(f"{how:11}" + "".join(f"{str(result['recall'][how][k]) + ' of ' + str(result['total']):<12}" for k in KS))
+        print(f"{how:11}" + "".join(f"{str(result['recall'][how][top_k]) + ' of ' + str(result['total']):<12}" for top_k in KS))
     print(f"\nNeeds a person ({len(result['person'])}): the labelled section is not in the top 5 on {ways[-1]}")
     for question in result["person"]:
         print(f"  {question}")

@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<link rel="icon" href="data:,">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Fernhill refunds desk</title>
 <style>
@@ -150,25 +151,25 @@ h2 { font-size: 18px; margin: 0 0 4px }
 
 <script>
 const $ = (id) => document.getElementById(id);
-const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
-const money = (n) => "$" + Number(n).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const escapeHtml = (value) => String(value ?? "").replace(/[&<>"]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[char]);
+const money = (amount) => "$" + Number(amount).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const clock = (iso) => new Date(iso).toLocaleTimeString("en-GB", { hour12: false });
 const state = { desk: null, open: null, seen: new Set() };
 
 async function post(path, body = {}) {
-  const res = await fetch(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
-  if (res.ok) { state.desk = await res.json(); draw(); }
+  const response = await fetch(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  if (response.ok) { state.desk = await response.json(); draw(); }
 }
 
 // Where a refund is on its track: decided, a manager's answer when needed, paid.
 function track(flow) {
   if (!flow) return `<div class="track idle"><span>Decide</span><span>Manager</span><span>Pay</span></div>`;
-  const s = flow.status || {}, d = s.decision, stage = s.stage;
-  const needs = d && d.needs_approval;
+  const status = flow.status || {}, decision = status.decision, stage = status.stage;
+  const needs = decision && decision.needs_approval;
   const decide = stage === "deciding" ? "now" : "done";
   let mgr = "off", mgrText = needs === false ? "Not needed" : "Manager";
-  if (needs) mgr = s.verdict ? "done" : "now";
-  if (needs && s.verdict) mgrText = s.verdict === "approved" ? "Approved" : "Rejected";
+  if (needs) mgr = status.verdict ? "done" : "now";
+  if (needs && status.verdict) mgrText = status.verdict === "approved" ? "Approved" : "Rejected";
   if (stage === "escalated") mgrText = "Escalated";
   let pay = "", payText = "Pay";
   if (stage === "paying") { pay = "now"; payText = "Paying"; }
@@ -181,85 +182,85 @@ function track(flow) {
 function events(flow) {
   if (!flow || !flow.events) return `<p class="empty">Not started. Start it and Temporal records every step here.</p>`;
   const words = { started: "started", scheduled: "scheduled", completed: "finished", "timed out": "timed out", failed: "failed", signal: "arrived", timer: "set" };
-  return `<ol>${flow.events.map((e) => {
-    const retry = e.attempt > 1;
-    const step = e.step === "workflow" ? "Workflow" : e.event === "signal" ? `Manager's ${esc(e.step)}` : e.event === "timer" ? "Approval deadline, 3 days," : `Step <b>${esc(e.step)}</b>`;
-    return `<li class="${retry ? "retry" : ""}"><time>${clock(e.at)}</time>${step} ${words[e.event] || esc(e.event)}${retry ? ` <b>on attempt ${e.attempt}</b>, after the worker died` : ""}</li>`;
+  return `<ol>${flow.events.map((entry) => {
+    const retry = entry.attempt > 1;
+    const step = entry.step === "workflow" ? "Workflow" : entry.event === "signal" ? `Manager's ${escapeHtml(entry.step)}` : entry.event === "timer" ? "Approval deadline, 3 days," : `Step <b>${escapeHtml(entry.step)}</b>`;
+    return `<li class="${retry ? "retry" : ""}"><time>${clock(entry.at)}</time>${step} ${words[entry.event] || escapeHtml(entry.event)}${retry ? ` <b>on attempt ${entry.attempt}</b>, after the worker died` : ""}</li>`;
   }).join("")}</ol>`;
 }
 
-function opened(r, flow) {
-  const s = flow && flow.status, d = s && s.decision, o = r.order;
-  const calls = state.desk.calls[r.id] || 0;
+function opened(refund, flow) {
+  const status = flow && flow.status, decided = status && status.decision, order = refund.order;
+  const calls = state.desk.calls[refund.id] || 0;
   let decision = `<p class="facts">The model has not decided yet.</p>`;
-  if (d) decision = `<div class="decision"><div class="big">${money(d.amount)}</div>
-      <p>${esc(d.reason)}</p><p>Rules ${esc((d.rules || []).join(", "))}. The model was asked ${calls} time${calls === 1 ? "" : "s"}.</p></div>`;
+  if (decided) decision = `<div class="decision"><div class="big">${money(decided.amount)}</div>
+      <p>${escapeHtml(decided.reason)}</p><p>Rules ${escapeHtml((decided.rules || []).join(", "))}. The model was asked ${calls} time${calls === 1 ? "" : "s"}.</p></div>`;
   let manager = "";
-  if (d && d.needs_approval && !s.verdict && !s.done)
+  if (decided && decided.needs_approval && !status.verdict && !status.done)
     manager = `<div class="approve"><p><b>Over $500, so it waits for you.</b> Nothing runs while it waits, even for days. After ${state.desk.deadline_days} days it is escalated.</p>
-      <div class="row"><button class="btn" data-verdict="approve" data-id="${r.id}">Approve ${money(d.amount)}</button><button class="btn quiet" data-verdict="reject" data-id="${r.id}">Reject</button></div></div>`;
-  else if (s && s.verdict) manager = `<p class="verdict">The manager ${esc(s.verdict)} it.</p>`;
+      <div class="row"><button class="btn" data-verdict="approve" data-id="${refund.id}">Approve ${money(decided.amount)}</button><button class="btn quiet" data-verdict="reject" data-id="${refund.id}">Reject</button></div></div>`;
+  else if (status && status.verdict) manager = `<p class="verdict">The manager ${escapeHtml(status.verdict)} it.</p>`;
   return `<div class="open"><div>
-      <p class="msg">"${esc(r.message)}"</p>
-      <p class="facts">${esc(o.customer)}, ${esc(o.item)}. Paid ${money(o.price)} plus ${money(o.delivery_fee)} delivery.</p>
+      <p class="msg">"${escapeHtml(refund.message)}"</p>
+      <p class="facts">${escapeHtml(order.customer)}, ${escapeHtml(order.item)}. Paid ${money(order.price)} plus ${money(order.delivery_fee)} delivery.</p>
       ${decision}${manager}
-      <div class="row" style="display:flex;gap:10px;margin-top:12px">${flow ? "" : `<button class="btn" data-start="${r.id}">Start this refund</button>`}
-        <button class="btn quiet" data-plain="${r.id}">Run it as a plain script, with a crash</button></div>
+      <div class="row" style="display:flex;gap:10px;margin-top:12px">${flow ? "" : `<button class="btn" data-start="${refund.id}">Start this refund</button>`}
+        <button class="btn quiet" data-plain="${refund.id}">Run it as a plain script, with a crash</button></div>
     </div><div class="history"><h3>Temporal's event history</h3>${events(flow)}</div></div>`;
 }
 
 function draw() {
   const desk = state.desk; if (!desk) return;
   $("who").textContent = `Signed in as ${desk.manager}`;
-  const w = desk.worker;
-  $("dot").className = "dot" + (w.alive ? " on" : "");
-  $("state").textContent = w.alive ? `Worker running, process ${w.pid}` : "Worker stopped";
-  $("kill").disabled = !w.alive; $("start-worker").disabled = w.alive; $("crashy").disabled = w.alive;
-  const open = Object.values(desk.flows).filter((f) => f.status && !f.status.done).length;
-  $("note").textContent = w.alive
-    ? (w.crash_after_pay ? "It will die right after each payout, once per refund. Start it again and watch it carry on." : "Refunds run as soon as they are started.")
+  const worker = desk.worker;
+  $("dot").className = "dot" + (worker.alive ? " on" : "");
+  $("state").textContent = worker.alive ? `Worker running, process ${worker.pid}` : "Worker stopped";
+  $("kill").disabled = !worker.alive; $("start-worker").disabled = worker.alive; $("crashy").disabled = worker.alive;
+  const open = Object.values(desk.flows).filter((workflow) => workflow.status && !workflow.status.done).length;
+  $("note").textContent = worker.alive
+    ? (worker.crash_after_pay ? "It will die right after each payout, once per refund. Start it again and watch it carry on." : "Refunds run as soon as they are started.")
     : open ? `${open} refund${open === 1 ? "" : "s"} still open. Their history is safe on the Temporal server. Start the worker and they carry on.` : "Start the worker to run refunds.";
-  const r = desk.review;
-  $("tally").innerHTML = r ? ["naive", "durable"].map((how) => `<div>${how === "naive" ? "Plain script" : "Temporal"}, last review<b class="${r[how].paid_twice + r[how].lost ? "bad" : ""}">${r[how].paid_twice} paid twice, ${r[how].lost} lost</b></div>`).join("") : "";
+  const review = desk.review;
+  $("tally").innerHTML = review ? ["naive", "durable"].map((how) => `<div>${how === "naive" ? "Plain script" : "Temporal"}, last review<b class="${review[how].paid_twice + review[how].lost ? "bad" : ""}">${review[how].paid_twice} paid twice, ${review[how].lost} lost</b></div>`).join("") : "";
 
-  $("requests").innerHTML = desk.refunds.map((x) => {
-    const flow = desk.flows[x.id], d = flow && flow.status && flow.status.decision;
-    return `<li class="req"><button data-open="${x.id}" aria-expanded="${state.open === x.id}">
-      <span class="rid">${x.id}</span>
-      <span class="what"><b>${esc(x.order.customer)}</b><span>${esc(x.order.item)}</span></span>
-      <span class="amt">${d ? money(d.amount) : "-"}<small>${d ? "decided" : "order " + money(x.order.price)}</small></span>
-      ${track(flow)}</button>${state.open === x.id ? opened(x, flow) : ""}</li>`;
+  $("requests").innerHTML = desk.refunds.map((refund) => {
+    const flow = desk.flows[refund.id], decision = flow && flow.status && flow.status.decision;
+    return `<li class="req"><button data-open="${refund.id}" aria-expanded="${state.open === refund.id}">
+      <span class="rid">${refund.id}</span>
+      <span class="what"><b>${escapeHtml(refund.order.customer)}</b><span>${escapeHtml(refund.order.item)}</span></span>
+      <span class="amt">${decision ? money(decision.amount) : "-"}<small>${decision ? "decided" : "order " + money(refund.order.price)}</small></span>
+      ${track(flow)}</button>${state.open === refund.id ? opened(refund, flow) : ""}</li>`;
   }).join("");
 
   const per = {};
   // Paid twice means twice by the same program: one refund can appear once per way.
-  for (const p of desk.payouts) per[p.refund + p.how] = (per[p.refund + p.how] || 0) + 1;
-  const total = desk.payouts.reduce((t, p) => t + p.cents, 0);
-  $("ledger").innerHTML = desk.payouts.length ? `<table>${desk.payouts.map((p) => {
-      const fresh = !state.seen.has(p.id); state.seen.add(p.id);
-      return `<tr class="${per[p.refund + p.how] > 1 ? "twice" : ""} ${fresh ? "fresh" : ""}"><td>${esc(p.customer)}, ${p.refund}, ${p.how === "naive" ? "plain script" : "Temporal"}<small>${p.idempotency_key ? "key " + esc(p.idempotency_key) : "no idempotency key"}</small></td><td class="money">${money(p.cents / 100)}</td></tr>`;
+  for (const payout of desk.payouts) per[payout.refund + payout.how] = (per[payout.refund + payout.how] || 0) + 1;
+  const total = desk.payouts.reduce((sum, part) => sum + part.cents, 0);
+  $("ledger").innerHTML = desk.payouts.length ? `<table>${desk.payouts.map((payout) => {
+      const fresh = !state.seen.has(payout.id); state.seen.add(payout.id);
+      return `<tr class="${per[payout.refund + payout.how] > 1 ? "twice" : ""} ${fresh ? "fresh" : ""}"><td>${escapeHtml(payout.customer)}, ${payout.refund}, ${payout.how === "naive" ? "plain script" : "Temporal"}<small>${payout.idempotency_key ? "key " + escapeHtml(payout.idempotency_key) : "no idempotency key"}</small></td><td class="money">${money(payout.cents / 100)}</td></tr>`;
     }).join("")}</table><footer><span>Paid out</span><span>${money(total / 100)}</span></footer>`
     : `<p class="none">No payouts yet.</p>`;
 }
 
 async function load() {
-  const res = await fetch("/api/desk").catch(() => null);
-  if (res && res.ok) { state.desk = await res.json(); draw(); }
+  const response = await fetch("/api/desk").catch(() => null);
+  if (response && response.ok) { state.desk = await response.json(); draw(); }
 }
 
-document.addEventListener("click", (e) => {
-  const t = e.target.closest("button"); if (!t) return;
-  if (t.dataset.open) { state.open = state.open === t.dataset.open ? null : t.dataset.open; return draw(); }
-  if (t.dataset.start) return post("/api/start", { refund: t.dataset.start });
-  if (t.dataset.plain) { t.disabled = true; t.textContent = "Running, crashing, running again..."; return post("/api/plain", { refund: t.dataset.plain }); }
-  if (t.dataset.verdict) return post("/api/verdict", { refund: t.dataset.id, reject: t.dataset.verdict === "reject" });
+document.addEventListener("click", (event) => {
+  const button = event.target.closest("button"); if (!button) return;
+  if (button.dataset.open) { state.open = state.open === button.dataset.open ? null : button.dataset.open; return draw(); }
+  if (button.dataset.start) return post("/api/start", { refund: button.dataset.start });
+  if (button.dataset.plain) { button.disabled = true; button.textContent = "Running, crashing, running again..."; return post("/api/plain", { refund: button.dataset.plain }); }
+  if (button.dataset.verdict) return post("/api/verdict", { refund: button.dataset.id, reject: button.dataset.verdict === "reject" });
 });
 $("start-worker").addEventListener("click", () => post("/api/worker/start", { crash_after_pay: $("crashy").checked }));
 $("kill").addEventListener("click", () => post("/api/worker/kill"));
-$("start-all").addEventListener("click", async () => { for (const r of state.desk.refunds) await post("/api/start", { refund: r.id }); });
+$("start-all").addEventListener("click", async () => { for (const refund of state.desk.refunds) await post("/api/start", { refund: refund.id }); });
 $("reset").addEventListener("click", () => { state.seen.clear(); post("/api/reset"); });
 
-load().then(() => { state.seen = new Set((state.desk?.payouts || []).map((p) => p.id)); });
+load().then(() => { state.seen = new Set((state.desk?.payouts || []).map((payout) => payout.id)); });
 // The desk follows the workflows on the server: a refund moves on its own once a worker is running.
 setInterval(load, 1000);
 </script>

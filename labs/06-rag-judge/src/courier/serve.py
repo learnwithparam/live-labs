@@ -25,13 +25,13 @@ class Room:
         self.lock = threading.Lock()
 
     def tickets(self) -> list[dict]:
-        return [{"id": r.id, "courier": r.courier, "question": r.question, "answer": r.answer, "cited": r.cited} for r in self.labelled]
+        return [{"id": row.id, "courier": row.courier, "question": row.question, "answer": row.answer, "cited": row.cited} for row in self.labelled]
 
     def sources(self, ids: list[str]) -> list[dict]:
-        return [{"id": p.id, "article": p.article, "section": p.section, "text": p.text} for p in self.help_centre.get(ids)]
+        return [{"id": passage.id, "article": passage.article, "section": passage.section, "text": passage.text} for passage in self.help_centre.get(ids)]
 
     def check(self, ticket: str) -> dict | None:
-        row = next((r for r in self.labelled if r.id == ticket), None)
+        row = next((row for row in self.labelled if row.id == ticket), None)
         if row is None:
             return None
         if ticket not in self.checked:

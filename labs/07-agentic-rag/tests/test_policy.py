@@ -37,7 +37,7 @@ class Fake:
         elif system == ANSWER:
             body = {"answer": "Roll back [ledger-writer-runbook#rollback].", "cited": ["ledger-writer-runbook#rollback", "made-up#id"], "covered": True}
         elif system == GRADE:
-            body = {"points": [{"point": n, "quote": "Roll back" if m else "", "made": m} for n, m in enumerate(self.made, 1)],
+            body = {"points": [{"point": number, "quote": "Roll back" if made else "", "made": made} for number, made in enumerate(self.made, 1)],
                     "contradicts": self.contradicts, "reason": "checked"}
         else:
             raise AssertionError(system)
@@ -57,9 +57,9 @@ def test_every_pdf_section_is_a_passage_and_every_expert_section_exists(policies
     assert len(policies.passages) == 64
     questions = load(LAB / "data/expert.jsonl")
     assert len(questions) == 16
-    assert all(need in policies.by_id for q in questions for need in q.needs)
+    assert all(need in policies.by_id for question in questions for need in question.needs)
     # Most questions need two or more sections: that is what makes one search fall short.
-    assert sum(len(q.needs) > 1 for q in questions) >= 14
+    assert sum(len(question.needs) > 1 for question in questions) >= 14
 
 
 def test_search_finds_the_section_by_its_words(policies):
@@ -76,7 +76,7 @@ def test_the_agent_goes_back_for_what_the_check_says_is_missing(policies):
     fake = Fake(checks=[MISSING])
     got = agentic("Can I roll back ledger-writer on Friday?", policies, fake, "m")
     assert got["rounds"] == 2
-    assert [s["query"] for s in got["searches"]][-1] == "deploy freeze window Friday"
+    assert [search["query"] for search in got["searches"]][-1] == "deploy freeze window Friday"
     assert "deploy-policy#freeze-window" in got["sources"]
     # plan, check, check, answer
     assert got["calls"] == 4 and fake.calls.count(CHECK) == 2
@@ -89,7 +89,7 @@ def test_a_made_up_citation_is_dropped(policies):
 
 def test_the_agent_stops_on_its_round_budget(policies):
     # A check that is never satisfied, with a new search each time, still ends after MAX_ROUNDS searches.
-    checks = [{"enough": False, "missing": "more", "queries": [q]} for q in ["deploy freeze", "card number log", "kafka poison message", "fx freeze"]]
+    checks = [{"enough": False, "missing": "more", "queries": [query]} for query in ["deploy freeze", "card number log", "kafka poison message", "fx freeze"]]
     got = agentic("Anything?", policies, Fake(checks=checks), "m")
     assert got["rounds"] == MAX_ROUNDS and got["answer"]
 
@@ -103,13 +103,13 @@ def test_a_retry_that_finds_nothing_new_stops_the_loop(policies):
 
 
 def test_an_answer_is_accepted_only_when_every_point_is_made_and_nothing_contradicts():
-    q = Question("Q", "Can I roll back?", ["ledger-writer-runbook#rollback"], ["Roll back first.", "Get approval."])
-    assert grade(q, "Roll back.", Fake(made=(True, True)), "j")[0]["accepted"] is True
-    missed = grade(q, "Roll back.", Fake(made=(True, False)), "j")[0]
+    question = Question("Q", "Can I roll back?", ["ledger-writer-runbook#rollback"], ["Roll back first.", "Get approval."])
+    assert grade(question, "Roll back.", Fake(made=(True, True)), "j")[0]["accepted"] is True
+    missed = grade(question, "Roll back.", Fake(made=(True, False)), "j")[0]
     assert missed["accepted"] is False and missed["reason"] == "Missed point 2: Get approval."
-    assert grade(q, "Roll back.", Fake(contradicts=True), "j")[0]["accepted"] is False
-    assert grade(q, "", Fake(), "j")[0] == {"accepted": False, "made": [False, False], "contradicts": False, "reason": "No answer."}
-    assert found(q, ["ledger-writer-runbook#rollback", "x"]) == 1
+    assert grade(question, "Roll back.", Fake(contradicts=True), "j")[0]["accepted"] is False
+    assert grade(question, "", Fake(), "j")[0] == {"accepted": False, "made": [False, False], "contradicts": False, "reason": "No answer."}
+    assert found(question, ["ledger-writer-runbook#rollback", "x"]) == 1
 
 
 def test_the_page_streams_each_step_and_serves_only_to_this_machine(policies, tmp_path):
@@ -120,15 +120,15 @@ def test_the_page_streams_each_step_and_serves_only_to_this_machine(policies, tm
     base = f"http://127.0.0.1:{server.server_port}"
 
     def post(path, body, origin=None):
-        req = urllib.request.Request(base + path, json.dumps(body).encode(), {"Content-Type": "application/json"})
+        request = urllib.request.Request(base + path, json.dumps(body).encode(), {"Content-Type": "application/json"})
         if origin:
-            req.add_header("Origin", origin)
-        return urllib.request.urlopen(req).read().decode()
+            request.add_header("Origin", origin)
+        return urllib.request.urlopen(request).read().decode()
 
     try:
         assert 'data-surface="on-call policy desk"' in urllib.request.urlopen(base + "/").read().decode()
         events = [json.loads(line) for line in post("/api/ask", {"question": "Roll back on Friday?"}).splitlines()]
-        assert [e["node"] for e in events] == ["plan", "search", "check", "search", "check", "answer"]
+        assert [event["node"] for event in events] == ["plan", "search", "check", "search", "check", "answer"]
         # The answer carries the run's totals, not the last step's.
         assert events[-1]["calls"] == 4 and events[-1]["sources"][0]["doc"].startswith("RB-101")
         assert json.loads(post("/api/escalate", {"question": "Q?", "answer": ""})) == [{"question": "Q?", "answer": ""}]

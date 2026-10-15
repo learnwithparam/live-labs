@@ -39,12 +39,12 @@ def review_one(row: Labelled, help_centre: HelpCentre, client, model: str, judge
 def review(rows: list[Labelled], help_centre: HelpCentre, client, model: str, judge_model: str) -> dict:
     # Each reply is checked on its own, so they run side by side; the order of results is kept.
     with ThreadPoolExecutor(max_workers=8) as pool:
-        results = list(pool.map(lambda r: review_one(r, help_centre, client, model, judge_model), rows))
-    bad = [r for r, got in zip(rows, results) if r.kind in UNSUPPORTED]
-    sent_bad = [r.id for r, got in zip(rows, results) if r.kind in UNSUPPORTED and got["send"]]
-    held_good = [r.id for r, got in zip(rows, results) if r.human == "pass" and not got["send"]]
+        results = list(pool.map(lambda row: review_one(row, help_centre, client, model, judge_model), rows))
+    bad = [row for row, got in zip(rows, results) if row.kind in UNSUPPORTED]
+    sent_bad = [row.id for row, got in zip(rows, results) if row.kind in UNSUPPORTED and got["send"]]
+    held_good = [row.id for row, got in zip(rows, results) if row.human == "pass" and not got["send"]]
     return {
-        "rows": [vars(r) | got for r, got in zip(rows, results)],
+        "rows": [vars(row) | got for row, got in zip(rows, results)],
         "guard": {"unsupported": len(bad), "sent": sent_bad, "held_good": held_good,
                   "held": sum(1 for got in results if not got["send"]), "total": len(rows)},
         "judge": agreement(rows, [got["judge"] for got in results]),

@@ -39,8 +39,8 @@ def judge(question: Question, reply: Reply) -> Verdict:
     """An answer stands only when it states the fact and a passage it cites holds that fact.
     Everything else goes to a person, with the reason."""
     # Only ids the model was actually shown count: a made-up id cannot hold anything.
-    shown = {p.id: p.text for p in reply.passages}
-    cited = {pid: shown[pid] for pid in reply.cited if pid in shown}
+    shown = {passage.id: passage.text for passage in reply.passages}
+    cited = {passage_id: shown[passage_id] for passage_id in reply.cited if passage_id in shown}
     # Saying "not covered" is the right answer when no runbook covers it; a person still takes the question.
     if reply.answer is None:
         if question.fact is None:
@@ -74,6 +74,6 @@ class Tally:
 
 
 def tally(verdicts: list[Verdict], replies: list[Reply]) -> Tally:
-    supported = sum(v.supported for v in verdicts)
-    answered = sum(r.answer is not None for r in replies)
-    return Tally(len(verdicts), supported, answered, len(verdicts) - supported, sum(r.cost for r in replies))
+    supported = sum(verdict.supported for verdict in verdicts)
+    answered = sum(reply.answer is not None for reply in replies)
+    return Tally(len(verdicts), supported, answered, len(verdicts) - supported, sum(reply.cost for reply in replies))

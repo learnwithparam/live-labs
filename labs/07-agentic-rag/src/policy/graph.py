@@ -53,7 +53,7 @@ class Check(BaseModel):
 
 def merge(old: list[str], new: list[str]) -> list[str]:
     """The sources reducer: keep every section found in any round, once, in the order found."""
-    return old + [i for i in new if i not in old]
+    return old + [passage_id for passage_id in new if passage_id not in old]
 
 
 class State(TypedDict, total=False):
@@ -80,8 +80,8 @@ def build(policies: Policies, client, model: str):
         return {"queries": queries, "rounds": 0, "cost": cost, "calls": 1}
 
     def search(state: State) -> State:
-        searches = [{"query": q, "found": [p.id for p in policies.search(q)]} for q in state["queries"]]
-        new = [i for s in searches for i in s["found"] if i not in state["sources"]]
+        searches = [{"query": query, "found": [passage.id for passage in policies.search(query)]} for query in state["queries"]]
+        new = [passage_id for search in searches for passage_id in search["found"] if passage_id not in state["sources"]]
         return {"searches": searches, "sources": new, "fresh": len(new), "rounds": state["rounds"] + 1}
 
     def check(state: State) -> State:
