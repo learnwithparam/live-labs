@@ -38,7 +38,7 @@ print what the README promises.
 | 17 | Put a Voice AI Agent on a Phone Line | LiveKit behind ChatGPT voice | planned |
 | 18 | [Assess Car Damage Photos with Vision LLMs](labs/18-vision-damage) | Tractable damage appraisal | ready |
 | 19 | [Score Refund Risk with a Decision Model](labs/19-decision-ai) | Stripe Radar score, thresholds and review | ready |
-| 20 | Ship a Remote MCP Server with OAuth | Remote MCP servers from Linear, Sentry and Atlassian | planned |
+| 20 | [Ship a Remote MCP Server with OAuth](labs/20-remote-mcp-oauth) | Remote MCP servers from Linear, Sentry and Atlassian | ready |
 | 21 | Enforce Document Permissions in RAG with OpenFGA | Glean permission-aware search | planned |
 | 22 | Authorize AI Agent Actions with RBAC and ABAC | Block's Goose: read-only and destructive tools | planned |
 | 23 | Block Prompt Injection with Guardrails | Zillow Fair Housing Classifier | planned |

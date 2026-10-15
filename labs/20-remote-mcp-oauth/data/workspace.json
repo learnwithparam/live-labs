@@ -1,0 +1,45 @@
+{
+ "workspace": "Copperline Payments",
+ "scopes": {
+  "issues:read": "Read issues and comments in teams you can see",
+  "issues:write": "Create issues, change their status and assignee",
+  "comments:write": "Comment on issues as you",
+  "issues:delete": "Delete issues"
+ },
+ "roles": {
+  "member": ["issues:read", "issues:write", "comments:write"],
+  "admin": ["issues:read", "issues:write", "comments:write", "issues:delete"]
+ },
+ "teams": [
+  {"key": "PLT", "name": "Platform", "private": false, "members": ["maya", "ines"]},
+  {"key": "SUP", "name": "Support", "private": false, "members": ["theo"]},
+  {"key": "SEC", "name": "Security", "private": true, "members": ["ines"]}
+ ],
+ "users": [
+  {"id": "maya", "name": "Maya Okafor", "email": "maya@copperline.example", "role": "member", "title": "Platform engineer"},
+  {"id": "theo", "name": "Theo Lindqvist", "email": "theo@copperline.example", "role": "member", "title": "Support lead"},
+  {"id": "ines", "name": "Ines Duarte", "email": "ines@copperline.example", "role": "admin", "title": "Head of security"}
+ ],
+ "statuses": ["Todo", "In Progress", "In Review", "Done"],
+ "issues": [
+  {"id": "PLT-204", "team": "PLT", "title": "Webhook retries back off too fast after a 503", "status": "Todo", "assignee": "maya", "priority": "High",
+   "comments": [{"author": "ines", "body": "Stripe-style exponential backoff, capped at one hour, please."}]},
+  {"id": "PLT-209", "team": "PLT", "title": "Idempotency keys expire before the settlement batch runs", "status": "In Review", "assignee": "maya", "priority": "Urgent",
+   "comments": [{"author": "maya", "body": "Raised the TTL to 48h; PR is up."}]},
+  {"id": "PLT-214", "team": "PLT", "title": "Move ledger exports to the new S3 bucket", "status": "Todo", "assignee": "maya", "priority": "Medium", "comments": []},
+  {"id": "PLT-217", "team": "PLT", "title": "p95 latency on /v2/payouts above 800 ms", "status": "In Progress", "assignee": "ines", "priority": "High", "comments": []},
+  {"id": "PLT-220", "team": "PLT", "title": "Move ledger exports to new bucket", "status": "Todo", "assignee": null, "priority": "Low",
+   "comments": [{"author": "maya", "body": "Duplicate of PLT-214."}]},
+  {"id": "PLT-223", "team": "PLT", "title": "Upgrade Postgres 16 to 17 on the read replicas", "status": "Done", "assignee": "ines", "priority": "Medium", "comments": []},
+  {"id": "SUP-86", "team": "SUP", "title": "Northwind Grocers: payout report shows the wrong currency", "status": "In Progress", "assignee": "theo", "priority": "High", "comments": []},
+  {"id": "SUP-88", "team": "SUP", "title": "Bluefin Travel: refund stuck in pending for 6 days", "status": "In Review", "assignee": "theo", "priority": "Urgent",
+   "comments": [{"author": "theo", "body": "Engineering pushed a fix; waiting on the customer to confirm."}]},
+  {"id": "SUP-90", "team": "SUP", "title": "Harbor Dental: card declines with code 05 on recurring charges", "status": "Todo", "assignee": null, "priority": "Medium", "comments": []},
+  {"id": "SUP-91", "team": "SUP", "title": "Webhook signature fails after secret rotation (Alder Labs)", "status": "Todo", "assignee": "theo", "priority": "High",
+   "comments": [{"author": "theo", "body": "Looks like a Platform bug, not config."}]},
+  {"id": "SUP-93", "team": "SUP", "title": "Ask for CSV export of disputes (Juniper Books)", "status": "Done", "assignee": "theo", "priority": "Low", "comments": []},
+  {"id": "SEC-31", "team": "SEC", "title": "Rotate the leaked staging API key found in a public gist", "status": "In Progress", "assignee": "ines", "priority": "Urgent",
+   "comments": [{"author": "ines", "body": "Key prefix lk_stg_9f2; revoke first, then audit the access logs."}]},
+  {"id": "SEC-33", "team": "SEC", "title": "Pen test finding: admin session not bound to IP", "status": "Todo", "assignee": "ines", "priority": "High", "comments": []}
+ ]
+}

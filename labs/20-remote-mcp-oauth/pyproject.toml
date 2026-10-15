@@ -1,0 +1,27 @@
+[project]
+name = "lab-20-remote-mcp-oauth"
+version = "0.1.0"
+description = "Ship a Remote MCP Server with OAuth: an issue tracker's MCP server over Streamable HTTP that acts as each user, within the scopes they granted, checked against the tracker's audit log"
+requires-python = ">=3.11"
+dependencies = ["mcp==2.2.0", "openai==2.54.0", "uvicorn==0.54.0"]
+
+[project.scripts]
+tracker = "larch.cli:main"
+
+[dependency-groups]
+dev = ["pytest>=8.4"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/larch"]
+
+[tool.uv]
+# Every dependency resolves to a release at least two weeks old, so a fresh one never lands untested.
+exclude-newer = "2026-10-01T00:00:00Z"
+
+[tool.pytest.ini_options]
+markers = ["proof: calls a real model; needs LLM_API_KEY"]
+addopts = "-m 'not proof'"

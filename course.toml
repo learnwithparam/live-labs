@@ -246,7 +246,7 @@ owns = "authentication and acting on behalf of a user"
 job = "Let an assistant act in a user's Linear workspace as that user"
 truth = "the scopes the user granted and the product's audit log"
 metric = "actions outside the granted scope (zero)"
-status = "planned"
+status = "ready"
 
 [[lab]]
 n = 21

@@ -1,0 +1,5 @@
+{
+ "$comment": "What each person ticks on Larch's consent screen when the assistant first connects. Maya grants what her role allows; Theo connects read-only.",
+ "maya": ["issues:read", "issues:write", "comments:write"],
+ "theo": ["issues:read"]
+}

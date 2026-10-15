@@ -1,0 +1,475 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="icon" href="data:,">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Larch issue board</title>
+<style>
+:root {
+  --paper: #FAFAFA; --card: #FFFFFF; --ink: #151515; --ink-2: #414141; --muted: #606060; --faint: #808080;
+  --line: #DFDFDF; --accent: #FAFF69; --accent-deep: #4F5101; --fill-dark: #1F1F1C;
+  --pass: #008138; --fail: #BF000F; --wait: #B75000;
+  --sans: Inter, Helvetica, Arial, sans-serif; --mono: Inconsolata, "Courier New", Courier, monospace;
+}
+* { box-sizing: border-box }
+html, body { margin: 0 }
+body { background: var(--paper); color: var(--ink); font: 14px/1.45 var(--sans); min-height: 100vh }
+button, input, select { font: inherit; color: inherit }
+button { cursor: pointer }
+button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px }
+h1, h2, h3 { margin: 0; letter-spacing: -0.01em }
+.mono { font-family: var(--mono) }
+
+/* Larch's own top bar: the workspace, who is signed in, and how the assistant connects. */
+.bar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 22px; padding: 10px 24px; background: var(--fill-dark); color: var(--paper) }
+.bar .brand { font-weight: 800; font-size: 18px; letter-spacing: -0.02em }
+.bar .brand span { color: var(--accent) }
+.bar .space { color: var(--line) }
+.bar label { display: flex; align-items: center; gap: 8px; color: var(--line) }
+.bar select { background: var(--fill-dark); color: var(--paper); border: 1px solid var(--faint); border-radius: 6px; padding: 4px 8px }
+.connect { display: flex; border: 1px solid var(--faint); border-radius: 8px; overflow: hidden; margin-left: auto }
+.connect button { background: transparent; border: 0; padding: 6px 12px; color: var(--line) }
+.connect button[aria-pressed="true"] { background: var(--accent); color: var(--ink); font-weight: 700 }
+.bar .reset { background: transparent; border: 1px solid var(--faint); color: var(--line); border-radius: 6px; padding: 5px 10px }
+
+/* The app: teams and connected apps, the board with its audit log, and the assistant. */
+.app { display: grid; grid-template-columns: 12.5rem minmax(0, 1fr) 21.5rem; min-height: calc(100vh - 52px) }
+.side { border-right: 1px solid var(--line); padding: 18px 16px; display: flex; flex-direction: column; gap: 22px; background: var(--card) }
+.side h2 { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 8px }
+.teams { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px }
+.teams li { display: flex; justify-content: space-between; padding: 5px 8px; border-radius: 6px; color: var(--ink-2) }
+.teams li.hidden { color: var(--muted) }
+.teams .key { font-family: var(--mono); color: var(--muted) }
+.apps { display: flex; flex-direction: column; gap: 10px }
+.grant { border: 1px solid var(--line); border-radius: 8px; padding: 10px; background: var(--paper) }
+.grant strong { display: block }
+.grant .who { color: var(--muted); font-size: 12px }
+.chips { display: flex; flex-wrap: wrap; gap: 4px; margin: 6px 0 }
+.chip { font-family: var(--mono); font-size: 12px; border: 1px solid var(--line); border-radius: 4px; padding: 0 5px; background: var(--card) }
+.grant button { background: transparent; border: 0; padding: 0; color: var(--fail); text-decoration: underline; font-size: 12px }
+.side .none { color: var(--muted); font-size: 13px }
+
+.main { min-width: 0; padding: 18px 24px 32px; display: flex; flex-direction: column; gap: 18px }
+.heading { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px }
+.heading h1 { font-size: 22px }
+.heading p { margin: 0; color: var(--muted) }
+
+/* The metric: actions outside what the person granted, read from the audit log, never from the model. */
+.metric { display: flex; flex-wrap: wrap; gap: 10px }
+.tile { border: 1px solid var(--line); border-radius: 10px; background: var(--card); padding: 10px 14px; min-width: 9.5rem; flex: 1 }
+.tile .count { font-size: 26px; font-weight: 800; letter-spacing: -0.02em }
+.tile .count.bad { color: var(--fail) }
+.tile .count.good { color: var(--pass) }
+.tile .label { color: var(--muted); font-size: 12px }
+
+.board-wrap { overflow-x: auto; min-width: 0 }
+.board { display: grid; grid-template-columns: repeat(4, minmax(10.5rem, 1fr)); gap: 10px; min-width: 44rem }
+.column { background: var(--paper); border: 1px solid var(--line); border-radius: 10px; padding: 10px; display: flex; flex-direction: column; gap: 8px; min-height: 9rem }
+.column h3 { font-size: 13px; color: var(--ink-2); display: flex; justify-content: space-between }
+.column h3 span { color: var(--muted); font-weight: 500 }
+.issue { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 9px 10px; display: flex; flex-direction: column; gap: 5px }
+.issue .top { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; color: var(--muted) }
+.issue .id { font-family: var(--mono) }
+.issue .title { color: var(--ink) }
+.issue .meta { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted) }
+.issue .urgent { color: var(--fail); font-weight: 600 }
+.issue .note { font-size: 12px; color: var(--ink-2); border-top: 1px dashed var(--line); padding-top: 5px }
+/* The one motion: an issue the assistant just changed lights up, so the change is seen, not inferred. */
+.issue.changed { animation: landed 1.6s ease-out }
+@keyframes landed { 0% { background: var(--accent); transform: translateY(-4px) } 100% { background: var(--card); transform: none } }
+@media (prefers-reduced-motion: reduce) { .issue.changed { animation: none; outline: 2px solid var(--accent-deep) } }
+
+/* The audit log: who acted, for whom, through which client and which kind of credential. */
+.audit h2 { font-size: 15px; margin-bottom: 8px }
+.audit .scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--card) }
+.audit table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 46rem }
+.audit th { text-align: left; font-weight: 600; color: var(--muted); font-size: 12px; padding: 8px 10px; border-bottom: 1px solid var(--line) }
+.audit td { padding: 7px 10px; border-bottom: 1px solid var(--line); vertical-align: top }
+.audit tr:last-child td { border-bottom: 0 }
+.audit .done { color: var(--pass); font-weight: 600 }
+.audit .refused { color: var(--fail); font-weight: 600 }
+.audit tr.outside td { background: var(--paper) }
+.audit tr.outside td:first-child { box-shadow: inset 4px 0 0 var(--fail) }
+.audit .why { color: var(--fail); font-size: 12px }
+.audit .empty { color: var(--muted); padding: 14px 10px }
+
+/* The assistant, a third-party MCP client the person connected to Larch. */
+.assistant { border-left: 1px solid var(--line); background: var(--card); padding: 18px 18px 28px; display: flex; flex-direction: column; gap: 14px }
+.assistant h2 { font-size: 15px }
+.assistant .sub { color: var(--muted); font-size: 13px; margin: 2px 0 0 }
+.asks { display: flex; flex-direction: column; gap: 6px }
+.asks button { text-align: left; background: var(--paper); border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px; color: var(--ink-2) }
+.asks button .rid { font-family: var(--mono); color: var(--muted); margin-right: 6px }
+.compose { display: flex; gap: 8px }
+.compose input { flex: 1; min-width: 0; border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; background: var(--card) }
+.compose button, .primary { background: var(--ink); color: var(--paper); border: 0; border-radius: 8px; padding: 8px 14px; font-weight: 600 }
+.compose button:disabled { background: var(--faint) }
+.thread { display: flex; flex-direction: column; gap: 8px }
+.said { background: var(--paper); border-radius: 10px; padding: 8px 10px }
+.said.person { background: var(--fill-dark); color: var(--paper); align-self: flex-end; max-width: 90% }
+.step { font-family: var(--mono); font-size: 12px; border-left: 3px solid var(--pass); padding: 2px 8px; color: var(--ink-2); overflow-wrap: anywhere }
+.step.error { border-left-color: var(--fail) }
+.step .result { color: var(--muted); display: block }
+.waiting { color: var(--wait); font-weight: 600 }
+
+/* The human in the loop: the request needs a scope the person never granted, so the person decides. */
+.decide { border: 2px solid var(--wait); border-radius: 10px; padding: 12px; display: flex; flex-direction: column; gap: 8px }
+.decide .tag { color: var(--wait); font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em }
+.decide p { margin: 0 }
+.decide .options { display: flex; flex-wrap: wrap; gap: 8px }
+.decide .secondary { background: var(--card); border: 1px solid var(--ink); border-radius: 8px; padding: 7px 12px; font-weight: 600 }
+
+/* The consent screen Larch shows when an app asks to act as you. */
+.sheet { position: fixed; inset: 0; background: color-mix(in srgb, var(--fill-dark) 60%, transparent); display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 5 }
+.sheet[hidden] { display: none }
+.consent { background: var(--card); border-radius: 14px; width: min(30rem, 100%); max-height: 100%; overflow-y: auto; padding: 22px; display: flex; flex-direction: column; gap: 14px }
+.consent .from { color: var(--muted); font-size: 13px }
+.consent h2 { font-size: 19px }
+.consent .resource { font-family: var(--mono); font-size: 12px; background: var(--paper); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; overflow-wrap: anywhere }
+.scopes { display: flex; flex-direction: column; gap: 8px }
+.scopes label { display: grid; grid-template-columns: 1.4rem minmax(0, 1fr); gap: 2px 8px; border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px }
+.scopes label.locked { color: var(--muted); background: var(--paper) }
+.scopes input { margin: 3px 0 0; accent-color: var(--ink) }
+.scopes .means { grid-column: 2; color: var(--muted); font-size: 13px }
+.consent .actions { display: flex; justify-content: flex-end; gap: 8px }
+.consent .actions .secondary { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 8px 14px }
+
+@media (max-width: 1100px) {
+  .app { grid-template-columns: 1fr }
+  .side, .assistant { border: 0; border-bottom: 1px solid var(--line) }
+  .assistant { order: -1 }
+  .side { flex-direction: row; flex-wrap: wrap }
+  .side > section { flex: 1 1 14rem }
+}
+@media (max-width: 600px) {
+  .bar { padding: 10px 16px }
+  .connect { margin-left: 0 }
+  .main, .assistant, .side { padding-left: 16px; padding-right: 16px }
+}
+</style>
+</head>
+<body data-surface="issue tracker board with connected apps">
+<header class="bar">
+  <div class="brand">larch<span>.</span></div>
+  <div class="space" id="space">Copperline Payments</div>
+  <label>Signed in as <select id="person" aria-label="Signed in as"></select></label>
+  <div class="connect" role="group" aria-label="How the assistant connects">
+    <button id="mode-oauth" data-server="oauth" aria-pressed="true">OAuth per person</button>
+    <button id="mode-shared" data-server="shared_key" aria-pressed="false">Shared admin key</button>
+  </div>
+  <button class="reset" id="reset">Reset workspace</button>
+</header>
+
+<div class="app">
+  <aside class="side">
+    <section>
+      <h2>Teams</h2>
+      <ul class="teams" id="teams"></ul>
+    </section>
+    <section>
+      <h2>Connected apps</h2>
+      <div class="apps" id="apps"></div>
+    </section>
+  </aside>
+
+  <main class="main">
+    <div class="heading">
+      <h1>Board</h1>
+      <p id="seen-by"></p>
+    </div>
+    <div class="metric" id="metric"></div>
+    <div class="board-wrap"><div class="board" id="board"></div></div>
+    <section class="audit">
+      <h2>Audit log</h2>
+      <div class="scroll">
+        <table>
+          <thead><tr><th>Time</th><th>Acted as</th><th>Asked by</th><th>Client</th><th>Credential</th><th>Action</th><th>Outcome</th></tr></thead>
+          <tbody id="audit"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <aside class="assistant">
+    <div>
+      <h2>Larch Assistant</h2>
+      <p class="sub" id="assistant-sub"></p>
+    </div>
+    <div class="asks" id="asks"></div>
+    <form class="compose" id="compose">
+      <input id="message" placeholder="Ask the assistant" aria-label="Ask the assistant">
+      <button id="send">Send</button>
+    </form>
+    <div class="thread" id="thread" aria-live="polite"></div>
+  </aside>
+</div>
+
+<div class="sheet" id="sheet" hidden>
+  <form class="consent" id="consent" aria-labelledby="consent-title">
+    <div class="from">Larch, Copperline Payments</div>
+    <h2 id="consent-title"></h2>
+    <p id="consent-lead"></p>
+    <div class="resource" id="consent-resource"></div>
+    <div class="scopes" id="consent-scopes"></div>
+    <div class="actions">
+      <button type="button" class="secondary" id="deny">Cancel</button>
+      <button class="primary" id="allow">Allow</button>
+    </div>
+  </form>
+</div>
+
+<script>
+const $ = (selector) => document.querySelector(selector);
+let state = null, person = "theo", server = "oauth", runId = null, lastRun = null, shownConsent = null;
+let seenIssues = {};
+
+function make(tag, className, text) {
+  const node = document.createElement(tag);
+  if (className) node.className = className;
+  // Every string from the model or the workspace goes in as text, never as HTML.
+  if (text !== undefined) node.textContent = text;
+  return node;
+}
+
+function nameOf(userId) {
+  if (userId === "svc-mcp") return "Copperline MCP integration";
+  const user = state.workspace.users.find((each) => each.id === userId);
+  return user ? user.name : "Unassigned";
+}
+
+function canSee(userId, issue) {
+  const team = state.workspace.teams.find((each) => each.key === issue.team);
+  return !team.private || team.members.includes(userId);
+}
+
+async function call(path, body) {
+  const response = await fetch(path, body ? { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) } : {});
+  return response.ok ? response.json() : { error: await response.text() };
+}
+
+function renderTop() {
+  const select = $("#person");
+  if (!select.options.length) {
+    state.people.forEach((user) => select.append(new Option(`${user.name}, ${user.title}`, user.id)));
+    select.value = person;
+  }
+  document.querySelectorAll(".connect button").forEach((button) => button.setAttribute("aria-pressed", String(button.dataset.server === server)));
+}
+
+function renderSide() {
+  const teams = $("#teams");
+  teams.replaceChildren(...state.workspace.teams.map((team) => {
+    const row = make("li", canSee(person, { team: team.key }) ? "" : "hidden");
+    row.append(make("span", "", team.name + (team.private ? " (private)" : "")), make("span", "key", team.key));
+    return row;
+  }));
+  const apps = $("#apps");
+  const grants = state.grants.filter((grant) => grant.person === person);
+  if (!grants.length) {
+    apps.replaceChildren(make("div", "none", server === "oauth" ? "No app can act as you. The assistant asks the first time you use it." :
+      "The shared-key server never asks you. It acts as Copperline MCP integration, an admin."));
+    return;
+  }
+  apps.replaceChildren(...grants.map((grant) => {
+    const card = make("div", "grant");
+    const chips = make("div", "chips");
+    grant.scopes.forEach((scope) => chips.append(make("span", "chip", scope)));
+    const revoke = make("button", "", "Disconnect");
+    revoke.type = "button";
+    revoke.onclick = async () => { await call("/api/disconnect", { person }); refresh(); };
+    card.append(make("strong", "", grant.client), make("span", "who", `Acts as ${grant.name}`), chips, revoke);
+    return card;
+  }));
+}
+
+function renderMetric() {
+  const outside = state.audit.filter((entry) => entry.outside).length;
+  const acted = state.audit.filter((entry) => entry.outcome === "done" && entry.asked_by);
+  const asThem = acted.filter((entry) => entry.actor_name === entry.asked_by).length;
+  const tiles = [
+    { count: outside, label: "actions outside the grant, this session", tone: outside ? "bad" : "good" },
+    { count: `${asThem} of ${acted.length}`, label: "actions logged as the person who asked", tone: asThem === acted.length ? "good" : "bad" },
+    { count: state.audit.filter((entry) => entry.outcome === "refused").length, label: "requests refused, nothing changed", tone: "" },
+  ];
+  if (state.review) {
+    const oauth = state.review.oauth, shared = state.review.shared_key;
+    tiles.push({ count: `${oauth.outside_grant} vs ${shared.outside_grant}`, tone: oauth.outside_grant ? "bad" : "good",
+      label: `outside the grant in the last review: OAuth vs shared key, ${oauth.requests} requests each` });
+  }
+  $("#metric").replaceChildren(...tiles.map((tile) => {
+    const box = make("div", "tile");
+    box.append(make("div", "count " + tile.tone, String(tile.count)), make("div", "label", tile.label));
+    return box;
+  }));
+}
+
+function renderBoard() {
+  const visible = state.workspace.issues.filter((issue) => canSee(person, issue));
+  const hidden = state.workspace.issues.length - visible.length;
+  $("#seen-by").textContent = `What ${nameOf(person)} can see` + (hidden ? `. ${hidden} issues in a private team are hidden.` : ".");
+  const fresh = {};
+  $("#board").replaceChildren(...state.workspace.statuses.map((status) => {
+    const column = make("section", "column");
+    const inColumn = visible.filter((issue) => issue.status === status);
+    const title = make("h3", "", status);
+    title.append(make("span", "", String(inColumn.length)));
+    column.append(title);
+    inColumn.forEach((issue) => {
+      const signature = JSON.stringify(issue);
+      fresh[issue.id] = signature;
+      const changed = seenIssues[issue.id] !== undefined && seenIssues[issue.id] !== signature;
+      const card = make("article", "issue" + (changed ? " changed" : ""));
+      const top = make("div", "top");
+      top.append(make("span", "id", issue.id), make("span", issue.priority === "Urgent" ? "urgent" : "", issue.priority));
+      const meta = make("div", "meta");
+      meta.append(make("span", "", nameOf(issue.assignee)), make("span", "", issue.comments.length ? `${issue.comments.length} comment${issue.comments.length > 1 ? "s" : ""}` : ""));
+      card.append(top, make("div", "title", issue.title), meta);
+      const latest = issue.comments[issue.comments.length - 1];
+      if (changed && latest) card.append(make("div", "note", `${nameOf(latest.author)}: ${latest.body}`));
+      column.append(card);
+    });
+    return column;
+  }));
+  seenIssues = fresh;
+}
+
+function renderAudit() {
+  const rows = state.audit.slice().reverse();
+  if (!rows.length) {
+    const empty = make("tr");
+    const cell = make("td", "empty", "Nothing yet. Every call the assistant makes lands here, with who it acted as.");
+    cell.colSpan = 7;
+    empty.append(cell);
+    return $("#audit").replaceChildren(empty);
+  }
+  $("#audit").replaceChildren(...rows.map((entry) => {
+    const row = make("tr", entry.outside ? "outside" : "");
+    const action = make("td");
+    action.append(make("span", "mono", `${entry.action} ${entry.issues.slice(0, 3).join(", ")}${entry.issues.length > 3 ? "..." : ""}`));
+    if (entry.outside) action.append(make("div", "why", entry.outside));
+    const outcome = make("td", entry.outcome, entry.outcome);
+    row.append(make("td", "mono", entry.at.slice(11, 19)), make("td", "", entry.actor_name), make("td", "", entry.asked_by || ""),
+      make("td", "", entry.client), make("td", "", entry.via), action, outcome);
+    return row;
+  }));
+}
+
+function renderAssistant() {
+  const user = state.people.find((each) => each.id === person);
+  $("#assistant-sub").textContent = server === "oauth"
+    ? `Connects to Larch's MCP server with OAuth, as ${user.name}, with what ${user.name.split(" ")[0]} grants.`
+    : "Connects to the MCP server that holds one admin API key for everyone.";
+  const asks = state.requests.filter((each) => each.user === person);
+  $("#asks").replaceChildren(...asks.map((each) => {
+    const button = make("button");
+    button.type = "button";
+    button.append(make("span", "rid", each.id), document.createTextNode(each.ask));
+    button.onclick = () => send(each.ask, each.id);
+    return button;
+  }));
+  $("#send").disabled = Boolean(state.running);
+}
+
+function renderConsent() {
+  const view = state.consent;
+  $("#sheet").hidden = !view;
+  if (!view || shownConsent === view.request) return;
+  shownConsent = view.request;
+  const who = state.people.find((each) => each.id === view.person);
+  $("#consent-title").textContent = `${view.client} wants to act as ${who.name}`;
+  $("#consent-lead").textContent = "It will see and do only what you tick, and every action is logged in your name with the app beside it.";
+  $("#consent-resource").textContent = `For ${view.resource}`;
+  $("#consent-scopes").replaceChildren(...view.scopes.map((item) => {
+    const allowed = who.can_grant.includes(item.scope);
+    const label = make("label", allowed ? "" : "locked");
+    const box = make("input");
+    box.type = "checkbox";
+    box.value = item.scope;
+    box.disabled = !allowed;
+    box.checked = item.scope === "issues:read";
+    label.append(box, make("span", "mono", item.scope), make("span", "means", allowed ? item.means : `${item.means}. Your role cannot grant this.`));
+    return label;
+  }));
+  $("#allow").focus();
+}
+
+function renderThread() {
+  const thread = $("#thread");
+  if (!lastRun) return thread.replaceChildren();
+  const nodes = [make("div", "said person", lastRun.message)];
+  lastRun.steps.forEach((step) => {
+    if (step.kind !== "call") return;
+    const line = make("div", "step" + (step.error ? " error" : ""), `${step.tool}(${Object.values(step.args).join(", ")})`);
+    line.append(make("span", "result", step.result.slice(0, 220)));
+    nodes.push(line);
+  });
+  if (state.consent && !lastRun.done) nodes.push(make("div", "waiting", "Waiting for you on Larch's consent screen."));
+  else if (!lastRun.done) nodes.push(make("div", "waiting", "Working..."));
+  if (lastRun.reply) nodes.push(make("div", "said", lastRun.reply));
+  if (lastRun.error) nodes.push(make("div", "step error", lastRun.error));
+  const card = decision();
+  if (card) nodes.push(card);
+  thread.replaceChildren(...nodes);
+}
+
+// The case the metric cannot settle alone: the person asked for something they never let the app do.
+function decision() {
+  if (!lastRun || !lastRun.done || lastRun.server !== "oauth") return null;
+  const refused = lastRun.steps.find((step) => step.kind === "call" && step.error && step.result.includes("reconnect and grant"));
+  if (!refused) return null;
+  const needed = (refused.result.match(/grant ([a-z]+:[a-z]+)/) || [])[1];
+  const first = nameOf(lastRun.person).split(" ")[0];
+  const card = make("div", "decide");
+  card.append(make("div", "tag", `Needs ${first}`),
+    make("p", "", `${first} asked to ${refused.tool === "set_status" ? `move ${refused.args.issue_id} to ${refused.args.status}` : `${refused.tool.replace("_", " ")} on ${refused.args.issue_id || "an issue"}`}, which needs ${needed}. ${first} granted the assistant less, so Larch refused and nothing changed.`),
+    make("p", "", `${first} decides: give the assistant ${needed} from now on, or do this one change by hand.`));
+  const options = make("div", "options");
+  const widen = make("button", "primary", `Reconnect with ${needed}`);
+  widen.type = "button";
+  widen.onclick = async () => { await call("/api/disconnect", { person: lastRun.person }); send(lastRun.message, lastRun.request); };
+  options.append(widen);
+  if (refused.tool === "set_status") {
+    const byHand = make("button", "secondary", `Move ${refused.args.issue_id} to ${refused.args.status} myself`);
+    byHand.type = "button";
+    byHand.onclick = async () => { await call("/api/act", { person: lastRun.person, issue: refused.args.issue_id, status: refused.args.status }); refresh(); };
+    options.append(byHand);
+  }
+  card.append(options);
+  return card;
+}
+
+async function send(message, requestId) {
+  if (!message || (state && state.running)) return;
+  const started = await call("/api/run", { server, person, message, request: requestId || null });
+  if (started.error) return;
+  runId = started.id;
+  lastRun = { message, steps: [], done: false, server, person };
+  $("#message").value = "";
+  refresh();
+}
+
+async function refresh() {
+  state = await call("/api/state");
+  if (runId) lastRun = await call(`/api/run/${runId}`);
+  renderTop(); renderSide(); renderMetric(); renderBoard(); renderAudit(); renderAssistant(); renderConsent(); renderThread();
+  if (!state.consent) shownConsent = null;
+}
+
+$("#person").onchange = (event) => { person = event.target.value; lastRun = null; runId = null; refresh(); };
+document.querySelectorAll(".connect button").forEach((button) => button.onclick = () => { server = button.dataset.server; refresh(); });
+$("#compose").onsubmit = (event) => { event.preventDefault(); send($("#message").value.trim()); };
+$("#reset").onclick = async () => { await call("/api/reset", {}); runId = null; lastRun = null; seenIssues = {}; refresh(); };
+$("#consent").onsubmit = async (event) => {
+  event.preventDefault();
+  const ticked = [...document.querySelectorAll("#consent-scopes input:checked")].map((box) => box.value);
+  await call("/api/consent", { scopes: ticked });
+  refresh();
+};
+$("#deny").onclick = async () => { await call("/api/consent", { scopes: [] }); refresh(); };
+
+refresh();
+setInterval(() => { if (state && (state.running || state.consent || (lastRun && !lastRun.done))) refresh(); }, 900);
+</script>
+</body>
+</html>
