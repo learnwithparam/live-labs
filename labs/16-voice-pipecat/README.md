@@ -196,14 +196,15 @@ uv run pytest -m proof -q
 
 Expect: 1 passed
 
-The last proof run, on 15 Oct 2026, with `openai/gpt-6-luna` and `small.en` on an M1 laptop:
+Two proof runs on 15 Oct 2026, with `openai/gpt-6-luna` and `small.en` on an M1 laptop:
 
 | Taken with no staff | Sent to staff | Timed turns | p50 turn | p95 turn | Model cost |
 | --- | --- | --- | --- | --- | --- |
 | 6 of 6 | 2 of 2 | 26 of 26 | 8.5 s | 19.4 s | $0.0049 for 8 calls |
+| 5 of 6 | 2 of 2 | 26 of 26 | 8.9 s | 36.0 s | $0.0047 for 8 calls |
 
 The orders are right, and the model costs about $0.0006 a call. The latency is far over the 1.5 s
-budget. The p50 turn split into hear 1.9 s, think 5.1 s and speak 1.1 s. Think includes a second
+budget. In the first run the p50 turn split into hear 1.9 s, think 5.1 s and speak 1.1 s. Think includes a second
 model call after each tool result, so it is the part to cut first: a faster model, or fewer tool round
 trips. The laptop also ran other heavy jobs, which slows Whisper and Kokoro on the same CPU.
 
