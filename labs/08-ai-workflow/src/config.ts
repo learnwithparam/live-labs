@@ -19,6 +19,6 @@ export function settings(): Settings {
   return {
     apiKey,
     baseUrl: process.env.LLM_BASE_URL ?? 'https://openrouter.ai/api/v1',
-    model: process.env.LLM_MODEL ?? 'google/gemini-2.5-flash',
+    model: process.env.LLM_MODEL ?? 'openai/gpt-6-luna',
   }
 }

@@ -32,7 +32,8 @@ this lab you can:
 The Ridgeway softshell sheet says "Wind? Rain? Bring it on." in its marketing lines. The spec table
 says the finish is water-resistant and the seams are not taped. One prompt sees both. It writes in
 the store's voice and it reads well. In our runs it published 6 to 9 of 12 listings that needed no
-edit. The rest went live missing a stove's outdoor-only warning or a filter's "does not remove viruses".
+edit, on both models we tried. The rest went live with something the merchant had to take back, such
+as a stove's outdoor-only warning left out.
 
 ## What you will build
 
@@ -106,9 +107,13 @@ npm run -s listing -- review
 
 Expect: /workflow\s+published without an edit: \d+ of 12/
 
-In our runs one prompt published 6 to 9 of 12 without an edit and put 3 to 6 live with an error. The
-workflow published 10 or 11 of 12, held at most 1 for a person, and put at most 1 live with an error.
-It cost 0.7 to 0.9 of a cent a listing against 0.08. `out/review.json` holds every listing and every edit.
+In our run on `openai/gpt-6-luna` one prompt published 8 of 12 without an edit and put 4 live with an
+error. The workflow published 9 of 12, held 1 for a person, and put 2 live with an error. It cost about
+a fifth of a cent a listing against a fiftieth.
+
+On `google/gemini-2.5-flash` the workflow did a little better, 10 or 11 of 12 with at most 1 wrong, at
+four times the price: 0.7 to 0.9 of a cent a listing. `out/review.json` holds every listing and every
+edit.
 
 ## 4. See it
 
