@@ -1,0 +1,299 @@
+{
+ "photos": {
+  "P01": {
+   "usable": true,
+   "findings": [
+    {
+     "panel": "front_left_wing",
+     "action": "replace",
+     "severity": "severe",
+     "prior_damage": false
+    },
+    {
+     "panel": "front_bumper",
+     "action": "repair",
+     "severity": "minor",
+     "prior_damage": false
+    }
+   ],
+   "note": ""
+  },
+  "P02": {
+   "usable": true,
+   "findings": [
+    {
+     "panel": "front_left_wing",
+     "action": "replace",
+     "severity": "severe",
+     "prior_damage": false
+    },
+    {
+     "panel": "front_bumper",
+     "action": "repair",
+     "severity": "minor",
+     "prior_damage": false
+    }
+   ],
+   "note": ""
+  },
+  "P03": {
+   "usable": true,
+   "findings": [
+    {
+     "panel": "rear_right_door",
+     "action": "replace",
+     "severity": "severe",
+     "prior_damage": false
+    },
+    {
+     "panel": "rear_right_quarter",
+     "action": "repair",
+     "severity": "moderate",
+     "prior_damage": false
+    }
+   ],
+   "note": ""
+  },
+  "P04": {
+   "usable": true,
+   "findings": [
+    {
+     "panel": "rear_right_door",
+     "action": "replace",
+     "severity": "severe",
+     "prior_damage": false
+    },
+    {
+     "panel": "front_right_door",
+     "action": "repair",
+     "severity": "moderate",
+     "prior_damage": false
+    }
+   ],
+   "note": ""
+  },
+  "P05": {
+   "usable": true,
+   "findings": [
+    {
+     "panel": "boot_lid",
+     "action": "replace",
+     "severity": "severe",
+     "prior_damage": false
+    },
+    {
+     "panel": "rear_bumper",
+     "action": "replace",
+     "severity": "severe",
+     "prior_damage": false
+    }
+   ],
+   "note": ""
+  },
+  "P06": {
+   "usable": true,
+   "findings": [
+    {
+     "panel": "front_bumper",
+     "action": "replace",
+     "severity": "moderate",
+     "prior_damage": false
+    },
+    {
+     "panel": "front_left_wing",
+     "action": "repair",
+     "severity": "minor",
+     "prior_damage": false
+    }
+   ],
+   "note": ""
+  },
+  "P07": {
+   "usable": true,
+   "findings": [
+    {
+     "panel": "bonnet",
+     "action": "replace",
+     "severity": "severe",
+     "prior_damage": false
+    },
+    {
+     "panel": "front_bumper",
+     "action": "repair",
+     "severity": "moderate",
+     "prior_damage": false
+    }
+   ],
+   "note": ""
+  },
+  "P08": {
+   "usable": true,
+   "findings": [
+    {
+     "panel": "bonnet",
+     "action": "replace",
+     "severity": "severe",
+     "prior_damage": false
+    },
+    {
+     "panel": "front_bumper",
+     "action": "replace",
+     "severity": "severe",
+     "prior_damage": false
+    },
+    {
+     "panel": "grille",
+     "action": "replace",
+     "severity": "severe",
+     "prior_damage": false
+    },
+    {
+     "panel": "headlight_left",
+     "action": "replace",
+     "severity": "severe",
+     "prior_damage": false
+    },
+    {
+     "panel": "headlight_right",
+     "action": "replace",
+     "severity": "severe",
+     "prior_damage": false
+    },
+    {
+     "panel": "front_right_wing",
+     "action": "replace",
+     "severity": "severe",
+     "prior_damage": false
+    },
+    {
+     "panel": "wheel_front_right",
+     "action": "replace",
+     "severity": "severe",
+     "prior_damage": false
+    }
+   ],
+   "note": ""
+  },
+  "P09": {
+   "usable": true,
+   "findings": [
+    {
+     "panel": "front_left_wing",
+     "action": "repair",
+     "severity": "moderate",
+     "prior_damage": true
+    }
+   ],
+   "note": "Rust bubbling through the wing edge; it predates the policy start."
+  },
+  "P10": {
+   "usable": false,
+   "findings": [],
+   "note": "Low sun glare across the bonnet; the reported dent cannot be judged."
+  },
+  "P11": {
+   "usable": true,
+   "findings": [
+    {
+     "panel": "bonnet",
+     "action": "replace",
+     "severity": "severe",
+     "prior_damage": false
+    },
+    {
+     "panel": "front_bumper",
+     "action": "replace",
+     "severity": "severe",
+     "prior_damage": false
+    },
+    {
+     "panel": "grille",
+     "action": "replace",
+     "severity": "severe",
+     "prior_damage": false
+    },
+    {
+     "panel": "headlight_left",
+     "action": "replace",
+     "severity": "severe",
+     "prior_damage": false
+    },
+    {
+     "panel": "front_left_wing",
+     "action": "replace",
+     "severity": "severe",
+     "prior_damage": false
+    }
+   ],
+   "note": ""
+  },
+  "P12": {
+   "usable": true,
+   "findings": [
+    {
+     "panel": "bonnet",
+     "action": "replace",
+     "severity": "severe",
+     "prior_damage": false
+    },
+    {
+     "panel": "grille",
+     "action": "replace",
+     "severity": "severe",
+     "prior_damage": false
+    }
+   ],
+   "note": "A Dodge Stratus with a US government plate, not the insured Mercedes."
+  }
+ },
+ "claims": {
+  "SM-1041": {
+   "route": [],
+   "bill": 742.15
+  },
+  "SM-1042": {
+   "route": [],
+   "bill": 1317.92
+  },
+  "SM-1043": {
+   "route": [],
+   "bill": 1121.23
+  },
+  "SM-1044": {
+   "route": [],
+   "bill": 1096.27
+  },
+  "SM-1045": {
+   "route": [],
+   "bill": 934.13
+  },
+  "SM-1046": {
+   "route": [],
+   "bill": 1046.84
+  },
+  "SM-1047": {
+   "route": [
+    "total_loss"
+   ],
+   "decision": "Settle as a total loss: market value less the excess, salvage category S."
+  },
+  "SM-1048": {
+   "route": [
+    "prior_damage"
+   ],
+   "decision": "Decline: the rust on the wing predates the policy and is not accident damage."
+  },
+  "SM-1049": {
+   "route": [
+    "image_quality"
+   ],
+   "decision": "Ask the customer for two new photos of the bonnet, taken out of direct sun."
+  },
+  "SM-1050": {
+   "route": [
+    "photos_disagree"
+   ],
+   "decision": "Ask for photos of the insured Mercedes and refer the claim to counter-fraud."
+  }
+ }
+}

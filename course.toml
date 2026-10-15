@@ -222,7 +222,7 @@ owns = "vision extraction"
 job = "Estimate car repair cost from claim photos, as Tractable does for insurers"
 truth = "the repairer's final bill for each claim"
 metric = "share of estimates within tolerance of the bill"
-status = "planned"
+status = "ready"
 
 [[lab]]
 n = 19

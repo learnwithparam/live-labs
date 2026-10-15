@@ -36,7 +36,7 @@ print what the README promises.
 | 15 | [Build a Deep Research Agent with Subagents](labs/15-research-subagents) | Anthropic's multi-agent research system | ready |
 | 16 | Build a Voice AI Agent with Pipecat | SoundHound takes restaurant phone orders | planned |
 | 17 | Put a Voice AI Agent on a Phone Line | LiveKit behind ChatGPT voice | planned |
-| 18 | Assess Car Damage Photos with Vision LLMs | Tractable damage appraisal | planned |
+| 18 | [Assess Car Damage Photos with Vision LLMs](labs/18-vision-damage) | Tractable damage appraisal | ready |
 | 19 | Score Refund Risk with a Decision Model | Stripe Radar score, thresholds and review | planned |
 | 20 | Ship a Remote MCP Server with OAuth | Remote MCP servers from Linear, Sentry and Atlassian | planned |
 | 21 | Enforce Document Permissions in RAG with OpenFGA | Glean permission-aware search | planned |

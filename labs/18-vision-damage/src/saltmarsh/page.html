@@ -1,0 +1,355 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="icon" href="data:,">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Saltmarsh Photo Estimator</title>
+<style>
+:root {
+  --paper: #FAFAFA; --card: #FFFFFF; --ink: #151515; --ink-2: #414141; --muted: #606060; --faint: #808080;
+  --line: #DFDFDF; --accent: #FAFF69; --accent-deep: #4F5101; --fill-dark: #1F1F1C;
+  --pass: #008138; --fail: #BF000F; --wait: #B75000;
+  --sans: Inter, Helvetica, Arial, sans-serif; --mono: Inconsolata, "Courier New", Courier, monospace;
+}
+* { box-sizing: border-box }
+html, body { margin: 0 }
+body { background: var(--paper); color: var(--ink); font: 15px/1.5 var(--sans); min-height: 100vh }
+button { font: inherit; cursor: pointer }
+button:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px }
+h1, h2, h3 { margin: 0; letter-spacing: -0.01em }
+.num { font-family: var(--mono); font-variant-numeric: tabular-nums }
+
+/* The insurer's claims system: a dark bar with the queue's run controls. */
+.bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 20px; padding: 12px 24px; background: var(--fill-dark); color: var(--paper) }
+.bar .brand { font-weight: 800; font-size: 17px; letter-spacing: -0.02em }
+.bar .brand small { font-weight: 500; color: var(--line); margin-left: 8px; font-size: 14px }
+.bar .model { color: var(--line); font-size: 13px; margin-left: auto }
+.bar .go { border: 0; background: var(--accent); color: var(--ink); font-weight: 700; border-radius: 8px; padding: 7px 14px }
+.bar .go:disabled { opacity: 0.6; cursor: wait }
+
+/* The day's tally: what paid out on the estimate and what a person has to look at. */
+.tally { display: flex; flex-wrap: wrap; gap: 0; border-bottom: 1px solid var(--line); background: var(--card) }
+.tally div { padding: 12px 24px; border-right: 1px solid var(--line); min-width: 9rem }
+.tally b { display: block; font-size: 24px; line-height: 1.1; font-family: var(--mono) }
+.tally span { color: var(--muted); font-size: 13px }
+.tally .human b { color: var(--wait) }
+.tally .auto b { color: var(--pass) }
+.tally .naive b { color: var(--fail) }
+.error { margin: 12px 24px 0; padding: 10px 14px; border-left: 4px solid var(--fail); background: var(--card) }
+
+.bench { display: grid; grid-template-columns: 15rem minmax(0, 1fr) minmax(19rem, 23rem); align-items: start }
+
+/* The queue: one row per claim, coloured by where it went. */
+.queue { list-style: none; margin: 0; padding: 12px; border-right: 1px solid var(--line); min-height: calc(100vh - 140px) }
+.queue button { width: 100%; text-align: left; border: 1px solid transparent; background: transparent; border-radius: 8px; padding: 8px 10px; display: grid; gap: 1px }
+.queue button[aria-current="true"] { background: var(--card); border-color: var(--ink) }
+.queue .id { font-family: var(--mono); font-weight: 700 }
+.queue .car { color: var(--muted); font-size: 13px }
+.chip { justify-self: start; font-size: 12px; font-weight: 700; border-radius: 4px; padding: 0 6px; margin-top: 2px }
+.chip.auto { color: var(--pass); border: 1px solid var(--pass) }
+.chip.adjuster { color: var(--card); background: var(--wait) }
+.chip.decided { color: var(--ink); background: var(--accent) }
+.chip.none { color: var(--muted); border: 1px solid var(--line) }
+
+/* The photos the customer sent, with each damaged panel boxed where the model saw it. */
+.photos { padding: 18px 22px }
+.photos h1 { font-size: 22px }
+.photos .meta { color: var(--muted); margin: 2px 0 10px }
+.account { margin: 0 0 14px; padding: 10px 14px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; color: var(--ink-2) }
+.account b { color: var(--ink) }
+.shots { display: grid; gap: 14px }
+figure { margin: 0; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden }
+.frame { position: relative }
+.frame img { display: block; width: 100%; height: auto }
+.box { position: absolute; border: 3px solid var(--accent); box-shadow: 0 0 0 1px var(--fill-dark); transform-origin: top left; animation: draw 0.5s ease-out both }
+.box.old { border-style: dashed; border-color: var(--wait) }
+.box span { position: absolute; left: -3px; top: -24px; white-space: nowrap; font-size: 12px; font-weight: 700; padding: 1px 6px; background: var(--fill-dark); color: var(--accent) }
+.box.old span { color: var(--card); background: var(--wait) }
+@keyframes draw { from { opacity: 0; transform: scale(0.6) } to { opacity: 1; transform: scale(1) } }
+@media (prefers-reduced-motion: reduce) { .box { animation: none } }
+.unusable { position: absolute; inset: auto 0 0 0; padding: 8px 12px; background: var(--fail); color: var(--card); font-weight: 600 }
+figcaption { padding: 8px 12px; font-size: 13px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 4px 14px }
+figcaption b { color: var(--ink) }
+
+/* The estimate and the routing decision: what the adjuster signs off. */
+.desk { padding: 18px 20px; border-left: 1px solid var(--line); background: var(--card); min-height: calc(100vh - 140px) }
+.desk h2 { font-size: 15px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); margin: 0 0 8px }
+table { width: 100%; border-collapse: collapse; font-size: 14px }
+td, th { padding: 6px 4px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top }
+th { font-size: 12px; color: var(--muted); font-weight: 600 }
+td.money, th.money { text-align: right; font-family: var(--mono); white-space: nowrap }
+td small { display: block; color: var(--muted) }
+tfoot td { border-bottom: 0; font-weight: 700 }
+.versus { margin: 10px 0 18px; font-size: 14px; color: var(--ink-2) }
+.versus .close { color: var(--pass); font-weight: 700 }
+.versus .far { color: var(--fail); font-weight: 700 }
+.verdict { border-radius: 8px; padding: 12px 14px; margin-bottom: 14px }
+.verdict.auto { border: 2px solid var(--pass) }
+.verdict.adjuster { border: 2px solid var(--wait) }
+.verdict h3 { font-size: 16px; margin-bottom: 6px }
+.reasons { margin: 0; padding-left: 18px }
+.reasons li { margin: 4px 0 }
+.reasons b { font-family: var(--mono); font-size: 13px }
+.choices { display: grid; grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr)); gap: 6px; margin-top: 10px }
+.choices button { border: 1px solid var(--ink); background: var(--card); border-radius: 6px; padding: 7px 8px; text-align: left; font-size: 14px }
+.choices button[aria-pressed="true"] { background: var(--accent); font-weight: 700 }
+.decided { margin-top: 10px; font-weight: 600 }
+.empty { color: var(--muted) }
+
+@media (max-width: 1100px) {
+  .bench { grid-template-columns: minmax(0, 1fr) }
+  .queue { display: flex; gap: 6px; overflow-x: auto; min-height: 0; border-right: 0; border-bottom: 1px solid var(--line) }
+  .queue li { flex: 0 0 9.5rem }
+  .desk { border-left: 0; border-top: 1px solid var(--line); min-height: 0 }
+}
+@media (max-width: 600px) {
+  .bar, .photos, .desk { padding-left: 16px; padding-right: 16px }
+  .tally div { flex: 1 1 50%; padding: 10px 16px; min-width: 0 }
+  .bar .model { margin-left: 0; flex-basis: 100% }
+}
+</style>
+</head>
+<body data-surface="claim photo estimator">
+<header class="bar">
+  <div class="brand">Saltmarsh Mutual<small>Motor claims · photo estimator</small></div>
+  <span class="model" id="model"></span>
+  <button class="go" id="go" type="button">Assess the queue</button>
+</header>
+<section class="tally" id="tally" aria-label="Today's queue"></section>
+<div id="error"></div>
+<main class="bench">
+  <ul class="queue" id="queue" aria-label="Claims"></ul>
+  <section class="photos" id="photos" aria-live="polite"></section>
+  <aside class="desk" id="desk"></aside>
+</main>
+<script>
+const $ = (selector) => document.querySelector(selector);
+const CHOICES = {
+  approve: "Pay the estimate",
+  new_photos: "Ask for new photos",
+  total_loss: "Settle as total loss",
+  decline: "Decline the claim",
+  counter_fraud: "Refer to counter-fraud",
+};
+let state = null;
+let current = location.hash.slice(1) || null;
+let polling = null;
+
+function make(tag, className, text) {
+  const node = document.createElement(tag);
+  if (className) node.className = className;
+  // Model text goes in as text, never as markup: a reading is untrusted input.
+  if (text !== undefined) node.textContent = text;
+  return node;
+}
+function pounds(amount) {
+  return amount === null || amount === undefined ? "none" : "£" + amount.toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+function words(name) { return name.replaceAll("_", " "); }
+function resultFor(claimId) { return state.run ? state.run.results.find((result) => result.claim === claimId) : null; }
+
+async function load() {
+  const response = await fetch("/api/state", { signal: AbortSignal.timeout(10000) });
+  state = await response.json();
+  if (!current || !state.claims.some((claim) => claim.id === current)) {
+    const waiting = state.run && state.run.results.find((result) => result.route.to === "adjuster" && !state.decisions[result.claim]);
+    current = waiting ? waiting.claim : state.claims[0].id;
+  }
+  render();
+  if (state.status.running && !polling) polling = setInterval(load, 1500);
+  if (!state.status.running && polling) { clearInterval(polling); polling = null; }
+}
+
+function render() {
+  const running = state.status.running;
+  $("#go").disabled = running;
+  $("#go").textContent = running ? "Reading photos…" : "Assess the queue";
+  $("#model").textContent = state.run ? `${state.run.model} · ${state.run.usage.prompt_tokens.toLocaleString()} tokens · $${state.run.usage.cost.toFixed(4)} for the queue` : "No run yet";
+  $("#error").replaceChildren();
+  if (state.status.error) $("#error").append(make("p", "error", state.status.error));
+  renderTally();
+  renderQueue();
+  renderPhotos();
+  renderDesk();
+}
+
+function tile(className, figure, label) {
+  const box = make("div", className);
+  box.append(make("b", "", figure), make("span", "", label));
+  return box;
+}
+function renderTally() {
+  const tally = $("#tally");
+  tally.replaceChildren();
+  if (!state.run) return tally.append(tile("", "–", "Run the queue to read the photos"));
+  const score = state.run.score;
+  tally.append(
+    tile("auto", String(score.auto), "auto-approved"),
+    tile("human", String(score.adjuster), "sent to an adjuster"),
+    tile("", `${score.within_tolerance} of ${score.billed}`, "estimates within 20% of the bill"),
+    tile("", `${score.panels.right} of ${score.panels.confirmed}`, "confirmed panels found"),
+  );
+  if (state.naive) tally.append(tile("naive", `${state.naive.within_tolerance} of ${state.naive.billed}`, "free-text estimates within 20%"));
+}
+
+function renderQueue() {
+  const queue = $("#queue");
+  queue.replaceChildren();
+  for (const claim of state.claims) {
+    const result = resultFor(claim.id);
+    const decision = state.decisions[claim.id];
+    const row = make("li");
+    const button = make("button");
+    button.type = "button";
+    button.setAttribute("aria-current", String(claim.id === current));
+    button.append(make("span", "id", claim.id), make("span", "car", `${claim.vehicle.make} ${claim.vehicle.model}`));
+    if (!result) button.append(make("span", "chip none", "not read"));
+    else if (decision) button.append(make("span", "chip decided", CHOICES[decision]));
+    else button.append(make("span", `chip ${result.route.to}`, result.route.to === "auto" ? "auto-approved" : "with adjuster"));
+    button.addEventListener("click", () => { current = claim.id; history.replaceState(null, "", "#" + claim.id); render(); });
+    row.append(button);
+    queue.append(row);
+    // On a phone the queue is a sideways strip; keep the open claim in view.
+    if (claim.id === current) queue.scrollLeft = Math.max(0, row.offsetLeft - 12);
+  }
+}
+
+function renderPhotos() {
+  const claim = state.claims.find((each) => each.id === current);
+  const result = resultFor(claim.id);
+  const panel = $("#photos");
+  const vehicle = claim.vehicle;
+  const account = make("p", "account");
+  account.append(make("b", "", `${claim.policyholder}, ${claim.reported}: `), document.createTextNode(claim.account));
+  panel.replaceChildren(
+    make("h1", "", claim.id),
+    make("p", "meta", `${vehicle.year} ${vehicle.make} ${vehicle.model} · ${vehicle.colour} · ${vehicle.reg} · market value ${pounds(vehicle.value)}`),
+    account,
+  );
+  const shots = make("div", "shots");
+  for (const photoId of claim.photos) {
+    const reading = result ? result.readings.find((each) => each.photo === photoId) : null;
+    const figure = make("figure");
+    const frame = make("div", "frame");
+    const image = make("img");
+    image.src = `/photos/${photoId}.jpg`;
+    image.alt = `Customer photo ${photoId} of the ${vehicle.make}`;
+    frame.append(image);
+    for (const finding of reading ? reading.findings : []) {
+      if (!finding.box) continue;
+      const [left, top, right, bottom] = finding.box;
+      const box = make("div", finding.prior_damage ? "box old" : "box");
+      Object.assign(box.style, { left: left / 10 + "%", top: top / 10 + "%", width: (right - left) / 10 + "%", height: (bottom - top) / 10 + "%" });
+      box.append(make("span", "", `${words(finding.panel)} · ${finding.action}${finding.prior_damage ? " · old" : ""}`));
+      frame.append(box);
+    }
+    if (reading && !reading.usable) frame.append(make("div", "unusable", reading.quality_problem || "Photo cannot show the damage"));
+    const caption = make("figcaption");
+    caption.append(make("b", "", photoId));
+    if (reading) caption.append(make("span", "", `seen as ${reading.vehicle.colour} ${reading.vehicle.make}, ${reading.vehicle.view}`), make("span", "", `${reading.findings.length} damaged panels`));
+    else caption.append(make("span", "", "not read yet"));
+    figure.append(frame, caption);
+    shots.append(figure);
+  }
+  panel.append(shots);
+}
+
+function renderDesk() {
+  const claim = state.claims.find((each) => each.id === current);
+  const result = resultFor(claim.id);
+  const desk = $("#desk");
+  desk.replaceChildren();
+  if (!result) return desk.append(make("p", "empty", "Assess the queue to read this claim's photos."));
+  desk.append(renderVerdict(claim, result), make("h2", "", "Estimate"), renderEstimate(result.estimate));
+  const bill = state.bills[claim.id];
+  const versus = make("p", "versus");
+  if (bill) {
+    const gap = (result.estimate.total - bill) / bill;
+    const close = Math.abs(gap) <= 0.2;
+    versus.append(document.createTextNode(`Repairer's bill ${pounds(bill)}: `),
+      make("span", close ? "close" : "far", `${gap >= 0 ? "+" : ""}${Math.round(gap * 100)}%, ${close ? "within" : "outside"} 20%`));
+  } else {
+    versus.textContent = `${Math.round(result.estimate.share_of_value * 100)}% of the car's value. No repair bill: an adjuster settled this claim.`;
+  }
+  desk.append(versus);
+  if (claim.photos.length > 1) {
+    desk.append(make("h2", "", "Same car in every photo?"),
+      make("p", "", `${result.vehicle_check.same_vehicle ? "Yes" : "No"}. ${result.vehicle_check.reason}`));
+  }
+}
+
+function renderVerdict(claim, result) {
+  const verdict = make("div", `verdict ${result.route.to}`);
+  if (result.route.to === "auto") {
+    verdict.append(make("h3", "", "Auto-approved"), make("p", "", "Every photo is usable, the damage is new, and the repair is worth doing."));
+    return verdict;
+  }
+  verdict.append(make("h3", "", "Sent to an adjuster"));
+  const reasons = make("ul", "reasons");
+  for (const reason of result.route.reasons) {
+    const item = make("li");
+    item.append(make("b", "", reason.code), document.createTextNode(` ${reason.detail}${reason.photo ? ` (${reason.photo})` : ""}`));
+    reasons.append(item);
+  }
+  verdict.append(reasons);
+  const decision = state.decisions[claim.id];
+  const choices = make("div", "choices");
+  for (const [code, label] of Object.entries(CHOICES)) {
+    const button = make("button", "", label);
+    button.type = "button";
+    button.setAttribute("aria-pressed", String(decision === code));
+    button.addEventListener("click", () => decide(claim.id, code));
+    choices.append(button);
+  }
+  verdict.append(choices);
+  if (decision) verdict.append(make("p", "decided", `Adjuster's decision: ${CHOICES[decision]}.`));
+  return verdict;
+}
+
+function renderEstimate(estimate) {
+  const table = make("table");
+  const head = make("tr");
+  head.append(make("th", "", "Panel"), make("th", "money", "Parts"), make("th", "money", "Labour + paint"), make("th", "money", "Line"));
+  const tableHead = make("thead");
+  tableHead.append(head);
+  table.append(tableHead);
+  const body = make("tbody");
+  if (!estimate.lines.length) {
+    const row = make("tr");
+    const cell = make("td", "empty", "Nothing priced: no new damage the policy covers.");
+    cell.colSpan = 4;
+    row.append(cell);
+    body.append(row);
+  }
+  for (const line of estimate.lines) {
+    const row = make("tr");
+    const panelCell = make("td", "", words(line.panel));
+    panelCell.append(make("small", "", `${line.action}, ${line.severity}${line.overridden ? " (always replaced)" : ""}`));
+    row.append(panelCell, make("td", "money", pounds(line.parts)), make("td", "money", pounds(line.labour + line.paint)), make("td", "money", pounds(line.total)));
+    body.append(row);
+  }
+  const foot = make("tfoot");
+  const total = make("tr");
+  const label = make("td", "", "Estimate");
+  label.colSpan = 3;
+  total.append(label, make("td", "money", pounds(estimate.total)));
+  foot.append(total);
+  table.append(body, foot);
+  return table;
+}
+
+async function decide(claimId, decision) {
+  const response = await fetch("/api/decide", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ claim: claimId, decision }), signal: AbortSignal.timeout(10000) });
+  if (response.ok) state.decisions = await response.json();
+  render();
+}
+
+$("#go").addEventListener("click", async () => {
+  await fetch("/api/run", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}", signal: AbortSignal.timeout(10000) });
+  load();
+});
+load();
+</script>
+</body>
+</html>
