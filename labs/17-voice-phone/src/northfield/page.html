@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="icon" href="data:,">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Northfield Call Wallboard</title>
+<style>
+:root {
+  --paper: #FAFAFA; --card: #FFFFFF; --ink: #151515; --ink-2: #414141; --muted: #606060; --faint: #808080;
+  --line: #DFDFDF; --accent: #FAFF69; --accent-deep: #4F5101; --fill-dark: #1F1F1C;
+  --pass: #008138; --fail: #BF000F; --wait: #B75000;
+  --sans: Inter, Helvetica, Arial, sans-serif; --mono: Inconsolata, "Courier New", Courier, monospace;
+}
+* { box-sizing: border-box }
+html, body { margin: 0 }
+body { background: var(--paper); color: var(--ink); font: 15px/1.5 var(--sans); min-height: 100vh }
+button { font: inherit; cursor: pointer }
+button:focus-visible { outline: 3px solid var(--accent-deep); outline-offset: 2px }
+h1, h2, h3 { margin: 0; letter-spacing: -0.01em }
+
+/* A contact-centre wallboard: the dark band is what the office reads from across the room. */
+.board { background: var(--fill-dark); color: var(--paper); padding: 14px 28px 20px }
+.board-top { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 20px }
+.brand { font-weight: 800; font-size: 18px; letter-spacing: -0.02em }
+.brand small { display: block; font-weight: 500; font-size: 13px; color: var(--line); letter-spacing: 0 }
+.run-note { color: var(--line); font-size: 13px; margin-left: auto }
+.ring { border: 0; background: var(--accent); color: var(--ink); font-weight: 700; border-radius: 8px; padding: 8px 16px }
+.ring:disabled { opacity: 0.6; cursor: wait }
+.counters { display: grid; grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr)); gap: 10px; margin-top: 16px }
+.counter { border: 1px solid var(--ink-2); border-radius: 10px; padding: 10px 14px }
+.counter .figure { font: 700 34px/1.1 var(--sans); letter-spacing: -0.02em; font-variant-numeric: tabular-nums }
+.counter .figure small { font-size: 16px; font-weight: 500; color: var(--line) }
+.counter .label { color: var(--line); font-size: 13px }
+.counter.lead { background: var(--accent); color: var(--ink); border-color: var(--accent) }
+.counter.lead .label, .counter.lead .figure small { color: var(--ink-2) }
+
+/* Three working columns: the lines, the call being read, and the queue a person works from. */
+.floor { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr) 19.5rem; align-items: start }
+.floor > section { padding: 18px 22px 40px; min-width: 0 }
+.floor > section + section { border-left: 1px solid var(--line) }
+.column-title { font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin-bottom: 10px }
+
+.line-row { display: flex; gap: 12px; width: 100%; text-align: left; background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; color: var(--ink) }
+.line-row[aria-pressed="true"] { border-color: var(--ink); box-shadow: inset 4px 0 0 var(--accent-deep) }
+.lamp { flex: none; width: 12px; height: 12px; border-radius: 50%; margin-top: 5px; background: var(--faint) }
+.lamp.live { background: var(--wait) }
+.lamp.reached { background: var(--pass) }
+.lamp.missed { background: var(--fail) }
+.line-main { flex: 1; min-width: 0 }
+.line-head { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline }
+.line-head b { font-size: 15px }
+.number { font-family: var(--mono); color: var(--muted); font-size: 14px }
+.situation { color: var(--ink-2); font-size: 14px; margin: 2px 0 0 }
+.verdict { font-size: 13px; color: var(--muted); margin-top: 4px }
+.chip { display: inline-block; border-radius: 999px; padding: 1px 9px; font-size: 12px; font-weight: 600; border: 1px solid currentColor }
+.chip.pass { color: var(--pass) }
+.chip.fail { color: var(--fail) }
+.chip.wait { color: var(--wait) }
+.chip.plain { color: var(--ink-2) }
+.line-side { flex: none; text-align: right; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums }
+
+/* The live lamp pulses like a ringing handset; it holds still for anyone who asks for less motion. */
+@keyframes ringing { 0% { box-shadow: 0 0 0 0 rgba(183, 80, 0, 0.55) } 100% { box-shadow: 0 0 0 9px rgba(183, 80, 0, 0) } }
+.lamp.live { animation: ringing 1.1s ease-out infinite }
+@media (prefers-reduced-motion: reduce) { .lamp.live { animation: none } }
+
+.call-head h2 { font-size: 20px }
+.call-head p { margin: 2px 0 12px; color: var(--ink-2); font-size: 14px }
+.turn { margin: 0 0 10px; max-width: 34rem }
+.turn .who { font-size: 12px; color: var(--muted); display: flex; gap: 8px; flex-wrap: wrap }
+.turn .said { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; margin-top: 2px }
+.turn.agent .said { background: var(--fill-dark); color: var(--paper); border-color: var(--fill-dark) }
+.turn.caller { margin-left: auto }
+.timing { font-family: var(--mono); color: var(--ink-2) }
+.book-changes { margin-top: 16px; border-top: 1px solid var(--line); padding-top: 12px }
+.book-changes h3 { font-size: 14px; margin-bottom: 6px }
+.tool { font-family: var(--mono); font-size: 13px; color: var(--ink-2); margin: 0 0 4px; overflow-wrap: anywhere }
+.tool b { color: var(--ink) }
+.empty { color: var(--muted); font-size: 14px }
+
+.handoff { background: var(--card); border: 1px solid var(--line); border-left: 4px solid var(--wait); border-radius: 10px; padding: 12px; margin-bottom: 12px }
+.handoff.safety { border-left-color: var(--fail) }
+.handoff h3 { font-size: 15px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap }
+.handoff .summary { margin: 6px 0 10px; font-size: 14px; color: var(--ink-2) }
+.choices { display: flex; flex-wrap: wrap; gap: 6px }
+.choices button { border: 1px solid var(--line); background: var(--paper); border-radius: 7px; padding: 4px 9px; font-size: 13px; color: var(--ink) }
+.choices button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent-deep); font-weight: 600 }
+.decided { font-size: 13px; color: var(--pass); margin-top: 8px; font-weight: 600 }
+.error { color: var(--fail); font-weight: 600 }
+
+@media (max-width: 1100px) {
+  .floor { grid-template-columns: minmax(0, 1fr) }
+  .floor > section + section { border-left: 0; border-top: 1px solid var(--line) }
+}
+@media (max-width: 600px) {
+  .board, .floor > section { padding-left: 16px; padding-right: 16px }
+  .counter .figure { font-size: 28px }
+  .run-note { margin-left: 0; width: 100% }
+}
+</style>
+</head>
+<body data-surface="inbound call wallboard">
+<header class="board">
+  <div class="board-top">
+    <div class="brand" id="brand">Northfield Heating &amp; Air<small id="line-number">Inbound line</small></div>
+    <span class="run-note" id="run-note">Loading the last review.</span>
+    <button class="ring" id="ring" type="button">Ring 10 test calls</button>
+  </div>
+  <div class="counters" id="counters"></div>
+</header>
+<main class="floor">
+  <section aria-labelledby="lines-title">
+    <h2 class="column-title" id="lines-title">Lines</h2>
+    <div id="lines"></div>
+  </section>
+  <section aria-live="polite" id="call"></section>
+  <section aria-labelledby="queue-title">
+    <h2 class="column-title" id="queue-title">Sent to a person</h2>
+    <div id="queue"></div>
+  </section>
+</main>
+<script>
+const $ = (selector) => document.querySelector(selector);
+const REASONS = { safety: "Safety", billing: "Billing", caller_asked: "Caller asked", other: "Other" };
+const OUTCOMES = { booked: "Book a visit", moved: "Move a visit", cancelled: "Cancel a visit", transferred: "Reach a person",
+  answered: "Get an answer", declined: "Hear a polite no" };
+let state = null;
+let selected = null;
+let polling = null;
+
+function make(tag, className, text) {
+  const node = document.createElement(tag);
+  if (className) node.className = className;
+  if (text !== undefined) node.textContent = text;
+  return node;
+}
+
+function phone(number) {
+  const digits = (number || "").replace(/\D/g, "").slice(-10);
+  return digits.length === 10 ? `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}` : number;
+}
+
+// A call on the board is the saved verdict, overlaid with the live status file while a run is going.
+function boardCalls() {
+  const saved = state.review ? state.review.calls : [];
+  const byId = new Map(saved.map((call) => [call.id, { ...call }]));
+  for (const live of state.live) {
+    const known = byId.get(live.call) || { id: live.call, caller: live.call, number: live.number, situation: "" };
+    byId.set(live.call, { ...known, live, turns: live.turns, tools: live.tools });
+  }
+  return [...byId.values()].sort((first, second) => first.id.localeCompare(second.id));
+}
+
+function isRunning() { return Boolean(state.run && !state.run.done); }
+
+function renderCounters(calls) {
+  const score = state.review ? state.review.score : null;
+  const counters = $("#counters");
+  counters.replaceChildren();
+  const answerDelays = calls.flatMap((call) => (call.turns || []).map((turn) => turn.e2e_latency).filter((delay) => delay !== undefined));
+  const meanDelay = answerDelays.length ? answerDelays.reduce((total, delay) => total + delay, 0) / answerDelays.length : null;
+  const entries = [
+    ["lead", score ? String(score.reached) : "–", score ? ` of ${score.calls}` : "", "calls reached their outcome"],
+    ["", score ? String(score.resolved_without_person) : "–", "", "resolved without a person"],
+    ["", score ? String(score.transfers.length) : "–", "", "sent to a person, with a reason"],
+    ["", score ? String(score.talked_over) : "–", "", "times the agent talked over a caller"],
+    ["", meanDelay === null ? "–" : meanDelay.toFixed(1), meanDelay === null ? "" : " s", "average wait for an answer"],
+    ["", score ? "$" + score.cost.toFixed(4) : "–", "", state.review ? `model cost, ${state.review.model}` : "model cost"],
+  ];
+  for (const [kind, figure, unit, label] of entries) {
+    const counter = make("div", "counter " + kind);
+    const number = make("div", "figure", figure);
+    if (unit) number.append(make("small", "", unit));
+    counter.append(number, make("div", "label", label));
+    counters.append(counter);
+  }
+}
+
+function lampOf(call) {
+  if (call.live && !call.live.ended) return "live";
+  if (call.reached === undefined) return "";
+  return call.reached ? "reached" : "missed";
+}
+
+function renderLines(calls) {
+  const lines = $("#lines");
+  lines.replaceChildren();
+  if (!calls.length) lines.append(make("p", "empty", "No calls yet. Ring the test calls to fill the board."));
+  for (const call of calls) {
+    const row = make("button", "line-row");
+    row.type = "button";
+    row.setAttribute("aria-pressed", String(call.id === selected));
+    row.addEventListener("click", () => { selected = call.id; render(); });
+    const main = make("div", "line-main");
+    const head = make("div", "line-head");
+    head.append(make("b", "", call.caller), make("span", "number", phone(call.number)));
+    main.append(head, make("p", "situation", call.situation));
+    const verdict = make("div", "verdict");
+    if (call.live && !call.live.ended) {
+      verdict.append(make("span", "chip wait", "On the line: agent " + call.live.agent));
+    } else if (call.reached !== undefined) {
+      const goal = OUTCOMES[call.expect.outcome] || call.expect.outcome;
+      verdict.append(make("span", "chip " + (call.reached ? "pass" : "fail"), (call.reached ? "Reached: " : "Missed: ") + goal), " " + call.why);
+    }
+    main.append(verdict);
+    const side = make("div", "line-side");
+    side.append(make("div", "", call.id), make("div", "", ((call.live ? call.live.seconds : call.seconds) || 0).toFixed(0) + " s"));
+    row.append(make("span", "lamp " + lampOf(call)), main, side);
+    lines.append(row);
+  }
+}
+
+function timingOf(turn) {
+  if (turn.e2e_latency !== undefined) return `answered in ${turn.e2e_latency.toFixed(1)} s`;
+  if (turn.end_of_turn_delay !== undefined) return `turn ended ${turn.end_of_turn_delay.toFixed(1)} s after they stopped`;
+  return "";
+}
+
+function renderCall(calls) {
+  const panel = $("#call");
+  panel.replaceChildren();
+  const call = calls.find((candidate) => candidate.id === selected);
+  if (!call) {
+    panel.append(make("h2", "column-title", "Call"), make("p", "empty", "Pick a line to read the call."));
+    return;
+  }
+  const head = make("div", "call-head");
+  head.append(make("h2", "", `${call.caller}, ${call.id}`), make("p", "", call.situation));
+  panel.append(make("h2", "column-title", "Transcript"), head);
+  for (const turn of call.turns || []) {
+    const bubble = make("div", "turn " + turn.who);
+    const who = make("div", "who");
+    who.append(make("span", "", (turn.who === "agent" ? "Agent" : "Caller") + " at " + turn.at.toFixed(0) + " s"));
+    const timing = timingOf(turn);
+    if (timing) who.append(make("span", "timing", timing));
+    bubble.append(who, make("div", "said", turn.text));
+    panel.append(bubble);
+  }
+  const changes = make("div", "book-changes");
+  changes.append(make("h3", "", "What the agent did in the booking system"));
+  const tools = (call.tools || []).filter((tool) => tool.name !== "find_windows");
+  if (!tools.length) changes.append(make("p", "empty", "Nothing changed in the book."));
+  for (const tool of tools) {
+    const line = make("p", "tool");
+    const outcome = tool.result.ok ? "done" : "refused: " + tool.result.reason;
+    line.append(make("b", "", tool.name), " " + JSON.stringify(tool.arguments) + " " + outcome);
+    changes.append(line);
+  }
+  panel.append(changes);
+}
+
+async function decide(callId, decision) {
+  const response = await fetch("/api/decide", { method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ call: callId, decision }), signal: AbortSignal.timeout(10000) });
+  if (response.ok) state.decisions = await response.json();
+  render();
+}
+
+function renderQueue(calls) {
+  const queue = $("#queue");
+  queue.replaceChildren();
+  const handed = calls.filter((call) => call.transfer);
+  if (!handed.length) queue.append(make("p", "empty", "No call has gone to a person."));
+  for (const call of handed) {
+    const card = make("article", "handoff " + call.transfer.reason);
+    const title = make("h3", "", call.caller);
+    title.append(make("span", "chip " + (call.transfer.reason === "safety" ? "fail" : "wait"), REASONS[call.transfer.reason] || call.transfer.reason));
+    card.append(title, make("p", "number", phone(call.number) + " · " + call.id), make("p", "summary", call.transfer.summary));
+    const choices = make("div", "choices");
+    for (const [key, label] of Object.entries(state.choices)) {
+      const choice = make("button", "", label);
+      choice.type = "button";
+      choice.setAttribute("aria-pressed", String(state.decisions[call.id] === key));
+      choice.addEventListener("click", () => decide(call.id, key));
+      choices.append(choice);
+    }
+    card.append(choices);
+    if (state.decisions[call.id]) card.append(make("p", "decided", "Decided: " + state.choices[state.decisions[call.id]]));
+    queue.append(card);
+  }
+}
+
+function renderBoard() {
+  $("#line-number").textContent = "Inbound line " + phone(state.line) + ", answered by a LiveKit voice agent";
+  const note = $("#run-note");
+  note.className = "run-note";
+  if (state.run && state.run.error) {
+    note.className = "run-note error";
+    note.textContent = state.run.error;
+  } else if (isRunning()) {
+    note.textContent = `Ringing test calls: ${state.run.ringing.length} of 10 started.`;
+  } else if (state.review) {
+    note.textContent = `Last review: ${state.review.calls.length} scripted callers on ${state.review.model}, $${state.review.score.cost.toFixed(4)} in model tokens.`;
+  } else {
+    note.textContent = "No review yet.";
+  }
+  $("#ring").disabled = isRunning();
+}
+
+function render() {
+  const calls = boardCalls();
+  if (!selected && calls.length) selected = (calls.find((call) => call.transfer) || calls[0]).id;
+  renderBoard();
+  renderCounters(calls);
+  renderLines(calls);
+  renderCall(calls);
+  renderQueue(calls);
+}
+
+async function load() {
+  state = await (await fetch("/api/state", { signal: AbortSignal.timeout(10000) })).json();
+  render();
+  if (isRunning() && !polling) polling = setInterval(load, 1000);
+  if (!isRunning() && polling) { clearInterval(polling); polling = null; }
+}
+
+$("#ring").addEventListener("click", async () => {
+  $("#ring").disabled = true;
+  await fetch("/api/run", { method: "POST", signal: AbortSignal.timeout(10000) });
+  await load();
+});
+
+load();
+</script>
+</body>
+</html>

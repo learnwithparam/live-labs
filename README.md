@@ -35,7 +35,7 @@ print what the README promises.
 | 14 | [Give AI Agents Long-Term Memory with Mem0](labs/14-agent-memory) | ChatGPT memory and its controls | ready |
 | 15 | [Build a Deep Research Agent with Subagents](labs/15-research-subagents) | Anthropic's multi-agent research system | ready |
 | 16 | Build a Voice AI Agent with Pipecat | SoundHound takes restaurant phone orders | planned |
-| 17 | Put a Voice AI Agent on a Phone Line | LiveKit behind ChatGPT voice | planned |
+| 17 | [Put a Voice AI Agent on a Phone Line](labs/17-voice-phone) | LiveKit behind ChatGPT voice | ready |
 | 18 | [Assess Car Damage Photos with Vision LLMs](labs/18-vision-damage) | Tractable damage appraisal | ready |
 | 19 | [Score Refund Risk with a Decision Model](labs/19-decision-ai) | Stripe Radar score, thresholds and review | ready |
 | 20 | [Ship a Remote MCP Server with OAuth](labs/20-remote-mcp-oauth) | Remote MCP servers from Linear, Sentry and Atlassian | ready |

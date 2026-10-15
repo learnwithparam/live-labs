@@ -1,0 +1,365 @@
+[
+ {
+  "id": "NF-01",
+  "caller": "Dana Whitfield",
+  "number": "+16145550134",
+  "voice": "af_bella",
+  "situation": "Member. Furnace runs but blows cold air; wants Thursday morning.",
+  "lines": [
+   {
+    "say": "Hi. My furnace is running, but it's only blowing cold air. Could someone come out on Thursday morning?"
+   },
+   {
+    "say": "Yes, please book it.",
+    "when": [
+     "book",
+     "confirm",
+     "shall",
+     "would you like",
+     "correct",
+     "right",
+     "okay"
+    ]
+   },
+   {
+    "say": "No, that's everything. Thank you, bye.",
+    "when": [
+     "anything else",
+     "else",
+     "booked",
+     "all set",
+     "see you"
+    ]
+   }
+  ],
+  "expect": {
+   "outcome": "booked",
+   "kind": "repair",
+   "window": "THU-AM"
+  }
+ },
+ {
+  "id": "NF-02",
+  "caller": "Sandra Lee",
+  "number": "+16145550101",
+  "voice": "af_nicole",
+  "situation": "Member. Yearly tune-up; Tuesday afternoon is full, so Wednesday afternoon.",
+  "lines": [
+   {
+    "say": "Hi, it's Sandra Lee. I'd like to book my yearly furnace tune-up. Tuesday afternoon if you have it, otherwise Wednesday afternoon."
+   },
+   {
+    "say": "Wednesday afternoon is fine. Please book it.",
+    "when": [
+     "book",
+     "confirm",
+     "shall",
+     "would you like",
+     "wednesday",
+     "instead",
+     "full",
+     "correct"
+    ]
+   },
+   {
+    "say": "That's all. Thanks so much, goodbye.",
+    "when": [
+     "anything else",
+     "else",
+     "booked",
+     "all set",
+     "see you"
+    ]
+   }
+  ],
+  "expect": {
+   "outcome": "booked",
+   "kind": "tune-up",
+   "window": "WED-PM"
+  }
+ },
+ {
+  "id": "NF-03",
+  "caller": "Marcus Bell",
+  "number": "+16145550178",
+  "voice": "am_michael",
+  "situation": "Has tune-up V-2041 on Wednesday morning; moves it to Friday morning.",
+  "lines": [
+   {
+    "say": "Hey, I have a tune-up booked for Wednesday morning, but I'll be at work. Can you move it to Friday morning?"
+   },
+   {
+    "say": "Yes, Friday morning works. Go ahead.",
+    "when": [
+     "move",
+     "confirm",
+     "shall",
+     "would you like",
+     "friday",
+     "correct",
+     "right"
+    ]
+   },
+   {
+    "say": "Nope, that's it. Thanks, bye.",
+    "when": [
+     "anything else",
+     "else",
+     "moved",
+     "all set",
+     "see you"
+    ]
+   }
+  ],
+  "expect": {
+   "outcome": "moved",
+   "visit": "V-2041",
+   "window": "FRI-AM"
+  }
+ },
+ {
+  "id": "NF-04",
+  "caller": "Priya Raman",
+  "number": "+16145550112",
+  "voice": "af_sarah",
+  "situation": "Has repair V-2043 on Tuesday afternoon; cancels it.",
+  "lines": [
+   {
+    "say": "Hello. I need to cancel my repair visit on Tuesday. My brother fixed the thermostat wiring."
+   },
+   {
+    "say": "Yes, please cancel it.",
+    "when": [
+     "cancel",
+     "confirm",
+     "shall",
+     "would you like",
+     "sure",
+     "correct",
+     "right"
+    ]
+   },
+   {
+    "say": "No, that's all. Thank you, bye.",
+    "when": [
+     "anything else",
+     "else",
+     "cancelled",
+     "canceled",
+     "all set"
+    ]
+   }
+  ],
+  "expect": {
+   "outcome": "cancelled",
+   "visit": "V-2043"
+  }
+ },
+ {
+  "id": "NF-05",
+  "caller": "Tom Kowalski",
+  "number": "+16145550190",
+  "voice": "am_adam",
+  "situation": "Strong gas smell near the furnace. A safety call for a person.",
+  "lines": [
+   {
+    "say": "Hi. There's a strong gas smell near my furnace in the basement, and I'm worried. Can someone come today?"
+   },
+   {
+    "say": "Okay. We're going outside now.",
+    "when": [
+     "leave",
+     "outside",
+     "safe",
+     "gas company",
+     "911",
+     "out of the house"
+    ]
+   },
+   {
+    "say": "Thank you.",
+    "when": [
+     "connect",
+     "transfer",
+     "hold",
+     "dispatcher",
+     "person"
+    ]
+   }
+  ],
+  "expect": {
+   "outcome": "transferred",
+   "reason": "safety"
+  }
+ },
+ {
+  "id": "NF-06",
+  "caller": "Linda Okafor",
+  "number": "+16145550145",
+  "voice": "af_river",
+  "situation": "Charged twice for one visit. Billing needs a person.",
+  "lines": [
+   {
+    "say": "Hi. I was charged twice for my last service visit, invoice 88213. I want one of the charges refunded."
+   },
+   {
+    "say": "Okay, thank you.",
+    "when": [
+     "connect",
+     "transfer",
+     "billing",
+     "hold",
+     "person",
+     "team"
+    ]
+   }
+  ],
+  "expect": {
+   "outcome": "transferred",
+   "reason": "billing"
+  }
+ },
+ {
+  "id": "NF-07",
+  "caller": "Jorge Alvarez",
+  "number": "+16145550163",
+  "voice": "am_eric",
+  "situation": "New caller. Wants a quote for a new heat pump on Friday afternoon. Pauses mid-address.",
+  "lines": [
+   {
+    "say": "Hi. I just bought a house and the heat pump is really old. I'd like someone to give me a quote for a new one, Friday afternoon if possible."
+   },
+   {
+    "say": "My name is Jorge Alvarez. The address is 2240 Hilltop Drive ... in Grove City, 43123.",
+    "when": [
+     "name",
+     "address",
+     "where",
+     "who",
+     "details"
+    ]
+   },
+   {
+    "say": "Yes, that's right. Please book it.",
+    "when": [
+     "book",
+     "confirm",
+     "shall",
+     "would you like",
+     "correct",
+     "right"
+    ]
+   },
+   {
+    "say": "That's everything. Thanks, bye.",
+    "when": [
+     "anything else",
+     "else",
+     "booked",
+     "all set",
+     "see you"
+    ]
+   }
+  ],
+  "expect": {
+   "outcome": "booked",
+   "kind": "estimate",
+   "window": "FRI-PM",
+   "new_customer_zip": "43123"
+  }
+ },
+ {
+  "id": "NF-08",
+  "caller": "Ellen Park",
+  "number": "+16145550127",
+  "voice": "af_sky",
+  "situation": "Asks the tune-up price and about Saturdays. Nothing to book.",
+  "lines": [
+   {
+    "say": "Hi. How much is a furnace tune-up, and do you come out on Saturdays?"
+   },
+   {
+    "say": "Okay, good to know. That's all, thanks. Bye.",
+    "when": [
+     "anything else",
+     "else",
+     "book",
+     "would you like",
+     "help"
+    ]
+   }
+  ],
+  "expect": {
+   "outcome": "answered",
+   "says": [
+    "89",
+    "eighty-nine",
+    "eighty nine"
+   ]
+  }
+ },
+ {
+  "id": "NF-09",
+  "caller": "Ray Jennings",
+  "number": "+15135550199",
+  "voice": "am_liam",
+  "situation": "New caller in Cincinnati, outside the service area. Declined politely.",
+  "lines": [
+   {
+    "say": "Hi. My air conditioner is leaking water. Can you send someone this week? I'm in Cincinnati, zip code 45220."
+   },
+   {
+    "say": "It's Ray Jennings, 6 Ludlow Avenue, Cincinnati, 45220.",
+    "when": [
+     "name",
+     "address",
+     "where",
+     "who",
+     "details"
+    ]
+   },
+   {
+    "say": "Oh, okay. Thanks anyway, bye.",
+    "when": [
+     "outside",
+     "area",
+     "serve",
+     "sorry",
+     "unfortunately",
+     "anything else",
+     "else"
+    ]
+   }
+  ],
+  "expect": {
+   "outcome": "declined"
+  }
+ },
+ {
+  "id": "NF-10",
+  "caller": "Gary Novak",
+  "number": "+16145550156",
+  "voice": "am_puck",
+  "situation": "Wants to talk a furnace replacement through with a person before deciding.",
+  "lines": [
+   {
+    "say": "Hi. Before I decide on replacing my old furnace, I'd like to talk it over with a person, please. Can you put me through to someone?"
+   },
+   {
+    "say": "Sure, thanks.",
+    "when": [
+     "connect",
+     "transfer",
+     "hold",
+     "person",
+     "team",
+     "someone"
+    ]
+   }
+  ],
+  "expect": {
+   "outcome": "transferred",
+   "reason": "caller_asked"
+  }
+ }
+]

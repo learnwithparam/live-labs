@@ -210,7 +210,7 @@ owns = "telephony and simulated callers"
 job = "Answer a business's inbound phone line with a voice agent"
 truth = "simulated caller scripts with the outcome each caller needs"
 metric = "share of simulated calls that reach their outcome"
-status = "planned"
+status = "ready"
 
 [[lab]]
 n = 18

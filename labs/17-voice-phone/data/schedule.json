@@ -1,0 +1,39 @@
+{
+ "company": "Northfield Heating & Air",
+ "today": "2026-10-19",
+ "line_number": "+16145550100",
+ "service_zips": ["43016", "43017", "43026", "43065", "43081", "43082", "43085", "43123", "43201", "43202", "43204", "43205", "43206", "43209", "43210", "43211", "43212", "43214", "43215", "43219", "43220", "43221", "43224", "43229", "43231", "43235"],
+ "prices": {
+  "tune-up": "89 dollars, included for Comfort Club members",
+  "repair": "a 99 dollar diagnostic visit, waived when you go ahead with the repair",
+  "estimate": "free"
+ },
+ "hours": "Phones 7 am to 7 pm, Monday to Friday. Visits 8 am to 4 pm, Monday to Friday. No weekend visits.",
+ "windows": [
+  {"id": "MON-PM", "day": "Monday 19 October", "time": "noon to 4 pm", "spots": 0},
+  {"id": "TUE-AM", "day": "Tuesday 20 October", "time": "8 am to noon", "spots": 1},
+  {"id": "TUE-PM", "day": "Tuesday 20 October", "time": "noon to 4 pm", "spots": 0},
+  {"id": "WED-AM", "day": "Wednesday 21 October", "time": "8 am to noon", "spots": 2},
+  {"id": "WED-PM", "day": "Wednesday 21 October", "time": "noon to 4 pm", "spots": 2},
+  {"id": "THU-AM", "day": "Thursday 22 October", "time": "8 am to noon", "spots": 1},
+  {"id": "THU-PM", "day": "Thursday 22 October", "time": "noon to 4 pm", "spots": 3},
+  {"id": "FRI-AM", "day": "Friday 23 October", "time": "8 am to noon", "spots": 2},
+  {"id": "FRI-PM", "day": "Friday 23 October", "time": "noon to 4 pm", "spots": 2}
+ ],
+ "customers": [
+  {"phone": "+16145550134", "name": "Dana Whitfield", "address": "418 Oakland Park Avenue, Columbus 43214", "zip": "43214", "equipment": "Carrier gas furnace, 2014", "member": true},
+  {"phone": "+16145550101", "name": "Sandra Lee", "address": "92 Kenworth Road, Columbus 43214", "zip": "43214", "equipment": "Trane gas furnace, 2019", "member": true},
+  {"phone": "+16145550178", "name": "Marcus Bell", "address": "1207 Wyandotte Road, Columbus 43212", "zip": "43212", "equipment": "Lennox gas furnace, 2017", "member": false},
+  {"phone": "+16145550112", "name": "Priya Raman", "address": "3360 Kenny Road, Columbus 43221", "zip": "43221", "equipment": "Goodman heat pump, 2020", "member": false},
+  {"phone": "+16145550190", "name": "Tom Kowalski", "address": "5521 Karl Road, Columbus 43229", "zip": "43229", "equipment": "Rheem gas furnace, 2009", "member": false},
+  {"phone": "+16145550145", "name": "Linda Okafor", "address": "740 Sunbury Road, Columbus 43219", "zip": "43219", "equipment": "Carrier heat pump, 2021", "member": true},
+  {"phone": "+16145550127", "name": "Ellen Park", "address": "18 West Lane Avenue, Columbus 43201", "zip": "43201", "equipment": "York gas furnace, 2012", "member": false},
+  {"phone": "+16145550156", "name": "Gary Novak", "address": "2915 Brandon Road, Upper Arlington 43221", "zip": "43221", "equipment": "Lennox gas furnace, 2004", "member": false}
+ ],
+ "visits": [
+  {"id": "V-2041", "phone": "+16145550178", "kind": "tune-up", "window": "WED-AM", "problem": "Yearly furnace tune-up", "status": "booked"},
+  {"id": "V-2043", "phone": "+16145550112", "kind": "repair", "window": "TUE-PM", "problem": "Heat pump short cycling", "status": "booked"},
+  {"id": "V-2047", "phone": "+16145550156", "kind": "estimate", "window": "MON-PM", "problem": "Replace 2004 furnace", "status": "done"}
+ ],
+ "handoffs": []
+}

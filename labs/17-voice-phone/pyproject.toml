@@ -1,0 +1,32 @@
+[project]
+name = "lab-17-voice-phone"
+version = "0.1.0"
+description = "Put a Voice AI Agent on a Phone Line: a heating and cooling company's inbound line answered by a LiveKit voice agent, tested by simulated callers"
+requires-python = ">=3.11,<3.14"
+dependencies = [
+    "livekit-agents==1.8.3",
+    "livekit-plugins-openai==1.8.3",
+    "faster-whisper==1.2.1",
+    "kokoro-onnx==0.6.1",
+]
+
+[project.scripts]
+phone = "northfield.cli:main"
+
+[dependency-groups]
+dev = ["pytest>=8.4"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/northfield"]
+
+[tool.uv]
+# Every dependency resolves to a release at least two weeks old, so a fresh one never lands untested.
+exclude-newer = "2026-10-01T00:00:00Z"
+
+[tool.pytest.ini_options]
+markers = ["proof: calls a real model; needs LLM_API_KEY"]
+addopts = "-m 'not proof'"
