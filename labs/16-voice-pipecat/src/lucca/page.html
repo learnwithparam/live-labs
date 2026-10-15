@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lucca Brick Oven · Kitchen display</title>
+<link rel="icon" href="data:,">
+<style>
+  :root {
+    --paper: #FAFAFA; --card: #FFFFFF; --ink: #151515; --ink-2: #414141; --muted: #606060; --faint: #808080;
+    --line: #DFDFDF; --accent: #FAFF69; --accent-deep: #4F5101; --fill-dark: #1F1F1C;
+    --pass: #008138; --fail: #BF000F; --wait: #B75000;
+    --sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  }
+  * { box-sizing: border-box }
+  body { margin: 0; background: var(--paper); color: var(--ink); font: 15px/1.45 var(--sans) }
+  button { font: inherit; cursor: pointer }
+  .bar { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; padding: 12px 24px;
+         background: var(--fill-dark); color: var(--card) }
+  .bar h1 { margin: 0; font-size: 17px; font-weight: 700 }
+  .bar .where { color: var(--line); font-size: 13px }
+  .status { margin-left: auto; display: flex; align-items: center; gap: 8px; font-size: 13px }
+  .lamp { width: 10px; height: 10px; border-radius: 50%; background: var(--faint) }
+  .lamp.on { background: var(--accent); animation: ring 1.2s ease-in-out infinite }
+  @keyframes ring { 50% { opacity: .35 } }
+  .shift { display: flex; gap: 22px; flex-wrap: wrap; padding: 14px 24px; border-bottom: 1px solid var(--line);
+           background: var(--card) }
+  .shift .count { font-size: 26px; font-weight: 700; line-height: 1 }
+  .shift .label { color: var(--muted); font-size: 12.5px; max-width: 15rem }
+  .shift mark { background: var(--accent); color: var(--ink); padding: 0 4px }
+  .floor { display: grid; grid-template-columns: 17rem minmax(0, 1fr) 21rem; min-height: calc(100vh - 140px) }
+  .phone { border-right: 1px solid var(--line); padding: 16px; background: var(--card) }
+  .phone h2, .side h2, .rail h2 { font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin: 4px 0 10px }
+  .live { width: 100%; padding: 10px 12px; border: 0; background: var(--accent); color: var(--ink); font-weight: 700; border-radius: 6px }
+  .live[aria-pressed="true"] { background: var(--fail); color: var(--card) }
+  .hint { color: var(--muted); font-size: 12.5px; margin: 6px 0 16px }
+  .caller { display: flex; justify-content: space-between; align-items: center; gap: 8px; width: 100%;
+            padding: 9px 10px; margin-bottom: 6px; border: 1px solid var(--line); border-radius: 6px; background: var(--card);
+            color: var(--ink); text-align: left }
+  .caller small { display: block; color: var(--muted); font-size: 12px }
+  .caller.picked { border-color: var(--ink); box-shadow: inset 3px 0 0 var(--ink) }
+  .chip { font: 600 11px var(--mono); padding: 2px 6px; border-radius: 4px; white-space: nowrap }
+  .chip.pass { color: var(--pass); border: 1px solid var(--pass) }
+  .chip.fail { color: var(--fail); border: 1px solid var(--fail) }
+  .chip.wait { color: var(--wait); border: 1px solid var(--wait) }
+  .pass-row { display: flex; gap: 6px; margin-top: 10px }
+  .pass-row button { flex: 1; padding: 7px; border: 1px solid var(--ink); background: var(--card); color: var(--ink); border-radius: 6px }
+  .pass-row button:disabled { opacity: .45; cursor: default }
+  .rail { padding: 18px 24px; overflow: hidden }
+  .tickets { position: relative; display: flex; gap: 16px; align-items: flex-start; overflow-x: auto; padding-bottom: 12px }
+  .ticket { flex: 0 0 270px; background: var(--card); border: 1px solid var(--line); border-top: 6px solid var(--ink);
+            font-family: var(--mono); font-size: 13px; padding: 12px 14px 14px; border-radius: 2px 2px 6px 6px }
+  .ticket.now { flex-basis: 330px; border-top-color: var(--accent-deep); box-shadow: 0 2px 0 var(--line) }
+  .ticket.staff { border-top-color: var(--wait) }
+  .ticket.miss { border-top-color: var(--fail) }
+  .ticket header { display: flex; justify-content: space-between; border-bottom: 1px dashed var(--faint); padding-bottom: 6px; margin-bottom: 8px }
+  .ticket .who { font-weight: 700; font-size: 15px }
+  .ticket ol { list-style: none; margin: 0; padding: 0 }
+  .ticket li { padding: 5px 0; border-bottom: 1px dotted var(--line) }
+  .ticket li .mods { display: block; color: var(--ink-2); padding-left: 2.2ch }
+  .ticket li.fresh { animation: drop .45s ease-out }
+  @keyframes drop { from { opacity: 0; transform: translateY(-6px) } }
+  .ticket footer { margin-top: 8px; display: flex; justify-content: space-between; color: var(--ink-2) }
+  .ticket .why { margin-top: 8px; font-family: var(--sans); font-size: 12.5px; color: var(--ink-2) }
+  .empty { color: var(--faint); padding: 6px 0 }
+  .callback { margin-top: 10px; padding: 10px; border: 1px solid var(--wait); border-radius: 6px; font-family: var(--sans); font-size: 13px }
+  .callback b { color: var(--wait); display: block; font-size: 11px; letter-spacing: .06em; text-transform: uppercase }
+  .side { border-left: 1px solid var(--line); background: var(--card); padding: 16px; display: flex; flex-direction: column; gap: 18px }
+  .transcript { display: flex; flex-direction: column; gap: 8px; max-height: 46vh; overflow-y: auto }
+  .say { padding: 7px 10px; border-radius: 8px; font-size: 13.5px; max-width: 92% }
+  .say.caller-line { background: var(--paper); border: 1px solid var(--line); align-self: flex-start }
+  .say.agent-line { background: var(--fill-dark); color: var(--card); align-self: flex-end }
+  .say.cut { text-decoration: line-through; text-decoration-color: var(--fail) }
+  .say small { display: block; font-size: 11px; color: var(--faint) }
+  .tool { font: 12px var(--mono); color: var(--accent-deep); align-self: center; text-align: center }
+  .note { font-size: 12px; color: var(--fail); align-self: center; text-align: center }
+  .strip { display: flex; flex-direction: column; gap: 7px }
+  .turn { display: grid; grid-template-columns: 2.4rem minmax(0, 1fr) 4.4rem; gap: 8px; align-items: center; font: 12px var(--mono) }
+  .bars { display: flex; height: 14px; background: var(--paper); border: 1px solid var(--line) }
+  .bars span { height: 100% }
+  .hear { background: var(--ink-2) } .think { background: var(--accent); box-shadow: inset 0 0 0 1px var(--accent-deep) } .speak { background: var(--faint) }
+  .legend { display: flex; gap: 12px; font-size: 12px; color: var(--muted) }
+  .legend i { display: inline-block; width: 10px; height: 10px; margin-right: 4px; vertical-align: -1px }
+  .over { color: var(--fail) }
+  .error { color: var(--fail); font-size: 13px }
+  @media (max-width: 960px) {
+    .floor { grid-template-columns: 1fr }
+    .phone, .side { border: 0; border-bottom: 1px solid var(--line) }
+    .rail, .phone, .side, .shift, .bar { padding-left: 16px; padding-right: 16px }
+    .ticket, .ticket.now { flex-basis: 85vw }
+    .transcript { max-height: none }
+  }
+  @media (prefers-reduced-motion: reduce) { .lamp.on, .ticket li.fresh { animation: none } }
+</style>
+</head>
+<body data-surface="pizzeria kitchen ticket display">
+<div class="bar">
+  <h1>Lucca Brick Oven</h1>
+  <span class="where">Kitchen display · phone orders · pickup</span>
+  <span class="status"><span class="lamp" id="lamp"></span><span id="line-status">Line idle</span></span>
+</div>
+<section class="shift" id="shift" aria-label="Shift results"></section>
+<main class="floor">
+  <aside class="phone">
+    <h2>Phone line</h2>
+    <button class="live" id="live" aria-pressed="false">Call the line with your microphone</button>
+    <p class="hint">Speech to text and the voice run on this machine. Only the transcript goes to the model.</p>
+    <h2>Recorded calls</h2>
+    <div id="callers"></div>
+    <div class="pass-row">
+      <button id="replay" disabled>Play this call again</button>
+    </div>
+    <p class="hint" id="replay-hint">A replay runs the whole pipeline on this machine, so it takes a few minutes.</p>
+  </aside>
+  <section class="rail">
+    <h2>Tickets</h2>
+    <div class="tickets" id="tickets"></div>
+  </section>
+  <aside class="side">
+    <div>
+      <h2>Call transcript</h2>
+      <div class="transcript" id="transcript"><p class="empty">Pick a call to see what was said.</p></div>
+    </div>
+    <div>
+      <h2>Turn latency, caller stops to first sound</h2>
+      <div class="legend"><span><i class="hear"></i>hear</span><span><i class="think"></i>think</span><span><i class="speak"></i>speak</span></div>
+      <div class="strip" id="strip"></div>
+    </div>
+  </aside>
+</main>
+<script>
+const $ = (selector) => document.querySelector(selector);
+const BUDGET_MS = 1500;  // the gap a caller tolerates before saying "hello?"
+let state = null, picked = null, polling = null, peer = null;
+
+function make(tag, className, text) {
+  const node = document.createElement(tag);
+  if (className) node.className = className;
+  if (text !== undefined) node.textContent = text;
+  return node;
+}
+
+function money(amount) { return "$" + Number(amount || 0).toFixed(2); }
+// A call's model cost is a fraction of a cent, so the bill keeps four places where cents would show $0.00.
+function bill(amount) { return "$" + Number(amount || 0).toFixed(4); }
+function seconds(ms) { return ms === null || ms === undefined ? "–" : (ms / 1000).toFixed(1) + " s"; }
+
+function renderShift() {
+  const shift = $("#shift");
+  shift.replaceChildren();
+  if (!state.shift) {
+    shift.append(make("span", "label", "No shift scored yet. Run phoneline review to play every recorded call."));
+    return;
+  }
+  const metric = state.shift.metric;
+  const block = (count, label) => {
+    const wrap = make("div");
+    wrap.append(make("div", "count", count), make("div", "label", label));
+    shift.append(wrap);
+  };
+  const taken = make("div");
+  const count = make("div", "count");
+  count.append(make("mark", "", `${metric.taken_alone} of ${metric.orders}`));
+  taken.append(count, make("div", "label", "orders taken with no staff, exact match to the order keyed by hand"));
+  shift.append(taken);
+  block(`${metric.staff_correct} of ${metric.staff_expected}`, "calls handed to staff for a call back, as they should be");
+  block(seconds(metric.p50_ms), `p50 turn latency over ${metric.timed_turns} turns`);
+  block(seconds(metric.p95_ms), "p95 turn latency: the slow turns callers hang up on");
+  block(bill(metric.cost), `model cost for ${metric.calls} calls`);
+}
+
+function shiftRow(callId) { return state.shift?.rows.find((row) => row.id === callId); }
+
+function renderCallers() {
+  const list = $("#callers");
+  list.replaceChildren();
+  for (const call of state.calls) {
+    const row = shiftRow(call.id);
+    const button = make("button", "caller" + (picked?.id === call.id ? " picked" : ""));
+    const label = make("span");
+    label.append(make("span", "", `${call.id} · ${call.caller}`), make("small", "", call.lines[0]));
+    button.append(label);
+    if (row) {
+      const kind = row.staff_expected ? (row.ok ? "wait" : "fail") : (row.ok ? "pass" : "fail");
+      const word = row.staff_expected ? (row.ok ? "staff" : "missed") : (row.ok ? "match" : "miss");
+      button.append(make("span", "chip " + kind, word));
+    }
+    button.addEventListener("click", () => pick(call.id));
+    list.append(button);
+  }
+  $("#replay").disabled = !picked || picked.kind !== "recorded" || Boolean(state.busy);
+}
+
+function ticketCard(ticket, heading, options = {}) {
+  const card = make("article", "ticket");
+  if (options.now) card.classList.add("now");
+  if (ticket.status === "staff") card.classList.add("staff");
+  if (options.miss) card.classList.add("miss");
+  const header = make("header");
+  header.append(make("span", "who", ticket.name || heading),
+                make("span", "", ticket.order_number ? `#${ticket.order_number}` : ticket.status.toUpperCase()));
+  card.append(header);
+  const lines = make("ol");
+  ticket.lines.forEach((line, position) => {
+    const item = make("li", options.fresh === position ? "fresh" : "");
+    item.append(make("span", "", `${line.quantity}× ${line.size ? line.size + " " : ""}${line.name}`));
+    const mods = line.options.filter((option) => option !== "regular crust");
+    if (mods.length) item.append(make("span", "mods", mods.join(", ")));
+    lines.append(item);
+  });
+  if (!ticket.lines.length) lines.append(make("li", "empty", "nothing keyed"));
+  card.append(lines);
+  const footer = make("footer");
+  footer.append(make("span", "", ticket.status === "placed" ? "to the oven" : ticket.status), make("span", "", money(ticket.total)));
+  card.append(footer);
+  if (ticket.status === "staff") {
+    const callback = make("div", "callback");
+    callback.append(make("b", "", "Call back: staff"), make("div", "", `Reason: ${ticket.staff_reason}`),
+                    make("div", "", "You decide: call the customer back, agree what they want, and key it by hand. Nothing went to the kitchen."));
+    card.append(callback);
+  }
+  if (options.why) card.append(make("div", "why", options.why));
+  return card;
+}
+
+function renderTickets(liveTicket, freshLine) {
+  const rail = $("#tickets");
+  rail.replaceChildren();
+  if (liveTicket) rail.append(ticketCard(liveTicket, "On the line", { now: true, fresh: freshLine }));
+  for (const row of state.shift?.rows || []) {
+    const card = ticketCard(row.ticket, row.caller, { miss: !row.ok, why: `${row.id}: ${row.why}`, now: !liveTicket && picked?.id === row.id });
+    card.addEventListener("click", () => pick(row.id));
+    rail.append(card);
+  }
+  if (!rail.children.length) rail.append(make("p", "empty", "No tickets yet."));
+  // The picked call's ticket may sit past the edge of the rail, so slide the rail to it.
+  const current = rail.querySelector(".ticket.now");
+  if (current) rail.scrollLeft = current.offsetLeft;
+}
+
+function renderTranscript(events) {
+  const box = $("#transcript");
+  box.replaceChildren();
+  const callerBubbles = {};
+  for (const event of events) {
+    if (event.kind === "caller_line" || event.kind === "caller") {
+      const bubble = callerBubbles[event.line] || make("div", "say caller-line");
+      bubble.replaceChildren(make("small", "", event.kind === "caller" ? "caller, as heard" : "caller"), document.createTextNode(event.text || event.said));
+      if (!callerBubbles[event.line]) box.append(bubble);
+      callerBubbles[event.line] = bubble;
+    } else if (event.kind === "agent" && event.text) {
+      const bubble = make("div", "say agent-line");
+      bubble.append(make("small", "", "phone line"), document.createTextNode(event.text));
+      box.append(bubble);
+    } else if (event.kind === "interrupted") {
+      const last = [...box.querySelectorAll(".agent-line")].pop();
+      if (last) last.classList.add("cut");
+      box.append(make("div", "note", `Caller cut in. The reply stopped ${event.stop_ms} ms after they started talking.`));
+    } else if (event.kind === "tool") {
+      const result = event.result.error ? `refused: ${event.result.error}` : (event.result.added || event.result.removed || (event.result.placed ? `order ${event.result.order_number} placed` : "sent to staff"));
+      box.append(make("div", "tool", `${event.tool} → ${result}`));
+    }
+  }
+  if (!box.children.length) box.append(make("p", "empty", "Waiting for the caller."));
+  box.scrollTop = box.scrollHeight;
+}
+
+function renderStrip(turns) {
+  const strip = $("#strip");
+  strip.replaceChildren();
+  const timed = turns.filter((turn) => turn.latency_ms !== null && turn.latency_ms !== undefined);
+  const widest = Math.max(BUDGET_MS, ...timed.map((turn) => turn.latency_ms));
+  for (const turn of turns) {
+    const row = make("div", "turn");
+    row.title = turn.heard || turn.said || "";
+    row.append(make("span", "", `T${turn.line}`));
+    const bars = make("div", "bars");
+    if (turn.latency_ms !== null && turn.latency_ms !== undefined) {
+      for (const part of ["hear", "think", "speak"]) {
+        const span = make("span", part);
+        span.style.width = `${(100 * turn[part + "_ms"]) / widest}%`;
+        span.title = `${part} ${seconds(turn[part + "_ms"])}`;
+        bars.append(span);
+      }
+    }
+    const total = turn.barge_in ? `cut in` : seconds(turn.latency_ms);
+    row.append(bars, make("span", turn.latency_ms > BUDGET_MS ? "over" : "", total));
+    strip.append(row);
+  }
+  if (!turns.length) strip.append(make("p", "empty", "No turns yet."));
+}
+
+function pick(callId) {
+  const row = shiftRow(callId);
+  picked = { id: callId, kind: "recorded" };
+  renderCallers();
+  renderTickets(null);
+  renderTranscript(row?.events || []);
+  renderStrip(row?.turns || []);
+}
+
+function setLine(busyText) {
+  $("#lamp").classList.toggle("on", Boolean(busyText));
+  $("#line-status").textContent = busyText || "Line idle";
+}
+
+async function follow(callId, label) {
+  clearInterval(polling);
+  setLine(label);
+  let shownLines = 0;
+  polling = setInterval(async () => {
+    const call = await (await fetch(`/api/run/${callId}`)).json();
+    const ticket = [...call.events].reverse().find((event) => event.kind === "tool")?.ticket
+      || call.ticket || { status: "open", name: "", lines: [], total: 0 };
+    renderTickets(ticket, ticket.lines.length > shownLines ? ticket.lines.length - 1 : null);
+    shownLines = ticket.lines.length;
+    renderTranscript(call.events);
+    renderStrip(call.events.filter((event) => event.kind === "turn"));
+    if (call.error) $("#transcript").append(make("p", "error", call.error));
+    if (call.done) {
+      clearInterval(polling);
+      setLine(call.verdict ? `Last call: ${call.verdict.ok ? "matches" : "differs from"} the keyed order` : "");
+      state = await (await fetch("/api/state")).json();
+      renderShift(); renderCallers();
+    }
+  }, 700);
+}
+
+$("#replay").addEventListener("click", async () => {
+  const response = await fetch("/api/call", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: picked.id }) });
+  const reply = await response.json();
+  if (!response.ok) { $("#replay-hint").textContent = reply.error; return; }
+  state.busy = reply.call_id;
+  renderCallers();
+  follow(reply.call_id, `Replaying ${picked.id}`);
+});
+
+$("#live").addEventListener("click", async () => {
+  const button = $("#live");
+  if (peer) { peer.close(); peer = null; button.setAttribute("aria-pressed", "false"); button.textContent = "Call the line with your microphone"; return; }
+  const microphone = await navigator.mediaDevices.getUserMedia({ audio: true });
+  peer = new RTCPeerConnection();
+  microphone.getTracks().forEach((track) => peer.addTrack(track, microphone));
+  peer.addTransceiver("audio", { direction: "recvonly" });
+  peer.ontrack = (incoming) => { const speaker = new Audio(); speaker.srcObject = incoming.streams[0]; speaker.play(); };
+  await peer.setLocalDescription(await peer.createOffer());
+  // Wait for ICE gathering so one POST carries every candidate; this line is local, so it is quick.
+  await new Promise((done) => { if (peer.iceGatheringState === "complete") done(); else peer.addEventListener("icegatheringstatechange", () => peer.iceGatheringState === "complete" && done()); });
+  const response = await fetch("/api/offer", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ sdp: peer.localDescription.sdp, type: peer.localDescription.type }) });
+  const answer = await response.json();
+  if (!response.ok) { $("#replay-hint").textContent = answer.error; peer.close(); peer = null; return; }
+  await peer.setRemoteDescription({ sdp: answer.sdp, type: answer.type });
+  button.setAttribute("aria-pressed", "true");
+  button.textContent = "Hang up";
+  picked = { id: answer.call_id, kind: "live" };
+  follow(answer.call_id, "On a live call");
+});
+
+(async () => {
+  state = await (await fetch("/api/state")).json();
+  renderShift();
+  const first = state.shift?.rows.find((row) => row.staff_expected) || state.shift?.rows[0];
+  if (first) pick(first.id); else { renderCallers(); renderTickets(null); renderStrip([]); }
+})();
+</script>
+</body>
+</html>

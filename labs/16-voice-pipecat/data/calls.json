@@ -1,0 +1,73 @@
+[
+  {"id": "LB-01", "caller": "Michael", "voice": "am_michael",
+   "lines": [
+     {"say": "Hi, can I get a large pepperoni on thin crust, and a dozen buffalo wings?"},
+     {"say": "That's everything. It's for pickup, and the name is Michael."},
+     {"say": "Yes, that's right."}],
+   "keyed": {"name": "Michael", "lines": [
+     {"item": "pepperoni-pizza", "size": "large", "options": ["thin crust"], "quantity": 1},
+     {"item": "wings", "size": "12 piece", "options": ["buffalo"], "quantity": 1}]}},
+
+  {"id": "LB-02", "caller": "Sarah", "voice": "af_heart",
+   "lines": [
+     {"say": "Hi there. I'd like a medium margherita with mushrooms, please."},
+     {"say": "And a Caesar salad with chicken, and a two liter Diet Coke."},
+     {"say": "No, that's it. The name is Sarah."},
+     {"say": "Yep, perfect."}],
+   "keyed": {"name": "Sarah", "lines": [
+     {"item": "margherita-pizza", "size": "medium", "options": ["regular crust", "mushrooms"], "quantity": 1},
+     {"item": "caesar-salad", "size": null, "options": ["add chicken"], "quantity": 1},
+     {"item": "soda-2l", "size": null, "options": ["diet coke"], "quantity": 1}]}},
+
+  {"id": "LB-03", "caller": "Tom", "voice": "am_adam",
+   "lines": [
+     {"say": "Hey, two small cheese pizzas and six barbecue wings."},
+     {"say": "That's all. Name is Tom."},
+     {"say": "Sorry, wait. Make the wings garlic parmesan instead.", "barge_in": true},
+     {"say": "Yes, that's it."}],
+   "keyed": {"name": "Tom", "lines": [
+     {"item": "cheese-pizza", "size": "small", "options": ["regular crust"], "quantity": 2},
+     {"item": "wings", "size": "6 piece", "options": ["garlic parmesan"], "quantity": 1}]}},
+
+  {"id": "LB-04", "caller": "Linda", "voice": "af_bella",
+   "lines": [
+     {"say": "Hello, I need a medium garden veggie pizza on gluten free crust."},
+     {"say": "And an order of garlic knots, and that is everything. The name is Linda."},
+     {"say": "Correct, thank you."}],
+   "keyed": {"name": "Linda", "lines": [
+     {"item": "veggie-pizza", "size": "medium", "options": ["gluten-free crust"], "quantity": 1},
+     {"item": "garlic-knots", "size": null, "options": [], "quantity": 1}]}},
+
+  {"id": "LB-05", "caller": "Karen", "voice": "bf_emma",
+   "lines": [
+     {"say": "Hi, can I get a large pizza, half pepperoni and half sausage?"},
+     {"say": "And a two liter Coke. The name is Karen."},
+     {"say": "Okay, thanks."}],
+   "keyed": {"staff": "a half and half pizza is not on the menu"}},
+
+  {"id": "LB-06", "caller": "James", "voice": "am_eric",
+   "lines": [
+     {"say": "Hey, I want a large sausage and peppers pizza, and a large cheese with extra cheese."},
+     {"say": "Plus two cannolis. Pickup, name is James."},
+     {"say": "Yeah, that's right."}],
+   "keyed": {"name": "James", "lines": [
+     {"item": "sausage-peppers-pizza", "size": "large", "options": ["regular crust"], "quantity": 1},
+     {"item": "cheese-pizza", "size": "large", "options": ["regular crust", "extra cheese"], "quantity": 1},
+     {"item": "cannoli", "size": null, "options": [], "quantity": 2}]}},
+
+  {"id": "LB-07", "caller": "Maria", "voice": "af_sky",
+   "lines": [
+     {"say": "Hi, I saw the family special on your flyer. Can I get that, with a Sprite?"},
+     {"say": "Okay. The name is Maria."}],
+   "keyed": {"staff": "the family special is not on the menu"}},
+
+  {"id": "LB-08", "caller": "David", "voice": "bm_george",
+   "lines": [
+     {"say": "Can I get twelve garlic parmesan wings and a large pepperoni?"},
+     {"say": "Actually, make the pepperoni a medium."},
+     {"say": "That's it. The name is David."},
+     {"say": "Yes, that is right."}],
+   "keyed": {"name": "David", "lines": [
+     {"item": "wings", "size": "12 piece", "options": ["garlic parmesan"], "quantity": 1},
+     {"item": "pepperoni-pizza", "size": "medium", "options": ["regular crust"], "quantity": 1}]}}
+]

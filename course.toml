@@ -198,7 +198,7 @@ owns = "voice pipelines and turn latency"
 job = "Take a restaurant's phone order by voice and put it in the till"
 truth = "the order a person would have keyed from the same call"
 metric = "orders taken with no staff, and turn latency"
-status = "planned"
+status = "ready"
 
 [[lab]]
 n = 17

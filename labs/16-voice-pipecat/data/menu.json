@@ -1,0 +1,51 @@
+{
+  "restaurant": "Lucca Brick Oven",
+  "address": "2140 Murray Avenue, Pittsburgh, PA",
+  "pickup_minutes": 25,
+  "tax_rate": 0.07,
+  "items": [
+    {"id": "cheese-pizza", "name": "Cheese pizza", "aliases": ["cheese pizza", "cheese", "plain pizza", "plain cheese"],
+     "sizes": {"small": 12.00, "medium": 16.00, "large": 19.00}, "groups": ["crust", "toppings"]},
+    {"id": "pepperoni-pizza", "name": "Pepperoni pizza", "aliases": ["pepperoni pizza", "pepperoni"],
+     "sizes": {"small": 14.00, "medium": 18.00, "large": 21.00}, "groups": ["crust", "toppings"]},
+    {"id": "margherita-pizza", "name": "Margherita pizza", "aliases": ["margherita pizza", "margherita", "margarita", "margarita pizza"],
+     "sizes": {"small": 14.00, "medium": 18.00, "large": 21.00}, "groups": ["crust", "toppings"]},
+    {"id": "sausage-peppers-pizza", "name": "Sausage and peppers pizza", "aliases": ["sausage and peppers", "sausage and pepper pizza", "sausage and peppers pizza", "sausage pepper"],
+     "sizes": {"small": 15.00, "medium": 19.00, "large": 22.00}, "groups": ["crust", "toppings"]},
+    {"id": "veggie-pizza", "name": "Garden veggie pizza", "aliases": ["veggie pizza", "veggie", "vegetable pizza", "garden veggie", "garden veggie pizza"],
+     "sizes": {"small": 15.00, "medium": 19.00, "large": 22.00}, "groups": ["crust", "toppings"]},
+    {"id": "wings", "name": "Wings", "aliases": ["wings", "chicken wings", "wing"],
+     "sizes": {"6 piece": 9.00, "12 piece": 16.00}, "size_words": {"6": "6 piece", "six": "6 piece", "half dozen": "6 piece", "12": "12 piece", "twelve": "12 piece", "dozen": "12 piece"},
+     "groups": ["sauce"]},
+    {"id": "garlic-knots", "name": "Garlic knots (6)", "aliases": ["garlic knots", "garlic knot", "knots"], "price": 6.00, "groups": []},
+    {"id": "caesar-salad", "name": "Caesar salad", "aliases": ["caesar salad", "caesar", "salad"], "price": 9.00, "groups": ["salad-add"]},
+    {"id": "soda-2l", "name": "2-liter soda", "aliases": ["2 liter", "two liter", "2-liter", "soda", "2 liter soda", "two liter soda", "pop"], "price": 4.00, "groups": ["flavor"]},
+    {"id": "cannoli", "name": "Cannoli", "aliases": ["cannoli", "cannolis", "cannoli's"], "price": 5.00, "groups": []}
+  ],
+  "groups": {
+    "crust": {"pick": "one", "default": "regular crust", "options": {
+      "regular crust": {"price": 0, "aliases": ["regular", "regular crust", "hand tossed", "normal crust"]},
+      "thin crust": {"price": 0, "aliases": ["thin", "thin crust"]},
+      "gluten-free crust": {"price": 3.00, "aliases": ["gluten free", "gluten-free", "gluten free crust", "gluten-free crust"]}}},
+    "toppings": {"pick": "any", "options": {
+      "extra cheese": {"price": 2.00, "aliases": ["extra cheese"]},
+      "mushrooms": {"price": 2.00, "aliases": ["mushroom", "mushrooms"]},
+      "onions": {"price": 2.00, "aliases": ["onion", "onions"]},
+      "green peppers": {"price": 2.00, "aliases": ["green pepper", "green peppers", "peppers"]},
+      "black olives": {"price": 2.00, "aliases": ["olive", "olives", "black olive", "black olives"]},
+      "jalapenos": {"price": 2.00, "aliases": ["jalapeno", "jalapenos", "jalapeño", "jalapeños"]},
+      "sausage": {"price": 2.00, "aliases": ["sausage", "italian sausage"]},
+      "pepperoni": {"price": 2.00, "aliases": ["pepperoni", "extra pepperoni"]},
+      "bacon": {"price": 2.00, "aliases": ["bacon"]}}},
+    "sauce": {"pick": "one", "options": {
+      "buffalo": {"price": 0, "aliases": ["buffalo", "hot", "buffalo sauce"]},
+      "bbq": {"price": 0, "aliases": ["bbq", "barbecue", "barbeque", "bbq sauce", "barbecue sauce"]},
+      "garlic parmesan": {"price": 0, "aliases": ["garlic parmesan", "garlic parm", "garlic parmesan sauce"]}}},
+    "salad-add": {"pick": "any", "options": {
+      "add chicken": {"price": 4.00, "aliases": ["chicken", "add chicken", "with chicken", "grilled chicken"]}}},
+    "flavor": {"pick": "one", "options": {
+      "coke": {"price": 0, "aliases": ["coke", "coca cola", "coca-cola"]},
+      "diet coke": {"price": 0, "aliases": ["diet coke", "diet"]},
+      "sprite": {"price": 0, "aliases": ["sprite"]}}}
+  }
+}

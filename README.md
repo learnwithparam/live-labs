@@ -34,7 +34,7 @@ print what the README promises.
 | 13 | [Cut Agent Token Costs with Context Engineering](labs/13-context-engineering) | Manus KV-cache hit rate | ready |
 | 14 | [Give AI Agents Long-Term Memory with Mem0](labs/14-agent-memory) | ChatGPT memory and its controls | ready |
 | 15 | [Build a Deep Research Agent with Subagents](labs/15-research-subagents) | Anthropic's multi-agent research system | ready |
-| 16 | Build a Voice AI Agent with Pipecat | SoundHound takes restaurant phone orders | planned |
+| 16 | [Build a Voice AI Agent with Pipecat](labs/16-voice-pipecat) | SoundHound takes restaurant phone orders | ready |
 | 17 | [Put a Voice AI Agent on a Phone Line](labs/17-voice-phone) | LiveKit behind ChatGPT voice | ready |
 | 18 | [Assess Car Damage Photos with Vision LLMs](labs/18-vision-damage) | Tractable damage appraisal | ready |
 | 19 | [Score Refund Risk with a Decision Model](labs/19-decision-ai) | Stripe Radar score, thresholds and review | ready |
