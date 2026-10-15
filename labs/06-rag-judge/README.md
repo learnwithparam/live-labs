@@ -101,7 +101,7 @@ uv run support review
 
 Expect: /With the guard:\s+\d+ unsupported replies sent/
 
-In our runs the guard sent 0 of the 8 and held no good reply. Two failures still go out, because
+In our runs the guard sent 0 of the 8 and held at most one good reply. Two failures still go out, because
 they are grounded: the tip reply and the mileage reply are true, they just miss the question. Catching
 those needs a reader of the whole reply, and that is the judge's job.
 
@@ -115,8 +115,9 @@ uv run support review --naive
 
 Expect: /Naive\s+agrees with agents on \d+ of 20/
 
-In our runs it agreed 12 or 13 of 20 times, with a kappa of 0.2 to 0.3. It passed every good reply,
-and 7 or 8 of the 10 bad ones. With no sources, a confident wrong number reads exactly like a right one.
+On `anthropic/claude-haiku-5.5` it agreed 16 of 20 times, with a kappa of 0.6. It passed 9 of the 10
+good replies and 3 of the 10 bad ones. On `google/gemini-2.5-flash` it agreed only 12 or 13 times,
+passing 7 or 8 bad replies. With no sources, a confident wrong number reads exactly like a right one.
 
 ## 4. Give the judge a rubric and the sources
 
@@ -177,6 +178,6 @@ centre or the product changed: relabel before you trust the judge again.
 
 ## Change it
 
-- Set `JUDGE_MODEL=google/gemini-2.5-flash-lite` in `.env` and rerun `support review`. Does a cheaper judge still agree?
+- Set `JUDGE_MODEL=qwen/qwen3.7-flash` in `.env` and rerun `support review`. Does a cheaper judge still agree?
 - Delete the "including any condition or exception" sentence from the guard's instructions in `src/courier/guard.py`. Does the beer reply get through?
 - Write three replies of your own into `data/labelled.jsonl` that you think a judge would get wrong, and test them.

@@ -4,8 +4,8 @@ import os
 from pathlib import Path
 
 DEFAULT_BASE_URL = "https://openrouter.ai/api/v1"
-DEFAULT_MODEL = "google/gemini-2.5-flash-lite"
-DEFAULT_JUDGE = "google/gemini-2.5-flash"
+DEFAULT_MODEL = "openai/gpt-6-luna"
+DEFAULT_JUDGE = "anthropic/claude-haiku-5.5"
 
 
 def load_dotenv(path: Path = Path(".env")) -> None:

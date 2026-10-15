@@ -10,6 +10,10 @@ import pytest
 
 from courier.agree import agreement, kappa, load_labelled
 from courier.bot import INSTRUCTIONS as BOT
+from courier.bot import Draft
+from courier.guard import Check
+from courier.judge import NaiveReview, Review
+from courier.llm import ask
 from courier.desk import handle, review
 from courier.guard import INSTRUCTIONS as GUARD
 from courier.guard import guard
@@ -137,3 +141,40 @@ def test_the_page_serves_only_to_this_machine_and_records_decisions(centre, tmp_
             post("/api/decide", {"ticket": "T-1042", "decision": "send"}, origin="http://evil.example")
     finally:
         server.shutdown()
+
+
+class SchemaRecorder:
+    """Stands in for the client and keeps the reply schema each call sent."""
+
+    def __init__(self):
+        self.schemas = []
+        self.chat = SimpleNamespace(completions=SimpleNamespace(create=self.create))
+
+    def create(self, **request):
+        self.schemas.append(request["response_format"]["json_schema"]["schema"])
+        message = SimpleNamespace(content="")
+        return SimpleNamespace(choices=[SimpleNamespace(message=message)], usage=None)
+
+
+def objects_in(node):
+    """Every object in a JSON schema, nested definitions included."""
+    if isinstance(node, dict):
+        if "properties" in node:
+            yield node
+        for value in node.values():
+            yield from objects_in(value)
+    elif isinstance(node, list):
+        for value in node:
+            yield from objects_in(value)
+
+
+def test_every_reply_schema_meets_openai_strict_mode():
+    # OpenAI models reject a schema where an object leaves a property optional or allows extra keys.
+    recorder = SchemaRecorder()
+    for shape in (Draft, Check, Review, NaiveReview):
+        ask(recorder, "any-model", "system", "user", shape)
+    objects = [found for schema in recorder.schemas for found in objects_in(schema)]
+    assert len(objects) >= 5, "one per shape, plus each claim inside a check"
+    for found in objects:
+        assert found["required"] == list(found["properties"])
+        assert found["additionalProperties"] is False
