@@ -11,7 +11,8 @@ from receipts.schema import Receipt
 SYSTEM = (
     "You turn a receipt into a ledger entry. It may be a phone photo, a PDF or the text of an email; "
     "a photo can be tilted or faded, so read each amount on its own row. Copy amounts exactly as printed. Use the receipt's own currency "
-    "as an ISO 4217 code. Sum every tax line into `tax`. A coupon printed as its own line is a "
+    "as an ISO 4217 code. Write `date` as YYYY-MM-DD with the four-digit year printed on the receipt; "
+    "a US receipt prints month/day/year. Sum every tax line into `tax`. A coupon printed as its own line is a "
     "negative line item; do not count it again in `discount`. When the receipt says prices include "
     "tax (incl. VAT, enth. MwSt, TTC), set `tax_included` to true. Reply with JSON only."
 )
@@ -63,8 +64,27 @@ class ExtractionFailed(Exception):
         self.history, self.cost = history, cost
 
 
+def strict_schema(node):
+    """Pydantic's schema, tightened to the rules OpenAI's strict mode enforces.
+
+    Every property must be listed as required and no extra keys allowed, so a field with a default
+    becomes one the model always fills. The pydantic model still checks the values afterwards.
+    """
+    if isinstance(node, dict):
+        if "properties" in node:
+            node["required"] = list(node["properties"])
+            node["additionalProperties"] = False
+        node.pop("default", None)
+        for value in node.values():
+            strict_schema(value)
+    elif isinstance(node, list):
+        for value in node:
+            strict_schema(value)
+    return node
+
+
 def response_format() -> dict:
-    schema = Receipt.model_json_schema()
+    schema = strict_schema(Receipt.model_json_schema())
     spec = {"name": "receipt", "schema": schema}
     return {"type": "json_schema", "json_schema": spec}
 

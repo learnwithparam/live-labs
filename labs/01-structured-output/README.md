@@ -61,8 +61,8 @@ are PDFs and one is an email. They are synthetic, drawn by `data/draw_receipts.p
 ## Set up
 
 You need [uv](https://docs.astral.sh/uv/) and a key for any OpenAI-compatible endpoint. The lab was
-measured on `google/gemini-2.5-flash-lite` through [OpenRouter](https://openrouter.ai): one run over
-all eight receipts, photos and PDFs included, costs about a fifth of a cent.
+measured on `openai/gpt-6-luna` through [OpenRouter](https://openrouter.ai): one run over all eight
+receipts, photos and PDFs included, costs about an eighth of a cent.
 
 ```bash
 cp env.example .env
@@ -145,9 +145,10 @@ uv run receipts match data/receipts
 
 Expect: /\d/8 matched to a card charge, \d need a person/
 
-In our runs seven receipts matched and none matched the wrong charge. The grocery receipt counts its
-coupon twice, so its lines never add up, but its total equals a charge to the cent: the bank confirms
-the total and the entry is flagged "the lines need a look". The pharmacy receipt was paid with a
+In our runs on luna seven receipts matched and none matched the wrong charge. On
+`google/gemini-2.5-flash-lite` the grocery receipt counted its coupon twice, so its lines never added
+up. Its total still equalled a charge to the cent: the bank confirmed the total and the entry was
+flagged "the lines need a look". The pharmacy receipt was paid with a
 personal card, so no charge fits and a person files it as out of pocket. A person checks one receipt
 instead of eight.
 

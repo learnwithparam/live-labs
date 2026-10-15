@@ -12,7 +12,7 @@ from pydantic import ValidationError
 
 from receipts import cli
 from receipts.config import DEFAULT_BASE_URL, DEFAULT_MODEL
-from receipts.extract import ExtractionFailed, extract, read_receipt
+from receipts.extract import ExtractionFailed, extract, read_receipt, response_format
 from receipts.schema import Receipt
 from receipts.match import load_charges
 from receipts.serve import Desk, serve
@@ -134,3 +134,25 @@ def test_env_example_matches_the_code_defaults():
     )
     assert env["LLM_MODEL"] == DEFAULT_MODEL
     assert env["LLM_BASE_URL"] == DEFAULT_BASE_URL
+
+
+def objects_in(node):
+    """Every object in a JSON schema, nested definitions included."""
+    if isinstance(node, dict):
+        if "properties" in node:
+            yield node
+        for value in node.values():
+            yield from objects_in(value)
+    elif isinstance(node, list):
+        for value in node:
+            yield from objects_in(value)
+
+
+def test_the_schema_meets_openai_strict_mode():
+    # OpenAI models reject a schema where an object leaves a property optional or allows extra keys.
+    schema = response_format()["json_schema"]["schema"]
+    objects = list(objects_in(schema))
+    assert len(objects) >= 2, "the receipt and its line items"
+    for found in objects:
+        assert found["required"] == list(found["properties"])
+        assert found["additionalProperties"] is False
