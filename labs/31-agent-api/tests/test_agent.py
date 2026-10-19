@@ -11,6 +11,9 @@ from mosswood.stub_model import Provider
 
 def test_first_token_arrives_long_before_the_answer_ends(tmp_path):
     with agent_over_stub(tmp_path) as (agent_url, _, _):
+        # The first call pays about a second of lazy imports and connection setup; on a loaded box that
+        # alone broke the 1.5 s bound (19 Oct 2026), so time a warm call like the gateway's p95 does.
+        httpx.post(f"{agent_url}/v1/chat", json={"question": "What is overdue?"}, headers=GATEWAY_HEADERS, timeout=30)
         started = time.perf_counter()
         seen = []
         with httpx.stream("POST", f"{agent_url}/v1/chat", json={"question": "Write a full report"}, headers=GATEWAY_HEADERS, timeout=30) as response:
