@@ -61,7 +61,7 @@ print what the README promises.
 
 Open [Show and tell](https://github.com/learnwithparam/live-labs/discussions/categories/show-and-tell) and
 start the title with the lab's slug in brackets, for example `[mcp-gateway] Gateway in front of our Jira
-server`. Each lab page links straight to a prefilled post. Include:
+server`. Include:
 
 1. What you built, in one sentence.
 2. A link to the code, or a screenshot if the code is private.
@@ -77,8 +77,8 @@ the title. Mark the reply that solved it as the answer, so the next person finds
 
 ## Review someone else
 
-Every lab page lists three things you can do afterwards. Use them as the review checklist: say which of
-the three the build shows, and one change you would make. Members who review well are invited to be lab
+Use the four points above as the review checklist: answer the question the builder asked, and name one
+change you would make. Members who review well are invited to be lab
 captains.
 
 ## Norms

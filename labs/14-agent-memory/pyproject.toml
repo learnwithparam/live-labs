@@ -25,3 +25,5 @@ exclude-newer = "2026-10-01T00:00:00Z"
 [tool.pytest.ini_options]
 markers = ["proof: calls a real model; needs LLM_API_KEY"]
 addopts = "-m 'not proof'"
+# Raised inside a dependency, not by this lab's code.
+filterwarnings = ["ignore:Cannot enable progress bars:UserWarning"]
