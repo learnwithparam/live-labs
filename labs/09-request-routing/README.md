@@ -1,4 +1,4 @@
-# Route Support Tickets with a Decision Model
+# Route Requests with LLM Classification
 
 Send each support ticket to the queue that can solve it, and send the ones in doubt to a person,
 using a model whose confidence you can trust.

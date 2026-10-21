@@ -1,7 +1,7 @@
 [project]
 name = "lab-19-decision-ai"
 version = "0.1.0"
-description = "Score Refund Risk with a Decision Model: a marketplace's refunds scored by a calibrated gradient-boosted model, with thresholds set from a review budget and graded on chargebacks found later"
+description = "Score Risk with a Decision Model: a marketplace's refunds scored by a calibrated gradient-boosted model, with thresholds set from a review budget and graded on chargebacks found later"
 requires-python = ">=3.11"
 dependencies = ["scikit-learn==1.9.1", "numpy>=2.4", "openai==2.54.0"]
 

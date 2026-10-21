@@ -1,7 +1,7 @@
 [project]
 name = "lab-18-vision-damage"
 version = "0.1.0"
-description = "Assess Car Damage Photos with Vision LLMs: a motor insurer's claim photos read into structured damage, priced in code from a rate table, with the doubtful claims sent to an adjuster"
+description = "Read Images with Vision LLMs: a motor insurer's claim photos read into structured damage, priced in code from a rate table, with the doubtful claims sent to an adjuster"
 requires-python = ">=3.11"
 dependencies = ["openai==2.54.0"]
 

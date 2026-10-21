@@ -1,7 +1,7 @@
 [project]
 name = "lab-09-request-routing"
 version = "0.1.0"
-description = "Route Support Tickets with a Decision Model: send each ticket to the queue that can solve it, three ways, and count the reassignments"
+description = "Route Requests with LLM Classification: send each ticket to the queue that can solve it, three ways, and count the reassignments"
 requires-python = ">=3.11"
 dependencies = ["fastembed==0.8.1", "openai>=1.100", "pydantic>=2.11", "httpx>=0.28"]
 

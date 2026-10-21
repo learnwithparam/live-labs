@@ -27,8 +27,8 @@ print what the README promises.
 | 6 | [Stop RAG Hallucinations with an LLM Judge](labs/06-rag-judge) | DoorDash Dasher support guardrail and judge | ready |
 | 7 | [Build Agentic RAG with LangGraph](labs/07-agentic-rag) | Uber enhanced agentic RAG | ready |
 | 8 | [Build an AI Workflow with Mastra](labs/08-ai-workflow) | Shopify Magic writes product descriptions from merchant details | ready |
-| 9 | [Route Support Tickets with a Decision Model](labs/09-request-routing) | Zendesk intelligent triage | ready |
-| 10 | [Make an AI Workflow Survive a Crash](labs/10-durable-workflow) | Temporal case studies: Coinbase and Netflix | ready |
+| 9 | [Route Requests with LLM Classification](labs/09-request-routing) | Zendesk intelligent triage | ready |
+| 10 | [Build Durable AI Workflows with Temporal](labs/10-durable-workflow) | Temporal case studies: Coinbase and Netflix | ready |
 | 11 | [Build an AI Agent Loop from Scratch](labs/11-agent-loop) | Klarna's assistant handled two thirds of support chats | ready |
 | 12 | [Design Tools for AI Agents with MCP](labs/12-mcp-tools) | Shopify Sidekick tool design | ready |
 | 13 | [Cut Agent Token Costs with Context Engineering](labs/13-context-engineering) | Manus KV-cache hit rate | ready |
@@ -36,8 +36,8 @@ print what the README promises.
 | 15 | [Build a Deep Research Agent with Subagents](labs/15-research-subagents) | Anthropic's multi-agent research system | ready |
 | 16 | [Build a Voice AI Agent with Pipecat](labs/16-voice-pipecat) | SoundHound takes restaurant phone orders | ready |
 | 17 | [Put a Voice AI Agent on a Phone Line](labs/17-voice-phone) | LiveKit behind ChatGPT voice | ready |
-| 18 | [Assess Car Damage Photos with Vision LLMs](labs/18-vision-damage) | Tractable damage appraisal | ready |
-| 19 | [Score Refund Risk with a Decision Model](labs/19-decision-ai) | Stripe Radar score, thresholds and review | ready |
+| 18 | [Read Images with Vision LLMs](labs/18-vision-damage) | Tractable damage appraisal | ready |
+| 19 | [Score Risk with a Decision Model](labs/19-decision-ai) | Stripe Radar score, thresholds and review | ready |
 | 20 | [Ship a Remote MCP Server with OAuth](labs/20-remote-mcp-oauth) | Remote MCP servers from Linear, Sentry and Atlassian | ready |
 | 21 | [Enforce Document Permissions in RAG with OpenFGA](labs/21-rag-permissions) | Glean permission-aware search | ready |
 | 22 | [Authorize AI Agent Actions with RBAC and ABAC](labs/22-agent-actions-authz) | Block's Goose: read-only and destructive tools | ready |
@@ -45,7 +45,7 @@ print what the README promises.
 | 24 | [Redact PII and PHI before the LLM](labs/24-pii-phi) | Clinical scribe products under HIPAA | ready |
 | 25 | [Control AI Agent Tool Access with an MCP Gateway](labs/25-mcp-gateway) | Block's curated list of approved MCP servers | ready |
 | 26 | [Route LLM Calls with an LLM Gateway](labs/26-llm-gateway) | RouteLLM and Instacart's AI gateway | ready |
-| 27 | [Manage Prompts Outside Your Code](labs/27-prompt-registry) | Langfuse and PromptLayer prompt registries | ready |
+| 27 | [Track Prompt Versions with Langfuse](labs/27-prompt-registry) | Langfuse and PromptLayer prompt registries | ready |
 | 28 | [Trace AI Agents with OpenTelemetry](labs/28-tracing) | OpenTelemetry GenAI conventions | ready |
 | 29 | [Gate AI Releases with Evals in CI](labs/29-evals-ci) | Shopify Sidekick evals before release | ready |
 | 30 | [Govern AI Systems with an Inventory and Audit Log](labs/30-ai-governance) | EU AI Act transparency duties from Aug 2026 | ready |

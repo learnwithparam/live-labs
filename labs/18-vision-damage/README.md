@@ -1,4 +1,4 @@
-# Assess Car Damage Photos with Vision LLMs
+# Read Images with Vision LLMs
 
 Read a motor claim's photos with a vision model into structured damage, price it in code from the
 repairer's rate table, and send the doubtful claims to a human adjuster with a reason.

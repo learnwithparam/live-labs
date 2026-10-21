@@ -1,4 +1,4 @@
-# Make an AI Workflow Survive a Crash
+# Build Durable AI Workflows with Temporal
 
 Run a refund that waits days for a manager's approval and pays out exactly once, even when the
 process running it dies at the worst moment.

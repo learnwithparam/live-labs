@@ -1,4 +1,4 @@
-# Score Refund Risk with a Decision Model
+# Score Risk with a Decision Model
 
 Train a small model on refund history, turn its scores into chances you can trust, and set the lines
 that decide which refunds are paid, held or sent to a person. Then grade it on the fraud found weeks

@@ -107,7 +107,7 @@ status = "ready"
 [[lab]]
 n = 9
 slug = "09-request-routing"
-title = "Route Support Tickets with a Decision Model"
+title = "Route Requests with LLM Classification"
 part = "Workflows, routing and decisions"
 anchor = "Zendesk intelligent triage"
 owns = "request routing"
@@ -119,7 +119,7 @@ status = "ready"
 [[lab]]
 n = 10
 slug = "10-durable-workflow"
-title = "Make an AI Workflow Survive a Crash"
+title = "Build Durable AI Workflows with Temporal"
 part = "Workflows, routing and decisions"
 anchor = "Temporal case studies: Coinbase and Netflix"
 owns = "durable execution and waiting for a human"
@@ -215,7 +215,7 @@ status = "ready"
 [[lab]]
 n = 18
 slug = "18-vision-damage"
-title = "Assess Car Damage Photos with Vision LLMs"
+title = "Read Images with Vision LLMs"
 part = "Vision AI and decision AI"
 anchor = "Tractable damage appraisal"
 owns = "vision extraction"
@@ -227,7 +227,7 @@ status = "ready"
 [[lab]]
 n = 19
 slug = "19-decision-ai"
-title = "Score Refund Risk with a Decision Model"
+title = "Score Risk with a Decision Model"
 part = "Vision AI and decision AI"
 anchor = "Stripe Radar score, thresholds and review"
 owns = "risk scores, thresholds and calibration"
@@ -323,7 +323,7 @@ status = "ready"
 [[lab]]
 n = 27
 slug = "27-prompt-registry"
-title = "Manage Prompts Outside Your Code"
+title = "Track Prompt Versions with Langfuse"
 part = "LLMOps and governance"
 anchor = "Langfuse and PromptLayer prompt registries"
 owns = "prompt versions"

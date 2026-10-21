@@ -1,4 +1,4 @@
-# Manage Prompts Outside Your Code
+# Track Prompt Versions with Langfuse
 
 Let a product team change a support bot's prompt without a deploy, and roll it back in a minute. The
 prompt lives in a Langfuse registry, each version is scored on a golden set, and a label decides which
