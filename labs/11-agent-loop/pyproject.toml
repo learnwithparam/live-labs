@@ -1,7 +1,7 @@
 [project]
 name = "lab-11-agent-loop"
 version = "0.1.0"
-description = "Build an AI Agent Loop from Scratch: resolve order-support chats with tools in a loop, then the same agent in Google ADK"
+description = "Build an AI Agent Loop with Tool Calling: resolve order-support chats with tools in a loop, then the same agent in Google ADK"
 requires-python = ">=3.11"
 dependencies = ["openai==2.54.0", "google-adk==2.10.0", "litellm==1.103.1"]
 

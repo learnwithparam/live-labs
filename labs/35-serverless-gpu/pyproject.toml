@@ -1,7 +1,7 @@
 [project]
 name = "lab-35-serverless-gpu"
 version = "0.1.0"
-description = "Serve an Open LLM on Serverless GPUs: a corporate card company serves its spend-category model with vLLM on a GPU that scales to zero, measured against the hosted model on the same golden set"
+description = "Serve Open LLMs with Serverless vLLM: a corporate card company serves its spend-category model on a GPU that scales to zero, measured against the hosted model on the same golden set"
 requires-python = ">=3.11,<3.14"
 dependencies = [
     "modal==1.6.0",

@@ -1,4 +1,4 @@
-# Serve an Open LLM on Serverless GPUs
+# Serve Open LLMs with Serverless vLLM
 
 Serve an open model with vLLM on a GPU that runs only while there is work. Measure the cold start, the
 p95 and the bill per wake-up, then find the batch size where it beats a hosted model.

@@ -1,4 +1,4 @@
-# Put a Voice AI Agent on a Phone Line
+# Build a Phone AI Agent with LiveKit
 
 Answer a heating company's phone line with a LiveKit voice agent. Then ring it with ten scripted
 callers, and count the calls that end the way each caller needed.

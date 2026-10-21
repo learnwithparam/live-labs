@@ -20,29 +20,29 @@ print what the README promises.
 | # | Lab | Built on | Status |
 |---|---|---|---|
 | 1 | [Extract Structured Data with LLMs](labs/01-structured-output) | Ramp matches uploaded receipts to card transactions | ready |
-| 2 | [Build a Golden Set for an LLM Feature](labs/02-golden-set) | LinkedIn: the last 15% took four more months | ready |
+| 2 | [Test LLM Features with a Golden Dataset](labs/02-golden-set) | LinkedIn: the last 15% took four more months | ready |
 | 3 | [Process a Million Prompts with Batch APIs](labs/03-batch-prompts) | Instacart Maple batch LLM platform | ready |
-| 4 | [Build a RAG Pipeline over PDFs](labs/04-rag-pipeline) | Uber Genie on-call copilot | ready |
+| 4 | [Build a PDF RAG Pipeline with Citations](labs/04-rag-pipeline) | Uber Genie on-call copilot | ready |
 | 5 | [Measure RAG Accuracy with Recall@k](labs/05-rag-recall) | Uber's golden set over policy PDFs | ready |
 | 6 | [Stop RAG Hallucinations with an LLM Judge](labs/06-rag-judge) | DoorDash Dasher support guardrail and judge | ready |
 | 7 | [Build Agentic RAG with LangGraph](labs/07-agentic-rag) | Uber enhanced agentic RAG | ready |
 | 8 | [Build an AI Workflow with Mastra](labs/08-ai-workflow) | Shopify Magic writes product descriptions from merchant details | ready |
 | 9 | [Route Requests with LLM Classification](labs/09-request-routing) | Zendesk intelligent triage | ready |
 | 10 | [Build Durable AI Workflows with Temporal](labs/10-durable-workflow) | Temporal case studies: Coinbase and Netflix | ready |
-| 11 | [Build an AI Agent Loop from Scratch](labs/11-agent-loop) | Klarna's assistant handled two thirds of support chats | ready |
+| 11 | [Build an AI Agent Loop with Tool Calling](labs/11-agent-loop) | Klarna's assistant handled two thirds of support chats | ready |
 | 12 | [Design Tools for AI Agents with MCP](labs/12-mcp-tools) | Shopify Sidekick tool design | ready |
 | 13 | [Cut Agent Token Costs with Context Engineering](labs/13-context-engineering) | Manus KV-cache hit rate | ready |
-| 14 | [Give AI Agents Long-Term Memory with Mem0](labs/14-agent-memory) | ChatGPT memory and its controls | ready |
+| 14 | [Add Long-Term Memory to AI Agents with Mem0](labs/14-agent-memory) | ChatGPT memory and its controls | ready |
 | 15 | [Build a Deep Research Agent with Subagents](labs/15-research-subagents) | Anthropic's multi-agent research system | ready |
 | 16 | [Build a Voice AI Agent with Pipecat](labs/16-voice-pipecat) | SoundHound takes restaurant phone orders | ready |
-| 17 | [Put a Voice AI Agent on a Phone Line](labs/17-voice-phone) | LiveKit behind ChatGPT voice | ready |
+| 17 | [Build a Phone AI Agent with LiveKit](labs/17-voice-phone) | LiveKit behind ChatGPT voice | ready |
 | 18 | [Read Images with Vision LLMs](labs/18-vision-damage) | Tractable damage appraisal | ready |
 | 19 | [Score Risk with a Decision Model](labs/19-decision-ai) | Stripe Radar score, thresholds and review | ready |
 | 20 | [Ship a Remote MCP Server with OAuth](labs/20-remote-mcp-oauth) | Remote MCP servers from Linear, Sentry and Atlassian | ready |
 | 21 | [Enforce Document Permissions in RAG with OpenFGA](labs/21-rag-permissions) | Glean permission-aware search | ready |
 | 22 | [Authorize AI Agent Actions with RBAC and ABAC](labs/22-agent-actions-authz) | Block's Goose: read-only and destructive tools | ready |
 | 23 | [Block Prompt Injection with Guardrails](labs/23-guardrails) | Zillow Fair Housing Classifier | ready |
-| 24 | [Redact PII and PHI before the LLM](labs/24-pii-phi) | Clinical scribe products under HIPAA | ready |
+| 24 | [Redact PII and PHI with Presidio](labs/24-pii-phi) | Clinical scribe products under HIPAA | ready |
 | 25 | [Control AI Agent Tool Access with an MCP Gateway](labs/25-mcp-gateway) | Block's curated list of approved MCP servers | ready |
 | 26 | [Route LLM Calls with an LLM Gateway](labs/26-llm-gateway) | RouteLLM and Instacart's AI gateway | ready |
 | 27 | [Track Prompt Versions with Langfuse](labs/27-prompt-registry) | Langfuse and PromptLayer prompt registries | ready |
@@ -53,7 +53,7 @@ print what the README promises.
 | 32 | [Run Background Coding Agents with Cloud Sandboxes](labs/32-background-agents) | Ramp Inspect, run on Modal sandboxes | ready |
 | 33 | [Run AI Agents on Serverless with Durable Functions](labs/33-serverless-agents) | AWS Lambda durable functions and Bedrock AgentCore | ready |
 | 34 | [Fine-Tune a Small LLM with Reviewed Data](labs/34-fine-tune) | Checkr replaced a large model with a tuned small one; Ramp fine-tunes on Modal | ready |
-| 35 | [Serve an Open LLM on Serverless GPUs](labs/35-serverless-gpu) | Ramp on Modal | ready |
+| 35 | [Serve Open LLMs with Serverless vLLM](labs/35-serverless-gpu) | Ramp on Modal | ready |
 
 <!-- end course map -->
 

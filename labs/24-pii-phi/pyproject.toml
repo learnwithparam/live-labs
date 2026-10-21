@@ -1,7 +1,7 @@
 [project]
 name = "lab-24-pii-phi"
 version = "0.1.0"
-description = "Redact PII and PHI before the LLM: a clinical scribe strips Safe Harbor identifiers from visit transcripts with Presidio, scored on spans a person annotated"
+description = "Redact PII and PHI with Presidio: a clinical scribe strips Safe Harbor identifiers from visit transcripts, scored on spans a person annotated"
 requires-python = ">=3.11,<3.14"
 dependencies = [
     "presidio-analyzer==2.2.364",

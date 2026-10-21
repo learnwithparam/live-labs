@@ -23,7 +23,7 @@ status = "ready"
 [[lab]]
 n = 2
 slug = "02-golden-set"
-title = "Build a Golden Set for an LLM Feature"
+title = "Test LLM Features with a Golden Dataset"
 part = "The LLM as an API"
 anchor = "LinkedIn: the last 15% took four more months"
 owns = "golden sets and field accuracy"
@@ -47,7 +47,7 @@ status = "ready"
 [[lab]]
 n = 4
 slug = "04-rag-pipeline"
-title = "Build a RAG Pipeline over PDFs"
+title = "Build a PDF RAG Pipeline with Citations"
 part = "RAG you can measure"
 anchor = "Uber Genie on-call copilot"
 owns = "ingestion, chunking and cited answers"
@@ -131,7 +131,7 @@ status = "ready"
 [[lab]]
 n = 11
 slug = "11-agent-loop"
-title = "Build an AI Agent Loop from Scratch"
+title = "Build an AI Agent Loop with Tool Calling"
 part = "Agents"
 anchor = "Klarna's assistant handled two thirds of support chats"
 owns = "the agent loop and its budgets"
@@ -167,7 +167,7 @@ status = "ready"
 [[lab]]
 n = 14
 slug = "14-agent-memory"
-title = "Give AI Agents Long-Term Memory with Mem0"
+title = "Add Long-Term Memory to AI Agents with Mem0"
 part = "Agents"
 anchor = "ChatGPT memory and its controls"
 owns = "memory across sessions"
@@ -203,7 +203,7 @@ status = "ready"
 [[lab]]
 n = 17
 slug = "17-voice-phone"
-title = "Put a Voice AI Agent on a Phone Line"
+title = "Build a Phone AI Agent with LiveKit"
 part = "Voice AI"
 anchor = "LiveKit behind ChatGPT voice"
 owns = "telephony and simulated callers"
@@ -287,7 +287,7 @@ status = "ready"
 [[lab]]
 n = 24
 slug = "24-pii-phi"
-title = "Redact PII and PHI before the LLM"
+title = "Redact PII and PHI with Presidio"
 part = "Agentic AI systems you can trust"
 anchor = "Clinical scribe products under HIPAA"
 owns = "PII and PHI redaction"
@@ -419,7 +419,7 @@ status = "ready"
 [[lab]]
 n = 35
 slug = "35-serverless-gpu"
-title = "Serve an Open LLM on Serverless GPUs"
+title = "Serve Open LLMs with Serverless vLLM"
 part = "Deploy"
 anchor = "Ramp on Modal"
 owns = "serving open models"

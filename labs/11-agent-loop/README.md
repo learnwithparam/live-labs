@@ -1,4 +1,4 @@
-# Build an AI Agent Loop from Scratch
+# Build an AI Agent Loop with Tool Calling
 
 Write the loop every agent framework runs: a model, a few tools, and a budget. Then run the same tools in
 Google ADK and see what the framework did for you.

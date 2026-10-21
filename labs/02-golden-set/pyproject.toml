@@ -1,7 +1,7 @@
 [project]
 name = "lab-02-golden-set"
 version = "0.1.0"
-description = "Build a Golden Set for an LLM Feature: score every prompt change against postings a person approved"
+description = "Test LLM Features with a Golden Dataset: score every prompt change against postings a person approved"
 requires-python = ">=3.11"
 dependencies = ["openai>=1.100", "pydantic>=2.11"]
 

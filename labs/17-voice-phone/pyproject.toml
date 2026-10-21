@@ -1,7 +1,7 @@
 [project]
 name = "lab-17-voice-phone"
 version = "0.1.0"
-description = "Put a Voice AI Agent on a Phone Line: a heating and cooling company's inbound line answered by a LiveKit voice agent, tested by simulated callers"
+description = "Build a Phone AI Agent with LiveKit: a heating and cooling company's inbound line answered by a voice agent, tested by simulated callers"
 requires-python = ">=3.11,<3.14"
 dependencies = [
     "livekit-agents==1.8.3",

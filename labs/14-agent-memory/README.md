@@ -1,4 +1,4 @@
-# Give AI Agents Long-Term Memory with Mem0
+# Add Long-Term Memory to AI Agents with Mem0
 
 Give a support agent memory that lasts between chats with Mem0. Then make it behave like ChatGPT's
 memory: a correction replaces the old fact, "forget it" deletes it, and the customer can see and edit

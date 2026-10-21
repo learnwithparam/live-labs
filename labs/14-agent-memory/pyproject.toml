@@ -1,7 +1,7 @@
 [project]
 name = "lab-14-agent-memory"
 version = "0.1.0"
-description = "Give AI Agents Long-Term Memory with Mem0: a pet food support agent that remembers across sessions, replaces stale facts and forgets on request"
+description = "Add Long-Term Memory to AI Agents with Mem0: a pet food support agent that remembers across sessions, replaces stale facts and forgets on request"
 requires-python = ">=3.11"
 dependencies = ["fastembed==0.8.1", "mem0ai==2.2.1", "openai==2.54.0"]
 

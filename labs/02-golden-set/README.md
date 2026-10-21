@@ -1,4 +1,4 @@
-# Build a Golden Set for an LLM Feature
+# Test LLM Features with a Golden Dataset
 
 Score every prompt or model change against cases a person already approved, field by field, and
 block the change when any field gets worse.

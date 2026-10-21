@@ -1,4 +1,4 @@
-# Build a RAG Pipeline over PDFs
+# Build a PDF RAG Pipeline with Citations
 
 Turn PDFs into passages a citation can point at, answer only from the passages found, and send a
 person every answer whose citation does not hold it.

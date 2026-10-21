@@ -1,4 +1,4 @@
-# Redact PII and PHI before the LLM
+# Redact PII and PHI with Presidio
 
 Strip patient identifiers from a visit transcript before an LLM writes the note, then put them back for
 the clinician. Then count how many identifiers your redactor misses.
