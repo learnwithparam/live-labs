@@ -38,6 +38,13 @@ def fuel_week(pickup: str) -> str:
     return f"{year}-W{week:02d}"
 
 
+def week_dates(week: str) -> str:
+    """A fuel week as the contract prints it, Monday to Sunday, so nobody reckons ISO weeks by hand."""
+    year, number = week.split("-W")
+    monday, sunday = date.fromisocalendar(int(year), int(number), 1), date.fromisocalendar(int(year), int(number), 7)
+    return f"{monday:%d %b} to {sunday:%d %b}"
+
+
 def billed(invoice: dict) -> float:
     return round(sum(line["amount"] for line in invoice["lines"]), 2)
 
@@ -88,7 +95,7 @@ def contract_text(terms: dict) -> str:
     """The contract as the agent reads it: the same text on every step, so it caches."""
     lanes = "\n".join(f"{lane['carrier']}  Rotterdam to {lane['destination']:<14}{lane['per_pallet']:>8.2f} per pallet"
                       for lane in terms["lanes"])
-    weeks = [f"{week}  {share * 100:.1f}%" for week, share in terms["fuel"].items()]
+    weeks = [f"{week}  {week_dates(week)}  {share * 100:.1f}%" for week, share in terms["fuel"].items()]
     carriers = "\n".join(f"{code}  {carrier['name']}, {carrier['address']}, VAT {carrier['vat']}, payment {carrier['terms']} days"
                          for code, carrier in terms["carriers"].items())
     return f"""ROAD FREIGHT CONTRACT {terms['contract']}, valid {terms['valid']}. Customer: {terms['client']}.
