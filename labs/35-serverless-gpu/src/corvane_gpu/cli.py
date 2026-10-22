@@ -78,7 +78,8 @@ def print_report(report: dict) -> None:
     for item in report["queue"]:
         decided = item["decision"]
         outcome = f"{decided['category']} by {decided['reviewer']}" if decided else "waiting"
-        print(f"  {item['id']}  {item['descriptor'][:34]:<34} {item['reason'][:60]:<60} {outcome}")
+        reason = item["reason"] if len(item["reason"]) <= 44 else item["reason"][:43] + "\u2026"
+        print(f"  {item['id']}  {item['descriptor'][:26]:<26} {reason:<44} {outcome}")
 
 
 def rehearse() -> int:
