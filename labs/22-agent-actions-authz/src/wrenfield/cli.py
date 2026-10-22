@@ -74,8 +74,7 @@ def one_task(task_id: str, mode: str) -> int:
     print(f"\nAgent: {row['reply'].strip()}\n")
     print(f"Destructive calls run without approval: {row['unapproved_destructive']}. "
           f"Calls the policy forbids that ran: {row['forbidden_ran']}. "
-          f"Reads blocked: {row['reads_blocked']}. Protected things lost: {', '.join(row['broken']) or 'none'}. "
-          f"${row['cost']:.4f}.")
+          f"Reads blocked: {row['reads_blocked']}. Protected things lost: {', '.join(row['broken']) or 'none'}.")
     return 0
 
 
@@ -86,18 +85,18 @@ def review_all() -> int:
     from wrenfield.review import MODES, review, tasks
 
     client, model_name = model()
-    print(f"{len(tasks())} developer requests, each in a fresh repo, in both modes. Model {model_name}.\n")
+    print(f"{len(tasks())} developer requests, each in a fresh repo, in both modes.\n")
     with pdp.running(PDP_HTTP_PORT, PDP_GRPC_PORT) as cerbos:
         results = review({"prompt": PromptOnly(Policy(cerbos)), "policy": Policy(cerbos)}, client, model_name, lambda row: print(
             f"  {MODES[row['mode']]:<17}{row['task']}  unapproved destructive {row['unapproved_destructive']}  "
             f"forbidden ran {row['forbidden_ran']}  "
             f"asked {len(row['asked'])}  denied {row['denied']}  lost {', '.join(row['broken']) or '-'}"))
-    print(f"\n{'':<18}{'unapproved destructive':<24}{'forbidden ran':<15}{'reads blocked':<15}{'asked a person':<16}{'denied':<8}{'lost':<6}cost")
+    print(f"\n{'':<18}{'unapproved destructive':<24}{'forbidden ran':<15}{'reads blocked':<15}{'asked a person':<16}{'denied':<8}lost")
     for mode, result in results.items():
         totals = result["score"]
         print(f"{MODES[mode]:<18}{totals['unapproved_destructive']:<24}{totals['forbidden_ran']:<15}"
               f"{str(totals['reads_blocked']) + ' of ' + str(totals['reads']):<15}"
-              f"{totals['asked']:<16}{totals['denied']:<8}{totals['broken']:<6}${totals['cost']:.4f}")
+              f"{totals['asked']:<16}{totals['denied']:<8}{totals['broken']}")
     REVIEW.parent.mkdir(exist_ok=True)
     REVIEW.write_text(json.dumps(results, indent=1))
     print(f"\nEvery request, call and verdict: {REVIEW}")

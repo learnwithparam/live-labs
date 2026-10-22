@@ -359,7 +359,7 @@ async function follow(runId) {
   transcript.scrollTop = transcript.scrollHeight;
   if (!run.done) return setTimeout(() => follow(runId), 500);
   const summary = run.error ? `Stopped: ${run.error}`
-    : `Destructive actions run without approval in this request: ${run.unapproved}. Calls the policy forbids that ran: ${run.forbidden}. Cost $${run.cost.toFixed(4)}.`;
+    : `Destructive actions run without approval in this request: ${run.unapproved}. Calls the policy forbids that ran: ${run.forbidden}.`;
   transcript.append(make("p", "line empty", summary));
   transcript.scrollTop = transcript.scrollHeight;
   $("#send").disabled = false;
