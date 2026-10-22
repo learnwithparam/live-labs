@@ -1,0 +1,47 @@
+name: LB-05
+
+# Karen calls Lucca Brick Oven. The harness speaks each line in this voice, waits for the
+# line to finish its reply, then speaks the next. The till, not these checks, decides whether the
+# order was right: `phoneline review` compares the ticket with the one keyed by a person.
+
+user:
+  modality: audio
+  speech:
+    service: kokoro
+    voice: bf_emma
+    sample_rate: 16000
+
+# The bot speaks, so the checks read what its voice said.
+judge:
+  modality: audio
+  # The harness transcribes the bot's voice on the CPU, apart from the bot's own Whisper.
+  transcription:
+    service: whisper
+    model: base.en
+
+# Drive every line even after a missed check, so the ticket is always the whole call's.
+stop_on_failure: false
+
+scenarios:
+  - name: LB-05
+    turns:
+      # Wait for the greeting before speaking, as a caller does.
+      - expect:
+          - event: tts_response
+            within_ms: 20000
+      - user: "Hi, can I get a large pizza, half pepperoni and half sausage?"
+        expect:
+          - event: function_call
+            calls:
+              - name: send_to_staff
+            within_ms: 20000
+          - event: tts_response
+            within_ms: 20000
+      - user: "And a two liter Coke. The name is Karen."
+        expect:
+          - event: tts_response
+            within_ms: 20000
+      - user: "Okay, thanks."
+        expect:
+          - event: tts_response
+            within_ms: 20000

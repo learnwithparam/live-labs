@@ -1,0 +1,46 @@
+# `phoneline review` runs this with Pipecat's own eval suite: each recorded call is one scenario,
+# played into a fresh bot over the eval transport, one call at a time as a single phone line takes them.
+concurrency: 1
+runs_dir: ../out/evals
+spawn: "{python} {bot} -t eval --port {port}"
+suite:
+  - bot: ../src/lucca/bot.py
+    name: LB-01
+    runner_body:
+      data: {call: LB-01, order_number: 412}
+    scenarios: [LB-01]
+  - bot: ../src/lucca/bot.py
+    name: LB-02
+    runner_body:
+      data: {call: LB-02, order_number: 413}
+    scenarios: [LB-02]
+  - bot: ../src/lucca/bot.py
+    name: LB-03
+    runner_body:
+      data: {call: LB-03, order_number: 414}
+    scenarios: [LB-03]
+  - bot: ../src/lucca/bot.py
+    name: LB-04
+    runner_body:
+      data: {call: LB-04, order_number: 415}
+    scenarios: [LB-04]
+  - bot: ../src/lucca/bot.py
+    name: LB-05
+    runner_body:
+      data: {call: LB-05, order_number: 416}
+    scenarios: [LB-05]
+  - bot: ../src/lucca/bot.py
+    name: LB-06
+    runner_body:
+      data: {call: LB-06, order_number: 417}
+    scenarios: [LB-06]
+  - bot: ../src/lucca/bot.py
+    name: LB-07
+    runner_body:
+      data: {call: LB-07, order_number: 418}
+    scenarios: [LB-07]
+  - bot: ../src/lucca/bot.py
+    name: LB-08
+    runner_body:
+      data: {call: LB-08, order_number: 419}
+    scenarios: [LB-08]

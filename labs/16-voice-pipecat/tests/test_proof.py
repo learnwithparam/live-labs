@@ -6,8 +6,9 @@ import json
 from pathlib import Path
 
 import pytest
+from pipecat.evals.suite import EvalManifest, EvalSuite
 
-from lucca.review import review
+from lucca.review import MANIFEST, review
 
 
 @pytest.mark.proof
@@ -21,6 +22,10 @@ def test_the_line_takes_orders_with_no_staff_and_hands_off_what_the_menu_cannot_
         if row["staff_expected"]:
             # Nothing reaches the kitchen, and staff are told why they are calling back.
             assert row["ticket"]["status"] == "staff" and row["ticket"]["staff_reason"], row["why"]
-    # Each caller line got an answer the clock could time, so p50 and p95 cover the whole shift.
-    assert metric["timed_turns"] >= metric["turns"] - 1, metric
-    assert metric["p50_ms"] and metric["p95_ms"] >= metric["p50_ms"], metric
+    # Each scripted caller line got a reply the clock could time, so p50 and p95 cover the whole shift.
+    # One may go untimed: a caller who cuts in can end the reply before its first sound.
+    scripted = sum(1 for run in EvalSuite(EvalManifest.load(MANIFEST)).runs
+                   for turn in (run.load() or run.loaded).turns if turn.user)
+    assert metric["timed_turns"] >= scripted - 1, metric
+    # The line answers the typical turn in under 3.5 s, measured from the caller going quiet.
+    assert metric["p50_ms"] <= 3500 and metric["p95_ms"] >= metric["p50_ms"], metric

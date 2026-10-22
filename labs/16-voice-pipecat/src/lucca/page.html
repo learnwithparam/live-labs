@@ -44,9 +44,6 @@
   .chip.pass { color: var(--pass); border: 1px solid var(--pass) }
   .chip.fail { color: var(--fail); border: 1px solid var(--fail) }
   .chip.wait { color: var(--wait); border: 1px solid var(--wait) }
-  .pass-row { display: flex; gap: 6px; margin-top: 10px }
-  .pass-row button { flex: 1; padding: 7px; border: 1px solid var(--ink); background: var(--card); color: var(--ink); border-radius: 6px }
-  .pass-row button:disabled { opacity: .45; cursor: default }
   .rail { padding: 18px 24px; overflow: hidden }
   .tickets { position: relative; display: flex; gap: 16px; align-items: flex-start; overflow-x: auto; padding-bottom: 12px }
   .ticket { flex: 0 0 270px; background: var(--card); border: 1px solid var(--line); border-top: 6px solid var(--ink);
@@ -71,7 +68,7 @@
   .say { padding: 7px 10px; border-radius: 8px; font-size: 13.5px; max-width: 92% }
   .say.caller-line { background: var(--paper); border: 1px solid var(--line); align-self: flex-start }
   .say.agent-line { background: var(--fill-dark); color: var(--card); align-self: flex-end }
-  .say.cut { text-decoration: line-through; text-decoration-color: var(--fail) }
+  .say.cut { border-left: 3px solid var(--fail) }
   .say small { display: block; font-size: 11px; color: var(--faint) }
   .tool { font: 12px var(--mono); color: var(--accent-deep); align-self: center; text-align: center }
   .note { font-size: 12px; color: var(--fail); align-self: center; text-align: center }
@@ -79,6 +76,7 @@
   .turn { display: grid; grid-template-columns: 2.4rem minmax(0, 1fr) 4.4rem; gap: 8px; align-items: center; font: 12px var(--mono) }
   .bars { display: flex; height: 14px; background: var(--paper); border: 1px solid var(--line) }
   .bars span { height: 100% }
+  .bars .whole { background: var(--line) }
   .hear { background: var(--ink-2) } .think { background: var(--accent); box-shadow: inset 0 0 0 1px var(--accent-deep) } .speak { background: var(--faint) }
   .legend { display: flex; gap: 12px; font-size: 12px; color: var(--muted) }
   .legend i { display: inline-block; width: 10px; height: 10px; margin-right: 4px; vertical-align: -1px }
@@ -108,10 +106,7 @@
     <p class="hint">Speech to text and the voice run on this machine. Only the transcript goes to the model.</p>
     <h2>Recorded calls</h2>
     <div id="callers"></div>
-    <div class="pass-row">
-      <button id="replay" disabled>Play this call again</button>
-    </div>
-    <p class="hint" id="replay-hint">A replay runs the whole pipeline on this machine, so it takes a few minutes.</p>
+    <p class="hint" id="line-hint">Pipecat's eval suite played each recorded call into the line in the caller's own voice. Run phoneline review to play them again.</p>
   </aside>
   <section class="rail">
     <h2>Tickets</h2>
@@ -179,7 +174,7 @@ function renderCallers() {
     const row = shiftRow(call.id);
     const button = make("button", "caller" + (picked?.id === call.id ? " picked" : ""));
     const label = make("span");
-    label.append(make("span", "", `${call.id} · ${call.caller}`), make("small", "", call.lines[0]));
+    label.append(make("span", "", `${call.id} · ${call.caller}`), make("small", "", call.summary));
     button.append(label);
     if (row) {
       const kind = row.staff_expected ? (row.ok ? "wait" : "fail") : (row.ok ? "pass" : "fail");
@@ -189,7 +184,6 @@ function renderCallers() {
     button.addEventListener("click", () => pick(call.id));
     list.append(button);
   }
-  $("#replay").disabled = !picked || picked.kind !== "recorded" || Boolean(state.busy);
 }
 
 function ticketCard(ticket, heading, options = {}) {
@@ -242,21 +236,17 @@ function renderTickets(liveTicket, freshLine) {
 function renderTranscript(events) {
   const box = $("#transcript");
   box.replaceChildren();
-  const callerBubbles = {};
   for (const event of events) {
-    if (event.kind === "caller_line" || event.kind === "caller") {
-      const bubble = callerBubbles[event.line] || make("div", "say caller-line");
-      bubble.replaceChildren(make("small", "", event.kind === "caller" ? "caller, as heard" : "caller"), document.createTextNode(event.text || event.said));
-      if (!callerBubbles[event.line]) box.append(bubble);
-      callerBubbles[event.line] = bubble;
+    if (event.kind === "caller") {
+      const bubble = make("div", "say caller-line");
+      bubble.append(make("small", "", "caller, as heard"), document.createTextNode(event.text));
+      box.append(bubble);
     } else if (event.kind === "agent" && event.text) {
-      const bubble = make("div", "say agent-line");
+      // The text is what the voice had spoken when the turn ended, so a cut reply shows where it stopped.
+      const bubble = make("div", "say agent-line" + (event.interrupted ? " cut" : ""));
       bubble.append(make("small", "", "phone line"), document.createTextNode(event.text));
       box.append(bubble);
-    } else if (event.kind === "interrupted") {
-      const last = [...box.querySelectorAll(".agent-line")].pop();
-      if (last) last.classList.add("cut");
-      box.append(make("div", "note", `Caller cut in. The reply stopped ${event.stop_ms} ms after they started talking.`));
+      if (event.interrupted) box.append(make("div", "note", "Caller cut in, so the line stopped talking and listened."));
     } else if (event.kind === "tool") {
       const result = event.result.error ? `refused: ${event.result.error}` : (event.result.added || event.result.removed || (event.result.placed ? `order ${event.result.order_number} placed` : "sent to staff"));
       box.append(make("div", "tool", `${event.tool} → ${result}`));
@@ -269,14 +259,17 @@ function renderTranscript(events) {
 function renderStrip(turns) {
   const strip = $("#strip");
   strip.replaceChildren();
-  const timed = turns.filter((turn) => turn.latency_ms !== null && turn.latency_ms !== undefined);
-  const widest = Math.max(BUDGET_MS, ...timed.map((turn) => turn.latency_ms));
-  for (const turn of turns) {
+  const widest = Math.max(BUDGET_MS, ...turns.map((turn) => turn.latency_ms));
+  turns.forEach((turn, position) => {
     const row = make("div", "turn");
-    row.title = turn.heard || turn.said || "";
-    row.append(make("span", "", `T${turn.line}`));
+    row.append(make("span", "", `T${position + 1}`));
     const bars = make("div", "bars");
-    if (turn.latency_ms !== null && turn.latency_ms !== undefined) {
+    // A turn that followed a cut-in keeps its total but no split, so it shows as one grey bar.
+    if (turn.hear_ms === null) {
+      const span = make("span", "whole");
+      span.style.width = `${(100 * turn.latency_ms) / widest}%`;
+      bars.append(span);
+    } else {
       for (const part of ["hear", "think", "speak"]) {
         const span = make("span", part);
         span.style.width = `${(100 * turn[part + "_ms"]) / widest}%`;
@@ -284,16 +277,15 @@ function renderStrip(turns) {
         bars.append(span);
       }
     }
-    const total = turn.barge_in ? `cut in` : seconds(turn.latency_ms);
-    row.append(bars, make("span", turn.latency_ms > BUDGET_MS ? "over" : "", total));
+    row.append(bars, make("span", turn.latency_ms > BUDGET_MS ? "over" : "", seconds(turn.latency_ms)));
     strip.append(row);
-  }
+  });
   if (!turns.length) strip.append(make("p", "empty", "No turns yet."));
 }
 
 function pick(callId) {
   const row = shiftRow(callId);
-  picked = { id: callId, kind: "recorded" };
+  picked = { id: callId };
   renderCallers();
   renderTickets(null);
   renderTranscript(row?.events || []);
@@ -320,21 +312,12 @@ async function follow(callId, label) {
     if (call.error) $("#transcript").append(make("p", "error", call.error));
     if (call.done) {
       clearInterval(polling);
-      setLine(call.verdict ? `Last call: ${call.verdict.ok ? "matches" : "differs from"} the keyed order` : "");
+      setLine("");
       state = await (await fetch("/api/state")).json();
       renderShift(); renderCallers();
     }
   }, 700);
 }
-
-$("#replay").addEventListener("click", async () => {
-  const response = await fetch("/api/call", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: picked.id }) });
-  const reply = await response.json();
-  if (!response.ok) { $("#replay-hint").textContent = reply.error; return; }
-  state.busy = reply.call_id;
-  renderCallers();
-  follow(reply.call_id, `Replaying ${picked.id}`);
-});
 
 $("#live").addEventListener("click", async () => {
   const button = $("#live");
@@ -349,11 +332,11 @@ $("#live").addEventListener("click", async () => {
   await new Promise((done) => { if (peer.iceGatheringState === "complete") done(); else peer.addEventListener("icegatheringstatechange", () => peer.iceGatheringState === "complete" && done()); });
   const response = await fetch("/api/offer", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ sdp: peer.localDescription.sdp, type: peer.localDescription.type }) });
   const answer = await response.json();
-  if (!response.ok) { $("#replay-hint").textContent = answer.error; peer.close(); peer = null; return; }
+  if (!response.ok) { $("#line-hint").textContent = answer.error; peer.close(); peer = null; return; }
   await peer.setRemoteDescription({ sdp: answer.sdp, type: answer.type });
   button.setAttribute("aria-pressed", "true");
   button.textContent = "Hang up";
-  picked = { id: answer.call_id, kind: "live" };
+  picked = { id: answer.call_id };
   follow(answer.call_id, "On a live call");
 });
 

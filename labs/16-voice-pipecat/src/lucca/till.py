@@ -42,6 +42,11 @@ class Menu:
         self.items = {item["id"]: item for item in self.data["items"]}
         self.groups = self.data["groups"]
 
+    def hint(self) -> str:
+        """The menu as one line of text for speech to text to expect, so it spells menu words as the
+        till does: "cannolis", not "canoles"."""
+        return f"{self.data['restaurant']}: " + ", ".join(item["name"] for item in self.data["items"]) + "."
+
     def find_item(self, said: str) -> tuple[dict, list[str]]:
         """The item a caller named, plus any option said as part of its name. Callers say "buffalo
         wings", "thin crust pepperoni" and "a two liter Diet Coke", so a name that holds an item's alias,

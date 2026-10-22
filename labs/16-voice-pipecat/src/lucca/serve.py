@@ -1,8 +1,9 @@
 """`phoneline serve`: Lucca Brick Oven's kitchen ticket display, filled as the caller speaks.
 
-Two kinds of call reach the same pipeline: a recorded call from data/calls, or a live call from the
-browser microphone over WebRTC. Pipecat runs on one asyncio loop in a background thread; the page posts a
-call, then polls it for the transcript, the ticket and each turn's latency.
+The display shows the last scored shift and takes live calls from the browser microphone over WebRTC.
+A live call runs the same `run_bot` that Pipecat's eval suite plays the recorded calls into, so what
+you hear on the line is what the shift was scored on. Pipecat runs on one asyncio loop in a background
+thread; the page posts its offer, then polls the call for the transcript, the ticket and each turn.
 """
 
 import asyncio
@@ -13,11 +14,19 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlsplit
 
-from lucca.caller import load_calls
-from lucca.review import OUT_FILE
+from lucca import config
+from lucca.review import OUT_FILE, load_calls
 
 PAGE = Path(__file__).with_name("page.html")
-LIVE_ORDER_NUMBER = 500  # live calls take ticket numbers apart from the recorded shift
+
+
+def summary(call: dict) -> str:
+    """One line under each caller's name: what a person keyed from the call."""
+    keyed = call["keyed"]
+    if "staff" in keyed:
+        return f"for staff: {keyed['staff']}"
+    items = sum(line["quantity"] for line in keyed["lines"])
+    return f"{items} item{'s' if items > 1 else ''} keyed for {keyed['name']}"
 
 
 class Line:
@@ -39,15 +48,8 @@ class Line:
             shift = {"metric": review["metric"],
                      "rows": [{key: row[key] for key in ("id", "caller", "ok", "why", "staff_expected", "ticket", "turns", "events")}
                               for row in review["rows"]]}
-        calls = [{"id": call["id"], "caller": call["caller"], "lines": [line["say"] for line in call["lines"]]}
-                 for call in load_calls()]
+        calls = [{"id": call["id"], "caller": call["caller"], "summary": summary(call)} for call in load_calls()]
         return {"menu": Menu().data, "calls": calls, "shift": shift, "busy": self.busy}
-
-    def record(self, kind: str, caller: str) -> str:
-        call_id = uuid.uuid4().hex[:8]
-        self.calls[call_id] = {"kind": kind, "caller": caller, "events": [], "done": False}
-        self.busy = call_id
-        return call_id
 
     def finish(self, call_id: str, result: dict | None = None, error: str | None = None) -> None:
         call = self.calls[call_id]
@@ -59,65 +61,38 @@ class Line:
         if self.busy == call_id:
             self.busy = None
 
-    def play(self, scripted: dict) -> str:
-        """Play a recorded call through the pipeline, scored against the order keyed from it."""
-        from lucca.pipeline import run_call
-        from lucca.till import check
-
-        call_id = self.record("recorded", scripted["caller"])
-        events = self.calls[call_id]["events"]
-
-        async def work():
-            try:
-                result = await run_call(scripted, 400, events.append)
-                ok, why = check(result["ticket"], scripted["keyed"])
-                self.calls[call_id]["verdict"] = {"ok": ok, "why": why}
-                self.finish(call_id, result)
-            # A missing key raises SystemExit, which Exception does not catch; the page would poll forever.
-            except (Exception, SystemExit) as error:  # shown on the page as a message, not a hang
-                self.finish(call_id, error=str(error))
-
-        asyncio.run_coroutine_threadsafe(work(), self.loop)
-        return call_id
-
     def answer(self, offer: dict) -> dict:
         """Answer a browser's WebRTC offer and start a live call on the connection it opens."""
+        # A missing key fails the offer with a message, before the browser hears a line that cannot think.
+        # It is checked here, not on the loop: SystemExit there would stop the loop and hang every call.
+        config.llm_settings()
         return asyncio.run_coroutine_threadsafe(self.connect(offer), self.loop).result(timeout=60)
 
     async def connect(self, offer: dict) -> dict:
-        from pipecat.transports.base_transport import TransportParams
+        from pipecat.runner.types import SmallWebRTCRunnerArguments
         from pipecat.transports.smallwebrtc.request_handler import SmallWebRTCRequest, SmallWebRTCRequestHandler
         from pipecat.transports.smallwebrtc.transport import SmallWebRTCTransport
-        from pipecat.workers.runner import WorkerRunner
 
-        from lucca.pipeline import OrderLine, thinking
-        from lucca.till import Till
+        from lucca.bot import on_apple_silicon, run_bot, transport_params
 
-        # The model is built before the call opens, so a missing key fails the offer with a message.
-        llm = thinking()
+        if on_apple_silicon():
+            from lucca.voice import warm
+
+            # The voice loads once per server, so the caller never waits on it inside a turn.
+            await warm(config.AGENT_VOICE)
         self.webrtc = self.webrtc or SmallWebRTCRequestHandler()
-        call_id = self.record("live", "browser caller")
+        call_id = uuid.uuid4().hex[:8]
+        self.calls[call_id] = {"caller": "browser caller", "events": [], "done": False}
+        self.busy = call_id
         events = self.calls[call_id]["events"]
 
         async def on_connection(connection) -> None:
-            transport = SmallWebRTCTransport(webrtc_connection=connection, params=TransportParams(
-                audio_in_enabled=True, audio_out_enabled=True, audio_in_sample_rate=16000, audio_out_sample_rate=24000))
-            order = OrderLine(transport, Till(), LIVE_ORDER_NUMBER, llm, events.append)
-
-            @transport.event_handler("on_client_connected")
-            async def greet(transport, client) -> None:
-                await order.greet()
-
-            @transport.event_handler("on_client_disconnected")
-            async def hang_up(transport, client) -> None:
-                await order.hang_up()
+            transport = SmallWebRTCTransport(webrtc_connection=connection, params=transport_params["webrtc"]())
+            runner_args = SmallWebRTCRunnerArguments(connection, body={"call": "live"})
 
             async def run() -> None:
                 try:
-                    runner = WorkerRunner(handle_sigint=False)
-                    await runner.add_workers(order.worker)
-                    await runner.run()
-                    self.finish(call_id, order.report())
+                    self.finish(call_id, await run_bot(transport, runner_args, events.append))
                 except (Exception, SystemExit) as error:  # SystemExit too, or the page polls forever
                     self.finish(call_id, error=str(error))
 
@@ -172,11 +147,6 @@ def handler(line: Line) -> type[BaseHTTPRequestHandler]:
             body = json.loads(self.rfile.read(int(self.headers.get("Content-Length") or 0)) or b"{}")
             if line.busy and not line.calls[line.busy]["done"]:
                 return self.send_json(409, {"error": "The line is on a call. Wait for it to finish."})
-            if self.path == "/api/call":
-                scripted = next((call for call in load_calls() if call["id"] == body.get("id")), None)
-                if not scripted:
-                    return self.send_json(404, {"error": "No recorded call with that id."})
-                return self.send_json(200, {"call_id": line.play(scripted)})
             if self.path == "/api/offer" and body.get("sdp"):
                 try:
                     return self.send_json(200, line.answer(body))

@@ -1,5 +1,9 @@
 """Score the phone line against the orders a person keyed from the same calls.
 
+Pipecat's eval suite plays each recorded call into a fresh bot, speaking the caller's lines in their own
+voice and waiting for each reply the way a caller does. The bot writes its till ticket and turn timings
+when the call ends; this module reads those back and scores them.
+
 Two numbers decide whether the line can take calls alone. Orders taken with no staff counts only exact
 matches, because a wrong sauce is a remade order. Turn latency is read at p50 and p95, because callers
 hang up on the slow turns, not the average one.
@@ -10,50 +14,80 @@ import json
 from collections.abc import Callable
 from pathlib import Path
 
-from lucca.caller import load_calls
-from lucca.pipeline import run_call
-from lucca.till import check
-from lucca.turns import percentile
+from pipecat.evals.suite import EvalManifest, EvalSuite
 
+from lucca.bot import CALLS_OUT, LAB
+from lucca.till import Till, check
+
+CALLS_FILE = Path("data/calls.json")
+MANIFEST = Path("evals/manifest.yaml")
 OUT_FILE = Path("out/calls.json")
-FIRST_ORDER_NUMBER = 412  # the till's next ticket number when the shift starts
+
+
+def load_calls() -> list[dict]:
+    return json.loads(CALLS_FILE.read_text())
+
+
+def percentile(values: list[float], share: float) -> float | None:
+    """Nearest-rank percentile. With a few dozen turns a p95 is the slowest turn or close to it, which is
+    the honest reading of a small sample."""
+    ordered = sorted(values)
+    if not ordered:
+        return None
+    rank = max(1, -(-int(share * 100) * len(ordered) // 100))
+    return ordered[rank - 1]
 
 
 def score(rows: list[dict]) -> dict:
-    """The metric from finished calls: exact orders, correct hand-offs, and the latency of every turn
-    that got an answer."""
+    """The metric from finished calls: exact orders, correct hand-offs, and the latency of every turn."""
     orders = [row for row in rows if not row["staff_expected"]]
-    latencies = [turn["latency_ms"] for row in rows for turn in row["turns"] if turn["latency_ms"] is not None]
-    hear = [turn["hear_ms"] for row in rows for turn in row["turns"] if turn["hear_ms"] is not None]
-    think = [turn["think_ms"] for row in rows for turn in row["turns"] if turn["think_ms"] is not None]
-    speak = [turn["speak_ms"] for row in rows for turn in row["turns"] if turn["speak_ms"] is not None]
+    turns = [turn for row in rows for turn in row["turns"]]
+
+    def p50(name: str) -> float | None:
+        # A turn the caller interrupted has a total but no split, so each part reads the turns that have one.
+        return percentile([turn[name] for turn in turns if turn[name] is not None], 0.50)
+
     return {
         "calls": len(rows),
         "orders": len(orders),
         "taken_alone": sum(row["ok"] for row in orders),
         "staff_expected": len(rows) - len(orders),
         "staff_correct": sum(row["ok"] for row in rows if row["staff_expected"]),
-        "turns": sum(len(row["turns"]) for row in rows),
-        "timed_turns": len(latencies),
-        "p50_ms": percentile(latencies, 0.50),
-        "p95_ms": percentile(latencies, 0.95),
-        "p50_parts_ms": {"hear": percentile(hear, 0.5), "think": percentile(think, 0.5), "speak": percentile(speak, 0.5)},
+        "lines": sum(row["lines"] for row in rows),
+        "timed_turns": len(turns),
+        "p50_ms": p50("latency_ms"),
+        "p95_ms": percentile([turn["latency_ms"] for turn in turns], 0.95),
+        "p50_parts_ms": {"hear": p50("hear_ms"), "think": p50("think_ms"), "speak": p50("speak_ms")},
         "cost": round(sum(row["cost"] for row in rows), 6),
     }
 
 
 async def review_calls(call_ids: list[str] | None = None, on_event: Callable[[dict], None] = lambda event: None) -> dict:
-    """Play each recorded call, one at a time, and keep what the till ended up with next to the keyed
-    order. Calls run one after another, as one phone line takes them."""
-    rows = []
+    """Run the eval suite, one call at a time as one phone line takes them, then keep what each till
+    ended up with next to the keyed order."""
     calls = [call for call in load_calls() if not call_ids or call["id"] in call_ids]
-    for order_number, call in enumerate(calls, FIRST_ORDER_NUMBER):
-        on_event({"kind": "call_start", "id": call["id"], "caller": call["caller"]})
-        result = await run_call(call, order_number, lambda event, call_id=call["id"]: on_event({"call": call_id, **event}))
+    suite = EvalSuite(EvalManifest.load(LAB / MANIFEST))
+    suite.runs = [run for run in suite.runs if run.label in {call["id"] for call in calls}]
+    for call in calls:
+        (CALLS_OUT / f"{call['id']}.json").unlink(missing_ok=True)
+
+    @suite.event_handler("on_update")
+    def on_update(suite, run):
+        on_event({"kind": "call_" + ("start" if run.status == "running" else run.status), "id": run.label})
+
+    await suite.run(LAB / "out/evals/logs", results_path=LAB / "out/evals/results.jsonl")
+    rows = []
+    for call in calls:
+        played = CALLS_OUT / f"{call['id']}.json"
+        # A bot that never wrote its call left nothing on the till, which scores as an open ticket.
+        result = json.loads(played.read_text()) if played.exists() else {
+            "ticket": Till().ticket(), "turns": [], "cost": 0, "events": []}
         ok, why = check(result["ticket"], call["keyed"])
-        row = {**result, "ok": ok, "why": why, "staff_expected": "staff" in call["keyed"], "keyed": call["keyed"]}
-        rows.append(row)
-        on_event({"kind": "call_end", "id": call["id"], "ok": ok, "why": why})
+        run = next(run for run in suite.runs if run.label == call["id"])
+        rows.append({**result, "id": call["id"], "caller": call["caller"], "ok": ok, "why": why,
+                     "staff_expected": "staff" in call["keyed"], "keyed": call["keyed"],
+                     "lines": sum(1 for event in result["events"] if event["kind"] == "caller"),
+                     "eval_error": run.error})
         print(f"{call['id']} {'MATCH' if ok else 'MISS '} {why}", flush=True)
     report = {"rows": rows, "metric": score(rows)}
     OUT_FILE.parent.mkdir(exist_ok=True)
