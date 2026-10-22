@@ -7,7 +7,7 @@ import asyncio
 import json
 
 from fakes import ScriptedLLM, tool_call
-from livekit.agents import AgentSession
+from livekit.agents import AgentSession, inference
 
 from northfield.agent import GREETING, INSTRUCTIONS, CallLog, FrontDesk, turn_handling
 from northfield.schedule import Schedule, changes, original
@@ -71,5 +71,12 @@ def test_the_caller_card_comes_from_caller_id_not_from_the_model(tmp_path):
 def test_the_prompt_discloses_nothing_it_cannot_back_and_the_greeting_discloses_ai_and_recording():
     assert "automated" in GREETING and "recorded" in GREETING
     assert "transfer_to_human" in INSTRUCTIONS and "end_call" in INSTRUCTIONS
-    # Silence alone would cut a caller off between sentences; the detector waits at least this long.
-    assert turn_handling()["endpointing"]["min_delay"] >= 0.5
+
+
+def test_the_turn_detector_model_ends_a_turn_unless_silence_is_asked_for(monkeypatch):
+    # Silence alone cuts a caller off between sentences, so the model is the default, as in LiveKit's starter.
+    monkeypatch.delenv("TURN_DETECTION", raising=False)
+    assert isinstance(turn_handling()["turn_detection"], inference.TurnDetector)
+    assert turn_handling()["preemptive_generation"] == {"enabled": True}
+    monkeypatch.setenv("TURN_DETECTION", "vad")
+    assert turn_handling()["turn_detection"] == "vad"

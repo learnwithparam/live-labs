@@ -41,15 +41,27 @@ def test_sending_a_resolvable_call_to_a_person_is_a_miss():
 
 def test_the_score_counts_reached_calls_and_transfers_separately():
     calls = [{"id": "NF-01", "reached": True, "transfer": None, "resolved_without_person": True,
-              "talked_over": 0, "cost": 0.001, "seconds": 90},
+              "talked_over": 0, "cost": 0.001, "seconds": 90, "turns": []},
              {"id": "NF-05", "reached": True, "transfer": {"reason": "safety"}, "resolved_without_person": False,
-              "talked_over": 1, "cost": 0.001, "seconds": 60},
+              "talked_over": 1, "cost": 0.001, "seconds": 60, "turns": []},
              {"id": "NF-09", "reached": False, "transfer": None, "resolved_without_person": False,
-              "talked_over": 0, "cost": 0.001, "seconds": 70}]
+              "talked_over": 0, "cost": 0.001, "seconds": 70, "turns": []}]
     tally = score(calls)
     assert (tally["reached"], tally["share"], tally["resolved_without_person"]) == (2, 0.67, 1)
     assert tally["transfers"] == [{"id": "NF-05", "reason": "safety"}]
 
+
+
+def test_the_wait_is_read_from_every_timed_reply_and_untimed_turns_are_left_out():
+    # The greeting and the caller's own turns carry no reply wait, so they must not pull the median down.
+    turns = [{"who": "agent", "tts_node_ttfb": 1.2}, {"who": "caller", "end_of_turn_delay": 0.5},
+             {"who": "agent", "e2e_latency": 1.0}, {"who": "agent", "e2e_latency": 3.0}]
+    calls = [{"id": "NF-01", "reached": True, "transfer": None, "resolved_without_person": True, "talked_over": 0,
+              "cost": 0.0, "seconds": 40, "turns": turns},
+             {"id": "NF-02", "reached": True, "transfer": None, "resolved_without_person": True, "talked_over": 0,
+              "cost": 0.0, "seconds": 40, "turns": [{"who": "agent", "e2e_latency": 2.0}]}]
+    tally = score(calls)
+    assert (tally["timed_replies"], tally["reply_p50"], tally["reply_p95"]) == (3, 2.0, 3.0)
 
 def test_the_caller_skips_ahead_when_the_agent_asks_for_its_line():
     lines = scripts()["NF-07"]["lines"]

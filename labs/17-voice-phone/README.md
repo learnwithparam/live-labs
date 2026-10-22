@@ -21,7 +21,7 @@ for ChatGPT's voice mode, and its Agents framework runs voice agents like this o
 Before: you have a voice agent that works in a browser tab, and no idea how it does on a phone. After
 this lab you can:
 
-- run a LiveKit server and a LiveKit Agents worker on your laptop
+- run a LiveKit Agents worker on your laptop, with rooms and speech on LiveKit Cloud
 - answer a call the way a SIP trunk delivers it: 8 kHz audio and the caller's number
 - tune turn detection so the agent waits while a caller pauses mid-sentence
 - give the agent tools that change a booking system, and a transfer to a person with a reason
@@ -61,26 +61,18 @@ transfer with its reason. The person on duty picks what the office does next.
   audio.
 - **Turn detection**: deciding that the caller has finished, not just paused. LiveKit's turn detector
   reads the words so far, as well as the silence.
-- **Endpointing delay**: how long the agent waits after speech stops before it answers.
+- **Preemptive generation**: starting the reply from the words heard so far, before the turn is
+  confirmed, and throwing it away if the caller keeps talking.
 - **Simulated caller**: a script of recorded lines that rings in, waits for the agent, and picks its
   next line from what the agent said.
 - **Human in the loop**: the person in the office who takes a transferred call.
 
 ## Set up
 
-You need [uv](https://docs.astral.sh/uv/), an [OpenRouter](https://openrouter.ai) key, and the LiveKit
-server. Install it with `brew install livekit`, or take the binary from
-[LiveKit's self-hosting guide](https://docs.livekit.io/home/self-hosting/local/):
-
-```bash
-livekit-server --version
-```
-
-Expect: /livekit-server version 1\./
-
-Install the Python packages. Speech runs on your machine, so there is no speech key:
-[faster-whisper](https://github.com/SYSTRAN/faster-whisper) hears and
-[Kokoro](https://github.com/thewh1teagle/kokoro-onnx) speaks.
+You need [uv](https://docs.astral.sh/uv/), an [OpenRouter](https://openrouter.ai) key, and a free
+[LiveKit Cloud](https://cloud.livekit.io) project. The agent is the shape of LiveKit's own
+[agent-starter-python](https://github.com/livekit-examples/agent-starter-python). Rooms, speech to text,
+text to speech and the turn detector all run in LiveKit Cloud, so nothing large downloads.
 
 ```bash
 uv sync
@@ -88,33 +80,18 @@ uv sync
 
 Expect: /Installed|Audited|Resolved/
 
-Kokoro needs its model files, about 340 MB, once:
+Copy `env.example` to `.env`. Add your OpenRouter key, then your project's URL, API key and secret from
+**Settings, API keys** in LiveKit Cloud.
 
-```bash
-mkdir -p ~/.cache/kokoro-onnx && (cd ~/.cache/kokoro-onnx && for name in kokoro-v1.0.onnx voices-v1.0.bin; do [ -f $name ] || curl -sSLO https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0/$name; done; ls)
-```
+## 1. Meet the callers
 
-Expect: voices-v1.0.bin
+`data/calls.json` holds ten callers. Each has a number, what they need, and their lines. A line after
+the first has `when` keywords: the caller says it when the agent's last turn used one. The `expect`
+block is the truth the call is judged against.
 
-Copy `env.example` to `.env` and add your key.
-
-## 1. Record the callers
-
-`data/calls.json` holds ten callers. Each has a number, a voice, what they need, and their lines. A
-line after the first has `when` keywords: the caller says it when the agent's last turn used one. The
-`expect` block is the truth the call is judged against.
-
-`src/northfield/voices.py` speaks each line with Kokoro, then `phone_audio.py` squeezes it into phone
-audio: the 300 to 3,400 Hz band, 8 kHz, mu-law noise. The recordings are in `data/calls`, so this
-only fills gaps:
-
-```bash
-uv run phone record
-```
-
-Expect: /caller line/
-
-Play `data/calls/NF-05-1.wav`. That is a worried man reporting a gas smell, as a phone delivers it.
+Each line is recorded once in `data/calls`, as a phone delivers it. `phone_audio.py` squeezed it into
+the 300 to 3,400 Hz band, 8 kHz, with mu-law noise. Play `data/calls/NF-05-1.wav`. That is a worried
+man reporting a gas smell.
 
 ## 2. The booking system
 
@@ -135,22 +112,23 @@ Expect: /\d+ passed/
 Read `src/northfield/agent.py` from the top:
 
 1. `GREETING` tells the caller they are talking to an automated assistant and that the call is
-   recorded. It is spoken once per worker and replayed, so the line picks up at once.
+   recorded.
 2. `answer` waits for the SIP participant and reads `sip.phoneNumber`. A real trunk sets that
    attribute too, and `caller_card` turns it into the customer's record.
    Caller ID can be spoofed, so the card leaves out the home address. Moving or cancelling a visit
    also needs the house number on file, which `schedule.py` checks.
 3. The tools: `find_windows`, `book_visit`, `move_visit`, `cancel_visit` and `transfer_to_human`. A
    transfer files the reason and a one-line summary, says who will pick up, then leaves the line.
-4. `turn_handling` uses LiveKit's turn detector with a 0.8 second minimum delay. A caller's pause
-   between "Thursday" and "morning, if you can" no longer ends their turn.
-5. `live_session` sets the model's reasoning to minimal. On a phone, every second of thinking is dead
-   air.
+4. `turn_handling` uses LiveKit's turn detector, as the starter does. It listens to how the words
+   sound, so a pause between "Thursday" and "morning, if you can" does not end the turn.
+   Preemptive generation starts the reply while the detector is still deciding.
+5. `live_session` streams speech through LiveKit Inference and sets the model's reasoning to minimal.
+   On a phone, every second of thinking is dead air.
 
 ## 4. Ring one call
 
-`phone call` starts a LiveKit dev server and the agent worker, rings in as the caller, and stops both
-when the call ends. `src/northfield/caller.py` joins the room as a SIP participant would. It waits
+`phone call` starts the agent worker, rings in through LiveKit Cloud as the caller, and stops the
+worker when the call ends. `src/northfield/caller.py` joins the room as a SIP participant would. It waits
 until the agent has finished speaking for a second, then plays its next line:
 
 ```bash
@@ -174,18 +152,18 @@ uv run phone review
 
 Expect: /\d+ of 10 calls reached their outcome/
 
-One run with `openai/gpt-6-luna` took about ten minutes and cost under half a cent for all ten calls:
+One run took about eight minutes, and the model cost under three cents for all ten calls:
 
 | Result | Calls |
 | --- | --- |
-| Reached their outcome | 9 of 10 |
-| Resolved with no person | 6 |
+| Reached their outcome | 10 of 10 |
+| Resolved with no person | 7 |
 | Sent to a person, right reason | 3: NF-05 `safety`, NF-06 `billing`, NF-10 `caller_asked` |
 | Agent talked over the caller | 0 |
+| Wait for the agent's first sound | 3.1 s median, 4.0 s at p95, over 25 replies |
 
-The miss was NF-02. Whisper dropped the end of Sandra's long first line, where she asks for Tuesday
-afternoon. Her next line never reached a transcript, so no visit was booked. The review's reason reads `0 visits
-changed, expected 1`, and the transcript shows the speech miss. Your numbers will move a little from run to run.
+Each reason names what the review checked in the book, such as `V-2041 now in FRI-AM`. Your numbers
+will move a little from run to run.
 
 ## 6. See it
 
@@ -211,7 +189,8 @@ uv run pytest -q
 Expect: /\d+ passed/
 
 The proof runs the review against the real model and real audio. At least 8 of 10 calls must reach
-their outcome, at least 5 with no person. Every transfer must carry the reason its caller needed:
+their outcome, at least 5 with no person. Every transfer must carry the reason its caller needed. The
+median wait from the caller's last word to the agent's first sound must stay under 4 seconds:
 
 ```bash
 uv run pytest -m proof -q
@@ -253,16 +232,16 @@ Keep the ten scripted callers, and add one for every call that went wrong in the
 ## At an enterprise
 
 Calls carry personal data, so record only with consent, and keep transcripts where your retention rules
-say. Move speech to a hosted provider such as Deepgram or Cartesia when latency matters more than
-cost. Each is one line in `live_session`. Watch transfer reasons per week: a rising `other` is a job
+say. Speech already runs on LiveKit Inference. To use your own Deepgram or Cartesia contract instead,
+change one line in `live_session`. Watch transfer reasons per week: a rising `other` is a job
 the agent cannot do yet. Run the scripted callers on every prompt change before it reaches the line.
 
 ## Change it
 
 - Set `TURN_DETECTION=vad` in `.env` and run `phone call NF-01`. Does the agent cut Dana off when she
   pauses?
-- Lower the endpointing `min_delay` to 0.3 in `agent.py`, then run the review. How often is the caller
-  talked over now?
+- Turn off `preemptive_generation` in `turn_handling`, then ring NF-05. How much longer is each
+  turn?
 - Delete the safety rule from `INSTRUCTIONS` and ring NF-05. What does the book say?
 - Add a caller who wants a repair on Monday afternoon, which is full, and the truth that they take
   another window.

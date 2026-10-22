@@ -1,17 +1,9 @@
-"""`phone`: record the callers, run the agent worker, ring one call, review all ten, or open the wallboard."""
+"""`phone`: run the agent worker, ring one call, review all ten, or open the wallboard."""
 
 import argparse
 import sys
 
 from northfield.config import OUT
-
-
-def record() -> int:
-    from northfield.voices import record_all
-
-    written = record_all()
-    print(f"Recorded {len(written)} caller lines into data/calls." if written else "Every caller line is already recorded.")
-    return 0
 
 
 def show(call: dict) -> None:
@@ -47,6 +39,7 @@ def review() -> int:
           f"{score['resolved_without_person']} resolved without a person, {len(score['transfers'])} sent to a person: "
           f"{', '.join(transfer['id'] + ' ' + transfer['reason'] for transfer in score['transfers']) or 'none'}.")
     print(f"Talked over the caller {score['talked_over']} times. Model {report['model']}, ${score['cost']:.4f} for all calls.")
+    print(f"Reply wait over {score['timed_replies']} timed replies: p50 {score['reply_p50']} s, p95 {score['reply_p95']} s.")
     print(f"Every transcript and verdict: {OUT / 'review.json'}")
     return 0
 
@@ -54,14 +47,11 @@ def review() -> int:
 def main() -> None:
     parser = argparse.ArgumentParser(prog="phone")
     sub = parser.add_subparsers(dest="command", required=True)
-    sub.add_parser("record")
     sub.add_parser("agent")
     sub.add_parser("call").add_argument("call_id")
     sub.add_parser("review")
     sub.add_parser("serve").add_argument("--port", type=int, default=8017)
     args = parser.parse_args()
-    if args.command == "record":
-        sys.exit(record())
     if args.command == "agent":
         from northfield.agent import run_worker
 

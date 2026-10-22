@@ -1,13 +1,13 @@
 """Ten scripted calls through the real stack, each judged against the booking system it should change.
 
-The review starts what a phone line needs on this machine: a LiveKit server and the agent worker. Each
+The review starts the agent worker on this machine and rings it through LiveKit Cloud. Each
 call gets its own room and its own copy of the week's schedule. The verdict reads only that schedule
 and the handoff queue, never the agent's own account of how the call went."""
 
 import asyncio
 import json
 import shutil
-import socket
+import statistics
 import subprocess
 import sys
 import time
@@ -18,23 +18,10 @@ from pathlib import Path
 from livekit import api
 
 from northfield.caller import place_call, scripts
-from northfield.config import (
-    AGENT_NAME,
-    LIVEKIT_API_KEY,
-    LIVEKIT_API_SECRET,
-    LIVEKIT_URL,
-    OUT,
-    llm_settings,
-)
+from northfield.config import AGENT_NAME, OUT, livekit_settings, llm_settings
 
 RESULT_WAIT = 30  # seconds for the agent to write its result after the caller hangs up
-DISPATCH_TRIES, DISPATCH_WAIT = 6, 10  # a busy worker gets six chances, ten seconds apart
-
-
-def port_open(port: int) -> bool:
-    with socket.socket() as probe:
-        probe.settimeout(0.5)
-        return probe.connect_ex(("127.0.0.1", port)) == 0
+DISPATCH_TRIES, DISPATCH_WAIT = 6, 10  # a busy worker gets six chances, up to ten seconds each
 
 
 def wait_for(check, seconds: float, what: str) -> None:
@@ -47,34 +34,24 @@ def wait_for(check, seconds: float, what: str) -> None:
 
 @contextmanager
 def phone_stack(out: Path):
-    """A LiveKit dev server (unless one already runs on 7880) and the agent worker, both stopped on exit."""
+    """The agent worker on this laptop, registered with LiveKit Cloud and stopped on exit. The rooms, the
+    speech models and the turn detector all run in LiveKit Cloud, so nothing else starts here."""
     out.mkdir(parents=True, exist_ok=True)
-    started = []
+    agent_log_path = out / "agent.log"
+    worker = subprocess.Popen([sys.executable, "-m", "northfield.cli", "agent"],
+                              stdout=agent_log_path.open("w"), stderr=subprocess.STDOUT)
     try:
-        if not port_open(7880):
-            if not shutil.which("livekit-server"):
-                raise SystemExit("livekit-server is not installed. Run `brew install livekit` first.")
-            server_log = (out / "livekit.log").open("w")
-            started.append(subprocess.Popen(["livekit-server", "--dev", "--bind", "127.0.0.1"],
-                                            stdout=server_log, stderr=subprocess.STDOUT))
-            wait_for(lambda: port_open(7880), 30, "the LiveKit server")
-        agent_log_path = out / "agent.log"
-        agent_log = agent_log_path.open("w")
-        started.append(subprocess.Popen([sys.executable, "-m", "northfield.cli", "agent"],
-                                        stdout=agent_log, stderr=subprocess.STDOUT))
-        # Whisper and Kokoro load before the worker registers, which takes a few seconds the first time.
-        wait_for(lambda: "agent registered" in agent_log_path.read_text() or started[-1].poll() is not None,
-                 180, "the agent worker")
-        if started[-1].poll() is not None:
+        wait_for(lambda: "agent registered" in agent_log_path.read_text() or worker.poll() is not None,
+                 60, "the agent worker")
+        if worker.poll() is not None:
             raise SystemExit(f"The agent worker stopped. See {agent_log_path}.")
-        yield lambda: started[-1].poll() is None
+        yield lambda: worker.poll() is None
     finally:
-        for process in reversed(started):
-            process.terminate()
-            try:
-                process.wait(timeout=15)
-            except subprocess.TimeoutExpired:
-                process.kill()
+        worker.terminate()
+        try:
+            worker.wait(timeout=15)
+        except subprocess.TimeoutExpired:
+            worker.kill()
 
 
 def judge(expect: dict, result: dict) -> tuple[bool, str]:
@@ -117,19 +94,22 @@ async def dispatch_until_answered(livekit: api.LiveKitAPI, room_name: str, metad
     for _ in range(DISPATCH_TRIES):
         await livekit.agent_dispatch.create_dispatch(api.CreateAgentDispatchRequest(
             agent_name=AGENT_NAME, room=room_name, metadata=metadata))
-        await asyncio.sleep(DISPATCH_WAIT)
-        # A dispatch a worker took carries a job; one that found no free worker stays empty.
-        if any(dispatch.state.jobs for dispatch in await livekit.agent_dispatch.list_dispatch(room_name)):
-            return
+        # A dispatch a worker took carries a job; one that found no free worker stays empty. Checking twice
+        # a second lets the call ring in as soon as the agent has it.
+        for _ in range(DISPATCH_WAIT * 2):
+            await asyncio.sleep(0.5)
+            if any(dispatch.state.jobs for dispatch in await livekit.agent_dispatch.list_dispatch(room_name)):
+                return
 
 
 async def one_call(script: dict, folder: Path) -> dict:
     """Dispatch the agent to a fresh room, ring in as the caller, then read what the agent wrote down."""
     shutil.rmtree(folder, ignore_errors=True)
     room_name = f"call-{script['id']}-{uuid.uuid4().hex[:6]}"
-    http_url = LIVEKIT_URL.replace("ws", "http", 1)
+    url, key, secret = livekit_settings()
+    http_url = url.replace("ws", "http", 1)
     metadata = json.dumps({"call": script["id"], "folder": str(folder.resolve())})
-    async with api.LiveKitAPI(http_url, LIVEKIT_API_KEY, LIVEKIT_API_SECRET) as livekit:
+    async with api.LiveKitAPI(http_url, key, secret) as livekit:
         answering = asyncio.ensure_future(dispatch_until_answered(livekit, room_name, metadata))
         observed = await place_call(script, room_name)
         answering.cancel()
@@ -146,19 +126,31 @@ async def one_call(script: dict, folder: Path) -> dict:
             "tokens": result.get("tokens", {}), **observed}
 
 
+def reply_waits(calls: list[dict]) -> list[float]:
+    """Seconds from the caller's last word to the agent's first sound, for every reply LiveKit timed. The
+    greeting and a reply that follows a tool call's own reply have no caller turn to time from."""
+    return [turn["e2e_latency"] for call in calls for turn in call["turns"] if turn.get("e2e_latency") is not None]
+
+
 def score(calls: list[dict]) -> dict:
     reached = sum(call["reached"] for call in calls)
+    waits = sorted(reply_waits(calls))
     return {"calls": len(calls), "reached": reached, "share": round(reached / len(calls), 2) if calls else 0,
             "resolved_without_person": sum(call["resolved_without_person"] for call in calls),
             "transfers": [{"id": call["id"], "reason": call["transfer"]["reason"]} for call in calls if call["transfer"]],
             "talked_over": sum(call["talked_over"] for call in calls),
             "cost": round(sum(call["cost"] for call in calls), 6),
-            "seconds": round(sum(call["seconds"] for call in calls), 1)}
+            "seconds": round(sum(call["seconds"] for call in calls), 1),
+            # The median reply is how the line feels; callers hang up on the slow ones, so p95 is kept too.
+            "timed_replies": len(waits),
+            "reply_p50": round(statistics.median(waits), 2) if waits else None,
+            "reply_p95": round(waits[max(0, -(-95 * len(waits) // 100) - 1)], 2) if waits else None}
 
 
 def review_calls(only: list[str] | None = None, out: Path = OUT, on_call=None) -> dict:
     """Ring the scripted calls one after another, and write out/review.json when all ten ran."""
     _, _, model = llm_settings()  # fail on a missing key before starting any process
+    livekit_settings()
     chosen = [script for call_id, script in scripts().items() if not only or call_id in only]
 
     async def all_calls(worker_alive) -> list[dict]:

@@ -159,14 +159,18 @@ function renderCounters(calls) {
   const counters = $("#counters");
   counters.replaceChildren();
   const answerDelays = calls.flatMap((call) => (call.turns || []).map((turn) => turn.e2e_latency).filter((delay) => delay !== undefined));
-  const meanDelay = answerDelays.length ? answerDelays.reduce((total, delay) => total + delay, 0) / answerDelays.length : null;
+  // The median, as the proof reads it: one slow reply should not hide how the rest of the line felt.
+  const sortedDelays = [...answerDelays].sort((first, second) => first - second);
+  const middle = Math.floor(sortedDelays.length / 2);
+  const medianDelay = !sortedDelays.length ? null
+    : sortedDelays.length % 2 ? sortedDelays[middle] : (sortedDelays[middle - 1] + sortedDelays[middle]) / 2;
   const entries = [
     ["lead", score ? String(score.reached) : "–", score ? ` of ${score.calls}` : "", "calls reached their outcome"],
     ["", score ? String(score.resolved_without_person) : "–", "", "resolved without a person"],
     ["", score ? String(score.transfers.length) : "–", "", "sent to a person, with a reason"],
     ["", score ? String(score.talked_over) : "–", "", "times the agent talked over a caller"],
-    ["", meanDelay === null ? "–" : meanDelay.toFixed(1), meanDelay === null ? "" : " s", "average wait for an answer"],
-    ["", score ? "$" + score.cost.toFixed(4) : "–", "", state.review ? `model cost, ${state.review.model}` : "model cost"],
+    ["", medianDelay === null ? "–" : medianDelay.toFixed(1), medianDelay === null ? "" : " s", "typical wait for an answer"],
+    ["", score ? "$" + score.cost.toFixed(4) : "–", "", "model cost"],
   ];
   for (const [kind, figure, unit, label] of entries) {
     const counter = make("div", "counter " + kind);
@@ -291,7 +295,7 @@ function renderBoard() {
   } else if (isRunning()) {
     note.textContent = `Ringing test calls: ${state.run.ringing.length} of 10 started.`;
   } else if (state.review) {
-    note.textContent = `Last review: ${state.review.calls.length} scripted callers on ${state.review.model}, $${state.review.score.cost.toFixed(4)} in model tokens.`;
+    note.textContent = `Last review: ${state.review.calls.length} scripted callers, $${state.review.score.cost.toFixed(4)} in model tokens.`;
   } else {
     note.textContent = "No review yet.";
   }

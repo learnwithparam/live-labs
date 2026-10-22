@@ -2,17 +2,16 @@
 
 One phone call is one LiveKit room. The caller joins as a SIP participant, the agent joins as a worker
 job, and the session runs the voice pipeline: voice activity detection cuts the caller's audio into
-speech, the turn detector decides whether they have finished, Whisper writes it down, the model picks a
-tool or a reply, and Kokoro speaks it. Every change lands in the booking system, never in the model."""
+speech, the turn detector decides whether they have finished, LiveKit Inference writes it down, the model
+picks a tool or a reply, and LiveKit Inference speaks it. The session is the shape of LiveKit's own
+agent-starter-python. Every change lands in the booking system, never in the model."""
 
 import json
 import os
 import time
-from functools import cache
 from pathlib import Path
 from typing import Literal
 
-import numpy as np
 from livekit import rtc
 from livekit.agents import (
     Agent,
@@ -26,9 +25,8 @@ from livekit.agents import (
 from livekit.agents.beta.tools import EndCallTool
 from livekit.plugins import openai
 
-from northfield.config import AGENT_VOICE, cost_of, llm_settings
+from northfield.config import AGENT_VOICE, STT_MODEL, TTS_MODEL, cost_of, llm_settings
 from northfield.schedule import Schedule, changes, original
-from northfield.speech import KokoroTTS, WhisperSTT, speak
 
 # Callers hear this before the model says a word, so the AI and the recording are disclosed every time.
 GREETING = ("Thanks for calling Northfield Heating and Air. This is the automated assistant, and this call "
@@ -185,28 +183,15 @@ class FrontDesk(Agent):
         return result
 
 
-@cache
-def greeting_samples() -> bytes:
-    samples, _ = speak(GREETING, AGENT_VOICE)
-    return (np.clip(samples, -1, 1) * 32767).astype(np.int16).tobytes()
-
-
-async def greeting_audio():
-    """The greeting never changes, so it is spoken once per worker and replayed: the line picks up at once."""
-    pcm, frame_bytes = greeting_samples(), 24000 // 50 * 2
-    for start in range(0, len(pcm), frame_bytes):
-        chunk = pcm[start:start + frame_bytes].ljust(frame_bytes, b"\0")
-        yield rtc.AudioFrame(chunk, 24000, 1, frame_bytes // 2)
-
-
 def turn_handling() -> dict:
-    """The model-based turn detector by default; TURN_DETECTION=vad makes silence alone end a turn."""
-    detector = "vad" if os.environ.get("TURN_DETECTION") == "vad" else inference.TurnDetector(version="v1-mini")
-    return {"turn_detection": detector,
-            # A caller pauses between sentences; 0.8 s keeps one breath from ending the whole turn.
-            "endpointing": {"min_delay": 0.8, "max_delay": 3.0},
-            "interruption": {"mode": "vad", "min_duration": 0.6},
-            "preemptive_generation": {"enabled": False}}
+    """LiveKit's turn detector, as in the starter; TURN_DETECTION=vad makes silence alone end a turn."""
+    detector = "vad" if os.environ.get("TURN_DETECTION") == "vad" else inference.TurnDetector()
+    # The model listens to the caller's audio, so "and, um..." keeps the turn open where silence alone would
+    # close it. Preemptive generation starts the reply while the detector is still deciding.
+    # Endpointing bounds that decision. Below 0.6 s the phone-band transcript lands after the turn closed,
+    # so the agent answered half a sentence; past 1.5 s an unsure detector is only dead air on the line.
+    return {"turn_detection": detector, "preemptive_generation": {"enabled": True},
+            "endpointing": {"min_delay": 0.6, "max_delay": 1.5}}
 
 
 def build_session(llm_model, stt_model, tts_model, vad_model) -> AgentSession:
@@ -216,10 +201,14 @@ def build_session(llm_model, stt_model, tts_model, vad_model) -> AgentSession:
 def live_session() -> tuple[AgentSession, str]:
     base_url, api_key, model = llm_settings()
     # A caller hears every second the model spends reasoning as dead air, so reasoning is kept minimal.
+    # OpenRouter's default routing is kept: its "sort by latency" option measured a 5 s first word on one
+    # request in eight, where default routing never passed 0.8 s.
     llm_model = openai.LLM(model=model, base_url=base_url, api_key=api_key, reasoning_effort="minimal")
-    # Half a second of silence closes a speech segment, so a comma's pause stays inside one transcription.
-    vad_model = inference.VAD(min_silence_duration=0.5)
-    return build_session(llm_model, WhisperSTT(), KokoroTTS(AGENT_VOICE), vad_model), model
+    # Speech runs on LiveKit Inference, streamed both ways, so the first words of a reply play while the
+    # rest is still being written. Nothing loads on this laptop.
+    stt_model = inference.STT(model=STT_MODEL, language="en")
+    tts_model = inference.TTS(model=TTS_MODEL, voice=AGENT_VOICE)
+    return build_session(llm_model, stt_model, tts_model, inference.VAD()), model
 
 
 def watch(session: AgentSession, log: CallLog, model: str) -> None:
@@ -270,7 +259,7 @@ async def answer(ctx: JobContext) -> None:
     # Transcripts go out whole, not word-synced to the audio: the phone caller never sees them anyway.
     options = room_io.RoomOptions(delete_room_on_close=True, text_output=room_io.TextOutputOptions(sync_transcription=False))
     await session.start(agent=FrontDesk(book, number, log), room=ctx.room, room_options=options, record=False)
-    await session.say(GREETING, audio=greeting_audio(), allow_interruptions=False, add_to_chat_ctx=True)
+    await session.say(GREETING, allow_interruptions=False, add_to_chat_ctx=True)
 
 
 def run_worker() -> None:
@@ -280,22 +269,16 @@ def run_worker() -> None:
 
     from livekit.agents import AgentServer, JobExecutorType
 
-    from northfield.config import (
-        AGENT_NAME,
-        LIVEKIT_API_KEY,
-        LIVEKIT_API_SECRET,
-        LIVEKIT_URL,
-    )
-    from northfield.speech import kokoro, whisper
+    from northfield.config import AGENT_NAME, livekit_settings
 
+    url, key, secret = livekit_settings()
     # out/agent.log then shows each job the worker takes or turns down, the first place to look when a call rings out.
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(message)s")
     # Explicit dispatch: the worker only takes calls sent to this name, as a phone number's dispatch rule does.
     os.environ.setdefault("LIVEKIT_AGENT_NAME", AGENT_NAME)
-    whisper(), kokoro(), greeting_samples()  # load the speech models once, before a caller waits on them
-    # Thread jobs share those loaded models; a process per call would load them again for every call.
-    server = AgentServer(job_executor_type=JobExecutorType.THREAD, ws_url=LIVEKIT_URL, api_key=LIVEKIT_API_KEY,
-                         api_secret=LIVEKIT_API_SECRET, port=8817, num_idle_processes=2)
+    # Calls run one at a time in this lab, so a thread per call is enough and starts at once.
+    server = AgentServer(job_executor_type=JobExecutorType.THREAD, ws_url=url, api_key=key,
+                         api_secret=secret, port=8817, num_idle_processes=2)
     server.rtc_session(answer)
     server.on("worker_registered", lambda *_: print("agent registered and waiting for calls", flush=True))
     asyncio.run(server.run(devmode=True))
