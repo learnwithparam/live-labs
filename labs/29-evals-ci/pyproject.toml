@@ -24,4 +24,5 @@ exclude-newer = "2026-10-01T00:00:00Z"
 
 [tool.pytest.ini_options]
 markers = ["proof: calls a real model; needs LLM_API_KEY"]
-addopts = "-m 'not proof'"
+# The lab scores with DeepEval's metrics; its pytest plugin only prints a teardown line.
+addopts = "-m 'not proof' -p no:deepeval"

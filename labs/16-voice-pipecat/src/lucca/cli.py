@@ -1,6 +1,7 @@
 import argparse
 import asyncio
 import json
+import sys
 
 from lucca.caller import load_calls
 from lucca.till import Menu
@@ -15,14 +16,19 @@ def show_menu() -> None:
 
 
 def show_call(call_id: str) -> None:
+    from loguru import logger
+
     from lucca.pipeline import run_call
 
+    # Pipecat logs every frame link and its whole system prompt at DEBUG, which buries the turn lines.
+    logger.remove()
+    logger.add(sys.stderr, level="ERROR")
     call = next(call for call in load_calls() if call["id"] == call_id)
     result = asyncio.run(run_call(call, 400))
     for turn in result["turns"]:
         print(f"caller: {turn['heard']!r}  latency {turn['latency_ms']} ms "
               f"(hear {turn['hear_ms']}, think {turn['think_ms']}, speak {turn['speak_ms']})")
-    print(json.dumps(result["ticket"], indent=2))
+    print(json.dumps(result["ticket"]))
     print(f"cost ${result['cost']:.4f}")
 
 
