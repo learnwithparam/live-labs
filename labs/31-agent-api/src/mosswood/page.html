@@ -53,12 +53,13 @@ h1, h2, h3, p { margin: 0 }
 .state.done { color: var(--pass) }
 
 /* The assistant panel: the answer is drawn as it streams, with the time the first word arrived. */
-.assistant { background: var(--fill-dark); color: var(--paper); border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 12px; position: sticky; top: 16px }
+.assistant { background: var(--fill-dark); color: var(--paper); border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 12px; position: sticky; top: 16px; max-height: calc(100vh - 32px) }
 .assistant h2 { font-size: 16px; display: flex; justify-content: space-between; gap: 8px }
 .assistant h2 small { font-weight: 400; color: var(--faint); font-size: 13px }
 .suggest { display: flex; flex-wrap: wrap; gap: 6px }
 .suggest button { background: transparent; color: var(--paper); border: 1px solid var(--ink-2); border-radius: 999px; padding: 3px 10px; font-size: 13px }
-.thread { min-height: 12rem; background: var(--ink); border-radius: 10px; padding: 12px; display: flex; flex-direction: column; gap: 8px; font-size: 14px }
+/* A long answer scrolls inside the thread, so Stop stays on screen while it streams. */
+.thread { min-height: 12rem; max-height: 50vh; overflow-y: auto; background: var(--ink); border-radius: 10px; padding: 12px; display: flex; flex-direction: column; gap: 8px; font-size: 14px }
 .thread .asked { align-self: flex-end; background: var(--accent); color: var(--ink); border-radius: 10px; padding: 5px 10px; max-width: 90% }
 .thread .tool { font-family: var(--mono); font-size: 13px; color: var(--faint) }
 .thread .answer { white-space: pre-wrap }
@@ -297,6 +298,7 @@ async function ask(question) {
           if (firstWord === null) firstWord = performance.now() - started;
           words += 1;
           caret.before(document.createTextNode(payload.text));
+          thread.scrollTop = thread.scrollHeight;
           timing.replaceChildren(make("span", "", "first word "), make("strong", "", `${Math.round(firstWord)} ms`),
                                  make("span", "", `${words} tokens so far`));
         } else if (name === "error") {

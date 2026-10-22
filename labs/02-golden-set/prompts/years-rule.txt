@@ -16,4 +16,4 @@ Salary: copy the pay as posted, in the period it is posted in. Never convert an 
 to a year. "K" means thousands. "LPA" means lakh per annum: 1 lakh is 100,000, so 28 LPA is 2800000
 INR a year. A single figure is both salary_min and salary_max. "Up to X" sets salary_max only. When
 no number is given, salary_min, salary_max, currency and period are null. currency is an ISO 4217
-code. period is hour, month or year.
+code. period is hour, month or year; a salary posted with no period is a year.

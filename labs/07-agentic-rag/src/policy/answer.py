@@ -14,7 +14,8 @@ INSTRUCTIONS = (
     "Use only the sections given. Answer every part of the question in short, direct sentences, with "
     "the exact commands, numbers, channels and time limits the sections give. Apply every rule that "
     "fits the situation, even one the question does not name; a rollback or a flag change is a change "
-    "to production, so the deploy policy applies to it. Cite the ids in square brackets exactly as "
+    "to production, so the deploy policy applies to it. When a section gives a time window, say whether "
+    "the time in the question falls inside it. Cite the ids in square brackets exactly as "
     "given, such as deploy-policy#freeze-window, for each section you used. If the sections do not cover part of the question, set covered to false and "
     "say which part is missing, rather than guess."
 )

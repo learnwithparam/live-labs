@@ -33,7 +33,7 @@ can:
 
 ## The problem
 
-The prompt in `prompts/shipped.txt` is 219 words of rules: what counts as staff, when a role is
+The prompt in `prompts/shipped.txt` is 228 words of rules: what counts as staff, when a role is
 hybrid, how a lakh is written. A teammate replaces it with 15 words in `prompts/shorter.txt` to cut
 the cost of every call by about 40%. They try it on three postings, every field looks right, and it
 ships. Nothing tells them that a Bengaluru salary of "28 - 35 LPA" now books as 28 rupees.
