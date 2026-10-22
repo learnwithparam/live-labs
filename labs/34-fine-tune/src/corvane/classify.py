@@ -89,7 +89,13 @@ class LargeModel:
     def classify(self, items: list[dict]) -> list[Prediction]:
         # API calls wait on the network, so a few run at once. Order is kept by `map`.
         with ThreadPoolExecutor(self.workers) as pool:
-            return list(pool.map(self.one, items))
+            predictions = list(pool.map(self.one, items))
+        # One failed call is one item for a reviewer. Every call failing is a wrong key or model name, and
+        # scoring it would print 0% as if the model were that bad, so the run stops with the error instead.
+        if predictions and all(prediction.raw.startswith("error: ") for prediction in predictions):
+            raise SystemExit(f"The large model answered none of the {len(items)} items ({predictions[0].raw}). "
+                             "Check LLM_API_KEY and LLM_MODEL in .env.")
+        return predictions
 
 
 class SmallModel:

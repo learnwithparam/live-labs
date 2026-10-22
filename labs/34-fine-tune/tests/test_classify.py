@@ -1,5 +1,6 @@
 """The large model's prompt, parsing and bill, with a scripted model and no key."""
 
+import pytest
 from fakes import FakeOpenAI
 
 from corvane.classify import LargeModel, few_shot_messages, pick_examples, short_messages, usage_cost
@@ -41,6 +42,12 @@ def test_the_large_model_is_parsed_and_billed_and_a_failed_call_is_no_label():
     assert predictions[0].cost == 0.0001 and predictions[2].cost == 0.0
     assert predictions[2].raw == "error: TimeoutError"
     assert all(request["extra_body"] == {"usage": {"include": True}} for request in client.seen)
+
+
+def test_a_large_model_that_answers_no_item_stops_the_run_instead_of_scoring_zero():
+    client = FakeOpenAI({}, fail_on="UBER *EATS PENDING")
+    with pytest.raises(SystemExit, match="answered none of the 1 items"):
+        LargeModel(client, "openai/gpt-6-luna", examples=[]).classify([ITEM])
 
 
 def test_list_prices_cost_a_call_when_the_provider_sends_no_bill():
