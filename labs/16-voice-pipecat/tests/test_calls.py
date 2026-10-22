@@ -1,6 +1,9 @@
+import json
+
 from pipecat.evals.suite import EvalManifest, EvalSuite
 
-from lucca.review import MANIFEST, load_calls
+from lucca import review
+from lucca.review import MANIFEST, load_calls, save_shift
 from lucca.till import Menu, Till
 
 
@@ -36,3 +39,19 @@ def test_every_keyed_order_is_one_the_till_can_hold():
         for line in keyed["lines"]:
             added = till.add_item(menu.items[line["item"]]["name"], line["size"], line["options"], line["quantity"])
             assert sorted(added.options) == sorted(line["options"]), call["id"]
+
+
+def shift_row(call_id: str, ok: bool) -> dict:
+    turn = {"latency_ms": 3000, "hear_ms": 400, "think_ms": 2000, "speak_ms": 600}
+    return {"id": call_id, "ok": ok, "staff_expected": False, "turns": [turn], "lines": 3, "cost": 0.001}
+
+
+def test_replaying_one_call_keeps_the_rest_of_the_shift(tmp_path, monkeypatch):
+    """`phoneline review LB-03` once replaced the whole shift with Tom's call, and the kitchen display
+    lost the other seven tickets. A replay updates its own row and scores the shift again."""
+    monkeypatch.setattr(review, "OUT_FILE", tmp_path / "calls.json")
+    save_shift([shift_row("LB-01", True), shift_row("LB-03", False), shift_row("LB-05", True)])
+    save_shift([shift_row("LB-03", True)])
+    shift = json.loads((tmp_path / "calls.json").read_text())
+    assert [row["id"] for row in shift["rows"]] == ["LB-01", "LB-03", "LB-05"]
+    assert shift["metric"]["taken_alone"] == 3 and shift["metric"]["calls"] == 3

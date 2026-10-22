@@ -206,7 +206,7 @@ laptop's GPU:
 
 | Taken with no staff | Sent to staff | Timed turns | p50 turn | p95 turn | Model cost |
 | --- | --- | --- | --- | --- | --- |
-| 6 of 6 | 2 of 2 | 26 of 26 | 3.3 s | 4.9 s | $0.0102 for 8 calls |
+| 6 of 6 | 2 of 2 | 26 of 26 | 3.2 s | 5.4 s | $0.0103 for 8 calls |
 
 The orders are right, and the model costs about $0.0013 a call. The typical turn split into hear 0.4 s,
 think 2.0 s and speak 0.6 s. Think is the part to cut. A turn that keys an item asks the model twice:

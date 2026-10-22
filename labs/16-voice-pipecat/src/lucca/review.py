@@ -90,9 +90,19 @@ async def review_calls(call_ids: list[str] | None = None, on_event: Callable[[di
                      "eval_error": run.error})
         print(f"{call['id']} {'MATCH' if ok else 'MISS '} {why}", flush=True)
     report = {"rows": rows, "metric": score(rows)}
-    OUT_FILE.parent.mkdir(exist_ok=True)
-    OUT_FILE.write_text(json.dumps(report, indent=2))
+    save_shift(rows)
     return report
+
+
+def save_shift(rows: list[dict]) -> None:
+    """Keep the kitchen display's whole shift. Replaying one call replaces only that call's row, so the
+    other callers' tickets stay on screen, and the shift's numbers are scored again over all of them."""
+    kept = json.loads(OUT_FILE.read_text())["rows"] if OUT_FILE.exists() else []
+    by_id = {row["id"]: row for row in kept} | {row["id"]: row for row in rows}
+    order = [call["id"] for call in load_calls()]
+    shift = sorted(by_id.values(), key=lambda row: order.index(row["id"]) if row["id"] in order else len(order))
+    OUT_FILE.parent.mkdir(exist_ok=True)
+    OUT_FILE.write_text(json.dumps({"rows": shift, "metric": score(shift)}, indent=2))
 
 
 def review(call_ids: list[str] | None = None) -> dict:
