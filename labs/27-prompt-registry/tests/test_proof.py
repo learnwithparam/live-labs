@@ -27,13 +27,16 @@ def test_a_bad_prompt_is_blocked_overridden_and_rolled_back_in_under_a_minute():
     assert cli.evaluate(again=True) == 0
     assert cli.promote(2, "Maya Ortiz", "") == 0
     assert cli.propose(str(PROMPTS / "warmer-tone.txt"), "Warmer, shorter replies", "Sam Lee") == 0
-    assert cli.evaluate(again=True) == 0
+    # Only the new version is scored; v1 and v2 keep the scores they shipped on.
+    assert cli.evaluate(again=False) == 0
 
     client, scores = cli.registry(), Scores()
     by_number = {version.number: scores.of(version.text) for version in versions(client)}
     assert gate(by_number[2]) is None, "the edited prompt must clear the bar"
     assert gate(by_number[3]) is not None, "the warmer prompt must fall below it"
-    assert by_number[2]["passed"] > by_number[1]["passed"]
+    # The export path is written only in v2, so the edit, not a lucky reply, is what passes this case.
+    download = {number: next(row for row in record["rows"] if row["id"] == "G11") for number, record in by_number.items()}
+    assert download[2]["passed"] and not download[1]["passed"]
 
     with pytest.raises(Refused):
         promote(client, ReleaseLog(), scores, 3, "Sam Lee")

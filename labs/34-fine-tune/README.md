@@ -132,7 +132,7 @@ uv run tune baseline
 
 Expect: /Qwen3 0.6B untuned, few-shot\s+accuracy/
 
-In our run the large model scored 96.5% and the untuned small model 33.5%. The large model's cost is
+In our run the large model scored 96.9% and the untuned small model 33.5%. The large model's cost is
 what OpenRouter billed. The small model's cost is its measured seconds per item, priced at what AWS
 charges for the same Mac (`SMALL_MODEL_HOURLY` in `src/corvane/config.py`).
 
@@ -151,7 +151,7 @@ uv run tune train
 
 Expect: /\d+(\.\d+)? GPU minutes/
 
-Our run took 429 steps on a Tesla T4, 2.9 GPU minutes in all, at 4.44 GB peak memory. When the data and
+Our run took 429 steps on a Tesla T4, 2.7 GPU minutes in all, at 4.44 GB peak memory. When the data and
 recipe have not changed, `train` reuses that adapter instead of paying for the GPU again.
 
 ## 4. Gate the tuned model alone
@@ -164,16 +164,18 @@ every category is at or above `CLASS_FLOOR`, and it is cheaper:
 uv run tune evaluate
 ```
 
-Expect: /The tuned model alone: HOLD\./
+Expect: /The tuned model alone: (HOLD|SHIP)\./
 
 | Model | Accuracy | Cost per 1,000 items |
 |---|---|---|
-| Large model, few-shot | 96.5% | $0.0945 |
-| Qwen3 0.6B untuned, few-shot | 33.5% | $0.3269 |
-| Qwen3 0.6B tuned | 91.6% | $0.0407 |
+| Large model, few-shot | 96.9% | $0.0951 |
+| Qwen3 0.6B untuned, few-shot | 33.5% | $0.2433 |
+| Qwen3 0.6B tuned | 93.0% | $0.0389 |
 
-Tuning took the small model from 33.5% to 91.6%, for under half the large model's price. It is still
-held. It trails by 4.9 points, and advertising recall is 50%, under the 60% floor.
+Tuning took the small model from 33.5% to 93.0%, for under half the large model's price. It is still
+held: it trails by 4.0 points, outside the 3-point margin. GPU training is not bit-for-bit repeatable, so
+your run lands a point or two either side. In four of our runs, one came within the margin and shipped
+alone; the other three were held. Either way, step 5 is what makes the small model safe to use.
 
 ## 5. Put it in front of the large model
 
@@ -196,9 +198,9 @@ uv run tune cascade
 
 Expect: /\d+ of 227 labelled by the small model, \d+ sent to the large model\.[\s\S]*The cascade: SHIP\./
 
-In our run threshold 80% kept 92 of 115 validation items. On the test, the run printed
-187 of 227 labelled by the small model, 40 sent to the large model. The small model got 182 of its 187
-right, as did the large model on those same items. The cascade scored 96.5% at $0.0588 per 1,000 items.
+In our run threshold 75% kept 96 of 115 validation items. On the test, the run printed
+192 of 227 labelled by the small model, 35 sent to the large model. The small model got 187 of its 192
+right, the large model 188 of those same items. The cascade scored 96.5% at $0.0550 per 1,000 items.
 
 A small model earns its place on the items it is sure of. The adapter card in `out/adapter/card.json`
 records the data version, the recipe, the Kaggle kernel, the threshold and this decision.
@@ -214,7 +216,7 @@ uv run tune shadow
 
 Expect: /\d+ of 150 labelled by the small model, \d+ sent to the large model\./
 
-In our run 124 stayed with the small model and 26 went up, mostly Expedia, in-flight wifi and Costco.
+In our run 123 stayed with the small model and 27 went up, mostly Vistaprint, Expedia and CLEAR.
 Those are the items the small model finds hard, so a reviewer's label on them is worth the most.
 Label one. The decision goes to `out/decisions.jsonl`, and `export` adds it to the training split only:
 

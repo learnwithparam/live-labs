@@ -192,24 +192,27 @@ run. Below it, hosted is cheaper, and at ten items a wake-up it is cheaper by fa
 
 ## 6. Decide the review queue
 
-Every golden item without exactly one valid category waits for a person. Set one, here a hotel bar,
-which Corvane's policy files under meals:
+Every golden item without exactly one valid category waits for a person. On the T4 run every answer
+was one category, so its queue is empty. The rehearsal from step 1 hung on FIGMA and rambled on
+MARRIOTT on purpose, so its queue holds ten items. Decide one there, a hotel bar, which Corvane's
+policy files under meals:
 
 ```bash
-uv run gpu review TX-00241 meals --reviewer "Dana Okafor, finance ops"
+uv run gpu review TX-00241 meals --reviewer "Dana Okafor, finance ops" --run out/rehearsal/results.json
 ```
 
 Expect: /set to meals by Dana Okafor, finance ops/
 
-The decision is saved in `out/decisions.jsonl`, not in the run. The run stays as measured. That item
-id only waits in the queue if the served model missed it, so pick one from `uv run gpu report`.
+The decision is saved in `out/decisions.jsonl`, not in the run. The run stays as measured. On your own
+GPU run, `uv run gpu report` lists the items that wait, if any.
 
 ## 7. See it
 
-Start the endpoint console and open http://127.0.0.1:8350:
+Start the endpoint console and open http://127.0.0.1:8350. `--run` points it at the rehearsal, the run
+with a queue; leave it out to see the T4 run:
 
 ```sh
-uv run gpu serve
+uv run gpu serve --run out/rehearsal/results.json
 ```
 
 Find the two wake-ups in the replica chart and the cold start marked on each. Find the p95 bucket in

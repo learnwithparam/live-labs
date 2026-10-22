@@ -61,6 +61,8 @@ services:
     environment:
       <<: *langfuse-env
       NEXTAUTH_SECRET: driftwell-local-nextauth
+      # As in the official compose: listen on every interface, so the healthcheck below reaches it.
+      HOSTNAME: 0.0.0.0
       # Headless setup: the org, project, API keys and one login exist on first start, so no clicking.
       LANGFUSE_INIT_ORG_ID: driftwell
       LANGFUSE_INIT_ORG_NAME: Driftwell
@@ -71,6 +73,13 @@ services:
       LANGFUSE_INIT_USER_EMAIL: product@driftwell.example
       LANGFUSE_INIT_USER_NAME: Driftwell product team
       LANGFUSE_INIT_USER_PASSWORD: driftwell-local
+    healthcheck:
+      # Without it `up --wait` returns when the container starts, before the API answers.
+      test: wget --no-verbose --tries=1 --spider http://127.0.0.1:3000/api/public/health || exit 1
+      interval: 3s
+      timeout: 5s
+      retries: 60
+      start_period: 5s
 
   clickhouse:
     image: docker.io/clickhouse/clickhouse-server:25.12.11.4-alpine

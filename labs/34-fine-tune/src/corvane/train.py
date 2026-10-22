@@ -23,17 +23,20 @@ TRAIN_SCRIPT = Path(__file__).parents[2] / "kaggle" / "train.sh"
 
 @dataclass
 class Recipe:
-    """Every knob that changes the result, in one place, so a run can be repeated exactly.
+    """Every knob that changes the result, in one place, so a run can be repeated.
 
     LoRA rank 8 on the attention projections of every layer. One pass over the training split, capped
     by `max_steps`, keeps a run to a few GPU minutes. Batch 2 gives twice the updates of batch 4 in the
-    same pass: at batch 4 the model still missed merchants it had seen only a few times. Answers are a
+    same pass: at batch 4 the model still missed merchants it had seen only a few times. GPU arithmetic is
+    not bit-for-bit repeatable, so the rate is set for a fresh run, not the best one: at 1e-3 a second run
+    of this recipe fell to 88.7% on validation and its cascade was held; at 5e-4 four runs landed between
+    89.6% and 93.0%. Answers are a
     few tokens, so 96 tokens fits every example, and short sequences are what make a step fast.
     """
     epochs: int = 1
     max_steps: int = 450
     batch_size: int = 2
-    learning_rate: float = 1e-3
+    learning_rate: float = 5e-4
     rank: int = 8
     alpha: int = 32
     targets: tuple[str, ...] = ("q_proj", "k_proj", "v_proj", "o_proj")
@@ -74,8 +77,9 @@ def run_settings(recipe: Recipe, folder: Path = SPLIT_DIR) -> dict:
 def already_trained(recipe: Recipe, folder: Path = SPLIT_DIR) -> dict | None:
     """The last run's report, when it was trained from these exact settings and its adapter is still here.
 
-    Same data and same recipe give the same adapter, so paying for the GPU again buys nothing. A new
-    review decision changes the dataset version, and then it trains.
+    Same data and same recipe give an adapter within a point or so of this one (GPU arithmetic is not
+    bit-for-bit repeatable), so paying for the GPU again buys nothing. A new review decision changes
+    the dataset version, and then it trains.
     """
     if not (ADAPTER_DIR / "adapters.safetensors").exists() or not TRAIN_REPORT.exists():
         return None

@@ -107,10 +107,10 @@ def hosted() -> int:
     return 0
 
 
-def review(item_id: str, category: str, reviewer: str) -> int:
+def review(item_id: str, category: str, reviewer: str, run_path: Path = GPU_RUN) -> int:
     from corvane_gpu.review import decide
 
-    report = current_report()
+    report = current_report(run_path)
     try:
         decision = decide(DECISIONS, {item["id"] for item in report["queue"]}, item_id, category, reviewer)
     except ValueError as error:
@@ -132,7 +132,9 @@ def main(argv: list[str] | None = None) -> int:
     review_parser.add_argument("item_id")
     review_parser.add_argument("category")
     review_parser.add_argument("--reviewer", default="Dana Okafor, finance ops")
-    commands.add_parser("serve", help=f"the endpoint console on http://127.0.0.1:{PAGE_PORT}")
+    review_parser.add_argument("--run", type=Path, default=GPU_RUN)
+    serve_parser = commands.add_parser("serve", help=f"the endpoint console on http://127.0.0.1:{PAGE_PORT}")
+    serve_parser.add_argument("--run", type=Path, default=GPU_RUN)
     args = parser.parse_args(argv)
     if args.command == "rehearse":
         return rehearse()
@@ -142,10 +144,10 @@ def main(argv: list[str] | None = None) -> int:
         print_report(current_report(args.run))
         return 0
     if args.command == "review":
-        return review(args.item_id, args.category, args.reviewer)
+        return review(args.item_id, args.category, args.reviewer, args.run)
     from corvane_gpu.serve import serve
 
-    serve(PAGE_PORT)
+    serve(PAGE_PORT, args.run)
     return 0
 
 
