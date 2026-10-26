@@ -1,0 +1,5 @@
+{
+  "name": "live-labs",
+  "gate": "make check",
+  "test": "make check"
+}
