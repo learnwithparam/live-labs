@@ -6,11 +6,10 @@ import time
 import urllib.error
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor
-from http.server import ThreadingHTTPServer
 
 import pytest
 
-from fernhill.egress import Ledger, handler
+from fernhill.egress import EgressServer, Ledger, handler
 
 ADMIN = "admin-secret"
 REAL_KEY = "sk-real-upstream-key"
@@ -26,7 +25,7 @@ def proxy():
                                                           "cost": 0.02}}).encode()
 
     ledger = Ledger((0.10, 0.01, 0.50))
-    server = ThreadingHTTPServer(("127.0.0.1", 0), handler(ledger, "http://upstream", REAL_KEY, "openai/gpt-6-luna",
+    server = EgressServer(("127.0.0.1", 0), handler(ledger, "http://upstream", REAL_KEY, "openai/gpt-6-luna",
                                                            ADMIN, send_upstream))
     threading.Thread(target=server.serve_forever, daemon=True).start()
     yield f"http://127.0.0.1:{server.server_port}", ledger, sent
@@ -91,7 +90,7 @@ def test_concurrent_calls_cannot_spend_past_the_budget():
         return 200, json.dumps({"choices": [], "usage": {"cost": 0.02}}).encode()
 
     ledger = Ledger((0.10, 0.01, 0.50))
-    server = ThreadingHTTPServer(("127.0.0.1", 0), handler(ledger, "http://upstream", REAL_KEY, "m", ADMIN,
+    server = EgressServer(("127.0.0.1", 0), handler(ledger, "http://upstream", REAL_KEY, "m", ADMIN,
                                                            slow_upstream))
     threading.Thread(target=server.serve_forever, daemon=True).start()
     url = f"http://127.0.0.1:{server.server_port}"

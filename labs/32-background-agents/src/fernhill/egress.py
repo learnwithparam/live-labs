@@ -154,10 +154,15 @@ def handler(ledger: Ledger, upstream: str, upstream_key: str, model: str, admin_
     return Handler
 
 
+class EgressServer(ThreadingHTTPServer):
+    # Several agents can call at once; the default backlog of 5 resets the sixth connection on a burst.
+    request_queue_size = 64
+
+
 def main() -> None:
     prices = tuple(float(price) for price in os.environ["MODEL_PRICES"].split(","))
     port = int(os.environ.get("PROXY_PORT", "8321"))
-    server = ThreadingHTTPServer(("0.0.0.0", port), handler(
+    server = EgressServer(("0.0.0.0", port), handler(
         Ledger(prices), os.environ["UPSTREAM_URL"].rstrip("/"), os.environ["UPSTREAM_KEY"], os.environ["MODEL"],
         os.environ["ADMIN_TOKEN"]))
     print(f"egress proxy on :{port}, forwarding chat completions for {os.environ['MODEL']}", flush=True)
