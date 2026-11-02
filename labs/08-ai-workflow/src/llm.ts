@@ -24,9 +24,11 @@ export function mastraAsk(settings: Settings): Ask {
       // OpenRouter reports what each call cost; it rides through Mastra in the raw usage.
       const raw = (reply.usage as { raw?: { raw?: { cost?: number } } } | undefined)?.raw?.raw
       return { object: (reply.object as z.infer<typeof shape>) ?? null, cost: raw?.cost ?? 0 }
-    } catch {
-      // A failed call is an empty answer, and every step treats empty as "not checked".
-      return { object: null, cost: 0 }
+    } catch (error) {
+      // A dead key or an unreachable model is a failed run, not an empty answer: log it and let it stop the run,
+      // or every listing reads as "not checked" and a proof that expects published listings passes on nothing.
+      console.error(`model call failed: ${error instanceof Error ? error.message : String(error)}`)
+      throw error
     }
   }
 }

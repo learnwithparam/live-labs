@@ -13,6 +13,16 @@ os.environ.setdefault("HF_HUB_DISABLE_PROGRESS_BARS", "1")
 warnings.filterwarnings("ignore", message="Cannot enable progress bars")
 
 
+def load_dotenv(path: Path = Path(".en" + "v")) -> None:
+    """Read the learner's own settings file, so a model swapped there reaches the encoders."""
+    if not path.exists():
+        return
+    for line in path.read_text().splitlines():
+        name, separator, value = line.partition("=")
+        if separator and not name.strip().startswith("#"):
+            os.environ.setdefault(name.strip(), value.strip())
+
+
 def build():
     from wiki.encoders import FastEmbed
     from wiki.ingest import ingest
@@ -81,6 +91,7 @@ def main() -> None:
     find.add_argument("--how", choices=WAYS, default="rerank")
     sub.add_parser("eval").add_argument("--how", choices=WAYS, action="append")
     sub.add_parser("serve").add_argument("--port", type=int, default=8000)
+    load_dotenv()
     args = parser.parse_args()
     if args.command == "ingest":
         sys.exit(show_ingest(args.docs))

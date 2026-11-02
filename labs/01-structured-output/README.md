@@ -86,7 +86,7 @@ this receipt as JSON", and reports what came back:
 uv run receipts naive data/receipts
 ```
 
-Expect: /\d/8 not JSON as sent/
+Expect: /[1-9]/8 not JSON as sent/
 
 Nothing here can be compared to the bank yet:
 

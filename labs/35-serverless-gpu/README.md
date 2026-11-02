@@ -117,7 +117,7 @@ reason, so a broken install reads as an outage.
 
 ### What happened when we ran it
 
-No Modal run happened for this lab. The GPU numbers come from one Kaggle T4 run on 15 October 2026,
+No Modal run happened for this lab. The GPU numbers are a recorded run on 15 October 2026 on one Kaggle T4,
 the third attempt. It used about 4.6 GPU minutes, and the results are in `data/gpu-run/`.
 
 The first run failed at import. PyPI's vLLM 0.20.2 wheel is built for CUDA 13, and Kaggle's image has
@@ -231,7 +231,7 @@ uv run pytest -q
 
 Expect: /\d+ passed/
 
-The proof runs the hosted model live on the golden set. It then reads the real GPU run. That must be a
+The proof runs the hosted model live on the golden set. It then reads the recorded GPU run. That must be a
 Kaggle T4 that refused callers without the key, and woke from zero twice and ended at zero.
 
 The proof prices that run against the live hosted run, and checks the break-even both ways. At ten

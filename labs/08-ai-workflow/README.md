@@ -105,7 +105,7 @@ takes about a minute:
 npm run -s listing -- review
 ```
 
-Expect: /workflow\s+published without an edit: \d+ of 12/
+Expect: /workflow\s+published without an edit: [1-9]\d* of 12/
 
 In our run on `openai/gpt-6-luna` one prompt published 8 of 12 without an edit and put 4 live with an
 error. The workflow published 9 of 12, held 1 for a person, and put 2 live with an error. It cost about

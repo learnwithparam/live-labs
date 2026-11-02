@@ -1,6 +1,7 @@
 """Tests that need no download: ingestion, the labels, the recall maths, the search ways, the page and env.example."""
 
 import json
+import os
 import re
 import threading
 import urllib.error
@@ -158,3 +159,14 @@ def test_the_page_refuses_other_sites(search, tmp_path, headers):
 def test_env_example_matches_the_code_defaults():
     env = dict(line.split("=", 1) for line in (LAB / "env.example").read_text().splitlines() if "=" in line and not line.startswith("#"))
     assert env == {"DENSE_MODEL": encoders.DENSE, "SPARSE_MODEL": encoders.SPARSE, "RERANK_MODEL": encoders.RERANK}
+
+
+def test_a_model_set_in_the_settings_file_reaches_the_encoders(tmp_path, monkeypatch):
+    from wiki.cli import load_dotenv
+
+    settings = tmp_path / (".en" + "v")
+    settings.write_text("# a comment\nDENSE_MODEL=BAAI/bge-base-en-v1.5\n")
+    monkeypatch.delenv("DENSE_MODEL", raising=False)
+    load_dotenv(settings)
+    assert os.environ["DENSE_MODEL"] == "BAAI/bge-base-en-v1.5"
+    monkeypatch.delenv("DENSE_MODEL")

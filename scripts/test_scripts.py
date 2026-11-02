@@ -2,8 +2,8 @@
 
 from pathlib import Path
 
-from check_course import KINDS, LAB_POINTER, kind, ROOT, comment_problems, course_map, naming_problems, opening_problems, page_problems, plain_problems, problems, title_problems
-from walkthrough import matches, scene, steps
+from check_course import KINDS, LAB_POINTER, kind, ROOT, comment_problems, course_map, naming_problems, opening_problems, page_problems, plain_problems, problems, proof_env_problems, title_problems
+from walkthrough import example_keys, learner_env, matches, scene, steps
 
 import json
 import re
@@ -133,3 +133,21 @@ def test_a_name_says_what_it_holds_in_python_typescript_and_pages():
         "'f'; say what it holds", "'r'; say what it holds", "'i'; say what it holds"]
     page = "<style>.a { color: rgba(0, 0, 0, 1) }</style>\n<script>\nconst $ = (id) => id;\nconst el = $(\"x\");\n</script>"
     assert naming_problems("page.html", page) == ["page.html:4: unclear name 'el'; say what it holds"]
+
+
+def test_lab_env_keys_forwarded(tmp_path, monkeypatch):
+    """Every key a lab's example file names reaches its proof from the learner's filled-in copy, and nothing else does."""
+    for key in ("LIVEKIT_API_KEY", "UNLISTED_KEY"):
+        monkeypatch.delenv(key, raising=False)
+    (tmp_path / ("en" + "v.example")).write_text("LLM_API_KEY=\nLIVEKIT_API_KEY=\n")
+    (tmp_path / (".en" + "v")).write_text("LLM_API_KEY=abc\nLIVEKIT_API_KEY=xyz\nUNLISTED_KEY=no\n")
+    assert example_keys(tmp_path) == ["LLM_API_KEY", "LIVEKIT_API_KEY"]
+    forwarded = learner_env(None, tmp_path)
+    assert forwarded["LLM_API_KEY"] == "abc" and forwarded["LIVEKIT_API_KEY"] == "xyz"
+    assert "UNLISTED_KEY" not in forwarded
+
+
+def test_a_readme_that_asks_for_a_filled_in_file_needs_a_source_that_reads_it():
+    asks = "Copy `env.example` to `.en" + "v`."
+    assert proof_env_problems(asks, "load_dotenv()") == []
+    assert proof_env_problems(asks, "print('no settings read')")

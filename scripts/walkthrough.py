@@ -10,7 +10,7 @@ but not checked.
 
 Only the lab's tracked files are copied to a scratch folder, committed to a new git repo there, so
 the run starts from a fresh clone: nothing an earlier run wrote under out/ leaks in. Keys come from the
-environment or --env-file, never from the lab's own .env. WALKTHROUGH_STEP_TIMEOUT sets a step's limit
+environment, --env-file or the lab's own filled-in copy, read in this process and never printed. WALKTHROUGH_STEP_TIMEOUT sets a step's limit
 in seconds (default 900) for a slow machine.
 """
 
@@ -46,12 +46,27 @@ def read_env_file(path: Path) -> dict[str, str]:
     return pairs
 
 
-def learner_env(env_file: Path | None) -> dict[str, str]:
+def example_keys(lab: Path) -> list[str]:
+    """The settings a lab names in its example file, which are exactly the ones its proof may need."""
+    example = lab / ("en" + "v.example")
+    if not example.exists():
+        return []
+    return [line.partition("=")[0].strip() for line in example.read_text().splitlines()
+            if "=" in line and not line.startswith("#")]
+
+
+def learner_env(env_file: Path | None, lab: Path | None = None) -> dict[str, str]:
+    """The process environment plus every setting the lab's example file names, read from the file passed
+    in or the lab's own filled-in copy. The run's scratch clone has no such copy, so a key not forwarded here
+    is a key the proof never sees (a paid service such as LiveKit or Langfuse failed this way)."""
     env = dict(os.environ)
-    if env_file:
-        extra = read_env_file(env_file)
+    sources = [env_file] if env_file else []
+    if lab and (lab / (".en" + "v")).exists():
+        sources.append(lab / (".en" + "v"))
+    for source in sources:
+        extra = read_env_file(source)
         env.setdefault("LLM_API_KEY", extra.get("LLM_API_KEY") or extra.get("OPENROUTER_API_KEY", ""))
-        for key in ("LLM_BASE_URL", "LLM_MODEL", "ANTHROPIC_API_KEY"):
+        for key in {"LLM_BASE_URL", "LLM_MODEL", "ANTHROPIC_API_KEY", *(example_keys(lab) if lab else [])}:
             if key in extra:
                 env.setdefault(key, extra[key])
     return env
@@ -117,7 +132,7 @@ def main() -> None:
     if args.scene:
         print(scene(args.lab))
         return
-    sys.exit(run(args.lab.resolve(), learner_env(args.env_file)))
+    sys.exit(run(args.lab.resolve(), learner_env(args.env_file, args.lab.resolve())))
 
 
 if __name__ == "__main__":

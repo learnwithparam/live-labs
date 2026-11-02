@@ -169,6 +169,13 @@ def plain_problems(readme: str) -> list[str]:
     return found + (["an em dash; use a full stop or a comma"] if "\u2014" in readme else [])
 
 
+def proof_env_problems(readme: str, source: str) -> list[str]:
+    """A README that tells the learner to fill in their settings file needs a lab that reads it: otherwise the
+    proof runs on the process environment alone and a key typed into the file is silently ignored."""
+    reads_file = re.search(r"dotenv|loadDotenv|env-file|loadEnvFile", source, re.I)
+    return [] if "`.en" + "v`" not in readme or reads_file else ["tells the learner to fill `.en" + "v` but no source reads it"]
+
+
 def problems(course: dict, readme: str) -> list[str]:
     found = []
     labs = course["lab"]
@@ -200,6 +207,8 @@ def problems(course: dict, readme: str) -> list[str]:
             found += [f"labs/{slug}/README.md: {problem}" for problem in title_problems((lab / "README.md").read_text(), title)]
             found += [f"labs/{slug}/README.md: points at another lab ({match.group(0)!r})" for match in LAB_POINTER.finditer((lab / "README.md").read_text())]
             found += [f"labs/{slug}/README.md: {problem}" for problem in plain_problems((lab / "README.md").read_text())]
+            lab_source = "\n".join(path.read_text(errors="ignore") for path in (lab / "src").rglob("*") if path.suffix in (".py", ".ts"))
+            found += [f"labs/{slug}/README.md: {problem}" for problem in proof_env_problems((lab / "README.md").read_text(), lab_source)]
         for module in sorted([*(lab / "src").glob("*/*.py"), *(lab / "src").glob("*.ts")]):
             if module.name not in PLUMBING:
                 found += comment_problems(str(module.relative_to(ROOT)), module.read_text())
