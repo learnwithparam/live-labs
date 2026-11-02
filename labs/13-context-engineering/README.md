@@ -50,6 +50,23 @@ payable clerk is the human in the loop: they press **Send dispute** or **Pay as 
 
 <img src="docs/audit-console.jpg" alt="Halyard Freight audit run console: the engineered run's step bars mostly cached, the verdict line, and the disputes queue with five invoices waiting on the clerk" width="720">
 
+## How it works
+
+The agent reads each invoice against the rate engine's contract price, then records one finding per invoice. Halyard's code builds every request so its start never changes, which lets the provider serve most of it from cache.
+
+```mermaid
+flowchart LR
+  A["Context builder"] --> B["Model call with tools"]
+  B --> C["Read invoice against rate engine"]
+  C --> B
+  B --> D["Record finding"]
+  D --> E["Compare with rate engine"]
+  E --> F["Disputes queue"]
+  F --> G["Clerk sends dispute or pays"]
+  B --> H["Billed and cached tokens"]
+  H --> I["Cache hit rate"]
+```
+
 ## Words you will use
 
 - **Prefix cache**: the provider keeps the start of a recent request and serves it again cheaply.

@@ -55,6 +55,22 @@ every run is listed slowest first, with its steps on one time axis and the slow 
 
 <img src="docs/month-end-ai-cost-reconciliation.jpg" alt="Quillmark AI usage close: the invoice reconciled to four customers with a red unattributed line, the cost split by customer and feature, two billed lines waiting for finance, and the slowest run's waterfall with the order lookup taking 14 of 21 seconds" width="720">
 
+## How it works
+
+Each model call is traced with the customer and the feature carried along, and the provider's invoice lines are joined to those traces. A line with no trace is not guessed at, and it goes to a person.
+
+```mermaid
+flowchart LR
+  A["Helpdesk agent calls model"] --> B["Spans with customer and feature"]
+  B --> C["Trace store"]
+  D["Provider invoice lines"] --> E["Join by response id"]
+  C --> E
+  E -- "matched" --> F["Split by customer and feature"]
+  E -- "no trace" --> G["Needs finance"]
+  G -- "finance assigns" --> F
+  F --> H["Month end close"]
+```
+
 ## Words you will use
 
 - **Span**: one timed step, with a name, a parent and attributes. A trace is the tree of spans for one run.

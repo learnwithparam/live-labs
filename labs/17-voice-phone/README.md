@@ -50,6 +50,24 @@ transfer with its reason. The person on duty picks what the office does next.
 
 <img src="docs/inbound-call-wallboard.jpg" alt="Northfield Heating and Air inbound call wallboard: counters for calls reached and sent to a person, the ten lines with green lamps, one transcript, and the queue of calls sent to a person with their reasons" width="720">
 
+## How it works
+
+A simulated caller phones in with a script, and the front desk agent books, moves or cancels visits in a schedule that refuses what the office would refuse. The judge then compares the book and any transfer with the outcome each caller's script needs.
+
+```mermaid
+flowchart LR
+  A["Scripted caller line"] --> B["Front desk agent hears the line"]
+  B --> C["Model calls booking tools"]
+  C --> D["Schedule books or refuses"]
+  D --> C
+  C --> E["Transfer to human"]
+  E --> F["Sent to a person queue"]
+  F --> G["Person picks next step"]
+  B --> H["Reply spoken to caller"]
+  H --> A
+  D --> I["Judge against expected outcome"]
+```
+
 ## Words you will use
 
 - **SIP trunk**: the link from a phone carrier to your software. A call arrives on it as a SIP

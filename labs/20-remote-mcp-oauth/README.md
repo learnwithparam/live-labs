@@ -48,6 +48,23 @@ granted, a **Needs Theo** card lets Theo decide: reconnect with more access, or 
 
 <img src="docs/issue-board.jpg" alt="Larch issue board for Copperline Payments: Theo's assistant was refused when asked to close SUP-88, the audit log shows the refusal as Theo through Larch Assistant, and a Needs Theo card offers to reconnect or close it by hand" width="720">
 
+## How it works
+
+The MCP server asks the authorization server whether each token is valid, and the exchange then trades the person's token for a one-minute token holding only the scope that one tool needs. The audit log records every call with who acted and who asked.
+
+```mermaid
+flowchart LR
+  A["Assistant calls a tool"] --> B["MCP server checks token"]
+  B -- "token refused" --> C["Refused and logged"]
+  B --> D["Authorization server introspects token"]
+  E["Person approves consent screen"] --> D
+  D --> F["Exchange for one minute scoped token"]
+  F -- "scope not granted" --> C
+  F --> G["Tracker runs the action"]
+  G --> H["Audit log entry"]
+  H --> I["Review against grant and audit log"]
+```
+
 ## Words you will use
 
 - **Remote MCP server**: an MCP server reached over HTTP instead of started on your machine. Many people

@@ -44,6 +44,23 @@ person still has to finish.
 
 The catalogue is synthetic and seeded: `python3 data/make_catalogue.py` writes the same two files.
 
+## How it works
+
+Products are packed into batch requests and filled either live or through a batch API. A checkpoint means a crash repeats nothing, and the results are scored against the retailer's own attributes.
+
+```mermaid
+flowchart LR
+  A["Catalogue CSV"] --> B["Pack products into requests"]
+  B --> C["Batch file"]
+  C --> D["Run with checkpoint"]
+  C --> E["Batch API submit and collect"]
+  D --> F["Model fills attributes"]
+  E --> F
+  F --> G["Retry products left out"]
+  G --> H["Score against retailer attributes"]
+  H --> I["Queue for a person"]
+```
+
 ## Words you will use
 
 - **Batch file**: one JSON line per request, each with a `custom_id`. Batch APIs read the same shape.

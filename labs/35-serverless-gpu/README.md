@@ -49,6 +49,22 @@ batch size, and a review queue lists every item that came back without one categ
 
 <img src="docs/gpu-endpoint-console.jpg" alt="Corvane GPU endpoint console from the Kaggle T4 run: replicas woke from zero twice and ended at zero, cold start 110.2 s, p95 4.20 s, served $0.1404 per 1,000 items against hosted $0.0949, and a break-even of 352 items per wake-up" width="720">
 
+## How it works
+
+The rehearsal runs on the laptop against a stand-in server, and the GPU numbers are a recorded Kaggle T4 run. The report prices that run with Modal's published rates, and the hosted cost is what the provider billed per call.
+
+```mermaid
+flowchart LR
+  A["Laptop rehearsal with stand in server"] --> B["Recorded Kaggle T4 run with vLLM"]
+  B --> C["Measured waves cold start and latency"]
+  D["Hosted model run over API"] --> E["Billed cost per item"]
+  C --> F["Report recomputes GPU bill"]
+  E --> F
+  F --> G["Break even items per wake"]
+  F --> H{"Items without one category"}
+  H -- "yes" --> I["Person picks category"]
+```
+
 ## Words you will use
 
 - **Replica**: one container with the model loaded on a GPU. Serverless means the platform starts and

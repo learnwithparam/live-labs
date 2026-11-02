@@ -53,6 +53,24 @@ override it, with their name and reason.
 
 <img src="docs/ci-check-run-on-a-pull-request.jpg" alt="Kettlebay Assist check run for pull request 214: merging is blocked because four golden cases are unsafe, and the refund case shows the signed-off request_approval step missing from what the release called" width="720">
 
+## How it works
+
+The check runs each release over the golden cases several times and scores the answers, the tool calls and the approvals. The gate blocks a release that is worse than the live one, and a person can override it with a written reason.
+
+```mermaid
+flowchart TD
+  A["Pull request changes a release"] --> B["Assistant runs golden cases"]
+  B --> C["Answer check"]
+  B --> D["Tool call check against expected calls"]
+  B --> E["Approval check before each write"]
+  C --> F{"Compare with live release"}
+  D --> F
+  E --> F
+  F -- "a case got worse" --> G["Merge blocked"]
+  F -- "no case got worse" --> H["Merge allowed"]
+  G -- "person writes reason" --> H
+```
+
 ## Words you will use
 
 - **Golden set**: requests with the answer and the tool calls a person signed off. The model never

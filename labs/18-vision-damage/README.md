@@ -49,6 +49,22 @@ The twelve photos are real, from [Wikimedia Commons](https://commons.wikimedia.o
 countries. `data/PHOTOS.md` lists each source, author and license. The ten claims, accounts and bills
 are written for this lab.
 
+## How it works
+
+The model reads the damaged panels in each photo into a fixed schema, and the rate table prices them in code. Triage then routes the claim to an adjuster for a reason, and the estimate is checked against the repairer's bill.
+
+```mermaid
+flowchart LR
+  A["Claim photos"] --> B["Model reads damaged panels"]
+  B --> C["Rate table prices panels"]
+  C --> D["Estimate"]
+  D --> E["Triage routes the claim"]
+  E -- "no reason to route" --> F["Auto approved"]
+  E -- "a reason to route" --> G["Adjuster decides"]
+  D --> H["Compare with repairer bill"]
+  I["Repairer bill"] --> H
+```
+
 ## Words you will use
 
 - **First notice of loss (FNOL)**: the moment a customer reports a claim, often with photos.

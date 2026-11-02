@@ -52,6 +52,23 @@ wrong-memory count.
 
 <img src="docs/support-chat.jpg" alt="Pawsley support chat: Priya's new session recalls 3 Harbour Road, the memory panel shows the address was 14 Mill Lane, and a Waiting on Priya card asks whether Biscuit can have chicken jerky treats" width="720">
 
+## How it works
+
+Each chat is a new session, so the agent recalls what a customer said earlier from a Mem0 store. The keeper either adds each new fact or reconciles it with what the store holds, and a verdict checks every recalled memory against what the customer said.
+
+```mermaid
+flowchart LR
+  A["Customer message"] --> B["Keeper adds to memory store"]
+  B --> C["Reconcile call with model"]
+  C --> D["Replace or keep memory"]
+  D --> E["New session recalls memories"]
+  E --> F["Reply model answers"]
+  E --> G["Verdict against what the customer said"]
+  G --> H["Wrong memories count"]
+  C --> I["Waiting on customer"]
+  I --> J["Customer says which is true"]
+```
+
 ## Words you will use
 
 - **Memory**: one short fact saved about a customer, such as "Biscuit is allergic to chicken". It

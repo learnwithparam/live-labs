@@ -50,6 +50,21 @@ coupon, and one receipt paid with a personal card that has no charge at all. Fiv
 are PDFs and one is an email. They are synthetic, drawn by `data/draw_receipts.py` from the texts in
 `data/source`.
 
+## How it works
+
+The model reads each receipt into a fixed schema, and a total check sends a failed reply back once. A receipt matches a card charge only when exactly one charge fits, and the rest go to a person.
+
+```mermaid
+flowchart LR
+  A["Receipt file"] --> B["Model reads receipt as JSON"]
+  B --> C{"Schema and total check"}
+  C -- "fails" --> D["Repair request with the error"]
+  D --> B
+  C -- "passes" --> E["Match against card feed"]
+  E -- "one charge fits" --> F["Matched card charge"]
+  E -- "none or tie" --> G["Queue for a person"]
+```
+
 ## Words you will use
 
 - **Structured output**: asking the provider to hold the reply to a JSON schema.

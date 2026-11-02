@@ -51,6 +51,22 @@ one, and the assistant finishes the job.
 
 <img src="docs/store-admin.jpg" alt="Tidepool Coffee store admin: the product table with the Kenya 1kg price changed to $19.00 from $68.00, and the assistant drawer where the model asked which Kenya before changing anything" width="720">
 
+## How it works
+
+The model chooses from the tools a server lists and calls them against the store. A find that matches several variants returns an error asking the merchant which one, and a review compares the store with the expected state.
+
+```mermaid
+flowchart LR
+  A["Merchant request"] --> B["Model picks a tool"]
+  B --> C["Tool call to store"]
+  C --> D{"Words match one variant"}
+  D -- "several match" --> E["Error asks merchant which one"]
+  E --> F["Model asks the merchant"]
+  D -- "one match" --> G["Store change made"]
+  G --> I["Review compares store state"]
+  H["Expected store state per task"] --> I
+```
+
 ## Words you will use
 
 - **MCP server**: a program that offers tools to any AI app over the Model Context Protocol. Claude

@@ -50,6 +50,22 @@ draws recall at top k, and lists the questions that still need a person.
 
 The docs are synthetic: `uv run --with reportlab==4.4.4 python data/make_docs.py` writes the same PDFs.
 
+## How it works
+
+Three ways of searching the same sections are scored against labelled question and section pairs. Recall at k shows which way finds the labelled section, and a person decides the misses.
+
+```mermaid
+flowchart LR
+  A["Runbook sections"] --> B["Embedding search"]
+  A --> C["Keyword search"]
+  B --> D["Hybrid fusion of both lists"]
+  C --> D
+  D --> E["Cross-encoder reranks shortlist"]
+  E --> G["Recall at k per method"]
+  F["Labelled question and section pairs"] --> G
+  G --> H["Person moves the label or rewords"]
+```
+
 ## Words you will use
 
 - **Golden set**: questions a person labelled with the right answer, here the right section.

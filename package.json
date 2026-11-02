@@ -1,0 +1,12 @@
+{
+  "name": "live-labs-docs",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "devDependencies": {
+    "mermaid": "11.17.2",
+    "playwright-core": "1.63.0"
+  }
+}

@@ -51,6 +51,22 @@ allowed or refused, and why. A test form sends one call as any staff member.
 
 <img src="docs/mcp-server-approval-console.jpg" alt="Basalt Pay MCP server approval console: the verdict band showing calls that got through direct and zero through the gateway, a drift alert on Ledgerline's lookup_merchant, approved server cards with team tool lists, and the live gateway call log" width="720">
 
+## How it works
+
+A staff agent reaches MCP servers only through the gateway, which checks each call against the approved server list and the pinned hash of the tool. A changed tool is refused, and a reviewer decides whether to re-approve it.
+
+```mermaid
+flowchart LR
+  A["Staff agent model"] --> B["Gateway"]
+  B --> C{"Approved server list"}
+  C -- "not listed" --> D["Refused"]
+  C -- "listed" --> E["Pin check against live tool"]
+  E -- "hash differs" --> D
+  E -- "hash matches" --> F["Approved MCP server"]
+  E -- "changed tool" --> H["Reviewer decides"]
+  F --> G["Gateway call log"]
+```
+
 ## Words you will use
 
 - **MCP server**: a program that offers tools to an AI agent over the Model Context Protocol.

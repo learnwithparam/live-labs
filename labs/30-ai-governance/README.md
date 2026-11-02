@@ -54,6 +54,24 @@ rail holds the metric, the chain's seal, the open finding on the mailer and the 
 
 <img src="docs/audit-request-desk.jpg" alt="Larkspur audit request desk: the auditor asks what the help assistant told one customer on 3 September; two chained log records show the exact replies with the AI disclosure highlighted, beside 14 of 14 answered and a verified chain" width="720">
 
+## How it works
+
+Every model call goes through a gateway that checks the inventory and writes one record to a hash chained log, including the refused calls. The desk answers the auditor from that log, and a person signs only when the chain verifies.
+
+```mermaid
+flowchart LR
+  A["Team service call"] --> B["Gateway checks inventory"]
+  B -- "not listed or no disclosure" --> C["Refused"]
+  B -- "listed" --> D["Model call with disclosure"]
+  D --> E["Append record to log"]
+  C --> E
+  E --> F["Auditor request answered from log"]
+  E --> H["Verify chain"]
+  G["Tamper test on a copy"] --> H
+  H -- "chain intact" --> I["Person signs pack"]
+  F --> I
+```
+
 ## Words you will use
 
 - **AI inventory**: the list of AI systems an organisation runs, with an owner, a purpose and the

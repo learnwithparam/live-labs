@@ -46,6 +46,23 @@ publishing** for a merchandiser.
 
 <img src="docs/import.jpg" alt="Northbeck product import: the workflow run with extract, three parallel writers, check and the branch, above the product page and the supplier sheet with quoted facts highlighted" width="720">
 
+## How it works
+
+Three writers draft from facts extracted from the supplier sheet, and code checks each claim against it. A merchant audit then compares the published listing with the sheet.
+
+```mermaid
+flowchart LR
+  A["Supplier spec sheet"] --> B["Extract facts with quotes"]
+  B --> C["Title, description and features writers in parallel"]
+  C --> D["Check each claim in code and by model"]
+  D --> E{"Claim check result"}
+  E -- "passes" --> F["Publish listing"]
+  E -- "feature line fails" --> G["Repair or cut the item"]
+  G --> F
+  E -- "title or limit fails" --> H["Held for a person"]
+  F --> I["Merchant audit against sheet"]
+```
+
 ## Words you will use
 
 - **Workflow**: steps in a fixed order that code declares. The model fills in each step; it never picks the next one.

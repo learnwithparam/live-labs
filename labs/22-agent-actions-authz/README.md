@@ -51,6 +51,25 @@ branch release/2.4. Policy: Release manager only, protected branch." **Approve**
 
 <img src="docs/coding-agent-session.jpg" alt="Wrenfield's coding agent session: an approval card asking to delete branch release/2.4 with Approve and Deny, the metric for both guards, and the policy table with the release manager column lit" width="720">
 
+## How it works
+
+The model proposes a tool call, and the Cerbos policy answers allow, ask or deny from the repo's settings and the call, never from the model's words. An ask waits for the developer's approval card, and a deny goes back to the model with its reason.
+
+```mermaid
+flowchart LR
+  A["Model proposes a tool call"] --> B["Cerbos policy check"]
+  B -- "allow" --> C["Tool runs in workspace"]
+  B -- "ask" --> D["Approval card for developer"]
+  D -- "Approve" --> C
+  D -- "Deny" --> E["Denial sent to model"]
+  B -- "deny" --> E
+  E --> A
+  C --> A
+  C --> F["Audit log"]
+  G["Role and attribute policy table"] --> B
+  F --> H["Review counts forbidden and lost branches"]
+```
+
 ## Words you will use
 
 - **Tool annotation**: MCP's hints on a tool. `readOnlyHint` says it changes nothing, and

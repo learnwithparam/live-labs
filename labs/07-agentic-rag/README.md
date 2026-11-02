@@ -43,6 +43,23 @@ policies do not cover a question, it goes to the policy owners instead of guessi
 
 <img src="docs/policy-desk.jpg" alt="Ledgerline policy desk: on slow card payments the agent planned four searches, including incident severity, and went back once for what was missing" width="720">
 
+## How it works
+
+A planner writes searches, a check names what is still missing, and the graph loops back to search while budget remains. An expert's points then grade each final answer.
+
+```mermaid
+flowchart LR
+  A["Question"] --> B["Plan writes searches"]
+  B --> C["Search runbook sections"]
+  C --> D["Check names what is missing"]
+  D --> E{"Missing and budget left"}
+  E -- "yes" --> C
+  E -- "no" --> F["Answer with citations"]
+  F --> G["Grade against expert points"]
+  H["Expert questions and points"] --> G
+  G --> I["Accepted or not"]
+```
+
 ## Words you will use
 
 - **Plain RAG**: one search with the user's words, then an answer from what came back.

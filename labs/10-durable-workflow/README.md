@@ -54,6 +54,24 @@ so both stories land in one ledger.
 
 <img src="docs/desk.jpg" alt="Fernhill refund approvals back office: the worker strip with Kill, the refund list with stage tracks, an opened refund with Temporal's event history, and the payments ledger with a red double payout from the plain script" width="720">
 
+## How it works
+
+A workflow asks the model for a decision, waits for a manager if the amount is over 500 dollars, then pays with the workflow id as the idempotency key. A crash after payment retries the payout with the same key, so it pays once.
+
+```mermaid
+flowchart LR
+  A["Refund request"] --> B["Decide activity asks model"]
+  B --> C{"Over 500 dollars"}
+  C -- "yes" --> D["Wait for manager approval"]
+  C -- "no" --> E["Pay with workflow id key"]
+  D -- "approved" --> E
+  E -- "crash before result" --> F["Retry payout with same key"]
+  F --> E
+  E --> G["Payments ledger"]
+  G --> I["Paid amount matches ruling"]
+  H["Finance ruling per refund"] --> I
+```
+
 ## Words you will use
 
 - **Workflow**: the refund as code that Temporal runs to the end, through crashes and restarts.

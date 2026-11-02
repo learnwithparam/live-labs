@@ -53,6 +53,22 @@ operator raises that tenant's limit or keeps it, and the gateway reloads.
 
 <img src="docs/project-timeline-with-a-streaming-assistant-and-gateway-operator-view.jpg" alt="Mosswood project timeline for Pemberton Foods with the assistant streaming an answer about overdue tasks, and below it the gateway operator view: p95 time to first token, error rate, 429s per tenant, and a card asking whether to raise Ninebark Labs' workspace limit" width="720">
 
+## How it works
+
+The web app signs a short-lived token for the signed-in person, and the gateway checks it before any call reaches the agent. The agent streams the model's words back as they arrive, and a closed tab stops the model call.
+
+```mermaid
+flowchart LR
+  A["Web app signs token"] --> B["Gateway checks token"]
+  B -- "missing or bad token" --> C["Refused 401"]
+  B -- "over workspace limit" --> D["Refused 429"]
+  B -- "allowed" --> E["Agent runs tool loop"]
+  E --> F["Model streams words"]
+  F --> G["Gateway streams to browser"]
+  G -- "tab closed" --> H["Stream cut and model call closed"]
+  D --> I["Operator decides new limit"]
+```
+
 ## Words you will use
 
 - **Server-Sent Events (SSE)**: a response that stays open and sends `event:` and `data:` lines as

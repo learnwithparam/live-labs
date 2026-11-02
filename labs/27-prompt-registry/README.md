@@ -54,6 +54,21 @@ tags every reply with the version that wrote it. The label history keeps who mov
 
 <img src="docs/prompt-release-and-rollback-console.jpg" alt="Driftwell's prompt release console: version 2 in production at 16 of 16, a 16.7 second rollback, version 3 waiting on a person at 2 of 16, the release track, a diff, the running bot's replies tagged by version, and the label history" width="720">
 
+## How it works
+
+The support bot holds no prompt of its own, and it asks the registry for the version carrying the production label on each reply. A person proposes a version, and a score gate on the golden set decides whether it can be promoted.
+
+```mermaid
+flowchart LR
+  A["Person edits prompt"] --> B["Saved as staging version"]
+  B --> C["Golden set scored"]
+  C -- "85 percent or more" --> D["Production label moves"]
+  C -- "below bar or no score" --> E["Waiting on a person"]
+  E -- "override with reason" --> D
+  D --> F["Bot reads production label"]
+  F --> G["Rollback moves label back"]
+```
+
 ## Words you will use
 
 - **Prompt registry**: a service that stores every version of a prompt outside the code. Langfuse and

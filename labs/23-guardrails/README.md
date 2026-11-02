@@ -58,6 +58,23 @@ was sent. The reviewer decides: send the draft, or keep the rewrite.
 
 <img src="docs/home-listing-page.jpg" alt="Brightdoor listing page for 2716 Bexvie Ave: the planted text in the description is highlighted, the chat shows the check listing rail blocking the answer, and the fair housing desk shows 34 of 34 violations caught with the rails against 18 of 34 with the prompt alone" width="720">
 
+## How it works
+
+Every buyer message passes input rails before the assistant runs, and the draft answer passes an output rail before it is sent. The rails read the listing as data, so planted instructions in the seller's text cannot pose as the buyer's request.
+
+```mermaid
+flowchart LR
+  A["Buyer message"] --> B["Input rails check the question"]
+  L["Listing text read as data"] --> B
+  B -- "steering" --> C["Refusal sent to buyer"]
+  B -- "allowed" --> D["Assistant model drafts answer"]
+  D --> E["Output rail checks answer"]
+  E -- "clean" --> F["Answer sent to buyer"]
+  E -- "blocked" --> G["Rewrite sent to buyer"]
+  E -- "marked for review" --> H["Fair housing desk queue"]
+  H --> I["Reviewer sends draft or keeps rewrite"]
+```
+
 ## Words you will use
 
 - **Guardrail**: a check that runs outside the model you are guarding, under its own written policy.

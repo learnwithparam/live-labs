@@ -53,6 +53,25 @@ staff decide. You can open any recorded call, or call the line with your own mic
 
 <img src="docs/kitchen-display.jpg" alt="Lucca Brick Oven kitchen display: a staff call back ticket for a half and half pizza, the call transcript with till tool calls, and the per-turn latency strip" width="720">
 
+## How it works
+
+The till decides what goes on the ticket: the model passes the caller's words, and the till either adds the item or refuses it with the next step. The review compares the till's ticket with the order keyed from the same call.
+
+```mermaid
+flowchart LR
+  A["Caller speaks"] --> B["Whisper hears the speech"]
+  B --> C["Turn detector ends the turn"]
+  C --> D["Model calls till tools"]
+  D --> E["Till adds or refuses the item"]
+  E --> D
+  E -- "cannot hold it" --> F["Staff call back"]
+  E --> G["Ticket"]
+  D --> H["Kokoro speaks the reply"]
+  H --> A
+  G --> I["Review against keyed order"]
+  J["Keyed order from the same call"] --> I
+```
+
 ## Words you will use
 
 - **Frame**: one piece of data moving through a Pipecat pipeline, such as 20 ms of audio, a transcript,

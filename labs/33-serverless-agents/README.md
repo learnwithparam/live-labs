@@ -50,6 +50,21 @@ them are the ledger, with one row per invoice, and the bill for Lambda against t
 
 <img src="docs/nightly-job-scheduler-run-timeline.jpg" alt="Meterline run timeline: 30 lanes of fetch, model and ledger steps with a red crash line at 12 seconds, two jobs waiting for finance, the ledger and the bill" width="720">
 
+## How it works
+
+Each customer is one durable run, and a crash resumes it from its last checkpoint, so no ledger row is written twice. The model reads the contract, plain code checks every number against it, and a change over the limit waits for finance.
+
+```mermaid
+flowchart TD
+  A["Nightly runner starts one run per customer"] --> B["Fetch billing with retries"]
+  B --> C["Model reads contract into JSON"]
+  C --> D["Plain code checks each number against contract"]
+  D -- "every number quoted" --> F["Write ledger row keyed by customer and period"]
+  D -- "change over limit or no price" --> E["Held for finance callback"]
+  E -- "finance approves" --> F
+  E -- "finance rejects" --> G["Stopped with no row"]
+```
+
 ## Words you will use
 
 - **Durable function**: a Lambda function whose progress is saved by the service as it runs. The

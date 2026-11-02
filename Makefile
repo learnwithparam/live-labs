@@ -2,12 +2,16 @@
 # proof: one lab against a real model; LLM_API_KEY in the environment or ENV_FILE=path.
 LABS := $(sort $(wildcard labs/*/))
 
-.PHONY: check readme proof scene
+.PHONY: check readme proof scene mermaid
 
-check:
+check: mermaid
 	python3 scripts/check_course.py
 	cd scripts && uv run --with pytest pytest -q -p no:cacheprovider test_scripts.py
 	@for lab in $(LABS); do echo "== $$lab"; if [ -f $$lab/package.json ]; then (cd $$lab && npm ci --silent && npm test --silent) || exit 1; else (cd $$lab && uv run --frozen pytest -q) || exit 1; fi; done
+
+mermaid:
+	npm ci --silent
+	node scripts/check-mermaid.mjs $$(git ls-files -co --exclude-standard '*.md')
 
 readme:
 	python3 scripts/check_course.py --write

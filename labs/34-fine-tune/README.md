@@ -70,6 +70,23 @@ reviewer to check after the fact.
 
 <img src="docs/model-release-console-for-the-labelling-team.jpg" alt="Corvane model release console: a SHIP stamp with five passing checks for the cascade, the tuned model alone on HOLD, accuracy bars for four rows with cost per 1,000 items, a count of items labelled by the small model, and a list of items sent to the large model" width="720">
 
+## How it works
+
+The small model trains on a Kaggle GPU, and the laptop does everything else, including scoring the held-out test. Only the cascade's confident items stay with the small model, and the rest go to the large model.
+
+```mermaid
+flowchart LR
+  A["Reviewed labels split by id"] --> B["Large model baseline over API"]
+  A --> C["Stage data for Kaggle"]
+  C --> D["Kaggle GPU trains adapter"]
+  D --> E["Adapter returned to laptop"]
+  E --> F["Small model scored on laptop"]
+  F --> H["Cascade with confidence threshold"]
+  B --> H
+  H -- "gate passes on test split" --> I["Shadow run and reviewer labels"]
+  I -- "labels feed next training" --> A
+```
+
 ## Words you will use
 
 - **Fine-tuning**: training a model further on your own examples, so it learns your task.

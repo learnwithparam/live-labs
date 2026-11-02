@@ -51,6 +51,25 @@ The right rail shows the leak suite's count, and the ticket held for an admin, w
 
 <img src="docs/company-search.jpg" alt="Copperline Search viewing as Dev Arora: the cited answer, the relation path from Dev through Security and Engineering to the Brand folder, and the leak suite showing 0 documents leaked across 15 permission test pairs" width="720">
 
+## How it works
+
+Source systems are translated into access tuples, and OpenFGA answers whether a person may open each document before the model reads it. A check that errors counts as a no, and a held ticket waits for an admin decision.
+
+```mermaid
+flowchart LR
+  A["Drive wiki and tickets"] --> B["Sync translates to access tuples"]
+  B --> C["OpenFGA store"]
+  D["Question from a person"] --> E["Retrieve chunks"]
+  E --> F["Batch check each document"]
+  C --> F
+  F -- "allowed" --> G["Allowed chunks to model"]
+  F -- "denied or check error" --> H["Dropped before the model"]
+  G --> I["Answer with sources"]
+  B -- "unknown group" --> J["Held ticket for admin"]
+  J --> B
+  I --> K["Leak suite grades answers"]
+```
+
 ## Words you will use
 
 - **ReBAC**: relationship-based access control. Access follows from relationships, such as "Ravi is in

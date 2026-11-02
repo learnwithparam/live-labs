@@ -55,6 +55,23 @@ calls and its tokens. Press **Run this version live** and watch the subagents wo
 
 <img src="docs/research-report-reader.jpg" alt="Kitebird research report reader: the Germany launch brief with its scorecard and footnoted claims, beside the research tree of the lead and four subagents and the source passage with the quoted sentence highlighted" width="720">
 
+## How it works
+
+A lead agent splits the question into objectives and runs a subagent on each, all searching the same library. The code checks every quote in a claim against its cited source, and a judge reads only the claims whose quotes are all there.
+
+```mermaid
+flowchart LR
+  A["Lead plans objectives"] --> B["Subagents search and read"]
+  B --> C["Findings with quotes"]
+  C --> D["Writer cites findings"]
+  D --> E["Find each quote in cited source"]
+  E -- "all quotes found" --> F["Judge reads the whole source"]
+  E -- "a quote missing" --> G["Claim for the editor"]
+  F -- "supports claim" --> H["Supported claim"]
+  F -- "not supported" --> G
+  G --> I["Editor keeps or cuts"]
+```
+
 ## Words you will use
 
 - **Lead agent**: the agent that plans the question, starts the subagents and hands their findings to

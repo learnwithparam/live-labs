@@ -47,6 +47,22 @@ as written. The **Judge vs agents** tab scores the judge on the 20 labelled repl
 
 <img src="docs/support-inbox.jpg" alt="Swiftbite courier support inbox: a reply that says leave the beer at the door is held for an agent, because two of its four claims have no support in the help centre" width="720">
 
+## How it works
+
+The bot's draft is sent only when a guard finds every claim backed by a cited section. A judge is scored against the agents' verdicts on past replies, and its agreement is measured.
+
+```mermaid
+flowchart LR
+  A["Courier message"] --> B["Search help centre sections"]
+  B --> C["Bot drafts reply with citations"]
+  C --> D{"Guard finds every claim backed"}
+  D -- "yes" --> E["Sent to courier"]
+  D -- "no" --> F["Held for an agent to decide"]
+  G["Agent verdicts on past replies"] --> H["Judge reads reply with sources"]
+  H --> I["Agreement and kappa with agents"]
+  G --> I
+```
+
 ## Words you will use
 
 - **Grounding check (guardrail)**: runs before sending and asks one question: does a cited section say each claim?

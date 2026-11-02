@@ -55,6 +55,24 @@ label whether cheap would have been enough. Each card says why it is there.
 
 <img src="docs/llm-gateway-admin-console.jpg" alt="Fernway LLM gateway admin console: routed calls cost less per thousand requests than all strong at the same quality, team budget meters with Growth over budget, and a rail asking the admin to raise Growth's budget or label a flagged care call" width="720">
 
+## How it works
+
+The caller asks for the model name auto, and the router picks the strong or the cheap tier for each call. The provider's billed cost and a labelled quality set show whether the cheaper choice held up.
+
+```mermaid
+flowchart TD
+  A["Team call with its key"] --> B{"Budget left"}
+  B -- "no" --> C["Refused with 402"]
+  B -- "yes" --> D["Safety and pack rules"]
+  D -- "rule matched" --> F["Strong model"]
+  D -- "no rule" --> E["Cheap model labels the request"]
+  E -- "lookup or extract" --> G["Cheap model answers"]
+  E -- "judgment or unclear" --> F
+  G --> H["Provider billed cost"]
+  F --> H
+  H --> I["Graded against quality set"]
+```
+
 ## Words you will use
 
 - **LLM gateway**: one service every app calls instead of a provider. It holds the provider keys,

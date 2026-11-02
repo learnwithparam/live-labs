@@ -47,6 +47,24 @@ is logged for the next routing review.
 
 <img src="docs/board.jpg" alt="Tallyroll triage board: the person lane first, then six queue lanes, with the LLM plus decision model reassigning 3 of 72 tickets and sending 12 to a person" width="720">
 
+## How it works
+
+The embedding vote, the LLM and the decision model each propose a queue. The LLM pick and the decision model must agree before a ticket is routed, and each router is scored against the resolved queue.
+
+```mermaid
+flowchart LR
+  A["New ticket"] --> B["Embedding vote from past tickets"]
+  A --> C["LLM picks queue"]
+  A --> D["Decision model probability per queue"]
+  C --> E{"Second opinion both agree"}
+  D --> E
+  E -- "agree" --> F["Routed to queue"]
+  E -- "disagree" --> G["Needs a person"]
+  F --> I["Share reassigned per router"]
+  B --> I
+  H["Queue each past ticket was resolved in"] --> I
+```
+
 ## Words you will use
 
 - **Queue**: a team's list of tickets. Routing is picking the queue.

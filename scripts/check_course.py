@@ -73,6 +73,20 @@ def model_id_problems(readme: str, pool: str) -> list[str]:
             if name not in pool]
 
 
+def diagram_problems(readme: str) -> list[str]:
+    """Each lab README draws its mechanism once, under `## How it works`."""
+    match = re.search(r"^## How it works\n(.*?)(?=^## )", readme, re.S | re.M)
+    if not match:
+        return ["no `## How it works` section"]
+    return [] if "```mermaid" in match.group(1) else ["`## How it works` has no mermaid block"]
+
+
+def architecture_problems(doc: str, course: dict) -> list[str]:
+    """The course map in docs/architecture.md must carry every lab title."""
+    return [f"docs/architecture.md: the map leaves out {lab['title']!r}" for lab in course["lab"]
+            if lab["title"].replace('"', "'") not in doc]
+
+
 def opening_problems(readme: str) -> list[str]:
     """The job and the learner's outcome come before the first command."""
     first_command = readme.find("```bash")
@@ -225,6 +239,7 @@ def problems(course: dict, readme: str) -> list[str]:
             found += [f"labs/{slug}/README.md: points at another lab ({match.group(0)!r})" for match in LAB_POINTER.finditer((lab / "README.md").read_text())]
             found += [f"labs/{slug}/README.md: {problem}" for problem in needs_problems(
                 (lab / "README.md").read_text(), next(row for row in labs if row["slug"] == slug)["needs"])]
+            found += [f"labs/{slug}/README.md: {problem}" for problem in diagram_problems((lab / "README.md").read_text())]
             found += [f"labs/{slug}/README.md: {problem}" for problem in plain_problems((lab / "README.md").read_text())]
             lab_source = "\n".join(path.read_text(errors="ignore") for path in (lab / "src").rglob("*") if path.suffix in (".py", ".ts"))
             found += [f"labs/{slug}/README.md: {problem}" for problem in proof_env_problems((lab / "README.md").read_text(), lab_source)]
@@ -242,6 +257,7 @@ def problems(course: dict, readme: str) -> list[str]:
     for path in sorted(code):
         found += naming_problems(str(path.relative_to(ROOT)), path.read_text())
     found += page_problems({str(path.relative_to(ROOT)): path.read_text() for path in [*(ROOT / "labs").glob("*/src/*/page.html"), *(ROOT / "labs").glob("*/src/page.html")]})
+    found += architecture_problems((ROOT / "docs" / "architecture.md").read_text(), course)
     if course_map(course) not in readme:
         found.append("README.md: course map is stale; run `make readme`")
     return found

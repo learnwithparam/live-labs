@@ -49,6 +49,22 @@ agent pull requests were merged.
 
 <img src="docs/background-agent-pull-request-queue.jpg" alt="Fernhill pull request queue: eleven sandbox sessions, two that gave up on unsafe issues, the laptop's reach next to the sandbox's, and an open pull request with its diff, green CI and merge form" width="720">
 
+## How it works
+
+Each issue runs in a fresh sandbox whose only route out is the model proxy, and the proxy enforces the budget. The change is pushed, CI runs in a second sandbox with no network, and a person merges only a pull request with green CI and a named reviewer.
+
+```mermaid
+flowchart LR
+  A["Issue queue"] --> B["Fresh sandbox with agent"]
+  B --> C["Model proxy with budget"]
+  B --> D["Change pushed to branch"]
+  D --> E["CI in sandbox with no network"]
+  E --> F["Pull request opened with CI result"]
+  F --> H{"Person names reviewer"}
+  H -- "green CI" --> I["Merged to main"]
+  H -- "red CI or refused" --> J["Not merged"]
+```
+
 ## Words you will use
 
 - **Background agent**: a coding agent started by a ticket or a message, working with no person

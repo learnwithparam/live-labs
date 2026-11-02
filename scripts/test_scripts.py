@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from check_course import KINDS, LAB_POINTER, kind, ROOT, comment_problems, course_map, model_id_problems, naming_problems, needs_problems, opening_problems, page_problems, plain_problems, problems, proof_env_problems, title_problems
+from check_course import KINDS, architecture_problems, diagram_problems, LAB_POINTER, kind, ROOT, comment_problems, course_map, model_id_problems, naming_problems, needs_problems, opening_problems, page_problems, plain_problems, problems, proof_env_problems, title_problems
 from walkthrough import example_keys, learner_env, matches, scene, steps
 
 import json
@@ -164,3 +164,16 @@ def test_a_model_id_in_prose_must_be_named_by_the_lab():
     assert model_id_problems("It runs `openai/gpt-6-luna`.", "MODEL = 'openai/gpt-6-luna'") == []
     assert model_id_problems("It runs `google/gemini-2.5-flash`.", "MODEL = 'openai/gpt-6-luna'")
     assert model_id_problems("[post](https://x.com/ditches-gpt-4-for-a-smaller-model.html)", "") == []
+
+
+def test_a_readme_must_draw_how_it_works():
+    drawn = "## How it works\n\nText.\n\n```mermaid\nflowchart LR\n  A-->B\n```\n\n## Set up\n"
+    assert diagram_problems(drawn) == []
+    assert diagram_problems("## Set up\n")
+    assert diagram_problems("## How it works\n\nOnly words.\n\n## Set up\n")
+
+
+def test_the_architecture_map_carries_every_lab():
+    course = {"lab": [{"title": "Extract Data"}, {"title": "Test Things"}]}
+    assert architecture_problems('L1["Extract Data"] L2["Test Things"]', course) == []
+    assert architecture_problems('L1["Extract Data"]', course)

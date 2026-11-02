@@ -55,6 +55,24 @@ up.
 
 <img src="docs/refund-risk-review-queue.jpg" alt="Fennick Market refund risk review queue: a risk ribbon with an 8% review slider catching 169 of 208 frauds, a grid of refunds to review, and a reliability chart where the calibrated dots sit on the diagonal" width="720">
 
+## How it works
+
+The model scores each refund using history from before June, and a review line frozen on May decides which refunds a person sees. The check is what fraud is found later, counted at the same review rate as the hand rule.
+
+```mermaid
+flowchart LR
+  A["Refund history"] --> B["Model trained Jan to Apr"]
+  B --> C["Calibrated on May"]
+  C --> D["Score each June and July refund"]
+  D -- "above review line" --> E["Queue for a person"]
+  D -- "below review line" --> F["Paid"]
+  E --> G["Person pays or holds"]
+  A --> H["Found later fraud outcome"]
+  D --> I["Caught at fixed review rate"]
+  H --> I
+  J["LLM 0 to 100 score"] --> I
+```
+
 ## Words you will use
 
 - **Risk score**: a number the model gives each refund. Higher means more likely to be fraud.

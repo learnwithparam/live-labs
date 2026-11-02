@@ -46,6 +46,21 @@ a person.
 
 The docs are synthetic: `uv run --with reportlab==4.4.4 python data/make_docs.py` writes the same PDFs.
 
+## How it works
+
+The model answers from four retrieved passages and must cite their ids. A plain check lets an answer stand only when a cited passage holds the labelled fact.
+
+```mermaid
+flowchart LR
+  A["PDF runbooks"] --> B["Passages by section"]
+  B --> C["Index finds four passages"]
+  C --> D["Model answers with cited ids"]
+  D --> E{"Cited passage holds the fact"}
+  H["Labelled fact for each question"] --> E
+  E -- "yes" --> F["Answer with citation"]
+  E -- "no or no answer" --> G["Hand to a person"]
+```
+
 ## Words you will use
 
 - **Ingestion**: reading documents into text a search can index, keeping where each piece came from.

@@ -50,6 +50,21 @@ The 14 postings in `data/postings` cover what breaks the filters: a salary in la
 contract rate, a "lead" title, a contract-to-hire role, an office that is optional, a salary that is
 only "up to", and one with no salary at all. They are synthetic.
 
+## How it works
+
+Each prompt run is scored field by field against postings a person approved. A changed prompt ships only if no field that was right becomes wrong.
+
+```mermaid
+flowchart LR
+  A["Prompt under test"] --> B["Model reads each posting"]
+  D["Approved golden postings"] --> C["Score each field"]
+  B --> C
+  C --> E{"Any field became wrong"}
+  E -- "yes" --> F["Change blocked and listed"]
+  E -- "no" --> G["Change ships"]
+  F --> H["Person reads the changed postings"]
+```
+
 ## Words you will use
 
 - **Golden set**: inputs with the output a person approved, kept fixed so every change is scored on the same cases.

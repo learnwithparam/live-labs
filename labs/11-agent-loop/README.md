@@ -51,6 +51,23 @@ Under the orders, the last review shows all three ways on all 10 chats.
 
 <img src="docs/help.jpg" alt="Kestrel Outdoor help page: the customer's orders on the left with a cancelled order highlighted, and the help chat on the right with tool calls, the budget meter and the outcome" width="720">
 
+## How it works
+
+The model picks tools in a loop, and each tool checks the policy and the customer's order before it changes the order system. A budget check hands the chat to a person when steps run out.
+
+```mermaid
+flowchart TD
+  A["Customer message"] --> B["Model asks for tools"]
+  B --> C{"Within step and cost budget"}
+  C -- "yes" --> D["Run tool on order system"]
+  D --> E["Policy and owner check"]
+  E --> B
+  C -- "no" --> F["Hand off to a person"]
+  B -- "no tool needed" --> G["Reply to customer"]
+  G --> I["Scored on order system state"]
+  H["Order system state after run"] --> I
+```
+
 ## Words you will use
 
 - **Tool**: a function the model may ask you to call, such as `cancel_order`. You run it, not the model.

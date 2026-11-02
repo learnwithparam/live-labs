@@ -48,6 +48,23 @@ it as said. They can select missed words and redact them. The note appears with 
 
 <img src="docs/clinical-scribe-transcript-editor.jpg" alt="Wrenfield transcript editor: a well child visit with names, a date and an email highlighted, the placeholders the model saw beside each line, and a lot number read aloud waiting for the clinician to decide" width="720">
 
+## How it works
+
+The detector finds identifiers with Presidio and the clinic's own recognizers, and each span is swapped for a placeholder before the model sees the transcript. A span the detector is unsure about waits for a clinician, and a visit the detector cannot read is held.
+
+```mermaid
+flowchart LR
+  A["Visit transcript"] --> B["Presidio and clinic recognizers"]
+  B -- "analyzer error" --> C["Visit held for a clinician"]
+  B --> D["Spans found"]
+  D -- "sure" --> E["Redact to placeholders"]
+  D -- "unsure" --> F["Needs you card"]
+  F --> G["Clinician keeps or sends as said"]
+  E --> H["Model writes note from redacted text"]
+  H --> I["Check prompt and note for annotated PHI"]
+  I --> J["Note with placeholders"]
+```
+
 ## Words you will use
 
 - **PHI**: health information tied to a person. HIPAA's Safe Harbor method lists 18 identifiers to
