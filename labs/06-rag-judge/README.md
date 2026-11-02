@@ -116,7 +116,7 @@ uv run support review --naive
 Expect: /Naive\s+agrees with agents on \d+ of 20/
 
 On `anthropic/claude-haiku-5.5` it agreed 16 of 20 times, with a kappa of 0.6. It passed 9 of the 10
-good replies and 3 of the 10 bad ones. On `google/gemini-2.5-flash` it agreed only 12 or 13 times,
+good replies and 3 of the 10 bad ones. On an earlier, weaker model it agreed only 12 or 13 times,
 passing 7 or 8 bad replies. With no sources, a confident wrong number reads exactly like a right one.
 
 ## 4. Give the judge a rubric and the sources

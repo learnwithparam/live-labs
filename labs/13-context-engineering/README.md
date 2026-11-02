@@ -137,7 +137,7 @@ In our run with `openai/gpt-6-luna`:
 | Engineered | 16 of 16 | 34 | 241,275 | 95% | $0.0046 |
 
 The engineered context sent half as many tokens again, and cost a fifth as much. A shorter context is
-not a cheaper one. Earlier, with `openai/gpt-4.1-mini`, the naive window dropped INV-03 before INV-15
+not a cheaper one. Earlier, with an earlier, smaller model, the naive window dropped INV-03 before INV-15
 arrived. The agent paid the same shipment twice, so that audit completed nothing.
 
 ## 5. Why the code does the arithmetic

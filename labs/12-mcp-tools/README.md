@@ -105,7 +105,7 @@ Expect: /Result: /
 
 On `openai/gpt-6-luna` it searched for a product titled "Colombia 1kg" twice and found none. Then it
 tried "Colombia", found Colombia Huila, and needed 6 calls to add the stock. The API was correct, and the
-model had to guess its way through it. On `google/gemini-2.5-flash` the same search stopped at the first
+model had to guess its way through it. On an earlier, weaker model the same search stopped at the first
 miss and asked the merchant for the right title.
 
 ## 3. Design the tools for the job
@@ -158,7 +158,7 @@ In two runs with `openai/gpt-6-luna`:
 A strong model gets most tasks done on the raw API, but it pays for the search. The designed tools did
 the same work in about a third fewer calls, at 28% less cost.
 
-A weaker model also fails tasks there. On `google/gemini-2.5-flash` the API server got 14 of 20 right
+A weaker model also fails tasks there. On an earlier, weaker model the API server got 14 of 20 right
 against 20 of 20. It lost TP-02 and TP-10 to exact-title search, and TP-13 the same way. On TP-06 it passed
 the product ID in the wrong format. On TP-14 it archived the product and zeroed the stock when the
 merchant asked to hide it. On TP-20 its answer left out the House Espresso.

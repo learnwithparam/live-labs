@@ -104,7 +104,7 @@ uv run postings eval prompts/shipped.txt
 Expect: /shipped: \d+/98 fields right/
 
 This is the baseline every change is measured against. In our runs on luna the shipped prompt got all
-98 fields right. On `google/gemini-2.5-flash-lite` it got 97: it read "2+ years" on the Harbor
+98 fields right. On an earlier, weaker model it got 97: it read "2+ years" on the Harbor
 posting as junior, where the person approved mid. The run is saved to `runs/shipped.json`.
 
 ## 3. Score the change

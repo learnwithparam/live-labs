@@ -49,11 +49,28 @@ LAB_POINTER = re.compile(r"\blabs? (?:\d+|one|two|three)\b|\b(?:next|previous|la
 
 
 def course_map(course: dict) -> str:
-    rows = ["| # | Lab | Built on | Status |", "|---|---|---|---|"]
+    rows = ["| # | Lab | Built on | You need | Status |", "|---|---|---|---|---|"]
     for lab in course["lab"]:
         title = f"[{lab['title']}](labs/{lab['slug']})" if lab["status"] == "ready" else lab["title"]
-        rows.append(f"| {lab['n']} | {title} | {lab['anchor']} | {lab['status']} |")
+        rows.append(f"| {lab['n']} | {title} | {lab['anchor']} | {', '.join(need.split(':', 1)[1] for need in lab['needs'])} | {lab['status']} |")
     return "\n".join([BEGIN, "", *rows, "", END])
+
+
+def needs_problems(readme: str, needs: list[str]) -> list[str]:
+    """Each need the course map promises must be said in the lab's own Set up section."""
+    match = re.search(r"## Set up\n(.*?)\n## ", readme, re.S)
+    setup = " ".join(match.group(1).split()).lower() if match else ""
+    return [f"Set up never mentions {need!r}, which course.toml lists" for need in needs
+            if need.split(":", 1)[1].lower() not in setup]
+
+
+MODEL_ID = re.compile(r"(?<![\w.-])(?:gpt|gemini|claude|llama|nemotron)-[\w.-]*\w")
+
+
+def model_id_problems(readme: str, pool: str) -> list[str]:
+    """A model id in prose must be one the lab's own code, settings or price table names."""
+    return [f"names model {name!r} but no source of this lab does" for name in sorted(set(MODEL_ID.findall(readme)))
+            if name not in pool]
 
 
 def opening_problems(readme: str) -> list[str]:
@@ -206,9 +223,14 @@ def problems(course: dict, readme: str) -> list[str]:
             title = next(row["title"] for row in labs if row["slug"] == slug)
             found += [f"labs/{slug}/README.md: {problem}" for problem in title_problems((lab / "README.md").read_text(), title)]
             found += [f"labs/{slug}/README.md: points at another lab ({match.group(0)!r})" for match in LAB_POINTER.finditer((lab / "README.md").read_text())]
+            found += [f"labs/{slug}/README.md: {problem}" for problem in needs_problems(
+                (lab / "README.md").read_text(), next(row for row in labs if row["slug"] == slug)["needs"])]
             found += [f"labs/{slug}/README.md: {problem}" for problem in plain_problems((lab / "README.md").read_text())]
             lab_source = "\n".join(path.read_text(errors="ignore") for path in (lab / "src").rglob("*") if path.suffix in (".py", ".ts"))
             found += [f"labs/{slug}/README.md: {problem}" for problem in proof_env_problems((lab / "README.md").read_text(), lab_source)]
+            pool = lab_source + "\n".join(path.read_text(errors="ignore") for path in lab.iterdir()
+                                          if path.is_file() and path.name != "README.md" and path.suffix in (".toml", ".json", ".example", ".md"))
+            found += [f"labs/{slug}/README.md: {problem}" for problem in model_id_problems((lab / "README.md").read_text(), pool)]
         for module in sorted([*(lab / "src").glob("*/*.py"), *(lab / "src").glob("*.ts")]):
             if module.name not in PLUMBING:
                 found += comment_problems(str(module.relative_to(ROOT)), module.read_text())

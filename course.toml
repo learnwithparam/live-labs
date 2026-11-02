@@ -18,6 +18,7 @@ owns = "structured output and the review queue"
 job = "Match each receipt photo, PDF or email to the card charge it pays for, so finance never types it in"
 truth = "the card transactions feed from the bank"
 metric = "share of receipts matched with no person"
+needs = ["tool:uv", "key:OpenRouter"]
 status = "ready"
 
 [[lab]]
@@ -30,6 +31,7 @@ owns = "golden sets and field accuracy"
 job = "Measure an LLM feature against cases people already signed off before changing its prompt or model"
 truth = "a labelled set of past cases a person approved"
 metric = "accuracy per field, before and after each change"
+needs = ["tool:uv", "key:OpenRouter"]
 status = "ready"
 
 [[lab]]
@@ -42,6 +44,7 @@ owns = "batch processing"
 job = "Fill missing product attributes across a whole grocery catalogue overnight, as Instacart's Maple does"
 truth = "attributes the retailer already supplied for a sample of products"
 metric = "cost per thousand products at the same attribute accuracy"
+needs = ["tool:uv", "key:OpenRouter"]
 status = "ready"
 
 [[lab]]
@@ -54,6 +57,7 @@ owns = "ingestion, chunking and cited answers"
 job = "Answer an engineer's on-call question from internal docs with a citation, as Uber Genie does in Slack"
 truth = "the doc passage each answer cites"
 metric = "share of answers whose citation supports them"
+needs = ["tool:uv", "key:OpenRouter"]
 status = "ready"
 
 [[lab]]
@@ -66,6 +70,7 @@ owns = "retrieval metrics, hybrid search and reranking"
 job = "Find the right policy passage for a question before any answer is written"
 truth = "question and passage pairs a person labelled"
 metric = "recall@k on the labelled questions"
+needs = ["tool:uv"]
 status = "ready"
 
 [[lab]]
@@ -78,6 +83,7 @@ owns = "LLM judges and their agreement with people"
 job = "Stop a support bot sending a courier an answer its sources do not support, as DoorDash does"
 truth = "support agents' verdicts on a sample of answers"
 metric = "judge agreement with people, and unsupported answers sent"
+needs = ["tool:uv", "key:OpenRouter"]
 status = "ready"
 
 [[lab]]
@@ -90,6 +96,7 @@ owns = "agentic retrieval"
 job = "Answer policy questions that need several lookups, as Uber's agentic RAG does for its policy docs"
 truth = "answers an expert wrote for a question set"
 metric = "share of answers the expert accepts"
+needs = ["tool:uv", "key:OpenRouter"]
 status = "ready"
 
 [[lab]]
@@ -102,6 +109,7 @@ owns = "workflows: chaining and parallel steps"
 job = "Turn a supplier spec sheet into a product listing in chained steps, with every claim checked"
 truth = "the supplier spec sheet each claim in the listing must trace to"
 metric = "share of listings published without an edit"
+needs = ["key:OpenRouter", "tool:Node"]
 status = "ready"
 
 [[lab]]
@@ -114,6 +122,7 @@ owns = "request routing"
 job = "Send each incoming support ticket to the queue that can solve it"
 truth = "the queue each past ticket was finally resolved in"
 metric = "share of tickets reassigned after routing"
+needs = ["tool:uv", "key:OpenRouter", "download:4 GB"]
 status = "ready"
 
 [[lab]]
@@ -126,6 +135,7 @@ owns = "durable execution and waiting for a human"
 job = "Run a refund that waits days for a manager's approval and pays out exactly once"
 truth = "the payments ledger"
 metric = "refunds paid twice or lost after a crash (zero)"
+needs = ["tool:uv", "key:OpenRouter"]
 status = "ready"
 
 [[lab]]
@@ -138,6 +148,7 @@ owns = "the agent loop and its budgets"
 job = "Resolve an order-support chat by calling order and refund tools in a loop"
 truth = "the order system's state after the run"
 metric = "share of chats resolved with no human handoff, inside the step and cost budget"
+needs = ["tool:uv", "key:OpenRouter"]
 status = "ready"
 
 [[lab]]
@@ -150,6 +161,7 @@ owns = "tool design"
 job = "Let a merchant run store admin tasks by asking, as Shopify Sidekick does"
 truth = "the store's admin API state after each task"
 metric = "task success rate, wrong-tool calls and tool calls per task"
+needs = ["tool:uv", "key:OpenRouter"]
 status = "ready"
 
 [[lab]]
@@ -162,6 +174,7 @@ owns = "context within one run"
 job = "Keep a long-running agent task affordable, as Manus does with its cache hit rate"
 truth = "the provider's billed and cached tokens"
 metric = "cost per completed task and cache hit rate"
+needs = ["tool:uv", "key:OpenRouter"]
 status = "ready"
 
 [[lab]]
@@ -174,6 +187,7 @@ owns = "memory across sessions"
 job = "Remember what a user said across sessions and let them correct it, as ChatGPT memory does"
 truth = "what the user actually said, and their corrections"
 metric = "share of recalled facts the user confirms, and wrong memories"
+needs = ["tool:uv", "key:OpenRouter"]
 status = "ready"
 
 [[lab]]
@@ -186,6 +200,7 @@ owns = "multi-agent orchestration"
 job = "Write a cited research report from many sources, as Anthropic's research system does"
 truth = "the sources each claim cites"
 metric = "share of claims their cited source supports, and cost per report"
+needs = ["tool:uv", "key:OpenRouter"]
 status = "ready"
 
 [[lab]]
@@ -198,6 +213,7 @@ owns = "voice pipelines and turn latency"
 job = "Take a restaurant's phone order by voice and put it in the till"
 truth = "the order a person would have keyed from the same call"
 metric = "orders taken with no staff, and turn latency"
+needs = ["tool:uv", "key:OpenRouter", "hw:Apple silicon", "download:1.6 GB"]
 status = "ready"
 
 [[lab]]
@@ -210,6 +226,7 @@ owns = "telephony and simulated callers"
 job = "Answer a business's inbound phone line with a voice agent"
 truth = "simulated caller scripts with the outcome each caller needs"
 metric = "share of simulated calls that reach their outcome"
+needs = ["tool:uv", "key:OpenRouter", "account:LiveKit"]
 status = "ready"
 
 [[lab]]
@@ -222,6 +239,7 @@ owns = "vision extraction"
 job = "Estimate car repair cost from claim photos, as Tractable does for insurers"
 truth = "the repairer's final bill for each claim"
 metric = "share of estimates within tolerance of the bill"
+needs = ["tool:uv", "key:OpenRouter"]
 status = "ready"
 
 [[lab]]
@@ -234,6 +252,7 @@ owns = "risk scores, thresholds and calibration"
 job = "Decide which refunds to pay, hold or review, as Stripe Radar does for payments"
 truth = "chargebacks and fraud found later"
 metric = "fraud caught at a fixed review rate"
+needs = ["tool:uv", "key:OpenRouter"]
 status = "ready"
 
 [[lab]]
@@ -246,6 +265,7 @@ owns = "authentication and acting on behalf of a user"
 job = "Let an assistant act in a user's Linear workspace as that user"
 truth = "the scopes the user granted and the product's audit log"
 metric = "actions outside the granted scope (zero)"
+needs = ["tool:uv", "key:OpenRouter"]
 status = "ready"
 
 [[lab]]
@@ -258,6 +278,7 @@ owns = "data permissions (ReBAC)"
 job = "Answer from company documents without showing anyone a file they cannot open, as Glean does"
 truth = "each source system's access list"
 metric = "documents leaked across permission test pairs (zero)"
+needs = ["tool:uv", "key:OpenRouter", "tool:Docker"]
 status = "ready"
 
 [[lab]]
@@ -270,6 +291,7 @@ owns = "action permissions (RBAC and ABAC)"
 job = "Let a coding agent read freely but ask before anything destructive, as Block's Goose does"
 truth = "the role and attribute policy table"
 metric = "destructive actions run without approval (zero)"
+needs = ["tool:uv", "key:OpenRouter"]
 status = "ready"
 
 [[lab]]
@@ -282,6 +304,7 @@ owns = "input and output guardrails"
 job = "Block a listing assistant from answers that break fair housing law, as Zillow does"
 truth = "a labelled set of compliant and violating messages"
 metric = "violations caught and good answers wrongly blocked"
+needs = ["tool:uv", "key:OpenRouter"]
 status = "ready"
 
 [[lab]]
@@ -294,6 +317,7 @@ owns = "PII and PHI redaction"
 job = "Strip patient identifiers from a visit transcript before an LLM writes the note"
 truth = "PHI spans a person annotated"
 metric = "PHI missed (recall) on the annotated set"
+needs = ["tool:uv", "key:OpenRouter"]
 status = "ready"
 
 [[lab]]
@@ -306,6 +330,7 @@ owns = "the MCP gateway"
 job = "Let staff agents use only approved MCP servers, as Block does with its curated list"
 truth = "the approved server list"
 metric = "calls to unapproved servers that got through (zero)"
+needs = ["tool:uv", "key:OpenRouter", "hw:Apple silicon"]
 status = "ready"
 
 [[lab]]
@@ -318,6 +343,7 @@ owns = "the LLM gateway and model routing"
 job = "Send each LLM call to the cheapest model that answers it well, as Instacart's gateway does"
 truth = "provider invoices and a labelled quality set"
 metric = "cost per request at the same quality"
+needs = ["tool:uv", "key:OpenRouter"]
 status = "ready"
 
 [[lab]]
@@ -330,6 +356,7 @@ owns = "prompt versions"
 job = "Let a product team change a support bot's prompt without a deploy and roll it back in a minute"
 truth = "the golden set score of each prompt version"
 metric = "time to roll back a bad prompt"
+needs = ["tool:uv", "key:OpenRouter", "tool:Docker"]
 status = "ready"
 
 [[lab]]
@@ -342,6 +369,7 @@ owns = "tracing and cost per run"
 job = "Tell finance what each customer's AI usage cost last month, and which step made a run slow"
 truth = "the provider's invoice"
 metric = "share of the invoice attributed to a customer and a feature"
+needs = ["tool:uv", "key:OpenRouter", "tool:Docker"]
 status = "ready"
 
 [[lab]]
@@ -354,6 +382,7 @@ owns = "release gates and trajectory evals"
 job = "Block a release that makes an assistant worse, as Shopify runs evals before Sidekick ships"
 truth = "the golden set and expected tool trajectories"
 metric = "regressions caught before release"
+needs = ["tool:uv", "key:OpenRouter"]
 status = "ready"
 
 [[lab]]
@@ -366,6 +395,7 @@ owns = "inventory, audit log and disclosure"
 job = "Answer an auditor: which AI systems talk to customers, and what one said on a given day"
 truth = "the AI inventory and the audit log"
 metric = "time to answer an audit request"
+needs = ["tool:uv", "key:OpenRouter"]
 status = "ready"
 
 [[lab]]
@@ -378,6 +408,7 @@ owns = "the agent API and the API gateway"
 job = "Serve an assistant to a web app with streaming, auth and rate limits"
 truth = "the gateway's logs under a load test"
 metric = "time to first token at p95, and error rate"
+needs = ["tool:uv", "key:OpenRouter", "tool:Docker"]
 status = "ready"
 
 [[lab]]
@@ -390,6 +421,7 @@ owns = "background agents and sandboxes"
 job = "Turn an issue into a tested pull request with no engineer at a keyboard, as Ramp Inspect does"
 truth = "the repo's CI on each pull request"
 metric = "share of agent pull requests merged"
+needs = ["tool:uv", "key:OpenRouter", "tool:Docker"]
 status = "ready"
 
 [[lab]]
@@ -402,6 +434,7 @@ owns = "serverless and managed agent runtimes"
 job = "Run nightly agent jobs that survive a crash with no server to run"
 truth = "the job ledger and the cloud bill"
 metric = "jobs finished after a crash, and cost per run"
+needs = ["tool:uv", "key:OpenRouter"]
 status = "ready"
 
 [[lab]]
@@ -414,6 +447,7 @@ owns = "fine-tuning"
 job = "Label most items with a small tuned model and send the rest to the large one, at its accuracy"
 truth = "labels from the human review queue"
 metric = "cascade accuracy, share the small model labels alone, and cost per item against the large model"
+needs = ["tool:uv", "key:OpenRouter", "hw:Apple silicon", "account:Kaggle"]
 status = "ready"
 
 [[lab]]
@@ -426,4 +460,5 @@ owns = "serving open models"
 job = "Serve the tuned model on your own GPUs only while there is work, as Ramp does on Modal"
 truth = "the same golden set as the hosted model"
 metric = "cost per thousand items and p95 latency"
+needs = ["tool:uv", "key:OpenRouter", "account:Kaggle"]
 status = "ready"

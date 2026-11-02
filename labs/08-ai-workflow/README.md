@@ -111,7 +111,7 @@ In our run on `openai/gpt-6-luna` one prompt published 8 of 12 without an edit a
 error. The workflow published 9 of 12, held 1 for a person, and put 2 live with an error. It cost about
 a fifth of a cent a listing against a fiftieth.
 
-On `google/gemini-2.5-flash` the workflow did a little better, 10 or 11 of 12 with at most 1 wrong, at
+On an earlier, weaker model the workflow did a little better, 10 or 11 of 12 with at most 1 wrong, at
 four times the price: 0.7 to 0.9 of a cent a listing. `out/review.json` holds every listing and every
 edit.
 

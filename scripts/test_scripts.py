@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from check_course import KINDS, LAB_POINTER, kind, ROOT, comment_problems, course_map, naming_problems, opening_problems, page_problems, plain_problems, problems, proof_env_problems, title_problems
+from check_course import KINDS, LAB_POINTER, kind, ROOT, comment_problems, course_map, model_id_problems, naming_problems, needs_problems, opening_problems, page_problems, plain_problems, problems, proof_env_problems, title_problems
 from walkthrough import example_keys, learner_env, matches, scene, steps
 
 import json
@@ -151,3 +151,16 @@ def test_a_readme_that_asks_for_a_filled_in_file_needs_a_source_that_reads_it():
     asks = "Copy `env.example` to `.en" + "v`."
     assert proof_env_problems(asks, "load_dotenv()") == []
     assert proof_env_problems(asks, "print('no settings read')")
+
+
+def test_a_need_the_course_map_lists_must_be_said_in_set_up():
+    readme = "## Set up\nYou need uv and Docker.\n\n## 1. Go\n"
+    assert needs_problems(readme, ["tool:uv", "tool:Docker"]) == []
+    assert needs_problems(readme, ["hw:Apple silicon"])
+    assert needs_problems("## 1. Go\n", ["tool:uv"])
+
+
+def test_a_model_id_in_prose_must_be_named_by_the_lab():
+    assert model_id_problems("It runs `openai/gpt-6-luna`.", "MODEL = 'openai/gpt-6-luna'") == []
+    assert model_id_problems("It runs `google/gemini-2.5-flash`.", "MODEL = 'openai/gpt-6-luna'")
+    assert model_id_problems("[post](https://x.com/ditches-gpt-4-for-a-smaller-model.html)", "") == []

@@ -145,8 +145,7 @@ uv run receipts match data/receipts
 
 Expect: /\d/8 matched to a card charge, \d need a person/
 
-In our runs on luna seven receipts matched and none matched the wrong charge. On
-`google/gemini-2.5-flash-lite` the grocery receipt counted its coupon twice, so its lines never added
+In our runs on luna seven receipts matched and none matched the wrong charge. On an earlier, weaker model the grocery receipt counted its coupon twice, so its lines never added
 up. Its total still equalled a charge to the cent: the bank confirmed the total and the entry was
 flagged "the lines need a look". The pharmacy receipt was paid with a
 personal card, so no charge fits and a person files it as out of pocket. A person checks one receipt

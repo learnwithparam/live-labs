@@ -140,7 +140,7 @@ Expect: /size passages on .*: \d+ of \d+ answers supported/
 In our run on luna 15 of 16 answers were supported, and 4 of 19 questions went to a person. The
 chunk that held the skip command ended at `kcat-skip --group settlement-co`, so no cited passage
 holds the whole command, and that answer goes to a person. The approval channel was cut the same way,
-and the search never found it. On `google/gemini-2.5-flash-lite` one answer copied the cut:
+and the search never found it. On an earlier, weaker model one answer copied the cut:
 `--group settlement-co --partition`, a command that names no consumer group. Now from section passages:
 
 ```bash
