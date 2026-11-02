@@ -15,12 +15,16 @@ in seconds (default 900) for a slow machine.
 """
 
 import argparse
+import datetime
+import hashlib
+import json
 import os
 import re
 import shutil
 import subprocess
 import sys
 import tempfile
+import tomllib
 from pathlib import Path
 
 STEP = re.compile(r"```bash\n(.*?)```\n+(?:Expect: ([^\n]+)\n)?", re.S)
@@ -70,6 +74,56 @@ def learner_env(env_file: Path | None, lab: Path | None = None) -> dict[str, str
             if key in extra:
                 env.setdefault(key, extra[key])
     return env
+
+
+SKIPPED_FOLDERS = {".venv", "node_modules", "__pycache__"}
+
+
+def declared_model(lab: Path) -> str:
+    """The model a lab's example settings name, which is the one its proof runs unless the caller overrides it."""
+    example = lab / ("en" + "v.example")
+    if example.exists():
+        for line in example.read_text().splitlines():
+            key, _, value = line.partition("=")
+            if key.strip() == "LLM_MODEL":
+                return value.strip()
+    return ""
+
+
+def dependency_sections(lab: Path) -> str:
+    """Only the parts of the manifests that change what a lab installs, so a lint setting edit keeps a proof."""
+    parts = []
+    if (lab / "pyproject.toml").exists():
+        manifest = tomllib.loads((lab / "pyproject.toml").read_text())
+        parts.append({"dependencies": manifest.get("project", {}).get("dependencies"),
+                      "groups": manifest.get("dependency-groups"), "uv": manifest.get("tool", {}).get("uv")})
+    if (lab / "package.json").exists():
+        manifest = json.loads((lab / "package.json").read_text())
+        parts.append({"dependencies": manifest.get("dependencies"), "dev": manifest.get("devDependencies")})
+    return json.dumps(parts, sort_keys=True)
+
+
+def proof_hash(lab: Path) -> str:
+    """What a proof depends on: the lab's source, the commands it runs, what it installs and which model it names."""
+    digest = hashlib.sha256()
+    source_folder = lab / "src"
+    sources = sorted(path for path in source_folder.rglob("*")
+                     if path.is_file() and not SKIPPED_FOLDERS & set(path.parts)) if source_folder.exists() else []
+    for path in sources:
+        digest.update(f"{path.relative_to(lab)}\0".encode() + path.read_bytes() + b"\0")
+    for cmd, expect in steps(lab / "README.md"):
+        digest.update(f"{cmd}\0{expect}\0".encode())
+    digest.update(dependency_sections(lab).encode())
+    digest.update(declared_model(lab).encode())
+    return digest.hexdigest()[:16]
+
+
+def write_proof(lab: Path, env: dict[str, str]) -> None:
+    """Called only after every step passed, so the file is evidence that this source ran green. PROOF_RAN_ON names the
+    model that actually answered when the labs were pointed at a gateway under their usual model id."""
+    record = {"hash": proof_hash(lab), "date": datetime.date.today().isoformat(),
+              "model": env.get("PROOF_RAN_ON") or env.get("LLM_MODEL") or declared_model(lab)}
+    (lab / "proof.json").write_text(json.dumps(record, indent=2) + "\n")
 
 
 def clone(lab: Path, work: Path) -> None:
@@ -132,7 +186,12 @@ def main() -> None:
     if args.scene:
         print(scene(args.lab))
         return
-    sys.exit(run(args.lab.resolve(), learner_env(args.env_file, args.lab.resolve())))
+    lab = args.lab.resolve()
+    env = learner_env(args.env_file, lab)
+    code = run(lab, env)
+    if code == 0:
+        write_proof(lab, env)
+    sys.exit(code)
 
 
 if __name__ == "__main__":

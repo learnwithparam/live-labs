@@ -2,8 +2,8 @@
 
 from pathlib import Path
 
-from check_course import KINDS, architecture_problems, diagram_problems, LAB_POINTER, kind, ROOT, comment_problems, course_map, model_id_problems, naming_problems, needs_problems, opening_problems, page_problems, plain_problems, problems, proof_env_problems, title_problems
-from walkthrough import example_keys, learner_env, matches, scene, steps
+from check_course import KINDS, architecture_problems, diagram_problems, LAB_POINTER, kind, ROOT, comment_problems, course_map, model_id_problems, naming_problems, needs_problems, opening_problems, page_problems, plain_problems, problems, proof_env_problems, proof_problems, title_problems
+from walkthrough import example_keys, learner_env, matches, proof_hash, scene, steps, write_proof
 
 import json
 import re
@@ -177,3 +177,30 @@ def test_the_architecture_map_carries_every_lab():
     course = {"lab": [{"title": "Extract Data"}, {"title": "Test Things"}]}
     assert architecture_problems('L1["Extract Data"] L2["Test Things"]', course) == []
     assert architecture_problems('L1["Extract Data"]', course)
+
+
+def make_lab(folder: Path, model: str = "model-a", ruff_line: int = 100) -> Path:
+    folder.mkdir(parents=True, exist_ok=True)
+    (folder / "src").mkdir(exist_ok=True)
+    (folder / "src" / "app.py").write_text("print(1)\n")
+    (folder / "README.md").write_text("```bash\nuv run app\n```\n\nExpect: ok\n")
+    (folder / "pyproject.toml").write_text(
+        f'[project]\nname = "lab"\ndependencies = ["httpx"]\n[tool.ruff]\nline-length = {ruff_line}\n')
+    (folder / ("en" + "v.example")).write_text(f"LLM_MODEL={model}\n")
+    return folder
+
+
+def test_a_proof_names_the_lab_whose_inputs_changed(tmp_path):
+    lab = make_lab(tmp_path / "lab")
+    assert proof_problems(lab) == ["no proof.json; run `make proof LAB=<slug>`"]
+    write_proof(lab, {})
+    assert json.loads((lab / "proof.json").read_text())["model"] == "model-a"
+    assert proof_problems(lab) == []
+    (lab / "src" / "app.py").write_text("print(2)\n")
+    assert "stale" in proof_problems(lab)[0]
+
+
+def test_the_proof_hash_follows_the_model_but_not_lint_settings(tmp_path):
+    base = proof_hash(make_lab(tmp_path / "base"))
+    assert proof_hash(make_lab(tmp_path / "lint", ruff_line=88)) == base
+    assert proof_hash(make_lab(tmp_path / "model", model="model-b")) != base

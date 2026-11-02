@@ -5,13 +5,14 @@ lab folder has a row, and README.md's course map matches the rows. `--write` reg
 """
 
 import ast
+import json
 import re
 import sys
 import tomllib
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from walkthrough import steps  # noqa: E402
+from walkthrough import proof_hash, steps  # noqa: E402
 
 ROOT = Path(__file__).parent.parent
 BEGIN, END = "<!-- course map: generated from course.toml by `make readme` -->", "<!-- end course map -->"
@@ -71,6 +72,16 @@ def model_id_problems(readme: str, pool: str) -> list[str]:
     """A model id in prose must be one the lab's own code, settings or price table names."""
     return [f"names model {name!r} but no source of this lab does" for name in sorted(set(MODEL_ID.findall(readme)))
             if name not in pool]
+
+
+def proof_problems(lab: Path) -> list[str]:
+    """A lab's recorded proof must have been run on exactly the source, steps, dependencies and model it has now."""
+    record = lab / "proof.json"
+    if not record.exists():
+        return ["no proof.json; run `make proof LAB=<slug>`"]
+    if json.loads(record.read_text()).get("hash") != proof_hash(lab):
+        return ["proof.json is stale: the source, steps, dependencies or model changed since the last proof"]
+    return []
 
 
 def diagram_problems(readme: str) -> list[str]:
@@ -240,6 +251,7 @@ def problems(course: dict, readme: str) -> list[str]:
             found += [f"labs/{slug}/README.md: {problem}" for problem in needs_problems(
                 (lab / "README.md").read_text(), next(row for row in labs if row["slug"] == slug)["needs"])]
             found += [f"labs/{slug}/README.md: {problem}" for problem in diagram_problems((lab / "README.md").read_text())]
+            found += [f"labs/{slug}: {problem}" for problem in proof_problems(lab)]
             found += [f"labs/{slug}/README.md: {problem}" for problem in plain_problems((lab / "README.md").read_text())]
             lab_source = "\n".join(path.read_text(errors="ignore") for path in (lab / "src").rglob("*") if path.suffix in (".py", ".ts"))
             found += [f"labs/{slug}/README.md: {problem}" for problem in proof_env_problems((lab / "README.md").read_text(), lab_source)]
