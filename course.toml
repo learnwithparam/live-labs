@@ -5,6 +5,9 @@
 # a later lab reuses an earlier lab's concept and says so in its README.
 # job, truth, metric: the product job, the source of truth outside the model, and the number the
 # proof asserts. AGENTS.md says why; `make check` fails a row without them.
+# level: 1 spine (uv and a key), 2 core (one new idea on the spine), 3 production (Docker, a second
+# account or special hardware). minutes: an estimate until a timed run replaces it (5 setup, the README
+# at 150 words a minute, 4 per step, more for big downloads), always a multiple of 5.
 
 title = "Applied AI Engineering for Software Engineers"
 
@@ -19,6 +22,8 @@ job = "Match each receipt photo, PDF or email to the card charge it pays for, so
 truth = "the card transactions feed from the bank"
 metric = "share of receipts matched with no person"
 needs = ["tool:uv", "key:OpenRouter"]
+level = 1
+minutes = 40
 status = "ready"
 
 [[lab]]
@@ -32,6 +37,8 @@ job = "Measure an LLM feature against cases people already signed off before cha
 truth = "a labelled set of past cases a person approved"
 metric = "accuracy per field, before and after each change"
 needs = ["tool:uv", "key:OpenRouter"]
+level = 1
+minutes = 45
 status = "ready"
 
 [[lab]]
@@ -45,6 +52,8 @@ job = "Fill missing product attributes across a whole grocery catalogue overnigh
 truth = "attributes the retailer already supplied for a sample of products"
 metric = "cost per thousand products at the same attribute accuracy"
 needs = ["tool:uv", "key:OpenRouter"]
+level = 2
+minutes = 40
 status = "ready"
 
 [[lab]]
@@ -58,6 +67,8 @@ job = "Answer an engineer's on-call question from internal docs with a citation,
 truth = "the doc passage each answer cites"
 metric = "share of answers whose citation supports them"
 needs = ["tool:uv", "key:OpenRouter"]
+level = 1
+minutes = 40
 status = "ready"
 
 [[lab]]
@@ -71,6 +82,8 @@ job = "Find the right policy passage for a question before any answer is written
 truth = "question and passage pairs a person labelled"
 metric = "recall@k on the labelled questions"
 needs = ["tool:uv"]
+level = 1
+minutes = 45
 status = "ready"
 
 [[lab]]
@@ -84,6 +97,8 @@ job = "Stop a support bot sending a courier an answer its sources do not support
 truth = "support agents' verdicts on a sample of answers"
 metric = "judge agreement with people, and unsupported answers sent"
 needs = ["tool:uv", "key:OpenRouter"]
+level = 2
+minutes = 40
 status = "ready"
 
 [[lab]]
@@ -97,6 +112,8 @@ job = "Answer policy questions that need several lookups, as Uber's agentic RAG 
 truth = "answers an expert wrote for a question set"
 metric = "share of answers the expert accepts"
 needs = ["tool:uv", "key:OpenRouter"]
+level = 2
+minutes = 35
 status = "ready"
 
 [[lab]]
@@ -110,6 +127,8 @@ job = "Turn a supplier spec sheet into a product listing in chained steps, with 
 truth = "the supplier spec sheet each claim in the listing must trace to"
 metric = "share of listings published without an edit"
 needs = ["key:OpenRouter", "tool:Node"]
+level = 2
+minutes = 40
 status = "ready"
 
 [[lab]]
@@ -123,6 +142,8 @@ job = "Send each incoming support ticket to the queue that can solve it"
 truth = "the queue each past ticket was finally resolved in"
 metric = "share of tickets reassigned after routing"
 needs = ["tool:uv", "key:OpenRouter", "download:4 GB"]
+level = 2
+minutes = 40
 status = "ready"
 
 [[lab]]
@@ -136,6 +157,8 @@ job = "Run a refund that waits days for a manager's approval and pays out exactl
 truth = "the payments ledger"
 metric = "refunds paid twice or lost after a crash (zero)"
 needs = ["tool:uv", "key:OpenRouter"]
+level = 2
+minutes = 35
 status = "ready"
 
 [[lab]]
@@ -149,6 +172,8 @@ job = "Resolve an order-support chat by calling order and refund tools in a loop
 truth = "the order system's state after the run"
 metric = "share of chats resolved with no human handoff, inside the step and cost budget"
 needs = ["tool:uv", "key:OpenRouter"]
+level = 1
+minutes = 45
 status = "ready"
 
 [[lab]]
@@ -162,6 +187,8 @@ job = "Let a merchant run store admin tasks by asking, as Shopify Sidekick does"
 truth = "the store's admin API state after each task"
 metric = "task success rate, wrong-tool calls and tool calls per task"
 needs = ["tool:uv", "key:OpenRouter"]
+level = 2
+minutes = 45
 status = "ready"
 
 [[lab]]
@@ -175,6 +202,8 @@ job = "Keep a long-running agent task affordable, as Manus does with its cache h
 truth = "the provider's billed and cached tokens"
 metric = "cost per completed task and cache hit rate"
 needs = ["tool:uv", "key:OpenRouter"]
+level = 2
+minutes = 45
 status = "ready"
 
 [[lab]]
@@ -188,6 +217,8 @@ job = "Remember what a user said across sessions and let them correct it, as Cha
 truth = "what the user actually said, and their corrections"
 metric = "share of recalled facts the user confirms, and wrong memories"
 needs = ["tool:uv", "key:OpenRouter"]
+level = 2
+minutes = 45
 status = "ready"
 
 [[lab]]
@@ -201,6 +232,8 @@ job = "Write a cited research report from many sources, as Anthropic's research 
 truth = "the sources each claim cites"
 metric = "share of claims their cited source supports, and cost per report"
 needs = ["tool:uv", "key:OpenRouter"]
+level = 2
+minutes = 40
 status = "ready"
 
 [[lab]]
@@ -214,6 +247,8 @@ job = "Take a restaurant's phone order by voice and put it in the till"
 truth = "the order a person would have keyed from the same call"
 metric = "orders taken with no staff, and turn latency"
 needs = ["tool:uv", "key:OpenRouter", "hw:Apple silicon", "download:1.6 GB"]
+level = 3
+minutes = 60
 status = "ready"
 
 [[lab]]
@@ -227,6 +262,8 @@ job = "Answer a business's inbound phone line with a voice agent"
 truth = "simulated caller scripts with the outcome each caller needs"
 metric = "share of simulated calls that reach their outcome"
 needs = ["tool:uv", "key:OpenRouter", "account:LiveKit"]
+level = 3
+minutes = 55
 status = "ready"
 
 [[lab]]
@@ -240,6 +277,8 @@ job = "Estimate car repair cost from claim photos, as Tractable does for insurer
 truth = "the repairer's final bill for each claim"
 metric = "share of estimates within tolerance of the bill"
 needs = ["tool:uv", "key:OpenRouter"]
+level = 2
+minutes = 40
 status = "ready"
 
 [[lab]]
@@ -253,6 +292,8 @@ job = "Decide which refunds to pay, hold or review, as Stripe Radar does for pay
 truth = "chargebacks and fraud found later"
 metric = "fraud caught at a fixed review rate"
 needs = ["tool:uv", "key:OpenRouter"]
+level = 2
+minutes = 45
 status = "ready"
 
 [[lab]]
@@ -266,6 +307,8 @@ job = "Let an assistant act in a user's Linear workspace as that user"
 truth = "the scopes the user granted and the product's audit log"
 metric = "actions outside the granted scope (zero)"
 needs = ["tool:uv", "key:OpenRouter"]
+level = 2
+minutes = 45
 status = "ready"
 
 [[lab]]
@@ -279,6 +322,8 @@ job = "Answer from company documents without showing anyone a file they cannot o
 truth = "each source system's access list"
 metric = "documents leaked across permission test pairs (zero)"
 needs = ["tool:uv", "key:OpenRouter", "tool:Docker"]
+level = 3
+minutes = 75
 status = "ready"
 
 [[lab]]
@@ -292,6 +337,8 @@ job = "Let a coding agent read freely but ask before anything destructive, as Bl
 truth = "the role and attribute policy table"
 metric = "destructive actions run without approval (zero)"
 needs = ["tool:uv", "key:OpenRouter"]
+level = 2
+minutes = 45
 status = "ready"
 
 [[lab]]
@@ -305,6 +352,8 @@ job = "Block a listing assistant from answers that break fair housing law, as Zi
 truth = "a labelled set of compliant and violating messages"
 metric = "violations caught and good answers wrongly blocked"
 needs = ["tool:uv", "key:OpenRouter"]
+level = 2
+minutes = 50
 status = "ready"
 
 [[lab]]
@@ -318,6 +367,8 @@ job = "Strip patient identifiers from a visit transcript before an LLM writes th
 truth = "PHI spans a person annotated"
 metric = "PHI missed (recall) on the annotated set"
 needs = ["tool:uv", "key:OpenRouter"]
+level = 2
+minutes = 45
 status = "ready"
 
 [[lab]]
@@ -331,6 +382,8 @@ job = "Let staff agents use only approved MCP servers, as Block does with its cu
 truth = "the approved server list"
 metric = "calls to unapproved servers that got through (zero)"
 needs = ["tool:uv", "key:OpenRouter", "hw:Apple silicon"]
+level = 3
+minutes = 50
 status = "ready"
 
 [[lab]]
@@ -344,6 +397,8 @@ job = "Send each LLM call to the cheapest model that answers it well, as Instaca
 truth = "provider invoices and a labelled quality set"
 metric = "cost per request at the same quality"
 needs = ["tool:uv", "key:OpenRouter"]
+level = 2
+minutes = 50
 status = "ready"
 
 [[lab]]
@@ -357,6 +412,8 @@ job = "Let a product team change a support bot's prompt without a deploy and rol
 truth = "the golden set score of each prompt version"
 metric = "time to roll back a bad prompt"
 needs = ["tool:uv", "key:OpenRouter", "tool:Docker"]
+level = 3
+minutes = 80
 status = "ready"
 
 [[lab]]
@@ -370,6 +427,8 @@ job = "Tell finance what each customer's AI usage cost last month, and which ste
 truth = "the provider's invoice"
 metric = "share of the invoice attributed to a customer and a feature"
 needs = ["tool:uv", "key:OpenRouter", "tool:Docker"]
+level = 3
+minutes = 55
 status = "ready"
 
 [[lab]]
@@ -383,6 +442,8 @@ job = "Block a release that makes an assistant worse, as Shopify runs evals befo
 truth = "the golden set and expected tool trajectories"
 metric = "regressions caught before release"
 needs = ["tool:uv", "key:OpenRouter"]
+level = 3
+minutes = 65
 status = "ready"
 
 [[lab]]
@@ -396,6 +457,8 @@ job = "Answer an auditor: which AI systems talk to customers, and what one said 
 truth = "the AI inventory and the audit log"
 metric = "time to answer an audit request"
 needs = ["tool:uv", "key:OpenRouter"]
+level = 2
+minutes = 50
 status = "ready"
 
 [[lab]]
@@ -409,6 +472,8 @@ job = "Serve an assistant to a web app with streaming, auth and rate limits"
 truth = "the gateway's logs under a load test"
 metric = "time to first token at p95, and error rate"
 needs = ["tool:uv", "key:OpenRouter", "tool:Docker"]
+level = 3
+minutes = 70
 status = "ready"
 
 [[lab]]
@@ -422,6 +487,8 @@ job = "Turn an issue into a tested pull request with no engineer at a keyboard, 
 truth = "the repo's CI on each pull request"
 metric = "share of agent pull requests merged"
 needs = ["tool:uv", "key:OpenRouter", "tool:Docker"]
+level = 3
+minutes = 60
 status = "ready"
 
 [[lab]]
@@ -435,6 +502,8 @@ job = "Run nightly agent jobs that survive a crash with no server to run"
 truth = "the job ledger and the cloud bill"
 metric = "jobs finished after a crash, and cost per run"
 needs = ["tool:uv", "key:OpenRouter"]
+level = 2
+minutes = 45
 status = "ready"
 
 [[lab]]
@@ -448,6 +517,8 @@ job = "Label most items with a small tuned model and send the rest to the large 
 truth = "labels from the human review queue"
 metric = "cascade accuracy, share the small model labels alone, and cost per item against the large model"
 needs = ["tool:uv", "key:OpenRouter", "hw:Apple silicon", "account:Kaggle"]
+level = 3
+minutes = 70
 status = "ready"
 
 [[lab]]
@@ -461,4 +532,50 @@ job = "Serve the tuned model on your own GPUs only while there is work, as Ramp 
 truth = "the same golden set as the hosted model"
 metric = "cost per thousand items and p95 latency"
 needs = ["tool:uv", "key:OpenRouter", "account:Kaggle"]
+level = 3
+minutes = 70
 status = "ready"
+
+# Paths: every lab sits in exactly one path; START-HERE.md's path table is generated from these rows.
+
+[[path]]
+name = "Spine"
+for = "everyone, first"
+labs = [1, 2, 4, 5, 11]
+ends_in = "A receipt matcher, a golden set gate, a cited RAG answer with recall@k, and an agent loop with a budget."
+
+[[path]]
+name = "Ship an AI feature"
+for = "engineers adding AI to a product"
+labs = [6, 8, 9, 14, 29, 31]
+ends_in = "An agent API behind a gateway with evals in CI."
+
+[[path]]
+name = "Build agents"
+for = "engineers building agent products"
+labs = [12, 13, 15, 10, 32]
+ends_in = "Tools you measured, a cached context, a lead agent with subagents, a durable job, sandboxed background agents."
+
+[[path]]
+name = "Make AI safe"
+for = "security and trust engineers"
+labs = [20, 22, 21, 23, 24, 25, 30]
+ends_in = "Every zero-count metric in the course (scope, leaks, destructive actions, unapproved servers) and an audit answer."
+
+[[path]]
+name = "Run AI in production"
+for = "platform engineers"
+labs = [26, 28, 27, 33]
+ends_in = "A model gateway, traces with cost per customer, a prompt registry with rollback, a crash-proof serverless job."
+
+[[path]]
+name = "Own the model"
+for = "data and ML engineers"
+labs = [3, 7, 19, 34, 35]
+ends_in = "Batch cost per thousand, agentic retrieval, a calibrated risk model, a tuned small model and its serving bill."
+
+[[path]]
+name = "Voice and vision"
+for = "multimodal product engineers"
+labs = [18, 16, 17]
+ends_in = "A vision claim reader and two phone agents."
