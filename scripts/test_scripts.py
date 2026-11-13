@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from check_course import KINDS, architecture_problems, diagram_problems, LAB_POINTER, kind, ROOT, comment_problems, course_map, model_id_problems, naming_problems, needs_problems, opening_problems, page_problems, plain_problems, problems, proof_env_problems, title_problems
+from check_course import KINDS, level_problems, path_problems, architecture_problems, diagram_problems, LAB_POINTER, kind, ROOT, comment_problems, course_map, model_id_problems, naming_problems, needs_problems, opening_problems, page_problems, plain_problems, problems, proof_env_problems, title_problems
 from walkthrough import example_keys, learner_env, matches, scene, steps
 
 import json
@@ -177,3 +177,20 @@ def test_the_architecture_map_carries_every_lab():
     course = {"lab": [{"title": "Extract Data"}, {"title": "Test Things"}]}
     assert architecture_problems('L1["Extract Data"] L2["Test Things"]', course) == []
     assert architecture_problems('L1["Extract Data"]', course)
+
+
+def test_every_lab_sits_in_exactly_one_path():
+    course = tomllib.loads((ROOT / "course.toml").read_text())
+    assert path_problems(course) == []
+    first_path, second_path = course["path"][0], course["path"][1]
+    second_path["labs"].append(first_path["labs"][0])
+    assert any("is in both" in problem for problem in path_problems(course))
+    first_path["labs"].pop()
+    assert any("is in no path" in problem for problem in path_problems(course))
+
+
+def test_a_lab_needs_a_level_and_minutes_in_steps_of_five():
+    lab = {"slug": "01-example", "level": 2, "minutes": 40}
+    assert level_problems(lab) == []
+    assert level_problems({**lab, "level": 4}) == ["01-example: `level` must be 1, 2 or 3"]
+    assert level_problems({**lab, "minutes": 42}) == ["01-example: `minutes` must be a positive multiple of 5"]

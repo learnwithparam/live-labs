@@ -15,6 +15,9 @@ from walkthrough import steps  # noqa: E402
 
 ROOT = Path(__file__).parent.parent
 BEGIN, END = "<!-- course map: generated from course.toml by `make readme` -->", "<!-- end course map -->"
+PATHS_BEGIN = "<!-- paths: generated from course.toml by `make readme` -->"
+PATHS_END = "<!-- end paths -->"
+LEVELS = {1: "spine", 2: "core", 3: "production"}
 REQUIRED = ["README.md", "env.example"]
 # A lab is Python (uv) or TypeScript (npm) when its framework is: Mastra is TypeScript. Each kind pins
 # its dependencies in a lock file and has one proof test that runs on a real model.
@@ -49,11 +52,46 @@ LAB_POINTER = re.compile(r"\blabs? (?:\d+|one|two|three)\b|\b(?:next|previous|la
 
 
 def course_map(course: dict) -> str:
-    rows = ["| # | Lab | Built on | You need | Status |", "|---|---|---|---|---|"]
+    rows = ["| # | Lab | Built on | Level | Minutes | You need | Status |", "|---|---|---|---|---|---|---|"]
     for lab in course["lab"]:
         title = f"[{lab['title']}](labs/{lab['slug']})" if lab["status"] == "ready" else lab["title"]
-        rows.append(f"| {lab['n']} | {title} | {lab['anchor']} | {', '.join(need.split(':', 1)[1] for need in lab['needs'])} | {lab['status']} |")
+        needs = ", ".join(need.split(":", 1)[1] for need in lab["needs"])
+        level = LEVELS.get(lab.get("level"), "?")
+        rows.append(f"| {lab['n']} | {title} | {lab['anchor']} | {level} | {lab.get('minutes', '?')} | {needs} | {lab['status']} |")
     return "\n".join([BEGIN, "", *rows, "", END])
+
+
+def path_table(course: dict) -> str:
+    """The paths in START-HERE.md: each path's labs in order and its minutes, summed from the lab rows."""
+    by_number = {lab["n"]: lab for lab in course["lab"]}
+    rows = ["| Path | For | Labs, in order | Minutes | You finish with |", "|---|---|---|---|---|"]
+    for path in course.get("path", []):
+        labs = [by_number[number] for number in path["labs"] if number in by_number]
+        links = ", ".join(f"[{lab['title']}](labs/{lab['slug']})" for lab in labs)
+        minutes = sum(lab.get("minutes", 0) for lab in labs)
+        rows.append(f"| {path['name']} | {path['for']} | {links} | {minutes} | {path['ends_in']} |")
+    return "\n".join([PATHS_BEGIN, "", *rows, "", PATHS_END])
+
+
+def path_problems(course: dict) -> list[str]:
+    """Every lab sits in exactly one path, so a learner who follows any path never meets a lab twice."""
+    seen: dict[int, str] = {}
+    found = []
+    for path in course.get("path", []):
+        for number in path["labs"]:
+            if number in seen:
+                found.append(f"course.toml: lab {number} is in both {seen[number]!r} and {path['name']!r}")
+            seen[number] = path["name"]
+    found += [f"course.toml: {lab['slug']} is in no path" for lab in course["lab"] if lab["n"] not in seen]
+    return found
+
+
+def level_problems(lab: dict) -> list[str]:
+    found = [] if lab.get("level") in LEVELS else [f"{lab['slug']}: `level` must be 1, 2 or 3"]
+    minutes = lab.get("minutes")
+    if not isinstance(minutes, int) or minutes <= 0 or minutes % 5:
+        found.append(f"{lab['slug']}: `minutes` must be a positive multiple of 5")
+    return found
 
 
 def needs_problems(readme: str, needs: list[str]) -> list[str]:
@@ -217,6 +255,7 @@ def problems(course: dict, readme: str) -> list[str]:
         if not lab["slug"].startswith(f"{lab['n']:02d}-"):
             found.append(f"{lab['slug']}: slug must start with {lab['n']:02d}-")
         found += [f"{lab['slug']}: no `{field}`" for field in JOB_FIELDS if not lab.get(field, "").strip()]
+        found += level_problems(lab)
         concept = lab.get("owns", "")
         if not concept:
             found.append(f"{lab['slug']}: no `owns` concept")
@@ -260,6 +299,10 @@ def problems(course: dict, readme: str) -> list[str]:
     found += architecture_problems((ROOT / "docs" / "architecture.md").read_text(), course)
     if course_map(course) not in readme:
         found.append("README.md: course map is stale; run `make readme`")
+    found += path_problems(course)
+    start_here = ROOT / "START-HERE.md"
+    if not start_here.exists() or path_table(course) not in start_here.read_text():
+        found.append("START-HERE.md: path table is stale; run `make readme`")
     return found
 
 
@@ -270,6 +313,10 @@ def main() -> None:
     if "--write" in sys.argv:
         start, end = readme.index(BEGIN), readme.index(END) + len(END)
         readme_path.write_text(readme[:start] + course_map(course) + readme[end:])
+        start_here_path = ROOT / "START-HERE.md"
+        start_here = start_here_path.read_text()
+        start, end = start_here.index(PATHS_BEGIN), start_here.index(PATHS_END) + len(PATHS_END)
+        start_here_path.write_text(start_here[:start] + path_table(course) + start_here[end:])
         return
     found = problems(course, readme)
     for problem in found:

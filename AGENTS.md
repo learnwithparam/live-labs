@@ -1,6 +1,6 @@
 # live-labs
 
-Recorded 10 to 15 minute labs for "Applied AI Engineering for Software Engineers". `course.toml` is the
+Recorded labs of 35 to 80 minutes each (minutes per lab in `course.toml`) for "Applied AI Engineering for Software Engineers". `course.toml` is the
 course map and the one source; `make check` runs with no key, `make proof LAB=<slug>` runs one lab
 against a real model. Spec: `internal-apps/plan/specs/09-applied-ai-engineering.md`.
 
