@@ -1,0 +1,84 @@
+[
+  {
+    "id": "pipe-right",
+    "name": "PipeRight Plumbing",
+    "trades": [
+      "plumbing"
+    ],
+    "buildings": [
+      "Alder House",
+      "Birch House",
+      "Cedar House"
+    ],
+    "emergency": true,
+    "rating": 4.8
+  },
+  {
+    "id": "hot-spot",
+    "name": "Hot Spot Heating",
+    "trades": [
+      "heating"
+    ],
+    "buildings": [
+      "Alder House",
+      "Birch House",
+      "Cedar House"
+    ],
+    "emergency": true,
+    "rating": 4.6
+  },
+  {
+    "id": "volt-co",
+    "name": "Volt and Co",
+    "trades": [
+      "electrical"
+    ],
+    "buildings": [
+      "Alder House",
+      "Birch House"
+    ],
+    "emergency": true,
+    "rating": 4.7
+  },
+  {
+    "id": "spark-bros",
+    "name": "Spark Brothers",
+    "trades": [
+      "electrical"
+    ],
+    "buildings": [
+      "Cedar House"
+    ],
+    "emergency": true,
+    "rating": 4.4
+  },
+  {
+    "id": "keyline",
+    "name": "Keyline Locksmiths",
+    "trades": [
+      "locksmith"
+    ],
+    "buildings": [
+      "Alder House",
+      "Birch House",
+      "Cedar House"
+    ],
+    "emergency": true,
+    "rating": 4.9
+  },
+  {
+    "id": "fix-it-all",
+    "name": "FixItAll Handymen",
+    "trades": [
+      "general",
+      "appliance"
+    ],
+    "buildings": [
+      "Alder House",
+      "Birch House",
+      "Cedar House"
+    ],
+    "emergency": false,
+    "rating": 4.2
+  }
+]

@@ -566,7 +566,7 @@ metric = "end-to-end task completion rate and p95 trace latency"
 needs = ["tool:uv", "key:OpenRouter", "tool:Docker"]
 level = 3
 minutes = 120
-status = "planned"
+status = "ready"
 
 [[lab]]
 n = 38
