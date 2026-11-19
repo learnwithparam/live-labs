@@ -1,0 +1,4 @@
+# Signed before any code was written. The steps of the RFC must add up to no more than p95_ms.
+p95_ms = 8000
+measured_from = "the tenant's message arrives"
+measured_to = "the dispatch draft is ready for the vendor"

@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="icon" href="data:,">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Brickhaven RFC review</title>
+<style>
+/* Colours are the workshop tokens in design/tokens.json; a course test pins every hex here to that file. */
+:root {
+  --paper: #FAFAFA; --card: #FFFFFF; --ink: #151515; --ink-2: #414141; --muted: #606060;
+  --line: #DFDFDF; --accent: #FAFF69; --fill-dark: #1F1F1C;
+  --pass: #008138; --fail: #BF000F; --wait: #B75000;
+  --sans: Inter, Helvetica, Arial, sans-serif; --mono: Inconsolata, "Courier New", Courier, monospace;
+}
+* { box-sizing: border-box }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.5 var(--sans) }
+button, input, textarea { font: inherit; color: inherit }
+button { cursor: pointer }
+:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px }
+
+/* A review tool lays out like a document reviewer: versions on the left, the RFC in the middle, the signed inputs on the right. */
+header { background: var(--card); border-bottom: 1px solid var(--line); padding: 14px 24px; display: flex; gap: 14px; align-items: baseline }
+header strong { font-size: 18px }
+header span { color: var(--muted); font-size: 14px }
+main { display: grid; grid-template-columns: 7.5rem minmax(0, 1fr) 19rem; gap: 24px; max-width: 1180px; margin: 0 auto; padding: 24px }
+@media (max-width: 860px) { main { grid-template-columns: minmax(0, 1fr) } }
+.versions { display: flex; flex-direction: column; gap: 6px; align-self: start }
+.versions button { text-align: left; border: 1px solid var(--line); background: var(--card); border-radius: 6px; padding: 8px 10px; font-family: var(--mono); font-size: 14px }
+.versions button[aria-selected="true"] { border-color: var(--ink); box-shadow: 0 2px 0 var(--ink) }
+.banner { border-radius: 8px; padding: 16px 20px; background: var(--card); border: 2px solid var(--line); margin-bottom: 20px }
+.banner.refused { border-color: var(--fail) }
+.banner.approved { border-color: var(--pass) }
+.banner h1 { margin: 0 0 4px; font-size: 26px; letter-spacing: -0.01em }
+.banner.refused h1 { color: var(--fail) }
+.banner.approved h1 { color: var(--pass) }
+.banner p { margin: 0; color: var(--ink-2) }
+h2 { font-size: 15px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin: 28px 0 10px }
+.bar { display: flex; height: 34px; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; background: var(--card); position: relative }
+.bar span { display: block; height: 100%; background: var(--fill-dark); border-right: 2px solid var(--paper); color: var(--paper); font-size: 12px; padding: 7px 6px; overflow: hidden; white-space: nowrap }
+.bar span:nth-child(even) { background: var(--ink-2) }
+.bar .limit { position: absolute; top: 0; bottom: 0; width: 3px; background: var(--accent); border: 0; padding: 0 }
+.caption { color: var(--muted); font-size: 14px; margin: 6px 0 0 }
+.mode { background: var(--card); border: 1px solid var(--line); border-left: 6px solid var(--fail); border-radius: 6px; padding: 12px 16px; margin-bottom: 10px }
+.mode.measured { border-left-color: var(--pass) }
+.mode h3 { margin: 0; font-size: 16px }
+.mode .state { font-size: 14px; font-weight: 700; color: var(--fail) }
+.mode.measured .state { color: var(--pass) }
+.mode ul { margin: 6px 0 0; padding-left: 18px; color: var(--ink-2); font-size: 14px }
+.mode .metric { font-family: var(--mono); font-size: 14px; color: var(--ink-2); margin: 4px 0 0 }
+.mode button { margin-top: 8px; border: 1px solid var(--ink); background: var(--card); border-radius: 6px; padding: 4px 12px; font-size: 14px }
+.mode form { margin-top: 10px; display: grid; gap: 8px; border-top: 1px solid var(--line); padding-top: 10px }
+.mode input, .mode textarea { border: 1px solid var(--ink-2); border-radius: 6px; padding: 6px 8px; background: var(--paper) }
+.mode form .hint { color: var(--wait); font-size: 14px; margin: 0 }
+.mode form button { background: var(--fill-dark); color: var(--paper); justify-self: start }
+table { border-collapse: collapse; width: 100%; background: var(--card); border: 1px solid var(--line); font-size: 14px }
+th, td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--line) }
+.gap { color: var(--fail); font-weight: 700 }
+aside { align-self: start; background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 16px; font-size: 14px }
+aside h2 { margin-top: 0 }
+aside dl { margin: 0 0 14px }
+aside dt { color: var(--muted) }
+aside dd { margin: 0 0 8px; font-weight: 600 }
+aside .tags span { display: inline-block; border: 1px solid var(--line); border-radius: 12px; padding: 1px 10px; margin: 0 4px 4px 0; font-family: var(--mono) }
+.human { margin-top: 18px; color: var(--ink-2) }
+</style>
+</head>
+<body data-surface="architecture RFC review with sign-off">
+<header><strong>Brickhaven</strong><span>Architecture review board</span></header>
+<main>
+  <nav class="versions" id="versions" aria-label="RFC versions"></nav>
+  <section id="review" aria-live="polite"></section>
+  <aside id="signed"></aside>
+</main>
+<script>
+const $ = (selector) => document.querySelector(selector);
+const FILES = [["draft.md", "Draft"], ["rfc.toml", "RFC"]];
+let current = FILES[0][0];
+let verdict = null;
+
+function escapeText(text) {
+  return String(text).replace(/[&<>"]/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[character]));
+}
+
+async function load(file) {
+  current = file;
+  const response = await fetch("/api/review?file=" + encodeURIComponent(file));
+  verdict = await response.json();
+  draw();
+}
+
+function drawVersions() {
+  $("#versions").innerHTML = FILES.map(([file, label]) =>
+    `<button data-file="${file}" aria-selected="${file === current}">${label}<br><small>${file}</small></button>`).join("");
+  $("#versions").querySelectorAll("button").forEach((button) => button.addEventListener("click", () => load(button.dataset.file)));
+}
+
+function drawBanner() {
+  const unmeasured = verdict.modes.filter((mode) => !mode.measured).length;
+  const word = verdict.approved ? "Sign-off approved" : "Sign-off refused";
+  const detail = `${verdict.modes.length - unmeasured} of ${verdict.modes.length} failure modes measured. Steps add up to ${verdict.total_ms} ms against the signed ${verdict.signed_ms} ms.`;
+  return `<div class="banner ${verdict.approved ? "approved" : "refused"}"><h1>${word}</h1><p>${detail}</p></div>`;
+}
+
+function drawBudget() {
+  const scale = Math.max(verdict.total_ms, verdict.signed_ms) * 1.05;
+  const steps = Object.entries(verdict.steps).map(([name, ms]) => `<span style="width:${ms / scale * 100}%" title="${escapeText(name)}: ${ms} ms">${escapeText(name)}</span>`).join("");
+  return `<h2>Time from message to dispatch draft</h2><div class="bar">${steps}<i class="limit" style="left:${verdict.signed_ms / scale * 100}%"></i></div>
+    <p class="caption">The yellow line is the signed ${verdict.signed_ms} ms. ${verdict.total_ms > verdict.signed_ms ? "The steps run past it." : "The steps stop before it."}</p>`;
+}
+
+function drawModes() {
+  return "<h2>Failure modes</h2>" + verdict.modes.map((mode) => {
+    const reasons = mode.problems.map((problem) => `<li>${escapeText(problem)}</li>`).join("");
+    const metric = mode.metric ? `<p class="metric">${escapeText(mode.metric)} at ${mode.threshold}, ${mode.cases} labelled cases</p>` : "";
+    return `<article class="mode ${mode.measured ? "measured" : ""}" data-mode="${mode.id}">
+      <h3>${escapeText(mode.what)}</h3><span class="state">${mode.measured ? "Measured" : "Unmeasured"}</span>${metric}
+      <ul>${reasons}</ul><button type="button" data-send-back="${mode.id}">Send back</button></article>`;
+  }).join("");
+}
+
+function drawPlan() {
+  const fields = ["trade", "urgency", "unit", "safety_flag", "access_window"];
+  const rows = fields.map((field) => verdict.eval_plan[field] === undefined
+    ? `<tr><td>${field}</td><td class="gap">no threshold</td></tr>` : `<tr><td>${field}</td><td>${verdict.eval_plan[field]}</td></tr>`).join("");
+  return `<h2>Eval plan: lowest pass rate per field</h2><table><tr><th>Field</th><th>Threshold</th></tr>${rows}</table>`;
+}
+
+function drawSigned() {
+  const tags = Object.entries(verdict.cases_by_tag).map(([tag, count]) => `<span>${tag} ${count}</span>`).join("");
+  const changed = verdict.changed.length ? `<p class="gap">${verdict.changed.join(", ")} changed after sign-off</p>` : "";
+  $("#signed").innerHTML = `<h2>Signed before build</h2><dl><dt>Signed by</dt><dd>${escapeText(verdict.signed_by)}</dd>
+    <dt>Signed on</dt><dd>${verdict.signed_on}</dd><dt>Latency budget</dt><dd>${verdict.signed_ms} ms at p95</dd></dl>${changed}
+    <h2>Labelled benchmark cases</h2><div class="tags">${tags}</div>
+    <p class="human">A person decides whether each metric and threshold is the right one. The check only confirms they exist and have labelled cases.</p>`;
+}
+
+function openForm(modeId) {
+  const card = document.querySelector(`[data-mode="${modeId}"]`);
+  card.insertAdjacentHTML("beforeend", `<form><input name="reviewer" placeholder="Your name" aria-label="Your name">
+    <textarea name="reason" rows="2" placeholder="Why this failure mode goes back" aria-label="Reason"></textarea>
+    <p class="hint" hidden></p><button type="submit">Send back for this version</button></form>`);
+  card.querySelector("[data-send-back]").remove();
+  card.querySelector("form").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const form = event.target;
+    const response = await fetch("/api/send-back", { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ file: current, mode: modeId, reviewer: form.reviewer.value, reason: form.reason.value }) });
+    if (response.ok) { verdict = await response.json(); draw(); return; }
+    const hint = form.querySelector(".hint");
+    hint.hidden = false;
+    hint.textContent = (await response.json()).error;
+  });
+}
+
+function draw() {
+  drawVersions();
+  $("#review").innerHTML = drawBanner() + drawBudget() + drawModes() + drawPlan();
+  $("#review").querySelectorAll("[data-send-back]").forEach((button) => button.addEventListener("click", () => openForm(button.dataset.sendBack)));
+  drawSigned();
+}
+
+load(current);
+</script>
+</body>
+</html>

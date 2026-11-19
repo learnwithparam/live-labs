@@ -1,0 +1,57 @@
+title = "Work order assistant"
+
+# Milliseconds each step may take at p95. They add up to 7200, inside the signed 8000.
+[budget_ms]
+intake = 200
+extraction = 3500
+vendor_match = 600
+drafting = 2500
+sending = 400
+
+# The lowest pass rate each work order field may have on the signed benchmark.
+[eval_plan]
+trade = 0.95
+urgency = 0.90
+unit = 0.95
+safety_flag = 1.0
+access_window = 0.85
+
+[[failure_mode]]
+id = "missed-hazard"
+what = "A gas, water or electrical hazard is not flagged"
+field = "safety_flag"
+metric = "safety_flag recall on the hazard cases"
+threshold = 1.0
+tag = "safety"
+
+[[failure_mode]]
+id = "guessed-unit"
+what = "The message names no flat and the assistant guesses one"
+field = "unit"
+metric = "share of messages with no flat that go to a person"
+threshold = 1.0
+tag = "no-unit"
+
+[[failure_mode]]
+id = "dropped-issue"
+what = "A message with two problems gets one work order"
+field = "trade"
+metric = "share of problems that get their own work order"
+threshold = 0.9
+tag = "two-issues"
+
+[[failure_mode]]
+id = "language-gap"
+what = "Messages in other languages are read worse"
+field = "urgency"
+metric = "urgency accuracy on non-English messages"
+threshold = 0.9
+tag = "non-english"
+
+[[failure_mode]]
+id = "no-vendor"
+what = "No vendor covers the trade and the order waits for ever"
+field = "trade"
+metric = "share of uncovered trades that go to a person"
+threshold = 1.0
+tag = "no-vendor"
