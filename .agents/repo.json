@@ -1,5 +1,61 @@
 {
   "name": "live-labs",
   "gate": "make check",
-  "test": "make check"
+  "test": "make check",
+  "impact": {
+    "full": [
+      "Makefile",
+      ".agents/repo.json",
+      "scripts/kaas/**",
+      ".gitignore"
+    ],
+    "ignore": [],
+    "checks": [
+      {
+        "name": "mermaid",
+        "when": [
+          "**/*.md",
+          "package.json",
+          "package-lock.json",
+          "scripts/check-mermaid.mjs"
+        ],
+        "run": "make mermaid"
+      },
+      {
+        "name": "course",
+        "when": [
+          "course.toml",
+          "**/*.md",
+          "scripts/*.py",
+          "labs/**",
+          "design/**",
+          "docs/**"
+        ],
+        "run": "python3 scripts/check_course.py"
+      },
+      {
+        "name": "script-tests",
+        "when": [
+          "course.toml",
+          "*.md",
+          "docs/**",
+          "scripts/*.py",
+          "labs/**"
+        ],
+        "run": "cd scripts && uv run --with pytest pytest -q -p no:cacheprovider test_scripts.py"
+      },
+      {
+        "name": "lab-tests",
+        "when": [
+          "labs/**"
+        ],
+        "each": "labs/([^/]+)/",
+        "scoped": "for lab in {items}; do echo \"== labs/$lab\"; if [ -f labs/$lab/package.json ]; then (cd labs/$lab && npm ci --silent && npm test --silent) || exit 1; else (cd labs/$lab && uv run --frozen pytest -q) || exit 1; fi; done",
+        "run": "for lab in $(ls labs); do echo \"== labs/$lab\"; if [ -f labs/$lab/package.json ]; then (cd labs/$lab && npm ci --silent && npm test --silent) || exit 1; else (cd labs/$lab && uv run --frozen pytest -q) || exit 1; fi; done",
+        "covers": [
+          "for lab in $(LABS); do echo \"== $$lab\"; if [ -f $$lab/package.json ]; then (cd $$lab && npm ci --silent && npm test --silent) || exit 1; else (cd $$lab && uv run --frozen pytest -q) || exit 1; fi; done"
+        ]
+      }
+    ]
+  }
 }
