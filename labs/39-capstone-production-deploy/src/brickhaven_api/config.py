@@ -33,8 +33,8 @@ LEDGER_TOLERANCE = 0.05
 BILLING_WAIT_S = 30
 MAX_BODY_BYTES = 16_000
 
-API_PORT = 8371
-PORTAL_PORT = 8372
+API_PORT = 8390
+PORTAL_PORT = 8391
 
 
 def load_dotenv(path: Path = Path(".env")) -> None:

@@ -58,7 +58,7 @@ def test_a_page_on_another_site_cannot_raise_a_limit(servers):
     app, _, portal = servers()
     body = {"operator": "Dana Okafor", "client": "maple-portal", "per_minute": 60, "reason": "move in week is busy"}
     assert post(f"{portal}/api/limit", body, {"Origin": "https://evil.example"})[0] == 403
-    assert post(f"{portal}/api/limit", body, {"Origin": "http://127.0.0.1:8372"})[0] == 200
+    assert post(f"{portal}/api/limit", body, {"Origin": "http://127.0.0.1:8391"})[0] == 200
     assert app.keys.by_name("maple-portal").per_minute == 60
     assert post(f"{portal}/api/limit", {**body, "reason": "no"}, {})[0] == 400
 
@@ -122,3 +122,8 @@ def test_error_rate_counts_only_what_a_person_would_call_a_failure():
     outcomes = [Outcome("maple-portal", 200, 100.0, "primary"), Outcome(RUNAWAY_CLIENT, 429), Outcome("harbor-sms", 429), Outcome("maple-portal", 503)]
     report = LoadReport("hardened", 4, outcomes, 0, 0.0)
     assert report.limited == 1 and report.errors == 2 and report.error_rate == 0.5
+
+
+def test_the_listeners_queue_a_burst_instead_of_refusing_it():
+    from brickhaven_api.serve import BurstSafeServer
+    assert BurstSafeServer.request_queue_size >= 64

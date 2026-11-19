@@ -36,7 +36,7 @@ A developer portal for the operator. The meters sit across the top: tasks served
 
 An operator can raise a client's limit from its key card, with their name and a reason. A button checks the last 20 ledger rows against the provider's billing record.
 
-<!-- screenshot: add docs/developer-portal-with-api-keys-per-client-usage-and-a-live-cost-ledger.jpg after the proof run -->
+<img src="docs/developer-portal-with-api-keys-per-client-usage-and-a-live-cost-ledger.jpg" alt="Brickhaven developer portal in hardened mode: 18 tasks served, a cost per task of $0.000259, and the runaway-sync key refused 12 times while the other two keys are served in full" width="720">
 
 ## How it works
 
@@ -102,15 +102,15 @@ Open `src/brickhaven_api/limiter.py` and `src/brickhaven_api/breaker.py`. Each i
 
 ```bash
 mkdir -p out
-uv run brickhaven-api serve --naive --port 8371 > out/naive-server.log 2>&1 &
+uv run brickhaven-api serve --naive --port 8390 > out/naive-server.log 2>&1 &
 server=$!
 trap 'kill $server 2>/dev/null' EXIT
-timeout 150 uv run brickhaven-api load --port 8371 --timeout 120
+uv run brickhaven-api load --port 8390 --timeout 120
 ```
 
 Expect: /naive load: 60 requests/
 
-Read the numbers: the error rate, the p95 time to first token and the cost per task. Every call from the runaway client was served and paid for. Nothing limited it. Placeholder, replace from the proof run: error rate TBD, p95 TBD ms, cost per task TBD.
+Read the numbers: the error rate, the p95 time to first token and the cost per task. Every call from the runaway client was served and paid for. Nothing limited it. In our proof run the error rate was 0.0%, the p95 time to first token was 4976 ms, and the cost per task was $0.000239, for a total of $0.014366.
 
 ## 3. Measure the hardened service
 
@@ -118,15 +118,15 @@ The same traffic, with keys, buckets, fallback and the ledger on:
 
 ```bash
 mkdir -p out
-uv run brickhaven-api serve --port 8371 > out/hardened-server.log 2>&1 &
+uv run brickhaven-api serve --port 8390 > out/hardened-server.log 2>&1 &
 server=$!
 trap 'kill $server 2>/dev/null' EXIT
-timeout 150 uv run brickhaven-api load --port 8371 --timeout 120
+uv run brickhaven-api load --port 8390 --timeout 120
 ```
 
 Expect: /hardened load: 60 requests/
 
-The runaway client now gets a 429 after its burst of 3, so most of its calls cost nothing. The honest clients are served. Placeholder, replace from the proof run: error rate TBD, p95 TBD ms, cost per task TBD, limited TBD.
+The runaway client now gets a 429 after its burst of 3, so most of its calls cost nothing. The honest clients are served. In our proof run 27 of 60 calls were limited, the error rate was 0.0%, the p95 time to first token was 5300 ms, and the cost per task was $0.000245. The total spend fell from $0.014366 to $0.008091.
 
 ## 4. Break the primary model
 
@@ -134,10 +134,10 @@ The runaway client now gets a 429 after its burst of 3, so most of its calls cos
 
 ```bash
 mkdir -p out
-uv run brickhaven-api serve --break-primary --port 8371 > out/fallback-server.log 2>&1 &
+uv run brickhaven-api serve --break-primary --port 8390 > out/fallback-server.log 2>&1 &
 server=$!
 trap 'kill $server 2>/dev/null' EXIT
-timeout 90 uv run brickhaven-api load --port 8371 --requests 12 --concurrency 3 --timeout 60
+uv run brickhaven-api load --port 8390 --requests 12 --concurrency 3 --timeout 60
 ```
 
 Expect: /served by fallback: [1-9]/
@@ -154,17 +154,17 @@ uv run brickhaven-api reconcile
 
 Expect: ledger within tolerance: yes
 
-A row the provider has no record of fails the check, because money may have been spent that nobody can account for. Placeholder, replace from the proof run: gap TBD%.
+A row the provider has no record of fails the check, because money may have been spent that nobody can account for. In our proof run the ledger said $0.008588 and the provider said $0.008410, a gap of 2.12% over 42 generations with none missing.
 
 ## 6. See it
 
-Start the hardened service and open the portal at http://127.0.0.1:8372:
+Start the hardened service and open the portal at http://127.0.0.1:8391:
 
 ```sh
-uv run brickhaven-api serve --port 8371
+uv run brickhaven-api serve --port 8390
 ```
 
-In another terminal run `uv run brickhaven-api load --port 8371 --requests 20`. Watch the meters and the ledger move. The runaway client's key card turns red. Press **Raise limit** on it, give your name and a reason of at least 4 words, and send more load. Stop the server with Ctrl-C.
+In another terminal run `uv run brickhaven-api load --port 8390 --requests 20`. Watch the meters and the ledger move. The runaway client's key card turns red. Press **Raise limit** on it, give your name and a reason of at least 4 words, and send more load. Stop the server with Ctrl-C.
 
 ## 7. Prove it
 

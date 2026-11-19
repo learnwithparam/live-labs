@@ -114,10 +114,16 @@ class PortalHandler(BaseHandler):
             self.json_reply(404, {"error": "not found"})
 
 
+class BurstSafeServer(ThreadingHTTPServer):
+    # The default listen backlog is 5, so a burst of a dozen callers gets connections refused before
+    # the rate limiter ever sees them. Those refusals would be counted as service errors.
+    request_queue_size = 128
+
+
 def start_servers(app: App, api_port: int, portal_port: int) -> tuple[ThreadingHTTPServer, ThreadingHTTPServer]:
     """Bind both listeners and serve each in its own thread. Port 0 picks a free port, which tests use."""
-    api = ThreadingHTTPServer(("127.0.0.1", api_port), type("BoundApiHandler", (ApiHandler,), {"app": app}))
-    portal = ThreadingHTTPServer(("127.0.0.1", portal_port), type("BoundPortalHandler", (PortalHandler,), {"app": app}))
+    api = BurstSafeServer(("127.0.0.1", api_port), type("BoundApiHandler", (ApiHandler,), {"app": app}))
+    portal = BurstSafeServer(("127.0.0.1", portal_port), type("BoundPortalHandler", (PortalHandler,), {"app": app}))
     for server in (api, portal):
         threading.Thread(target=server.serve_forever, daemon=True).start()
     return api, portal
