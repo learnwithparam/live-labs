@@ -1,0 +1,7 @@
+# Written when the benchmark and budget were signed. A later edit to either breaks the match.
+signed_by = "Dana Okafor, Head of Operations"
+signed_on = "2026-11-02"
+
+[sha256]
+"benchmark.jsonl" = "e6d7d89b37bf7726ae26ea4de254263d552931f900741d694c963871b99a1c0f"
+"latency_budget.toml" = "4e9427f4292b67a8a9065723b57c09d7fc233e370adcae59f2e03cbf6452a477"

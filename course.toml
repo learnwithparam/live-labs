@@ -551,7 +551,7 @@ metric = "architecture sign-off with zero unmeasured failure modes"
 needs = ["tool:uv"]
 level = 2
 minutes = 60
-status = "planned"
+status = "ready"
 
 [[lab]]
 n = 37
