@@ -596,7 +596,7 @@ metric = "p95 time to first token, error rate under load and cost per task"
 needs = ["tool:uv", "key:OpenRouter"]
 level = 3
 minutes = 90
-status = "planned"
+status = "ready"
 
 [[path]]
 name = "Spine"
