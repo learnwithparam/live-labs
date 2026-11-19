@@ -51,10 +51,15 @@ SCRIPT = re.compile(r"(<script[^>]*>)(.*?)</script>", re.S)
 LAB_POINTER = re.compile(r"\blabs? (?:\d+|one|two|three)\b|\b(?:next|previous|later|earlier|last) lab\b", re.I)
 
 
+def lab_title_link(lab: dict) -> str:
+    """A lab's title, linked to its folder only when it is ready: a planned lab has no folder to open."""
+    return f"[{lab['title']}](labs/{lab['slug']})" if lab["status"] == "ready" else lab["title"]
+
+
 def course_map(course: dict) -> str:
     rows = ["| # | Lab | Built on | Level | Minutes | You need | Status |", "|---|---|---|---|---|---|---|"]
     for lab in course["lab"]:
-        title = f"[{lab['title']}](labs/{lab['slug']})" if lab["status"] == "ready" else lab["title"]
+        title = lab_title_link(lab)
         needs = ", ".join(need.split(":", 1)[1] for need in lab["needs"])
         level = LEVELS.get(lab.get("level"), "?")
         rows.append(f"| {lab['n']} | {title} | {lab['anchor']} | {level} | {lab.get('minutes', '?')} | {needs} | {lab['status']} |")
@@ -67,7 +72,7 @@ def path_table(course: dict) -> str:
     rows = ["| Path | For | Labs, in order | Minutes | You finish with |", "|---|---|---|---|---|"]
     for path in course.get("path", []):
         labs = [by_number[number] for number in path["labs"] if number in by_number]
-        links = ", ".join(f"[{lab['title']}](labs/{lab['slug']})" for lab in labs)
+        links = ", ".join(lab_title_link(lab) for lab in labs)
         minutes = sum(lab.get("minutes", 0) for lab in labs)
         rows.append(f"| {path['name']} | {path['for']} | {links} | {minutes} | {path['ends_in']} |")
     return "\n".join([PATHS_BEGIN, "", *rows, "", PATHS_END])

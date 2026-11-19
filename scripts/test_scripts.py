@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from check_course import KINDS, level_problems, path_problems, architecture_problems, diagram_problems, LAB_POINTER, kind, ROOT, comment_problems, course_map, model_id_problems, naming_problems, needs_problems, opening_problems, page_problems, plain_problems, problems, proof_env_problems, title_problems
+from check_course import KINDS, level_problems, path_problems, architecture_problems, diagram_problems, LAB_POINTER, kind, ROOT, comment_problems, course_map, path_table, model_id_problems, naming_problems, needs_problems, opening_problems, page_problems, plain_problems, problems, proof_env_problems, title_problems
 from walkthrough import example_keys, learner_env, matches, scene, steps
 
 import json
@@ -187,6 +187,19 @@ def test_every_lab_sits_in_exactly_one_path():
     assert any("is in both" in problem for problem in path_problems(course))
     first_path["labs"].pop()
     assert any("is in no path" in problem for problem in path_problems(course))
+
+
+def test_every_lab_link_in_the_docs_opens_a_folder():
+    """A planned lab has no folder yet, so no generated table may link to it; then walk every doc for real."""
+    course = tomllib.loads((ROOT / "course.toml").read_text())
+    planned = {**course["lab"][0], "status": "planned"}
+    planned_course = {**course, "lab": [planned, *course["lab"][1:]]}
+    for table in (course_map(planned_course), path_table(planned_course)):
+        assert f"](labs/{planned['slug']})" not in table
+    folders = {folder.name for folder in (ROOT / "labs").iterdir() if folder.is_dir()}
+    for doc in ["README.md", "START-HERE.md", "docs/architecture.md"]:
+        linked = set(re.findall(r"\]\(labs/([\w-]+)/?\)", (ROOT / doc).read_text()))
+        assert linked <= folders, f"{doc} links to missing lab folders: {sorted(linked - folders)}"
 
 
 def test_a_lab_needs_a_level_and_minutes_in_steps_of_five():
