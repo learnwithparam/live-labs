@@ -8,7 +8,7 @@ teaches that job one lab at a time, each as a named company does it today.
 
 ## The course map
 
-Every lab owns one concept. The groups run from calling a model as an API to serving it on your own GPU.
+Every lab owns one concept. The groups run from calling a model as an API to serving it on your own GPU, then a capstone of your own taken from RFC to a hardened launch.
 Inside a group the labs are independent, so you can start at any lab whose Set up you can meet.
 
 ```mermaid
@@ -75,6 +75,13 @@ flowchart LR
     L34["Fine-Tune a Small LLM with Reviewed Data"]
     L35["Serve Open LLMs with Serverless vLLM"]
   end
+  subgraph P9["Production Capstone"]
+    direction TB
+    L36["Scope a Production AI System with an Architecture RFC"]
+    L37["Ship an End-to-End AI Pipeline with OpenTelemetry"]
+    L38["Verify Production AI Quality with CI Evals"]
+    L39["Deploy a Hardened AI Service with Rate Limits"]
+  end
   P0 --> P1
   P1 --> P2
   P2 --> P3
@@ -83,6 +90,7 @@ flowchart LR
   P5 --> P6
   P6 --> P7
   P7 --> P8
+  P8 --> P9
 ```
 
 ## What every lab has

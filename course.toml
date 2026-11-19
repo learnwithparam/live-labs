@@ -538,6 +538,66 @@ status = "ready"
 
 # Paths: every lab sits in exactly one path; START-HERE.md's path table is generated from these rows.
 
+[[lab]]
+n = 36
+slug = "36-capstone-rfc"
+title = "Scope a Production AI System with an Architecture RFC"
+part = "Production Capstone"
+anchor = "Stripe engineering RFCs define failure modes and metrics before code"
+owns = "architecture RFCs, failure modes and latency budgets"
+job = "Write an architecture RFC for your chosen capstone with latency budgets, failure modes and a labelled eval plan"
+truth = "the benchmark dataset and latency budget signed off before build"
+metric = "architecture sign-off with zero unmeasured failure modes"
+needs = ["tool:uv"]
+level = 2
+minutes = 60
+status = "planned"
+
+[[lab]]
+n = 37
+slug = "37-capstone-tracer-bullet"
+title = "Ship an End-to-End AI Pipeline with OpenTelemetry"
+part = "Production Capstone"
+anchor = "Datadog end-to-end LLM tracing in production"
+owns = "the traced vertical slice"
+job = "Build the working vertical slice of your capstone with full span traces, token accounting and error handling"
+truth = "the OpenTelemetry trace spans across every step of a user request"
+metric = "end-to-end task completion rate and p95 trace latency"
+needs = ["tool:uv", "key:OpenRouter", "tool:Docker"]
+level = 3
+minutes = 120
+status = "planned"
+
+[[lab]]
+n = 38
+slug = "38-capstone-eval-gate"
+title = "Verify Production AI Quality with CI Evals"
+part = "Production Capstone"
+anchor = "Shopify Sidekick automated release eval gates"
+owns = "edge-case golden datasets and zero-regression releases"
+job = "Build a golden dataset and automated eval suite that blocks bad prompts or model changes on your capstone"
+truth = "a human-verified golden dataset of edge cases and expected outputs"
+metric = "pass rate per field and zero regressions on release"
+needs = ["tool:uv", "key:OpenRouter"]
+level = 2
+minutes = 90
+status = "planned"
+
+[[lab]]
+n = 39
+slug = "39-capstone-production-deploy"
+title = "Deploy a Hardened AI Service with Rate Limits"
+part = "Production Capstone"
+anchor = "Cloudflare AI Gateway rate limiting and fallback routing"
+owns = "hardening a service: auth, rate limits, fallback and a cost ledger"
+job = "Ship your capstone behind an authenticated API with rate limits, fallback routing and a live cost ledger"
+truth = "load-test gateway logs and provider billing records"
+metric = "p95 time to first token, error rate under load and cost per task"
+needs = ["tool:uv", "key:OpenRouter"]
+level = 3
+minutes = 90
+status = "planned"
+
 [[path]]
 name = "Spine"
 for = "everyone, first"
@@ -579,3 +639,9 @@ name = "Voice and vision"
 for = "multimodal product engineers"
 labs = [18, 16, 17]
 ends_in = "A vision claim reader and two phone agents."
+
+[[path]]
+name = "Ship a production capstone"
+for = "engineers taking one system of their own to production"
+labs = [36, 37, 38, 39]
+ends_in = "A signed-off RFC, a traced vertical slice, an eval gate with zero regressions and a rate-limited live service."
