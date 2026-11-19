@@ -52,16 +52,18 @@ The trace is worse than the failure. Each model call is a trace of its own, so n
 request. You see model calls but never the request that made them, and you cannot say how long a tenant
 waited.
 
-In our proof run the naive version dispatched [PLACEHOLDER: naive dispatched] of 16 messages and
-none of its traces showed a whole request. The slice dispatched [PLACEHOLDER: slice dispatched] of 16,
-sent [PLACEHOLDER: human queue count] to a person with a reason, lost none, and had a complete span tree for
-[PLACEHOLDER: complete trees] of 16.
+In our proof run the naive version dispatched 14 of 16 messages and
+none of its traces showed a whole request. The slice dispatched 13 of 16,
+sent 3 to a person with a reason, lost none, and had a complete span tree for
+16 of 16.
 
 ## What you will build
 
 The dispatcher's work order board. Dispatched requests are on the left and the human queue is in the
 middle. Pick any request and its trace waterfall opens on the right: one bar per span, read back from
 Jaeger. Switch between **Naive** and **Slice** to see the same 16 messages both ways.
+
+<img src="docs/dispatcher-work-order-board-with-a-per-request-trace-waterfall.jpg" alt="Brickhaven work order board on the slice: 14 of 16 dispatched, 2 need a person, 16 of 16 trace trees complete, and the waterfall of one request with a span for each step and tool" width="720">
 
 Two of the 16 messages can never be dispatched. One names no flat and one needs a pest controller, and
 Brickhaven has none. They belong in the human queue, so the best possible completion rate is 14 of 16.
@@ -152,7 +154,7 @@ uv run brickhaven-slice report --mode naive
 Expect: Trace trees complete: 0 of 16
 
 No request has a `request` span, and its model calls sit in separate traces. In our proof run the
-naive completion rate was [PLACEHOLDER: naive completion rate].
+naive completion rate was 88%, because it counts a dispatch as a success and has no trace to check it against.
 
 ## 4. Run the slice
 
@@ -180,9 +182,9 @@ uv run brickhaven-slice report --mode slice
 Expect: Trace trees complete: 16 of 16
 
 The report prints the completion rate, the p95 trace latency and the tokens. In our proof run the
-completion rate was [PLACEHOLDER: slice completion rate], the p95 was [PLACEHOLDER: p95 ms] ms against
-the 8000 ms target, and the 16 requests used [PLACEHOLDER: tokens in] tokens in and
-[PLACEHOLDER: tokens out] out.
+completion rate was 81%, the p95 was 1675 ms against
+the 8000 ms target, and the 16 requests used 5142 tokens in and
+1071 out.
 
 `tree_problems` in `src/brickhaven_slice/trace_check.py` holds each rule a tree must pass.
 

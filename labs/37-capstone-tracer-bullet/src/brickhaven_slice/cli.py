@@ -10,10 +10,10 @@ import urllib.request
 from brickhaven_slice.config import MODES, OUT, WORKERS, P95_TARGET_MS, COMPLETION_THRESHOLD, jaeger_url, otlp_endpoint
 
 
-def wait_for_jaeger(seconds: int = 30) -> None:
+def wait_for_jaeger(seconds: int = 90) -> None:
     for _ in range(seconds * 2):
         try:
-            with urllib.request.urlopen(f"{jaeger_url()}/api/services", timeout=2):
+            with urllib.request.urlopen(f"{jaeger_url()}/api/v3/services", timeout=2):
                 return
         except OSError:
             time.sleep(0.5)

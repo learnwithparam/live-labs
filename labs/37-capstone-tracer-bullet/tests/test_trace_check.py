@@ -42,24 +42,26 @@ def test_p95_is_nearest_rank():
     assert percentile(values, 0.95) == 19 and percentile([7], 0.95) == 7
 
 
-JAEGER = {"data": [{"traceID": "aa", "spans": [
-    {"traceID": "aa", "spanID": "01", "operationName": "request", "references": [], "startTime": 1000, "duration": 5000,
-     "tags": [{"key": "brickhaven.request_id", "type": "string", "value": "m01"},
-              {"key": "brickhaven.outcome", "type": "string", "value": "sent"}]},
-    {"traceID": "aa", "spanID": "02", "operationName": "step intake",
-     "references": [{"refType": "CHILD_OF", "traceID": "aa", "spanID": "01"}], "startTime": 1100, "duration": 200,
-     "tags": [{"key": "error", "type": "bool", "value": True}, {"key": "brickhaven.request_id", "type": "string", "value": "m01"}]}]}]}
+def attribute(key, value):
+    return {"key": key, "value": {"stringValue": value}}
+
+
+JAEGER = {"result": {"resourceSpans": [{"scopeSpans": [{"spans": [
+    {"traceId": "aa", "spanId": "01", "parentSpanId": "", "name": "request", "startTimeUnixNano": "1000000", "endTimeUnixNano": "6000000",
+     "attributes": [attribute("brickhaven.run_id", "run-1"), attribute("brickhaven.request_id", "m01"), attribute("brickhaven.outcome", "sent")]},
+    {"traceId": "aa", "spanId": "02", "parentSpanId": "01", "name": "step intake", "startTimeUnixNano": "1100000", "endTimeUnixNano": "1300000",
+     "status": {"code": 2}, "attributes": [attribute("brickhaven.run_id", "run-1"), attribute("brickhaven.request_id", "m01")]}]}]}]}}
 
 
 def test_jaeger_json_becomes_the_same_records():
-    records = from_jaeger(JAEGER)
+    records = from_jaeger(JAEGER["result"])
     assert [(record.name, record.parent_id, record.error, record.duration_us) for record in records] == [
         ("request", None, False, 5000), ("step intake", "01", True, 200)]
     assert records[0].attributes["brickhaven.outcome"] == "sent"
 
 
 def test_read_back_asks_again_until_every_request_has_arrived():
-    answers = [{"data": []}, JAEGER]
+    answers = [{"result": {}}, JAEGER]
     urls = []
 
     def fetch(url):
@@ -68,4 +70,4 @@ def test_read_back_asks_again_until_every_request_has_arrived():
 
     records = read_back("run-1", 1, "http://jaeger", fetch=fetch, wait_seconds=5)
     assert len(records) == 2 and len(urls) == 2
-    assert "service=brickhaven-slice" in urls[0] and "brickhaven.run_id" in urls[0]
+    assert "/api/v3/traces" in urls[0] and "query.service_name=brickhaven-slice" in urls[0]

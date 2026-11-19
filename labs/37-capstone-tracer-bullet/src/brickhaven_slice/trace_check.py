@@ -5,6 +5,7 @@ so one checker serves the proof and the keyless tests. A tree is complete when e
 promises is there, every span hangs from the `request` span, and the token totals add up.
 """
 
+import datetime
 import json
 import math
 import time
@@ -57,16 +58,28 @@ def from_exporter(spans) -> list[SpanRecord]:
     return records
 
 
+VALUE_KINDS = ("stringValue", "intValue", "doubleValue", "boolValue")
+
+
+def plain_value(value: dict):
+    """OTLP JSON wraps every attribute value in its type, and integers arrive as strings."""
+    for kind in VALUE_KINDS:
+        if kind in value:
+            return int(value[kind]) if kind == "intValue" else value[kind]
+    return None
+
+
 def from_jaeger(payload: dict) -> list[SpanRecord]:
-    """Records from Jaeger's `/api/traces` answer: each span has tags, and a parent is a CHILD_OF reference."""
+    """Records from Jaeger's v3 query answer, which is OTLP JSON: spans sit in resourceSpans, then scopeSpans."""
     records = []
-    for one_trace in payload.get("data", []):
-        for span in one_trace["spans"]:
-            tags = {tag["key"]: tag["value"] for tag in span.get("tags", [])}
-            parents = [ref["spanID"] for ref in span.get("references", []) if ref["refType"] == "CHILD_OF"]
-            failed = tags.get("error") in (True, "true") or tags.get("otel.status_code") == "ERROR"
-            records.append(SpanRecord(span["traceID"], span["spanID"], parents[0] if parents else None,
-                                      span["operationName"], span["startTime"], span["duration"], failed, tags))
+    for resource_spans in payload.get("resourceSpans", []):
+        for scope_spans in resource_spans.get("scopeSpans", []):
+            for span in scope_spans.get("spans", []):
+                attributes = {item["key"]: plain_value(item["value"]) for item in span.get("attributes", [])}
+                started, ended = int(span["startTimeUnixNano"]), int(span["endTimeUnixNano"])
+                failed = span.get("status", {}).get("code") in (2, "STATUS_CODE_ERROR")
+                records.append(SpanRecord(span["traceId"], span["spanId"], span.get("parentSpanId") or None, span["name"],
+                                          started // 1000, (ended - started) // 1000, failed, attributes))
     return records
 
 
@@ -76,15 +89,19 @@ def fetch_json(url: str) -> dict:
 
 
 def read_back(run_id: str, expected_requests: int, base_url: str, fetch=fetch_json, wait_seconds: float = 30) -> list[SpanRecord]:
-    """Ask Jaeger for the run's spans, and ask again until every request has shown up or the wait ends.
+    """Ask Jaeger for the service's recent spans, keep this run's, and ask again until every request has shown up.
 
     Export is batched, so the last spans of a run reach Jaeger a moment after the app exits.
     """
-    query = urllib.parse.urlencode({"service": SERVICE_NAME, "limit": 1500, "lookback": "6h",
-                                    "tags": json.dumps({"brickhaven.run_id": run_id})})
+    now = datetime.datetime.now(datetime.timezone.utc)
+    query = urllib.parse.urlencode({"query.service_name": SERVICE_NAME, "query.num_traces": 1500,
+                                    "query.start_time_min": (now - datetime.timedelta(hours=6)).strftime("%Y-%m-%dT%H:%M:%SZ"),
+                                    "query.start_time_max": (now + datetime.timedelta(hours=1)).strftime("%Y-%m-%dT%H:%M:%SZ")})
     deadline = time.monotonic() + wait_seconds
     while True:
-        records = from_jaeger(fetch(f"{base_url}/api/traces?{query}"))
+        everything = from_jaeger(fetch(f"{base_url}/api/v3/traces?{query}").get("result", {}))
+        run_traces = {record.trace_id for record in everything if record.attributes.get("brickhaven.run_id") == run_id}
+        records = [record for record in everything if record.trace_id in run_traces]
         seen = {record.attributes.get("brickhaven.request_id") for record in records}
         if len(seen - {None}) >= expected_requests or time.monotonic() > deadline:
             return records

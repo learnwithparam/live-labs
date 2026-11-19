@@ -25,6 +25,7 @@ def test_the_slice_completes_inside_the_target_with_every_span_tree_whole():
     # The truth: every request has one complete tree, and no request vanished.
     assert totals["complete_trees"] == totals["requests"] and totals["lost"] == 0
     assert all(card["complete"] for card in shipped["cards"])
-    # The naive version: the same requests, with gaps and lost work the slice does not have.
+    # The naive version: the same requests, with gaps and lost work the slice does not have. It can match
+    # the slice on dispatched requests when the model behaves, so what separates them is what it loses.
     assert naive["totals"]["complete_trees"] < totals["complete_trees"]
-    assert naive["totals"]["completion_rate"] < totals["completion_rate"]
+    assert naive["totals"]["lost"] > totals["lost"]

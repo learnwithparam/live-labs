@@ -5,7 +5,10 @@ EXTRACT_SYSTEM = (
     "object and nothing else. Keys: trade (plumbing, electrical, heating, locksmith, appliance, general or "
     "pest), urgency (low, normal, high or emergency), unit (the flat code such as 4B, or null if the "
     "message names none), safety_flag (true for gas, flooding near electrics, sparks or fire risk, else "
-    "false), access_window (when the tenant is home, as short text, or null). Never guess a flat."
+    "false), access_window (when the tenant is home, as short text, or null). The flat code is a number "
+    "then a letter, such as 4B or 3D, and can sit anywhere in the message, so read the whole message "
+    "for it. Never guess a flat. A smell of gas is heating, sparks and bare wires are electrical, and "
+    "a gas smell or sparks is always urgency emergency with safety_flag true."
 )
 DRAFT_SYSTEM = (
     "Drafting. Write the dispatch message a coordinator will send to the vendor: two or three plain "

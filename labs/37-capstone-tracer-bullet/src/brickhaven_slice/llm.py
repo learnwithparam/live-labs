@@ -17,6 +17,11 @@ TRANSIENT = (TimeoutError, ConnectionError, openai.APITimeoutError, openai.APICo
              openai.RateLimitError, openai.InternalServerError)
 
 
+# The model's hidden thinking is switched off. It took seconds per call, counted against the token cap and
+# left some answers empty at 400, so a 3500 ms step budget failed on thinking time rather than on the work.
+MAX_REPLY_TOKENS = 600
+
+
 @dataclass
 class Model:
     """The client and the model it should call, passed around as one thing."""
@@ -32,7 +37,7 @@ def call_model(model: Model, tracer: Tracer, span_name: str, system: str, user: 
             **tags, "gen_ai.operation.name": "chat", "gen_ai.request.model": model.name,
             "brickhaven.timeout_ms": timeout_ms}) as span:
         response = model.client.chat.completions.create(
-            model=model.name, timeout=timeout_ms / 1000, max_tokens=400, extra_body={"usage": {"include": True}},
+            model=model.name, timeout=timeout_ms / 1000, max_tokens=MAX_REPLY_TOKENS, extra_body={"usage": {"include": True}, "reasoning": {"enabled": False}},
             messages=[{"role": "system", "content": system}, {"role": "user", "content": user}])
         usage = response.usage
         cost = float((getattr(usage, "model_extra", None) or {}).get("cost") or 0)
