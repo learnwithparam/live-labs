@@ -7,7 +7,7 @@ of every field, and each single case that passed on the live release and now fai
 
 from dataclasses import dataclass, field
 
-from brickhaven_evals.config import THRESHOLDS
+from brickhaven_evals.config import NAIVE_BAR, THRESHOLDS
 
 FIELDS = tuple(THRESHOLDS)
 
@@ -62,7 +62,7 @@ class Verdict:
 
     @property
     def naive_ships(self) -> bool:
-        return self.naive_candidate >= self.naive_live
+        return self.naive_candidate >= NAIVE_BAR
 
 
 def gate(cases: list[dict], live_run: dict[str, dict], candidate_run: dict[str, dict]) -> Verdict:

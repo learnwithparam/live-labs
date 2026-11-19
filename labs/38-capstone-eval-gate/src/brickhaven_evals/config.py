@@ -13,6 +13,10 @@ THRESHOLDS = {"trade": 0.95, "urgency": 0.90, "unit": 0.95, "safety_flag": 1.0, 
 DEFAULT_BASE_URL = "https://openrouter.ai/api/v1"
 DEFAULT_MODEL = "nvidia/nemotron-3.5-lightning"
 TIMEOUT = 60  # seconds per model call
+# Each case is asked this many times and the majority answer counts, because a model varies between calls.
+VOTES = 3
+# The bar a one-number gate uses: ship when the overall exact match stays above it. Most teams start here.
+NAIVE_BAR = 0.75
 WORKERS = 6
 PORT = 8380
 

@@ -124,7 +124,7 @@ function drawScorecard(card) {
       <p>${escapeText(regression.message)}</p></div>`).join("");
     const fooled = verdict.naive_ships && !verdict.ships;
     body = `<div class="banner ${verdict.ships ? "ships" : "blocked"}"><h1>${verdict.ships ? "Release ships" : "Release blocked"}</h1>
-        <p>${verdict.regressions.length} cases got worse than the live release, ${verdict.below_threshold.length} fields below their threshold, on ${card.cases} verified cases.</p></div>
+        <p>${verdict.regressions.length} ${verdict.regressions.length === 1 ? 'case' : 'cases'} got worse than the live release, ${verdict.below_threshold.length} ${verdict.below_threshold.length === 1 ? 'field is' : 'fields are'} below the threshold, on ${card.cases} verified cases.</p></div>
       <div class="naive ${fooled ? "fooled" : ""}"><strong>One overall score:</strong> live ${verdict.naive_live.toFixed(2)}, candidate ${verdict.naive_candidate.toFixed(2)}.
         It would ${verdict.naive_ships ? "ship" : "block"} this candidate.${fooled ? " It misses what the fields show." : ""}</div>
       <table><tr><th>Field</th><th>Live</th><th>Candidate</th><th>Threshold</th><th></th></tr>${rows}</table>

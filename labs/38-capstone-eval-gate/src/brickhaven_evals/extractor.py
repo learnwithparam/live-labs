@@ -6,12 +6,13 @@ and the proof passes the real model. Both go through the same scoring code.
 
 import json
 import os
+from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable
 
-from brickhaven_evals.config import CANDIDATES, DEFAULT_MODEL, LAB, TIMEOUT, WORKERS, llm_settings, load_dotenv
+from brickhaven_evals.config import CANDIDATES, DEFAULT_MODEL, LAB, TIMEOUT, VOTES, WORKERS, llm_settings, load_dotenv
 
 Extract = Callable[["Candidate", str], dict]
 EMPTY_OUTPUT = {"work_orders": []}
@@ -59,10 +60,22 @@ def model_extract(candidate: Candidate, message: str) -> dict:
     return parse_output(response.choices[0].message.content)
 
 
+def majority_answer(candidate: Candidate, message: str, extract: Extract) -> dict:
+    """The answer most calls agree on. A model at temperature 0 still varies between calls.
+
+    One lucky or unlucky call would flip a case between runs and block a release for noise, so each case
+    is asked VOTES times. A tie keeps the first answer, which makes the result repeatable for scripted tests.
+    """
+    answers = [extract(candidate, message) for _ in range(VOTES)]
+    counts = Counter(json.dumps(answer, sort_keys=True) for answer in answers)
+    top = max(counts.values())
+    return next(answer for answer in answers if counts[json.dumps(answer, sort_keys=True)] == top)
+
+
 def run_candidate(candidate: Candidate, cases: list[dict], extract: Extract = model_extract) -> dict[str, dict]:
     """Every golden case through the candidate: {case id: its work orders}."""
     with ThreadPoolExecutor(max_workers=WORKERS) as pool:
-        outputs = list(pool.map(lambda case: extract(candidate, case["message"]), cases))
+        outputs = list(pool.map(lambda case: majority_answer(candidate, case["message"], extract), cases))
     return {case["id"]: output for case, output in zip(cases, outputs)}
 
 

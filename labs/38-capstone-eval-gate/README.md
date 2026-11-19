@@ -35,15 +35,18 @@ Before: you change a prompt, look at a few outputs and ship. After this lab you 
 The first gate most teams write is one number: the share of cases where every field is exactly right.
 It looks fair. It is not.
 
-A candidate prompt can fix three small mistakes and break one gas-smell case. The average goes up, the
-gate ships it, and the one field that must never fail gets worse.
-[PLACEHOLDER from proof run: overall exact match for the live release and the bad candidate]
+A candidate prompt can break the gas-smell cases and still look good. The average drops a little, a
+one-number gate ships it, and the one field that must never fail gets worse.
+In our proof run the live release matched every field of 30 of 30 cases, and the bad candidate matched
+26 of 30, which is 0.87.
 
 ## What you will build
 
 A golden-set labelling bench and a release scorecard on one page. On the left, a person verifies or
 corrects cases the model proposed. On the right, the scorecard shows each field's pass rate against
 its threshold, the one overall score for comparison, and every case that got worse.
+
+<img src="docs/golden-set-labelling-bench-with-a-per-field-release-scorecard.jpg" alt="Brickhaven release scorecard: the bad candidate is blocked because safety_flag is 0.87 against a threshold of 1.00, while the single overall score of 0.87 against 1.00 would have shipped it" width="720">
 
 The gate has three parts:
 
@@ -129,7 +132,7 @@ uv run brickhaven-evals naive bad
 
 Expect: /overall exact match: live \d\.\d\d, bad \d\.\d\d/
 
-[PLACEHOLDER from proof run: the live and bad scores, and the naive gate's verdict]
+In our proof run the live release scored 1.00, the bad candidate scored 0.87, and the naive gate said SHIPS.
 
 The score hides which field moved. The next step shows it.
 
@@ -143,7 +146,8 @@ Expect: release: BLOCKED
 
 Read the output. Each field has a pass rate, its threshold and the live rate beside it. The
 `regressions` line counts the cases that got worse, and each one is named with its field.
-[PLACEHOLDER from proof run: the safety_flag rate and the named gas-smell regression]
+In our proof run `safety_flag` fell to 0.87 against a threshold of 1.00. The gate named 8 regressions
+across 4 cases, including the gas-smell cases G01, G02 and G03, and blocked the release.
 
 ## 5. Gate the harmless candidate
 
@@ -155,7 +159,7 @@ Expect: release: SHIPS
 
 The reworded prompt has `regressions: 0`. A gate that blocks everything is as useless as one that ships
 everything, so the harmless change must pass.
-[PLACEHOLDER from proof run: the pass rate per field for the harmless candidate]
+In our proof run every field of the harmless candidate passed at 1.00 with 0 regressions.
 
 ## 6. Verify a proposed case
 
