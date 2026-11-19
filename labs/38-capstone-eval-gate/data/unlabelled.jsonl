@@ -1,0 +1,3 @@
+{"id": "L01", "tag": "safety", "message": "Flat 4D: there is smoke coming from the fuse box and a hot smell. I am in all day.", "proposed": {"work_orders": [{"trade": "electrical", "urgency": "urgent", "unit": "4D", "safety_flag": false, "access_window": "anytime"}]}}
+{"id": "L02", "tag": "no-unit", "message": "The communal bin store door will not close. Mornings.", "proposed": {"work_orders": [{"trade": "general", "urgency": "routine", "unit": null, "safety_flag": false, "access_window": "morning"}]}}
+{"id": "L03", "tag": "two-issues", "message": "Flat 9C: the bath is draining slowly and the front door lock is stiff. Evenings.", "proposed": {"work_orders": [{"trade": "plumbing", "urgency": "routine", "unit": "9C", "safety_flag": false, "access_window": "evening"}]}}

@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="icon" href="data:,">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Brickhaven golden set and release scorecard</title>
+<style>
+/* Colours are the workshop tokens in design/tokens.json; a course test pins every hex here to that file. */
+:root {
+  --paper: #FAFAFA; --card: #FFFFFF; --ink: #151515; --ink-2: #414141; --muted: #606060;
+  --line: #DFDFDF; --accent: #FAFF69; --fill-dark: #1F1F1C;
+  --pass: #008138; --fail: #BF000F; --wait: #B75000;
+  --sans: Inter, Helvetica, Arial, sans-serif; --mono: Inconsolata, "Courier New", Courier, monospace;
+}
+* { box-sizing: border-box }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.5 var(--sans) }
+button, input, textarea, select { font: inherit; color: inherit }
+button { cursor: pointer }
+:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px }
+header { background: var(--fill-dark); color: var(--paper); padding: 14px 24px; display: flex; gap: 14px; align-items: baseline }
+header span { color: var(--line); font-size: 14px }
+
+/* The labeller's bench is the narrower side: a person works down the queue while the scorecard stays in view. */
+main { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.5fr); gap: 24px; max-width: 1240px; margin: 0 auto; padding: 24px }
+@media (max-width: 880px) { main { grid-template-columns: minmax(0, 1fr) } }
+section > h2 { margin: 0 0 10px; font-size: 18px }
+.count { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 12px 16px; margin-bottom: 14px }
+.count strong { font-size: 26px }
+.tags span { display: inline-block; border: 1px solid var(--line); border-radius: 12px; padding: 1px 10px; margin: 0 4px 4px 0; font: 13px var(--mono) }
+.case { background: var(--card); border: 1px solid var(--line); border-left: 6px solid var(--wait); border-radius: 6px; padding: 12px 16px; margin-bottom: 10px }
+.case.done { border-left-color: var(--pass) }
+.case p { margin: 4px 0 }
+.case pre { margin: 6px 0; padding: 8px; background: var(--paper); border: 1px solid var(--line); border-radius: 4px; font: 13px var(--mono); white-space: pre-wrap }
+.case form { display: grid; gap: 8px; border-top: 1px solid var(--line); padding-top: 10px; margin-top: 8px }
+.case input, .case textarea { border: 1px solid var(--muted); border-radius: 4px; padding: 6px 8px; background: var(--card) }
+.case button { justify-self: start; border: 1px solid var(--ink); background: var(--card); border-radius: 6px; padding: 4px 12px; font-size: 14px }
+.hint { color: var(--fail); font-size: 14px; margin: 0 }
+.human { color: var(--ink-2); font-size: 14px }
+
+.picker { display: flex; gap: 8px; margin-bottom: 14px }
+.picker button { border: 1px solid var(--line); background: var(--card); border-radius: 6px; padding: 8px 14px; font-family: var(--mono) }
+.picker button[aria-selected="true"] { border-color: var(--ink); box-shadow: 0 2px 0 var(--ink) }
+.banner { border-radius: 8px; padding: 16px 20px; background: var(--card); border: 2px solid var(--line); margin-bottom: 14px }
+.banner.blocked { border-color: var(--fail) }
+.banner.ships { border-color: var(--pass) }
+.banner h1 { margin: 0 0 4px; font-size: 26px }
+.banner.blocked h1 { color: var(--fail) }
+.banner.ships h1 { color: var(--pass) }
+.banner p { margin: 0; color: var(--ink-2) }
+.naive { background: var(--card); border: 1px dashed var(--muted); border-radius: 8px; padding: 10px 16px; margin-bottom: 14px }
+.naive.fooled { border-color: var(--wait) }
+table { width: 100%; border-collapse: collapse; background: var(--card); border: 1px solid var(--line); margin-bottom: 14px }
+th, td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--line); font-size: 14px }
+td.number { font-family: var(--mono) }
+td.below, .regression strong { color: var(--fail); font-weight: 700 }
+td.met { color: var(--pass); font-weight: 700 }
+.regression { background: var(--card); border: 1px solid var(--line); border-left: 6px solid var(--fail); border-radius: 6px; padding: 8px 14px; margin-bottom: 8px }
+.regression p { margin: 2px 0; font-size: 14px }
+.empty { color: var(--muted) }
+</style>
+</head>
+<body data-surface="golden-set labelling bench with a release scorecard">
+<header><strong>Brickhaven</strong><span>Golden set and release scorecard</span></header>
+<main>
+  <section id="bench" aria-label="Labelling bench"></section>
+  <section id="scorecard" aria-live="polite" aria-label="Release scorecard"></section>
+</main>
+<script>
+const $ = (selector) => document.querySelector(selector);
+const CANDIDATES = [["bad", "Bad candidate"], ["harmless", "Harmless candidate"]];
+let current = CANDIDATES[0][0];
+let bench = null;
+
+function escapeText(text) {
+  return String(text).replace(/[&<>"]/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[character]));
+}
+
+function drawBench() {
+  const tags = bench.tags.map((tag) => `<span>${escapeText(tag)}</span>`).join("");
+  const waiting = bench.waiting.map((proposal) => `<article class="case" data-case="${proposal.id}">
+      <p><strong>${proposal.id}</strong> <span class="human">tag ${escapeText(proposal.tag)}</span></p>
+      <p>${escapeText(proposal.message)}</p>
+      <p class="human">The model proposed this. It does not count until you verify it.</p>
+      <pre>${escapeText(JSON.stringify(proposal.proposed.work_orders, null, 1))}</pre>
+      <form><input name="labeller" placeholder="Your name" aria-label="Your name">
+        <textarea name="corrected" rows="3" aria-label="Corrected work orders as JSON" placeholder="Leave empty to verify as proposed, or paste corrected work orders as a JSON list"></textarea>
+        <p class="hint" hidden></p><button type="submit">Verify this case</button></form></article>`).join("");
+  $("#bench").innerHTML = `<h2>Labelling bench</h2>
+    <div class="count"><strong>${bench.verified}</strong> verified cases count toward every score.
+      <p class="human">${bench.waiting.length} more wait for a person. Only a case a named person verified is scored.</p>
+      <div class="tags">${tags}</div></div>${waiting || '<p class="empty">Nothing is waiting for a person.</p>'}`;
+  $("#bench").querySelectorAll(".case form").forEach((form) => form.addEventListener("submit", submitLabel));
+}
+
+async function submitLabel(event) {
+  event.preventDefault();
+  const form = event.target;
+  const hint = form.querySelector(".hint");
+  let corrected = null;
+  if (form.corrected.value.trim()) {
+    try { corrected = { work_orders: JSON.parse(form.corrected.value) }; }
+    catch (error) { hint.hidden = false; hint.textContent = "The corrected work orders are not valid JSON."; return; }
+  }
+  const response = await fetch("/api/label", { method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ case_id: form.closest(".case").dataset.case, labeller: form.labeller.value, corrected }) });
+  if (response.ok) { bench = await response.json(); drawBench(); load(current); return; }
+  hint.hidden = false;
+  hint.textContent = (await response.json()).error;
+}
+
+function drawScorecard(card) {
+  const picker = CANDIDATES.map(([name, label]) => `<button data-candidate="${name}" aria-selected="${name === current}">${label}</button>`).join("");
+  let body = `<p class="empty">No run saved for this candidate yet. Run it from the terminal, then reload.</p>`;
+  if (card.ran) {
+    const verdict = card.verdict;
+    const rows = Object.entries(bench.thresholds).map(([field, threshold]) => {
+      const rate = verdict.candidate_rates[field];
+      const met = rate >= threshold;
+      return `<tr><td>${field}</td><td class="number">${verdict.live_rates[field].toFixed(2)}</td><td class="number">${rate.toFixed(2)}</td>
+        <td class="number">${threshold.toFixed(2)}</td><td class="${met ? "met" : "below"}">${met ? "meets it" : "below it"}</td></tr>`;
+    }).join("");
+    const regressions = verdict.regressions.map((regression) => `<div class="regression"><p><strong>${regression.case_id}</strong> lost ${regression.field_name}</p>
+      <p>${escapeText(regression.message)}</p></div>`).join("");
+    const fooled = verdict.naive_ships && !verdict.ships;
+    body = `<div class="banner ${verdict.ships ? "ships" : "blocked"}"><h1>${verdict.ships ? "Release ships" : "Release blocked"}</h1>
+        <p>${verdict.regressions.length} cases got worse than the live release, ${verdict.below_threshold.length} fields below their threshold, on ${card.cases} verified cases.</p></div>
+      <div class="naive ${fooled ? "fooled" : ""}"><strong>One overall score:</strong> live ${verdict.naive_live.toFixed(2)}, candidate ${verdict.naive_candidate.toFixed(2)}.
+        It would ${verdict.naive_ships ? "ship" : "block"} this candidate.${fooled ? " It misses what the fields show." : ""}</div>
+      <table><tr><th>Field</th><th>Live</th><th>Candidate</th><th>Threshold</th><th></th></tr>${rows}</table>
+      <h2>Cases that got worse</h2>${regressions || '<p class="empty">No case got worse.</p>'}
+      <p class="human">${card.unscored ? card.unscored + " verified cases are not scored yet: run the candidates again. " : ""}A person decides whether a regression is a real problem or a wrong label.</p>`;
+  }
+  $("#scorecard").innerHTML = `<h2>Release scorecard</h2><div class="picker">${picker}</div>${body}`;
+  $("#scorecard").querySelectorAll("[data-candidate]").forEach((button) => button.addEventListener("click", () => { current = button.dataset.candidate; load(current); }));
+}
+
+async function load(name) {
+  const response = await fetch("/api/scorecard?candidate=" + encodeURIComponent(name));
+  drawScorecard(await response.json());
+}
+
+(async () => {
+  bench = await (await fetch("/api/bench")).json();
+  drawBench();
+  load(current);
+})();
+</script>
+</body>
+</html>
