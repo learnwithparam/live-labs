@@ -1,0 +1,23 @@
+# Each client is one caller of the API. The file holds a hash of the key, never the key itself.
+# per_minute is how fast the bucket refills; burst is how many calls it holds when full.
+
+[[client]]
+name = "maple-portal"
+owner = "Maple Court tenant portal"
+key_hash = "37fb78d381f821cbf5d1e33249fcff584d4725eaca863288c65ab0df7e8e64f9"
+per_minute = 30
+burst = 20
+
+[[client]]
+name = "harbor-sms"
+owner = "Harbor Row text message line"
+key_hash = "eef920f16656f680eba65f2cff72450af325e55d0b28067c02a30122e81bd0bb"
+per_minute = 30
+burst = 20
+
+[[client]]
+name = "runaway-sync"
+owner = "A partner sync job that retries without waiting"
+key_hash = "6901d23dfac7555619a848b80ebb98282b02d669bfe73e8948deb8610c5d532c"
+per_minute = 6
+burst = 3
