@@ -581,7 +581,7 @@ metric = "pass rate per field and zero regressions on release"
 needs = ["tool:uv", "key:OpenRouter"]
 level = 2
 minutes = 90
-status = "planned"
+status = "ready"
 
 [[lab]]
 n = 39

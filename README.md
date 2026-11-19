@@ -61,7 +61,7 @@ print what the README promises.
 | 35 | [Serve Open LLMs with Serverless vLLM](labs/35-serverless-gpu) | Ramp on Modal | production | 70 | uv, OpenRouter, Kaggle | ready |
 | 36 | [Scope a Production AI System with an Architecture RFC](labs/36-capstone-rfc) | Stripe engineering RFCs define failure modes and metrics before code | core | 60 | uv | ready |
 | 37 | [Ship an End-to-End AI Pipeline with OpenTelemetry](labs/37-capstone-tracer-bullet) | Datadog end-to-end LLM tracing in production | production | 120 | uv, OpenRouter, Docker | ready |
-| 38 | Verify Production AI Quality with CI Evals | Shopify Sidekick automated release eval gates | core | 90 | uv, OpenRouter | planned |
+| 38 | [Verify Production AI Quality with CI Evals](labs/38-capstone-eval-gate) | Shopify Sidekick automated release eval gates | core | 90 | uv, OpenRouter | ready |
 | 39 | Deploy a Hardened AI Service with Rate Limits | Cloudflare AI Gateway rate limiting and fallback routing | production | 90 | uv, OpenRouter | planned |
 
 <!-- end course map -->
