@@ -1,0 +1,82 @@
+[
+  {
+    "unit": "1A",
+    "building": "Alder House",
+    "floor": 1
+  },
+  {
+    "unit": "1B",
+    "building": "Alder House",
+    "floor": 1
+  },
+  {
+    "unit": "2A",
+    "building": "Alder House",
+    "floor": 2
+  },
+  {
+    "unit": "2B",
+    "building": "Alder House",
+    "floor": 2
+  },
+  {
+    "unit": "2C",
+    "building": "Alder House",
+    "floor": 2
+  },
+  {
+    "unit": "3B",
+    "building": "Birch House",
+    "floor": 3
+  },
+  {
+    "unit": "3D",
+    "building": "Birch House",
+    "floor": 3
+  },
+  {
+    "unit": "4A",
+    "building": "Birch House",
+    "floor": 4
+  },
+  {
+    "unit": "4B",
+    "building": "Birch House",
+    "floor": 4
+  },
+  {
+    "unit": "5A",
+    "building": "Birch House",
+    "floor": 5
+  },
+  {
+    "unit": "5B",
+    "building": "Birch House",
+    "floor": 5
+  },
+  {
+    "unit": "6A",
+    "building": "Cedar House",
+    "floor": 6
+  },
+  {
+    "unit": "6B",
+    "building": "Cedar House",
+    "floor": 6
+  },
+  {
+    "unit": "7A",
+    "building": "Cedar House",
+    "floor": 7
+  },
+  {
+    "unit": "7C",
+    "building": "Cedar House",
+    "floor": 7
+  },
+  {
+    "unit": "8A",
+    "building": "Cedar House",
+    "floor": 8
+  }
+]

@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="icon" href="data:,">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Brickhaven work order board</title>
+<style>
+/* Colours are the workshop tokens in design/tokens.json; a course test pins every hex here to that file. */
+:root {
+  --paper: #FAFAFA; --card: #FFFFFF; --ink: #151515; --ink-2: #414141; --muted: #606060;
+  --line: #DFDFDF; --accent: #FAFF69; --fill-dark: #1F1F1C;
+  --pass: #008138; --fail: #BF000F; --wait: #B75000;
+  --sans: Inter, Helvetica, Arial, sans-serif; --mono: Inconsolata, "Courier New", Courier, monospace;
+}
+* { box-sizing: border-box }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.5 var(--sans) }
+button { font: inherit; color: inherit; cursor: pointer }
+:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px }
+
+/* A dispatcher's board: finished work on the left, the people queue in the middle, the selected request's trace on the right. */
+header { background: var(--card); border-bottom: 1px solid var(--line); padding: 14px 24px; display: flex; flex-wrap: wrap; gap: 16px; align-items: center }
+header strong { font-size: 18px }
+.modes { display: flex; gap: 6px }
+.modes button { border: 1px solid var(--line); background: var(--card); border-radius: 6px; padding: 6px 14px; font-size: 14px }
+.modes button[aria-selected="true"] { border-color: var(--ink); box-shadow: 0 2px 0 var(--ink) }
+.totals { display: flex; flex-wrap: wrap; gap: 8px 22px; margin-left: auto; font-size: 14px; color: var(--ink-2) }
+.totals b { font-size: 20px; color: var(--ink); font-family: var(--mono) }
+.totals .bad b { color: var(--fail) }
+.totals .good b { color: var(--pass) }
+main { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) minmax(23rem, 28rem); gap: 20px; padding: 20px 24px; max-width: 1500px; margin: 0 auto; align-items: start }
+@media (max-width: 960px) { main { grid-template-columns: minmax(0, 1fr) } }
+h2 { font-size: 14px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin: 0 0 10px }
+.column { display: grid; gap: 8px }
+.ticket { text-align: left; width: 100%; background: var(--card); border: 1px solid var(--line); border-left: 6px solid var(--pass); border-radius: 6px; padding: 10px 14px }
+.ticket.person { border-left-color: var(--wait) }
+.ticket.lost { border-left-color: var(--fail) }
+.ticket[aria-pressed="true"] { border-color: var(--ink); box-shadow: 0 2px 0 var(--ink) }
+.ticket .top { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; color: var(--muted) }
+.ticket .text { margin: 4px 0 0; font-size: 15px }
+.ticket .meta { margin: 4px 0 0; font-size: 13px; color: var(--ink-2); font-family: var(--mono) }
+.empty { color: var(--muted); font-size: 14px; margin: 0 }
+.lostbox { margin-top: 18px }
+.detail { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 16px; position: sticky; top: 12px }
+.detail h3 { margin: 0 0 4px; font-size: 16px }
+.detail p { margin: 6px 0; font-size: 14px; color: var(--ink-2) }
+.detail .why { border-left: 4px solid var(--wait); padding-left: 10px; color: var(--ink) }
+.detail .gap { border-left: 4px solid var(--fail); padding-left: 10px; color: var(--fail) }
+.waterfall { margin-top: 12px; border-top: 1px solid var(--line) }
+.span { display: grid; grid-template-columns: 11.5rem minmax(0, 1fr) 4.5rem; align-items: center; min-height: 28px; border-bottom: 1px dotted var(--line); font-size: 12.5px }
+.span .name { font-family: var(--mono); white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+.span .lane { position: relative; height: 12px }
+.span .bar { position: absolute; top: 0; height: 12px; min-width: 2px; background: var(--fill-dark); border-radius: 2px }
+.span.failed .bar { background: var(--fail) }
+.span .ms { text-align: right; color: var(--muted); font-family: var(--mono) }
+.limit { margin: 8px 0 0; font-size: 13px; color: var(--muted) }
+</style>
+</head>
+<body data-surface="dispatcher work order board with request trace waterfall and human queue">
+<header>
+  <strong>Work orders</strong>
+  <div class="modes" role="tablist" aria-label="Which version of the pipeline">
+    <button role="tab" data-mode="naive" aria-selected="false">Naive</button>
+    <button role="tab" data-mode="slice" aria-selected="true">Slice</button>
+  </div>
+  <div class="totals" id="totals"></div>
+</header>
+<main>
+  <section><h2>Dispatched</h2><div class="column" id="dispatched"></div></section>
+  <section>
+    <h2>Needs a person</h2><div class="column" id="queue"></div>
+    <div class="lostbox"><h2>Lost: nobody was told</h2><div class="column" id="lost"></div></div>
+  </section>
+  <aside class="detail" id="detail"><p class="empty">Pick a request to see its trace.</p></aside>
+</main>
+<script>
+const $ = (selector) => document.querySelector(selector);
+let board = null, chosen = null, mode = "slice";
+
+// One place builds every node, and only through textContent, so a tenant's message can never become markup.
+function make(tag, className, text) {
+  const node = document.createElement(tag);
+  if (className) node.className = className;
+  if (text !== undefined) node.textContent = text;
+  return node;
+}
+
+function total(label, value, tone) {
+  const box = make("span", tone || "");
+  box.append(make("b", "", value), " ", label);
+  return box;
+}
+
+function showTotals() {
+  const totals = board.totals, box = $("#totals");
+  box.replaceChildren(
+    total("of " + totals.requests + " dispatched", String(totals.dispatched), totals.dispatched === totals.requests ? "good" : ""),
+    total("need a person", String(totals.human_queue), totals.human_queue ? "" : "good"),
+    total("lost", String(totals.lost), totals.lost ? "bad" : "good"),
+    total("trace trees complete", totals.complete_trees + "/" + totals.requests, totals.complete_trees === totals.requests ? "good" : "bad"),
+    total("p95 trace, target " + board.target_ms + " ms", totals.p95_ms === null ? "none" : Math.round(totals.p95_ms) + " ms"));
+}
+
+function ticket(card) {
+  const kind = card.outcome === "sent" ? "" : card.outcome === "human_queue" ? "person" : "lost";
+  const button = make("button", "ticket " + kind);
+  button.setAttribute("aria-pressed", String(card === chosen));
+  const top = make("div", "top");
+  top.append(make("span", "", card.request_id + " " + card.tenant), make("span", "", card.latency_ms === null ? "no trace" : Math.round(card.latency_ms) + " ms"));
+  button.append(top, make("p", "text", card.text));
+  if (card.dispatch && card.dispatch.work_order) {
+    const order = card.dispatch.work_order;
+    button.append(make("p", "meta", [order.trade, order.urgency, order.unit, order.safety_flag ? "safety" : ""].filter(Boolean).join(" / ")));
+  }
+  if (card.outcome === "human_queue") button.append(make("p", "meta", "stopped at " + card.failed_step));
+  button.addEventListener("click", () => { chosen = card; render(); });
+  return button;
+}
+
+function showDetail() {
+  const box = $("#detail");
+  if (!chosen) return box.replaceChildren(make("p", "empty", "Pick a request to see its trace."));
+  const parts = [make("h3", "", chosen.request_id + " " + chosen.tenant)];
+  if (chosen.outcome === "human_queue") {
+    parts.push(make("p", "why", "Stopped at " + chosen.failed_step + ": " + chosen.reason));
+    parts.push(make("p", "", "The dispatcher decides: write the work order by hand, ask the tenant which flat, or find a vendor outside the list."));
+  } else if (chosen.outcome !== "sent") {
+    parts.push(make("p", "gap", "The request was lost: " + (chosen.reason || "no reason recorded") + ". No one was told."));
+  } else if (chosen.dispatch) {
+    parts.push(make("p", "", chosen.dispatch.draft));
+  }
+  parts.push(make("p", "", chosen.input_tokens + " tokens in, " + chosen.output_tokens + " out."));
+  if (!chosen.complete) parts.push(make("p", "gap", "Trace gap: " + chosen.problems.join("; ")));
+  const waterfall = make("div", "waterfall");
+  const end = Math.max(1, ...chosen.rows.map((row) => row.start_ms + row.duration_ms));
+  for (const row of chosen.rows) {
+    const line = make("div", "span" + (row.error ? " failed" : ""));
+    const lane = make("div", "lane"), bar = make("div", "bar");
+    bar.style.left = (100 * row.start_ms / end) + "%";
+    bar.style.width = (100 * row.duration_ms / end) + "%";
+    lane.append(bar);
+    const name = make("div", "name", row.name);
+    name.style.paddingLeft = (row.depth * 12) + "px";
+    line.append(name, lane, make("div", "ms", Math.round(row.duration_ms) + " ms"));
+    waterfall.append(line);
+  }
+  parts.push(waterfall, make("p", "limit", "Every bar is a span read back from Jaeger."));
+  box.replaceChildren(...parts);
+}
+
+function fill(selector, cards, emptyText) {
+  const column = $(selector);
+  column.replaceChildren(...(cards.length ? cards.map(ticket) : [make("p", "empty", emptyText)]));
+}
+
+function render() {
+  for (const button of document.querySelectorAll(".modes button")) button.setAttribute("aria-selected", String(button.dataset.mode === mode));
+  showTotals();
+  fill("#dispatched", board.cards.filter((card) => card.outcome === "sent"), "Nothing dispatched.");
+  fill("#queue", board.cards.filter((card) => card.outcome === "human_queue"), "No request needs a person.");
+  fill("#lost", board.cards.filter((card) => card.outcome !== "sent" && card.outcome !== "human_queue"), "Nothing was lost.");
+  showDetail();
+}
+
+async function load() {
+  const response = await fetch("/api/board?mode=" + mode);
+  const payload = await response.json();
+  if (!response.ok) {
+    $("#totals").replaceChildren(make("span", "", payload.error));
+    for (const selector of ["#dispatched", "#queue", "#lost"]) $(selector).replaceChildren();
+    return;
+  }
+  board = payload;
+  chosen = board.cards.find((card) => card.outcome !== "sent") || board.cards[0];
+  render();
+}
+
+for (const button of document.querySelectorAll(".modes button")) {
+  button.addEventListener("click", () => { mode = button.dataset.mode; load(); });
+}
+load();
+</script>
+</body>
+</html>
