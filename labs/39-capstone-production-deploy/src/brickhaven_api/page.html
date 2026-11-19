@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="icon" href="data:,">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Brickhaven developer portal</title>
+<style>
+/* Colours are the workshop tokens in design/tokens.json; a course test pins every hex here to that file. */
+:root {
+  --paper: #FAFAFA; --card: #FFFFFF; --ink: #151515; --ink-2: #414141; --muted: #606060;
+  --line: #DFDFDF; --accent: #FAFF69; --fill-dark: #1F1F1C;
+  --pass: #008138; --fail: #BF000F; --wait: #B75000;
+  --sans: Inter, Helvetica, Arial, sans-serif; --mono: Inconsolata, "Courier New", Courier, monospace;
+}
+* { box-sizing: border-box }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.5 var(--sans) }
+button, input { font: inherit; color: inherit }
+button { cursor: pointer }
+:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px }
+
+/* A developer portal: the meters sit across the top, the keys on the left, the live ledger on the right. */
+header { background: var(--fill-dark); color: var(--paper); padding: 14px 24px; display: flex; gap: 16px; align-items: baseline; flex-wrap: wrap }
+header strong { font-size: 18px }
+header .mode { font-family: var(--mono); font-size: 14px; background: var(--accent); color: var(--ink); padding: 2px 8px; border-radius: 4px }
+.meters { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; max-width: 1200px; margin: 20px auto 0; padding: 0 24px }
+.meter { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 12px 16px }
+.meter span { display: block; color: var(--muted); font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em }
+.meter strong { font-size: 26px; font-variant-numeric: tabular-nums }
+.meter.closed strong { color: var(--pass) }
+.meter.open strong { color: var(--fail) }
+.meter.half-open strong { color: var(--wait) }
+.portal { display: grid; grid-template-columns: minmax(0, 24rem) minmax(0, 1fr); gap: 24px; max-width: 1200px; margin: 0 auto; padding: 20px 24px 40px }
+@media (max-width: 860px) { .portal, .meters { grid-template-columns: minmax(0, 1fr) } }
+h2 { font-size: 14px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin: 0 0 10px }
+.key { background: var(--card); border: 1px solid var(--line); border-left: 6px solid var(--pass); border-radius: 6px; padding: 12px 16px; margin-bottom: 12px }
+.key.hot { border-left-color: var(--fail) }
+.key h3 { margin: 0; font-size: 16px }
+.key .owner { color: var(--muted); font-size: 14px; margin: 0 0 6px }
+.key dl { display: grid; grid-template-columns: 6rem minmax(0, 1fr); margin: 0; font-size: 14px; gap: 2px 8px }
+.key dt { color: var(--muted) }
+.key dd { margin: 0; font-family: var(--mono) }
+.key .limited { color: var(--fail); font-weight: 700 }
+.key button { margin-top: 8px; border: 1px solid var(--ink); background: var(--card); border-radius: 6px; padding: 4px 12px; font-size: 14px }
+.key form { margin-top: 10px; display: grid; gap: 8px; border-top: 1px solid var(--line); padding-top: 10px }
+.key input { border: 1px solid var(--ink-2); border-radius: 6px; padding: 6px 8px; background: var(--paper) }
+.key form .hint { margin: 0; font-size: 14px; color: var(--wait) }
+.key form button { background: var(--fill-dark); color: var(--paper); justify-self: start }
+table { border-collapse: collapse; width: 100%; background: var(--card); border: 1px solid var(--line); font-size: 14px; margin-bottom: 20px }
+th, td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--line) }
+td.number, th.number { text-align: right; font-variant-numeric: tabular-nums; font-family: var(--mono) }
+.slot-fallback { color: var(--wait); font-weight: 700 }
+.reconcile { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 12px 16px; margin-bottom: 20px }
+.reconcile button { border: 1px solid var(--ink); background: var(--card); border-radius: 6px; padding: 4px 12px }
+.reconcile .yes { color: var(--pass); font-weight: 700 }
+.reconcile .no { color: var(--fail); font-weight: 700 }
+.changes { color: var(--ink-2); font-size: 14px; margin: 0 0 20px; padding-left: 18px }
+</style>
+</head>
+<body data-surface="developer portal with API keys, per-client usage and a live cost ledger">
+<header><strong>Brickhaven developer portal</strong><span class="mode" id="mode">loading</span></header>
+<div class="meters" id="meters"></div>
+<div class="portal">
+  <section aria-label="API keys"><h2>API keys</h2><div id="keys"></div></section>
+  <section aria-label="Usage and ledger">
+    <h2>Usage by client</h2>
+    <table id="usage"><thead><tr><th>Client</th><th class="number">Served</th><th class="number">Limited</th><th class="number">Failed</th><th class="number">Cost</th></tr></thead><tbody></tbody></table>
+    <div class="reconcile" id="reconcile"><button id="reconcile-button">Check the last 20 rows against provider billing</button> <span id="reconcile-result"></span></div>
+    <h2>Recent limit changes</h2>
+    <ul class="changes" id="changes"></ul>
+    <h2>Live cost ledger</h2>
+    <table id="ledger"><thead><tr><th>Time</th><th>Client</th><th>Slot</th><th class="number">Tokens in</th><th class="number">Tokens out</th><th class="number">Cost</th></tr></thead><tbody></tbody></table>
+  </section>
+</div>
+<script>
+const $ = selector => document.querySelector(selector)
+const dollars = amount => "$" + amount.toFixed(6)
+let openForm = null
+
+function element(tag, text, className) {
+  const node = document.createElement(tag)
+  if (text !== undefined) node.textContent = text
+  if (className) node.className = className
+  return node
+}
+
+function meter(label, value, className) {
+  const box = element("div", undefined, "meter " + (className || ""))
+  box.append(element("span", label), element("strong", value))
+  return box
+}
+
+function keyCard(client, ceiling) {
+  const card = element("div", undefined, "key" + (client.usage.limited > 0 ? " hot" : ""))
+  card.append(element("h3", client.name), element("p", client.owner, "owner"))
+  const facts = element("dl")
+  const limited = element("dd", String(client.usage.limited), client.usage.limited > 0 ? "limited" : "")
+  for (const [name, value] of [["Refill", client.per_minute + " a minute"], ["Burst", String(client.burst)], ["Refused", limited]]) {
+    facts.append(element("dt", name), typeof value === "string" ? element("dd", value) : value)
+  }
+  card.append(facts)
+  const raise = element("button", "Raise limit")
+  raise.addEventListener("click", () => { openForm = openForm === client.name ? null : client.name; render(latest) })
+  card.append(raise)
+  if (openForm === client.name) card.append(raiseForm(client, ceiling))
+  return card
+}
+
+function raiseForm(client, ceiling) {
+  const form = element("form")
+  const operator = element("input"); operator.placeholder = "Your name"; operator.setAttribute("aria-label", "Your name")
+  const perMinute = element("input"); perMinute.type = "number"; perMinute.value = client.per_minute * 2; perMinute.setAttribute("aria-label", "New refill per minute")
+  const reason = element("input"); reason.placeholder = "Reason, at least 4 words"; reason.setAttribute("aria-label", "Reason")
+  const hint = element("p", "The service never goes past " + ceiling + " a minute.", "hint")
+  const save = element("button", "Raise to this limit"); save.type = "submit"
+  form.append(operator, perMinute, reason, save, hint)
+  form.addEventListener("submit", async submitted => {
+    submitted.preventDefault()
+    const response = await fetch("/api/limit", { method: "POST", body: JSON.stringify({ operator: operator.value, client: client.name, per_minute: Number(perMinute.value), reason: reason.value }) })
+    const payload = await response.json()
+    if (!response.ok) { hint.textContent = payload.error; return }
+    openForm = null
+    render(payload)
+  })
+  return form
+}
+
+let latest = null
+function render(summary) {
+  latest = summary
+  $("#mode").textContent = summary.mode
+  $("#meters").replaceChildren(
+    meter("Tasks served", String(summary.served)),
+    meter("Total cost", dollars(summary.total_cost)),
+    meter("Cost per task", dollars(summary.cost_per_task)),
+    meter("Primary breaker", summary.breakers.primary, summary.breakers.primary),
+  )
+  $("#keys").replaceChildren(...summary.clients.map(client => keyCard(client, summary.ceiling)))
+  $("#usage tbody").replaceChildren(...summary.clients.map(client => {
+    const row = element("tr")
+    row.append(element("td", client.name), element("td", String(client.usage.served), "number"), element("td", String(client.usage.limited), "number"),
+               element("td", String(client.usage.failed), "number"), element("td", dollars(client.cost), "number"))
+    return row
+  }))
+  $("#changes").replaceChildren(...(summary.limit_changes.length ? summary.limit_changes : [{ none: true }]).map(change => change.none
+    ? element("li", "No limit has been raised yet.")
+    : element("li", `${change.operator} raised ${change.client} from ${change.from} to ${change.to} a minute: ${change.reason}`)))
+  $("#ledger tbody").replaceChildren(...summary.ledger.map(entry => {
+    const row = element("tr")
+    row.append(element("td", entry.at.slice(11, 19)), element("td", entry.client), element("td", entry.slot, "slot-" + entry.slot),
+               element("td", String(entry.prompt_tokens), "number"), element("td", String(entry.completion_tokens), "number"), element("td", dollars(entry.cost), "number"))
+    return row
+  }))
+  $("#reconcile-button").disabled = !summary.can_reconcile
+}
+
+async function refresh() {
+  if (openForm) return
+  render(await (await fetch("/api/summary")).json())
+}
+
+$("#reconcile-button").addEventListener("click", async () => {
+  $("#reconcile-result").textContent = "asking the provider..."
+  const response = await fetch("/api/reconcile", { method: "POST", body: "{}" })
+  const result = await response.json()
+  const label = element("span", result.within_tolerance ? "within tolerance" : "outside tolerance", result.within_tolerance ? "yes" : "no")
+  $("#reconcile-result").replaceChildren(label, ` ledger ${dollars(result.ledger_total)}, billing ${dollars(result.billing_total)}, gap ${(result.gap_share * 100).toFixed(2)}%, ${result.missing} missing`)
+})
+
+refresh()
+setInterval(refresh, 2000)
+</script>
+</body>
+</html>

@@ -1,0 +1,5 @@
+# Demo keys for the load test only. They open nothing outside this lab.
+[keys]
+maple-portal = "bh_demo_maple_portal_4f9a"
+harbor-sms = "bh_demo_harbor_sms_7c21"
+runaway-sync = "bh_demo_runaway_sync_90de"
