@@ -1,0 +1,727 @@
+{
+  "modules": [
+    {
+      "key": "the-llm-as-an-api",
+      "title": "The LLM as an API",
+      "units": [
+        {
+          "key": "01-structured-output",
+          "title": "Extract Structured Data with LLMs",
+          "items": [
+            {
+              "key": "01-structured-output.lab",
+              "kind": "lab",
+              "title": "Extract Structured Data with LLMs",
+              "minutes": 40,
+              "body_md": "Match each receipt photo, PDF or email to the card charge it pays for, so finance never types it in.",
+              "lab": {
+                "slug": "01-structured-output",
+                "repo_path": "labs/01-structured-output"
+              }
+            }
+          ]
+        },
+        {
+          "key": "02-golden-set",
+          "title": "Test LLM Features with a Golden Dataset",
+          "items": [
+            {
+              "key": "02-golden-set.lab",
+              "kind": "lab",
+              "title": "Test LLM Features with a Golden Dataset",
+              "minutes": 45,
+              "body_md": "Measure an LLM feature against cases people already signed off before changing its prompt or model.",
+              "lab": {
+                "slug": "02-golden-set",
+                "repo_path": "labs/02-golden-set"
+              }
+            }
+          ]
+        },
+        {
+          "key": "03-batch-prompts",
+          "title": "Process a Million Prompts with Batch APIs",
+          "items": [
+            {
+              "key": "03-batch-prompts.lab",
+              "kind": "lab",
+              "title": "Process a Million Prompts with Batch APIs",
+              "minutes": 40,
+              "body_md": "Fill missing product attributes across a whole grocery catalogue overnight, as Instacart's Maple does.",
+              "lab": {
+                "slug": "03-batch-prompts",
+                "repo_path": "labs/03-batch-prompts"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "rag-you-can-measure",
+      "title": "RAG you can measure",
+      "units": [
+        {
+          "key": "04-rag-pipeline",
+          "title": "Build a PDF RAG Pipeline with Citations",
+          "items": [
+            {
+              "key": "04-rag-pipeline.lab",
+              "kind": "lab",
+              "title": "Build a PDF RAG Pipeline with Citations",
+              "minutes": 40,
+              "body_md": "Answer an engineer's on-call question from internal docs with a citation, as Uber Genie does in Slack.",
+              "lab": {
+                "slug": "04-rag-pipeline",
+                "repo_path": "labs/04-rag-pipeline"
+              }
+            }
+          ]
+        },
+        {
+          "key": "05-rag-recall",
+          "title": "Measure RAG Accuracy with Recall@k",
+          "items": [
+            {
+              "key": "05-rag-recall.lab",
+              "kind": "lab",
+              "title": "Measure RAG Accuracy with Recall@k",
+              "minutes": 45,
+              "body_md": "Find the right policy passage for a question before any answer is written.",
+              "lab": {
+                "slug": "05-rag-recall",
+                "repo_path": "labs/05-rag-recall"
+              }
+            }
+          ]
+        },
+        {
+          "key": "06-rag-judge",
+          "title": "Stop RAG Hallucinations with an LLM Judge",
+          "items": [
+            {
+              "key": "06-rag-judge.lab",
+              "kind": "lab",
+              "title": "Stop RAG Hallucinations with an LLM Judge",
+              "minutes": 40,
+              "body_md": "Stop a support bot sending a courier an answer its sources do not support, as DoorDash does.",
+              "lab": {
+                "slug": "06-rag-judge",
+                "repo_path": "labs/06-rag-judge"
+              }
+            }
+          ]
+        },
+        {
+          "key": "07-agentic-rag",
+          "title": "Build Agentic RAG with LangGraph",
+          "items": [
+            {
+              "key": "07-agentic-rag.lab",
+              "kind": "lab",
+              "title": "Build Agentic RAG with LangGraph",
+              "minutes": 35,
+              "body_md": "Answer policy questions that need several lookups, as Uber's agentic RAG does for its policy docs.",
+              "lab": {
+                "slug": "07-agentic-rag",
+                "repo_path": "labs/07-agentic-rag"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "workflows-routing-and-decisions",
+      "title": "Workflows, routing and decisions",
+      "units": [
+        {
+          "key": "08-ai-workflow",
+          "title": "Build an AI Workflow with Mastra",
+          "items": [
+            {
+              "key": "08-ai-workflow.lab",
+              "kind": "lab",
+              "title": "Build an AI Workflow with Mastra",
+              "minutes": 40,
+              "body_md": "Turn a supplier spec sheet into a product listing in chained steps, with every claim checked.",
+              "lab": {
+                "slug": "08-ai-workflow",
+                "repo_path": "labs/08-ai-workflow"
+              }
+            }
+          ]
+        },
+        {
+          "key": "09-request-routing",
+          "title": "Route Requests with LLM Classification",
+          "items": [
+            {
+              "key": "09-request-routing.lab",
+              "kind": "lab",
+              "title": "Route Requests with LLM Classification",
+              "minutes": 40,
+              "body_md": "Send each incoming support ticket to the queue that can solve it.",
+              "lab": {
+                "slug": "09-request-routing",
+                "repo_path": "labs/09-request-routing"
+              }
+            }
+          ]
+        },
+        {
+          "key": "10-durable-workflow",
+          "title": "Build Durable AI Workflows with Temporal",
+          "items": [
+            {
+              "key": "10-durable-workflow.lab",
+              "kind": "lab",
+              "title": "Build Durable AI Workflows with Temporal",
+              "minutes": 35,
+              "body_md": "Run a refund that waits days for a manager's approval and pays out exactly once.",
+              "lab": {
+                "slug": "10-durable-workflow",
+                "repo_path": "labs/10-durable-workflow"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "agents",
+      "title": "Agents",
+      "units": [
+        {
+          "key": "11-agent-loop",
+          "title": "Build an AI Agent Loop with Tool Calling",
+          "items": [
+            {
+              "key": "11-agent-loop.lab",
+              "kind": "lab",
+              "title": "Build an AI Agent Loop with Tool Calling",
+              "minutes": 45,
+              "body_md": "Resolve an order-support chat by calling order and refund tools in a loop.",
+              "lab": {
+                "slug": "11-agent-loop",
+                "repo_path": "labs/11-agent-loop"
+              }
+            }
+          ]
+        },
+        {
+          "key": "12-mcp-tools",
+          "title": "Design Tools for AI Agents with MCP",
+          "items": [
+            {
+              "key": "12-mcp-tools.lab",
+              "kind": "lab",
+              "title": "Design Tools for AI Agents with MCP",
+              "minutes": 45,
+              "body_md": "Let a merchant run store admin tasks by asking, as Shopify Sidekick does.",
+              "lab": {
+                "slug": "12-mcp-tools",
+                "repo_path": "labs/12-mcp-tools"
+              }
+            }
+          ]
+        },
+        {
+          "key": "13-context-engineering",
+          "title": "Cut Agent Token Costs with Context Engineering",
+          "items": [
+            {
+              "key": "13-context-engineering.lab",
+              "kind": "lab",
+              "title": "Cut Agent Token Costs with Context Engineering",
+              "minutes": 45,
+              "body_md": "Keep a long-running agent task affordable, as Manus does with its cache hit rate.",
+              "lab": {
+                "slug": "13-context-engineering",
+                "repo_path": "labs/13-context-engineering"
+              }
+            }
+          ]
+        },
+        {
+          "key": "14-agent-memory",
+          "title": "Add Long-Term Memory to AI Agents with Mem0",
+          "items": [
+            {
+              "key": "14-agent-memory.lab",
+              "kind": "lab",
+              "title": "Add Long-Term Memory to AI Agents with Mem0",
+              "minutes": 45,
+              "body_md": "Remember what a user said across sessions and let them correct it, as ChatGPT memory does.",
+              "lab": {
+                "slug": "14-agent-memory",
+                "repo_path": "labs/14-agent-memory"
+              }
+            }
+          ]
+        },
+        {
+          "key": "15-research-subagents",
+          "title": "Build a Deep Research Agent with Subagents",
+          "items": [
+            {
+              "key": "15-research-subagents.lab",
+              "kind": "lab",
+              "title": "Build a Deep Research Agent with Subagents",
+              "minutes": 40,
+              "body_md": "Write a cited research report from many sources, as Anthropic's research system does.",
+              "lab": {
+                "slug": "15-research-subagents",
+                "repo_path": "labs/15-research-subagents"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "voice-ai",
+      "title": "Voice AI",
+      "units": [
+        {
+          "key": "16-voice-pipecat",
+          "title": "Build a Voice AI Agent with Pipecat",
+          "items": [
+            {
+              "key": "16-voice-pipecat.lab",
+              "kind": "lab",
+              "title": "Build a Voice AI Agent with Pipecat",
+              "minutes": 60,
+              "body_md": "Take a restaurant's phone order by voice and put it in the till.",
+              "lab": {
+                "slug": "16-voice-pipecat",
+                "repo_path": "labs/16-voice-pipecat"
+              }
+            }
+          ]
+        },
+        {
+          "key": "17-voice-phone",
+          "title": "Build a Phone AI Agent with LiveKit",
+          "items": [
+            {
+              "key": "17-voice-phone.lab",
+              "kind": "lab",
+              "title": "Build a Phone AI Agent with LiveKit",
+              "minutes": 55,
+              "body_md": "Answer a business's inbound phone line with a voice agent.",
+              "lab": {
+                "slug": "17-voice-phone",
+                "repo_path": "labs/17-voice-phone"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "vision-ai-and-decision-ai",
+      "title": "Vision AI and decision AI",
+      "units": [
+        {
+          "key": "18-vision-damage",
+          "title": "Read Images with Vision LLMs",
+          "items": [
+            {
+              "key": "18-vision-damage.lab",
+              "kind": "lab",
+              "title": "Read Images with Vision LLMs",
+              "minutes": 40,
+              "body_md": "Estimate car repair cost from claim photos, as Tractable does for insurers.",
+              "lab": {
+                "slug": "18-vision-damage",
+                "repo_path": "labs/18-vision-damage"
+              }
+            }
+          ]
+        },
+        {
+          "key": "19-decision-ai",
+          "title": "Score Risk with a Decision Model",
+          "items": [
+            {
+              "key": "19-decision-ai.lab",
+              "kind": "lab",
+              "title": "Score Risk with a Decision Model",
+              "minutes": 45,
+              "body_md": "Decide which refunds to pay, hold or review, as Stripe Radar does for payments.",
+              "lab": {
+                "slug": "19-decision-ai",
+                "repo_path": "labs/19-decision-ai"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "agentic-ai-systems-you-can-trust",
+      "title": "Agentic AI systems you can trust",
+      "units": [
+        {
+          "key": "20-remote-mcp-oauth",
+          "title": "Ship a Remote MCP Server with OAuth",
+          "items": [
+            {
+              "key": "20-remote-mcp-oauth.lab",
+              "kind": "lab",
+              "title": "Ship a Remote MCP Server with OAuth",
+              "minutes": 45,
+              "body_md": "Let an assistant act in a user's Linear workspace as that user.",
+              "lab": {
+                "slug": "20-remote-mcp-oauth",
+                "repo_path": "labs/20-remote-mcp-oauth"
+              }
+            }
+          ]
+        },
+        {
+          "key": "21-rag-permissions",
+          "title": "Enforce Document Permissions in RAG with OpenFGA",
+          "items": [
+            {
+              "key": "21-rag-permissions.lab",
+              "kind": "lab",
+              "title": "Enforce Document Permissions in RAG with OpenFGA",
+              "minutes": 75,
+              "body_md": "Answer from company documents without showing anyone a file they cannot open, as Glean does.",
+              "lab": {
+                "slug": "21-rag-permissions",
+                "repo_path": "labs/21-rag-permissions"
+              }
+            }
+          ]
+        },
+        {
+          "key": "22-agent-actions-authz",
+          "title": "Authorize AI Agent Actions with RBAC and ABAC",
+          "items": [
+            {
+              "key": "22-agent-actions-authz.lab",
+              "kind": "lab",
+              "title": "Authorize AI Agent Actions with RBAC and ABAC",
+              "minutes": 45,
+              "body_md": "Let a coding agent read freely but ask before anything destructive, as Block's Goose does.",
+              "lab": {
+                "slug": "22-agent-actions-authz",
+                "repo_path": "labs/22-agent-actions-authz"
+              }
+            }
+          ]
+        },
+        {
+          "key": "23-guardrails",
+          "title": "Block Prompt Injection with Guardrails",
+          "items": [
+            {
+              "key": "23-guardrails.lab",
+              "kind": "lab",
+              "title": "Block Prompt Injection with Guardrails",
+              "minutes": 50,
+              "body_md": "Block a listing assistant from answers that break fair housing law, as Zillow does.",
+              "lab": {
+                "slug": "23-guardrails",
+                "repo_path": "labs/23-guardrails"
+              }
+            }
+          ]
+        },
+        {
+          "key": "24-pii-phi",
+          "title": "Redact PII and PHI with Presidio",
+          "items": [
+            {
+              "key": "24-pii-phi.lab",
+              "kind": "lab",
+              "title": "Redact PII and PHI with Presidio",
+              "minutes": 45,
+              "body_md": "Strip patient identifiers from a visit transcript before an LLM writes the note.",
+              "lab": {
+                "slug": "24-pii-phi",
+                "repo_path": "labs/24-pii-phi"
+              }
+            }
+          ]
+        },
+        {
+          "key": "25-mcp-gateway",
+          "title": "Control AI Agent Tool Access with an MCP Gateway",
+          "items": [
+            {
+              "key": "25-mcp-gateway.lab",
+              "kind": "lab",
+              "title": "Control AI Agent Tool Access with an MCP Gateway",
+              "minutes": 50,
+              "body_md": "Let staff agents use only approved MCP servers, as Block does with its curated list.",
+              "lab": {
+                "slug": "25-mcp-gateway",
+                "repo_path": "labs/25-mcp-gateway"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "llmops-and-governance",
+      "title": "LLMOps and governance",
+      "units": [
+        {
+          "key": "26-llm-gateway",
+          "title": "Route LLM Calls with an LLM Gateway",
+          "items": [
+            {
+              "key": "26-llm-gateway.lab",
+              "kind": "lab",
+              "title": "Route LLM Calls with an LLM Gateway",
+              "minutes": 50,
+              "body_md": "Send each LLM call to the cheapest model that answers it well, as Instacart's gateway does.",
+              "lab": {
+                "slug": "26-llm-gateway",
+                "repo_path": "labs/26-llm-gateway"
+              }
+            }
+          ]
+        },
+        {
+          "key": "27-prompt-registry",
+          "title": "Track Prompt Versions with Langfuse",
+          "items": [
+            {
+              "key": "27-prompt-registry.lab",
+              "kind": "lab",
+              "title": "Track Prompt Versions with Langfuse",
+              "minutes": 80,
+              "body_md": "Let a product team change a support bot's prompt without a deploy and roll it back in a minute.",
+              "lab": {
+                "slug": "27-prompt-registry",
+                "repo_path": "labs/27-prompt-registry"
+              }
+            }
+          ]
+        },
+        {
+          "key": "28-tracing",
+          "title": "Trace AI Agents with OpenTelemetry",
+          "items": [
+            {
+              "key": "28-tracing.lab",
+              "kind": "lab",
+              "title": "Trace AI Agents with OpenTelemetry",
+              "minutes": 55,
+              "body_md": "Tell finance what each customer's AI usage cost last month, and which step made a run slow.",
+              "lab": {
+                "slug": "28-tracing",
+                "repo_path": "labs/28-tracing"
+              }
+            }
+          ]
+        },
+        {
+          "key": "29-evals-ci",
+          "title": "Gate AI Releases with Evals in CI",
+          "items": [
+            {
+              "key": "29-evals-ci.lab",
+              "kind": "lab",
+              "title": "Gate AI Releases with Evals in CI",
+              "minutes": 65,
+              "body_md": "Block a release that makes an assistant worse, as Shopify runs evals before Sidekick ships.",
+              "lab": {
+                "slug": "29-evals-ci",
+                "repo_path": "labs/29-evals-ci"
+              }
+            }
+          ]
+        },
+        {
+          "key": "30-ai-governance",
+          "title": "Govern AI Systems with an Inventory and Audit Log",
+          "items": [
+            {
+              "key": "30-ai-governance.lab",
+              "kind": "lab",
+              "title": "Govern AI Systems with an Inventory and Audit Log",
+              "minutes": 50,
+              "body_md": "Answer an auditor: which AI systems talk to customers, and what one said on a given day.",
+              "lab": {
+                "slug": "30-ai-governance",
+                "repo_path": "labs/30-ai-governance"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "deploy",
+      "title": "Deploy",
+      "units": [
+        {
+          "key": "31-agent-api",
+          "title": "Ship a Streaming AI Agent API with an API Gateway",
+          "items": [
+            {
+              "key": "31-agent-api.lab",
+              "kind": "lab",
+              "title": "Ship a Streaming AI Agent API with an API Gateway",
+              "minutes": 70,
+              "body_md": "Serve an assistant to a web app with streaming, auth and rate limits.",
+              "lab": {
+                "slug": "31-agent-api",
+                "repo_path": "labs/31-agent-api"
+              }
+            }
+          ]
+        },
+        {
+          "key": "32-background-agents",
+          "title": "Run Background Coding Agents with Cloud Sandboxes",
+          "items": [
+            {
+              "key": "32-background-agents.lab",
+              "kind": "lab",
+              "title": "Run Background Coding Agents with Cloud Sandboxes",
+              "minutes": 60,
+              "body_md": "Turn an issue into a tested pull request with no engineer at a keyboard, as Ramp Inspect does.",
+              "lab": {
+                "slug": "32-background-agents",
+                "repo_path": "labs/32-background-agents"
+              }
+            }
+          ]
+        },
+        {
+          "key": "33-serverless-agents",
+          "title": "Run AI Agents on Serverless with Durable Functions",
+          "items": [
+            {
+              "key": "33-serverless-agents.lab",
+              "kind": "lab",
+              "title": "Run AI Agents on Serverless with Durable Functions",
+              "minutes": 45,
+              "body_md": "Run nightly agent jobs that survive a crash with no server to run.",
+              "lab": {
+                "slug": "33-serverless-agents",
+                "repo_path": "labs/33-serverless-agents"
+              }
+            }
+          ]
+        },
+        {
+          "key": "34-fine-tune",
+          "title": "Fine-Tune a Small LLM with Reviewed Data",
+          "items": [
+            {
+              "key": "34-fine-tune.lab",
+              "kind": "lab",
+              "title": "Fine-Tune a Small LLM with Reviewed Data",
+              "minutes": 70,
+              "body_md": "Label most items with a small tuned model and send the rest to the large one, at its accuracy.",
+              "lab": {
+                "slug": "34-fine-tune",
+                "repo_path": "labs/34-fine-tune"
+              }
+            }
+          ]
+        },
+        {
+          "key": "35-serverless-gpu",
+          "title": "Serve Open LLMs with Serverless vLLM",
+          "items": [
+            {
+              "key": "35-serverless-gpu.lab",
+              "kind": "lab",
+              "title": "Serve Open LLMs with Serverless vLLM",
+              "minutes": 70,
+              "body_md": "Serve the tuned model on your own GPUs only while there is work, as Ramp does on Modal.",
+              "lab": {
+                "slug": "35-serverless-gpu",
+                "repo_path": "labs/35-serverless-gpu"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "production-capstone",
+      "title": "Production Capstone",
+      "units": [
+        {
+          "key": "36-capstone-rfc",
+          "title": "Scope a Production AI System with an Architecture RFC",
+          "items": [
+            {
+              "key": "36-capstone-rfc.lab",
+              "kind": "lab",
+              "title": "Scope a Production AI System with an Architecture RFC",
+              "minutes": 60,
+              "body_md": "Write an architecture RFC for your chosen capstone with latency budgets, failure modes and a labelled eval plan.",
+              "lab": {
+                "slug": "36-capstone-rfc",
+                "repo_path": "labs/36-capstone-rfc"
+              }
+            }
+          ]
+        },
+        {
+          "key": "37-capstone-tracer-bullet",
+          "title": "Ship an End-to-End AI Pipeline with OpenTelemetry",
+          "items": [
+            {
+              "key": "37-capstone-tracer-bullet.lab",
+              "kind": "lab",
+              "title": "Ship an End-to-End AI Pipeline with OpenTelemetry",
+              "minutes": 120,
+              "body_md": "Build the working vertical slice of your capstone with full span traces, token accounting and error handling.",
+              "lab": {
+                "slug": "37-capstone-tracer-bullet",
+                "repo_path": "labs/37-capstone-tracer-bullet"
+              }
+            }
+          ]
+        },
+        {
+          "key": "38-capstone-eval-gate",
+          "title": "Verify Production AI Quality with CI Evals",
+          "items": [
+            {
+              "key": "38-capstone-eval-gate.lab",
+              "kind": "lab",
+              "title": "Verify Production AI Quality with CI Evals",
+              "minutes": 90,
+              "body_md": "Build a golden dataset and automated eval suite that blocks bad prompts or model changes on your capstone.",
+              "lab": {
+                "slug": "38-capstone-eval-gate",
+                "repo_path": "labs/38-capstone-eval-gate"
+              }
+            }
+          ]
+        },
+        {
+          "key": "39-capstone-production-deploy",
+          "title": "Deploy a Hardened AI Service with Rate Limits",
+          "items": [
+            {
+              "key": "39-capstone-production-deploy.lab",
+              "kind": "lab",
+              "title": "Deploy a Hardened AI Service with Rate Limits",
+              "minutes": 90,
+              "body_md": "Ship your capstone behind an authenticated API with rate limits, fallback routing and a live cost ledger.",
+              "lab": {
+                "slug": "39-capstone-production-deploy",
+                "repo_path": "labs/39-capstone-production-deploy"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

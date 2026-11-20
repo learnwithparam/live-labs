@@ -25,6 +25,7 @@
         "name": "course",
         "when": [
           "course.toml",
+          "syllabus.json",
           "**/*.md",
           "scripts/*.py",
           "labs/**",

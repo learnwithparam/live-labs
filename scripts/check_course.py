@@ -1,10 +1,11 @@
 """The structural test for the whole course; `make check` runs it with no key.
 
 course.toml is the single source: every ready row has a lab folder that follows the contract, every
-lab folder has a row, and README.md's course map matches the rows. `--write` regenerates the map.
+lab folder has a row, and README.md's course map and syllabus.json match the rows. `--write` regenerates both.
 """
 
 import ast
+import json
 import re
 import sys
 import tomllib
@@ -54,6 +55,40 @@ LAB_POINTER = re.compile(r"\blabs? (?:\d+|one|two|three)\b|\b(?:next|previous|la
 def lab_title_link(lab: dict) -> str:
     """A lab's title, linked to its folder only when it is ready: a planned lab has no folder to open."""
     return f"[{lab['title']}](labs/{lab['slug']})" if lab["status"] == "ready" else lab["title"]
+
+
+# The proengineers.club syllabus tree (app/syllabus.mjs validate): a stable key is a-z, 0-9, . _ - up to 64 characters.
+STABLE_KEY = re.compile(r"^[a-z0-9][a-z0-9._-]{0,63}$")
+
+
+def syllabus(course: dict) -> dict:
+    """The course as a club syllabus: a module per part, a unit per lab, one lab item in each. Item keys stay put when
+    labs are reordered, so a learner's progress survives a new version."""
+    modules: dict[str, dict] = {}
+    for lab in course["lab"]:
+        key = re.sub(r"[^a-z0-9]+", "-", lab["part"].lower()).strip("-")
+        module = modules.setdefault(key, {"key": key, "title": lab["part"], "units": []})
+        module["units"].append({
+            "key": lab["slug"], "title": lab["title"],
+            "items": [{"key": f"{lab['slug']}.lab", "kind": "lab", "title": lab["title"], "minutes": lab["minutes"],
+                       "body_md": lab["job"] + ".", "lab": {"slug": lab["slug"], "repo_path": f"labs/{lab['slug']}"}}],
+        })
+    return {"modules": list(modules.values())}
+
+
+def syllabus_problems(course: dict) -> list[str]:
+    keys: list[str] = []
+    for module in syllabus(course)["modules"]:
+        keys.append(module["key"])
+        for unit in module["units"]:
+            keys += [unit["key"], *(item["key"] for item in unit["items"])]
+    found = [f"syllabus.json: {key!r} is not a stable key" for key in keys if not STABLE_KEY.match(key)]
+    found += [f"syllabus.json: key {key!r} is used twice" for key in sorted({key for key in keys if keys.count(key) > 1})]
+    return found
+
+
+def syllabus_text(course: dict) -> str:
+    return json.dumps(syllabus(course), indent=2) + "\n"
 
 
 def course_map(course: dict) -> str:
@@ -304,7 +339,9 @@ def problems(course: dict, readme: str) -> list[str]:
     found += architecture_problems((ROOT / "docs" / "architecture.md").read_text(), course)
     if course_map(course) not in readme:
         found.append("README.md: course map is stale; run `make readme`")
-    found += path_problems(course)
+    found += path_problems(course) + syllabus_problems(course)
+    if not (ROOT / "syllabus.json").exists() or (ROOT / "syllabus.json").read_text() != syllabus_text(course):
+        found.append("syllabus.json: stale; run `make readme`")
     start_here = ROOT / "START-HERE.md"
     if not start_here.exists() or path_table(course) not in start_here.read_text():
         found.append("START-HERE.md: path table is stale; run `make readme`")
@@ -322,6 +359,7 @@ def main() -> None:
         start_here = start_here_path.read_text()
         start, end = start_here.index(PATHS_BEGIN), start_here.index(PATHS_END) + len(PATHS_END)
         start_here_path.write_text(start_here[:start] + path_table(course) + start_here[end:])
+        (ROOT / "syllabus.json").write_text(syllabus_text(course))
         return
     found = problems(course, readme)
     for problem in found:

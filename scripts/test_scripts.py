@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from check_course import KINDS, level_problems, path_problems, architecture_problems, diagram_problems, LAB_POINTER, kind, ROOT, comment_problems, course_map, path_table, model_id_problems, naming_problems, needs_problems, opening_problems, page_problems, plain_problems, problems, proof_env_problems, title_problems
+from check_course import KINDS, level_problems, path_problems, architecture_problems, diagram_problems, LAB_POINTER, kind, ROOT, comment_problems, course_map, path_table, model_id_problems, naming_problems, needs_problems, opening_problems, page_problems, plain_problems, problems, proof_env_problems, syllabus, syllabus_problems, title_problems
 from walkthrough import example_keys, learner_env, matches, scene, steps
 
 import json
@@ -151,6 +151,16 @@ def test_a_readme_that_asks_for_a_filled_in_file_needs_a_source_that_reads_it():
     asks = "Copy `env.example` to `.en" + "v`."
     assert proof_env_problems(asks, "load_dotenv()") == []
     assert proof_env_problems(asks, "print('no settings read')")
+
+
+def test_the_syllabus_has_a_module_per_part_a_unit_per_lab_and_stable_keys():
+    row = {"slug": "01-a", "title": "A", "part": "The LLM as an API", "minutes": 40, "job": "Do a thing"}
+    tree = syllabus({"lab": [row, {**row, "slug": "02-b", "title": "B"}]})
+    assert [module["key"] for module in tree["modules"]] == ["the-llm-as-an-api"]
+    assert [unit["key"] for unit in tree["modules"][0]["units"]] == ["01-a", "02-b"]
+    assert syllabus_problems({"lab": [row]}) == []
+    assert syllabus_problems({"lab": [{**row, "slug": "Bad Key"}]})
+    assert syllabus_problems({"lab": [row, row]})
 
 
 def test_a_need_the_course_map_lists_must_be_said_in_set_up():
